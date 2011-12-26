@@ -1,9 +1,10 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // DEBUG.C - Debugging Messages
 // Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source Utilised with the Kind Permission of Landon Dyer
+//
 
 #include "debug.h"
 #include "sect.h"
@@ -16,23 +17,28 @@ static int siztab[4] = {3, 5, 9, 9};
 // --- Print 'c' Visibly ---------------------------------------------------------------------------
 //
 
-int visprt(char c) {
-   if(c < 0x20 || c >= 0x7f)
+int visprt(char c)
+{
+   if (c < 0x20 || c >= 0x7f)
       putchar('.');
    else
       putchar(c);
 
-   return(0);
+   return 0;
 }
 
 //
 // --- Print expression, return ptr to just past the ENDEXPR ---------------------------------------
 //
 
-TOKEN *printexpr(TOKEN *tp) {
-   if(tp != NULL)
-      while(*tp != ENDEXPR)
-         switch((int)*tp++) {
+TOKEN * printexpr(TOKEN * tp)
+{
+   if (tp != NULL)
+   {
+      while (*tp != ENDEXPR)
+	  {
+         switch ((int)*tp++)
+		 {
             case SYMBOL:
                printf("`%s' ", ((SYM *)*tp)->sname);
                ++tp;
@@ -48,39 +54,48 @@ TOKEN *printexpr(TOKEN *tp) {
                printf("%c ", (char)tp[-1]);
                break;
          }
+	  }
+   }
+
    printf(";\n");
-   return(tp + 1);
+   return tp + 1;
 }
 
 //
 // --- Dump data in a chunk (and maybe others) in the appropriate format ---------------------------
 //
 
-int chdump(CHUNK *ch, int format) {
-   while(ch != NULL) {
+int chdump(CHUNK * ch, int format)
+{
+   while (ch != NULL)
+   {
       printf("chloc=$%08lx, chsize=$%lx\n", ch->chloc, ch->ch_size);
       mdump(ch->chptr, ch->ch_size, format, ch->chloc);
       ch = ch->chnext;
    }
 
-   return(0);
+   return 0;
 }
 
 //
 // --- Dump fixup records in printable format ------------------------------------------------------
 //
 
-int fudump(CHUNK *ch) {
+int fudump(CHUNK * ch)
+{
    PTR p;
-   char *ep;
+   char * ep;
    WORD attr, esiz;
    WORD line, file;
    LONG loc;
 
-   for(; ch != NULL;) {
+   for(; ch!=NULL;)
+   {
       p.cp = ch->chptr;
       ep = ch->chptr + ch->ch_size;
-      while(p.cp < ep) {
+
+	  while(p.cp < ep)
+	  {
          attr = *p.wp++;
          loc = *p.lp++;
          file = *p.wp++;
@@ -88,66 +103,77 @@ int fudump(CHUNK *ch) {
 
          printf("$%04x $%08lx %d.%d: ", (int)attr, loc, (int)file, (int)line);
 
-         if(attr & FU_EXPR) {
+         if (attr & FU_EXPR)
+		 {
             esiz = *p.wp++;
             printf("(%d long) ", (int)esiz);
             p.tk = printexpr(p.tk);
-         } else {
+         }
+         else
+		 {
             printf("`%s' ;\n", (*p.sy)->sname);
             ++p.lp;
          }
       }
+
       ch = ch->chnext;
    }
 
-   return(0);
+   return 0;
 }
 
 //
 // --- Dump marks ----------------------------------------------------------------------------------
 //
 
-int mudump(void) {
-   MCHUNK *mch;
+int mudump(void)
+{
+   MCHUNK * mch;
    PTR p;
    WORD from;
    WORD w;
    LONG loc;
-   SYM *symbol;
+   SYM * symbol;
 
    from = 0;
-   for(mch = firstmch; mch != NULL; mch = mch->mcnext) {
+
+   for(mch=firstmch; mch!=NULL; mch=mch->mcnext)
+   {
       printf("mch=$%08lx mcptr=$%08lx mcalloc=$%lx mcused=$%x\n",
-             mch,
-             mch->mcptr,
+             (unsigned long int)mch,
+             (unsigned long int)(mch->mcptr.lw),
              mch->mcalloc,
-             mch->mcused);
+             (unsigned int)(mch->mcused));
 
       p = mch->mcptr;
-      for(;;) {
+	  
+      for(;;)
+	  {
          w = *p.wp++;
-         if(w & MCHEND)
+
+		 if (w & MCHEND)
             break;
 
          symbol = NULL;
          loc = *p.lp++;
 
-         if(w & MCHFROM)
+         if (w & MCHFROM)
             from = *p.wp++;
 
-         if(w & MSYMBOL)
+         if (w & MSYMBOL)
             symbol = *p.sy++;
 
          printf("m=$%04x to=%d loc=$%lx from=%d siz=%s",
                  w, w & 0x00ff, loc, from, (w & MLONG) ? "long" : "word");
 
-         if(symbol != NULL)
+         if (symbol != NULL)
             printf(" sym=`%s'", symbol->sname);
-         printf("\n");
+
+		 printf("\n");
       }
    }
 
-   return(0);
+   return 0;
 }
 
 //
@@ -219,27 +245,31 @@ int mdump(char *start, LONG count, int flg, LONG base) {
 // --- Dump list of tokens on stdout in printable form ---------------------------------------------
 //
 
-int dumptok(TOKEN *tk) {
+int dumptok(TOKEN * tk)
+{
    int flg = 0;
 
-   while(*tk != EOL) {
-      if(flg++)
+   while (*tk != EOL)
+   {
+      if (flg++)
          printf(" ");
 
-      if(*tk >= 128) {
+      if (*tk >= 128)
+	  {
          printf("REG=%ld", *tk++ - 128);
          continue;
       }
 
-      switch((int)*tk++) {
+      switch ((int)*tk++)
+	  {
          case CONST:                                        // CONST <value>
             printf("CONST=%ld", *tk++);
             break;
          case STRING:                                       // STRING <address>
-            printf("STRING='%s'", *tk++);
+            printf("STRING='%s'", (char *)*tk++);
             break;
          case SYMBOL:                                       // SYMBOL <address> 
-            printf("SYMBOL='%s'", *tk++);
+            printf("SYMBOL='%s'", (char *)*tk++);
             break;
          case EOL:                                          // End of line 
             printf("EOL");
@@ -269,13 +299,14 @@ int dumptok(TOKEN *tk) {
             printf("SHL");
             break;
          default:
-            printf("%c", tk[-1]);
+            printf("%c", (int)tk[-1]);
             break;
       }
    }
+
    printf("\n");
 
-   return(0);
+   return 0;
 }
 
 //

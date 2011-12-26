@@ -117,27 +117,27 @@
 #define  SYM         struct _sym
 SYM
 {
-   SYM *snext;                                              // * -> Next symbol on hash-chain
-   SYM *sorder;                                             // * -> Next sym in order of refrence
-   SYM *sdecl;                                              // * -> Next sym in order of decleration
+   SYM * snext;                                             // * -> Next symbol on hash-chain
+   SYM * sorder;                                            // * -> Next sym in order of refrence
+   SYM * sdecl;                                             // * -> Next sym in order of declaration
    BYTE stype;                                              // Symbol type 
    WORD sattr;                                              // Attribute bits
    LONG sattre;                                             // Extended attribute bits
    WORD senv;                                               // Enviroment number
    LONG svalue;                                             // Symbol value
-   char *sname;                                             // * -> Symbol's print-name
+   char * sname;                                            // * -> Symbol's print-name
 };
 
 // Pointer type that can point to (almost) anything
 #define PTR union _ptr
 PTR
 {
-   char *cp;                                                // Char
-   WORD *wp;                                                // WORD
-   LONG *lp;                                                // LONG
+   char * cp;                                               // Char
+   WORD * wp;                                               // WORD
+   LONG * lp;                                               // LONG
    LONG lw;                                                 // LONG
-   SYM **sy;                                                // SYM
-   TOKEN *tk;                                               // TOKEN
+   SYM ** sy;                                               // SYM
+   TOKEN * tk;                                              // TOKEN
 };
 
 // Symbol spaces
@@ -186,7 +186,7 @@ extern int rgpu, rdsp;
 extern int err_flag;
 extern int err_fd;
 extern int regbank;
-extern char *firstfname;
+extern char * firstfname;
 extern int list_fd;
 extern int as68_flag;
 extern int list_flag;
@@ -199,16 +199,16 @@ extern int in_main;
 
 // Prototypes
 void init_sym(void);
-SYM *lookup(char *, int, int);
-SYM *newsym(char *, int, int);
-char *fext(char *, char *, int);
+SYM * lookup(char *, int, int);
+SYM * newsym(char *, int, int);
+char * fext(char *, char *, int);
 void cantcreat(char *);
 int kmatch(char *, int *, int *, int *, int *);
 void autoeven(int);
 int nthpath(char *, int, char *);
 void clear(char *, LONG);
-char *copy(char *, char *, LONG);
-int rmac_qsort(char *, int, int, int	(*)());
-char *amem(LONG);
+char * copy(char *, char *, LONG);
+int rmac_qsort(char *, int, int, int (*)());
+char * amem(LONG);
 
 #endif // __RMAC_H__

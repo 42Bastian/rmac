@@ -1,9 +1,10 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // MACRO.C - Macro Definition and Invocation
 // Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source Utilised with the Kind Permission of Landon Dyer
+//
 
 #include "macro.h"
 #include "token.h"
@@ -449,8 +450,9 @@ int invokemac(SYM *mac, WORD siz) {
 // -------------------------------------------------------------------------------------------------
 //
 
-void ib_macro(void) {
-   SYM *mac;
+void ib_macro(void)
+{
+   SYM * mac;
 
    curmac = mac = newsym("mjump", MACRO, 0);
    mac->svalue = 0;

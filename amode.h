@@ -1,9 +1,10 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // AMODE.H - Addressing Modes
 // Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source Utilised with the Kind Permission of Landon Dyer
+//
 
 #ifndef __AMODE_H__
 #define __AMODE_H__
@@ -100,7 +101,7 @@ MNTAB {
    LONG mn0, mn1;                                           // Addressing modes
    WORD mninst;                                             // Instruction mask
    WORD mncont;                                             // Continuation (or -1)
-   int (*mnfunc)();                                         // Mnemonic builder
+   int (*mnfunc)(WORD, WORD);                                         // Mnemonic builder
 };
 
 // mnattr:

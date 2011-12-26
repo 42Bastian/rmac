@@ -1,9 +1,10 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // TOKEN.C - Token Handling
 // Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source Utilised with the Kind Permission of Landon Dyer
+//
 
 #include "token.h"
 #include "symbol.h"
@@ -20,7 +21,7 @@ int curlineno;                                              // Current line numb
 int totlines;                                               // Total # of lines
 int mjump_align = 0;                                        // mjump alignment flag
 char lntag;                                                 // Line tag
-char *curfname;                                             // Current filename
+char * curfname;                                            // Current filename
 char tolowertab[128];                                       // Uppercase ==> lowercase 
 char hextab[128];                                           // Table of hex values
 char dotxtab[128];                                          // Table for ".b", ".s", etc.
@@ -28,24 +29,25 @@ char irbuf[LNSIZ];                                          // Text for .rept bl
 char lnbuf[LNSIZ];                                          // Text of current line
 WORD filecount;                                             // Unique file number counter
 WORD cfileno;                                               // Current file number
-TOKEN *tok;                                                 // Ptr to current token
-TOKEN *etok;                                                // Ptr past last token in tokbuf[]
+TOKEN * tok;                                                // Ptr to current token
+TOKEN * etok;                                               // Ptr past last token in tokbuf[]
 TOKEN tokeol[1] = {EOL};                                    // Bailout end-of-line token
 
 // File record, used to maintain a list of every include file ever visited
 #define FILEREC struct _filerec
-FILEREC {
-   FILEREC *frec_next;
-   char *frec_name;
+FILEREC
+{
+   FILEREC * frec_next;
+   char * frec_name;
 };
 
-FILEREC *filerec;
-FILEREC *last_fr;
+FILEREC * filerec;
+FILEREC * last_fr;
 
-INOBJ *cur_inobj;                                           // Ptr current input obj (IFILE/IMACRO)
-static INOBJ *f_inobj;                                      // Ptr list of free INOBJs
-static IFILE *f_ifile;                                      // Ptr list of free IFILEs
-static IMACRO *f_imacro;                                    // Ptr list of free IMACROs
+INOBJ * cur_inobj;                                          // Ptr current input obj (IFILE/IMACRO)
+static INOBJ * f_inobj;                                     // Ptr list of free INOBJs
+static IFILE * f_ifile;                                     // Ptr list of free IFILEs
+static IMACRO * f_imacro;                                   // Ptr list of free IMACROs
 
 static TOKEN tokbuf[TOKBUFSIZE];                            // Token buffer (stack-like, all files)
 
@@ -99,13 +101,13 @@ char chrtab[] = {
 };
 
 // Names of registers
-static char *regname[] = {
+static char * regname[] = {
    "d0", "d1",  "d2",  "d3", "d4", "d5", "d6", "d7",
    "a0", "a1",  "a2",  "a3", "a4", "a5", "a6", "a7",
    "pc", "ssp", "usp", "sr", "ccr"
 };
 
-static char *riscregname[] = {
+static char * riscregname[] = {
     "r0",  "r1",  "r2",  "r3",  "r4", "r5",   "r6",  "r7", 
     "r8",  "r9", "r10", "r11", "r12", "r13", "r14", "r15",
    "r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",
@@ -116,7 +118,8 @@ static char *riscregname[] = {
 // --- Make `fnum' the Current `curfname' ----------------------------------------------------------
 //
 
-void setfnum(WORD fnum) {
+void setfnum(WORD fnum)
+{
    FILEREC *fr;
 
    for(fr = filerec; fr != NULL && fnum--; fr = fr->frec_next)
@@ -132,7 +135,8 @@ void setfnum(WORD fnum) {
 // --- Allocate an IFILE or IMACRO -----------------------------------------------------------------
 //
 
-INOBJ *a_inobj(int typ) {
+INOBJ * a_inobj(int typ)
+{
    INOBJ *inobj;
    IFILE *ifile;
    IMACRO *imacro;
@@ -198,7 +202,8 @@ INOBJ *a_inobj(int typ) {
 // -------------------------------------------------------------------------------------------------
 //
 
-int mexpand(char *src, char *dest, int destsiz) {
+int mexpand(char * src, char * dest, int destsiz)
+{
    char *s;
    char *d = NULL;
    char *dst;                                               // Next dest slot
@@ -453,7 +458,8 @@ int mexpand(char *src, char *dest, int destsiz) {
 // --- Get Next Line of Text from a Macro ----------------------------------------------------------
 //
 
-char *getmln(void) {
+char * getmln(void)
+{
    IMACRO *imacro;
    LONG *strp;
    unsigned source_addr;
@@ -489,7 +495,8 @@ char *getmln(void) {
 // --- Get Next Line of Text from a Repeat Block ---------------------------------------------------
 //
  
-char *getrln(void) {
+char * getrln(void)
+{
    IREPT *irept;
    LONG *strp;
 
@@ -498,7 +505,7 @@ char *getrln(void) {
 
    // Do repeat at end of .rept block's string list
    if(strp == NULL) {
-      DEBUG printf("back-to-top-of-repeat-block count=%d\n", irept->ir_count);
+      DEBUG printf("back-to-top-of-repeat-block count=%d\n", (int)irept->ir_count);
       irept->ir_nextln = irept->ir_firstln;  // copy first line
       if(irept->ir_count-- == 0) {
          DEBUG printf("end-repeat-block\n");
@@ -519,7 +526,8 @@ char *getrln(void) {
 // --- Include a Source File used at the Root, and for ".include" Files ----------------------------
 //
 
-int include(int handle, char *fname) {
+int include(int handle, char * fname)
+{
    IFILE *ifile;
    INOBJ *inobj;
    FILEREC *fr;
@@ -556,7 +564,8 @@ int include(int handle, char *fname) {
 // --- Initialize Tokenizer ------------------------------------------------------------------------
 //
 
-void init_token(void) {
+void init_token(void)
+{
    int i;                                                   // Iterator
    char *htab = "0123456789abcdefABCDEF";                   // Hex character table
 
@@ -602,7 +611,8 @@ void init_token(void) {
 //
 // --- Pop the Current Input Level -----------------------------------------------------------------
 //
-int fpop(void) {
+int fpop(void)
+{
    INOBJ *inobj;
    IFILE *ifile;
    IMACRO *imacro;
@@ -658,7 +668,8 @@ int fpop(void) {
 // --- Get line from file into buf, return NULL on EOF or ptr to the start of a null-term line -----
 //
 
-char *getln(void) {
+char * getln(void)
+{
    IFILE *fl;
    int i, j;
    char *p, *d;
@@ -729,7 +740,8 @@ char *getln(void) {
 // --- Tokenize a Line -----------------------------------------------------------------------------
 //
 
-int tokln(void) {
+int tokln(void)
+{
    char *ln = NULL;                                         // Ptr to current position in line
    char *p;                                                 // Random character ptr
    TOKEN *tk;                                               // Token-deposit ptr
@@ -1156,7 +1168,8 @@ int tokln(void) {
 //
 
 //int d_goto(WORD siz) {
-int d_goto(void) {
+int d_goto(void)
+{
    char *sym;                                               // Label to search for 
    LONG *defln;                                             // Macro definition strings 
    char *s1;                                                // Temps for string comparison 

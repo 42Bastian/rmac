@@ -725,11 +725,11 @@ void interactive(void)
 
    // As there is no command line, print a copyright message and prompt for command line
 	s = "*****************************************************\n";
-	printf("\n%s* RMAC - Reboot's Macro Assembler for Atari Jaguar *\n", s);
+	printf("\n%s* RMAC - Reboot's Macro Assembler for Atari Jaguar  *\n", s);
 	printf("* Copyright (C) 199x Landon Dyer, 2011 Reboot       *\n");
-	printf("* Version %01i.%01i.%01i                Platform: %-9s *\n",MAJOR,MINOR,PATCH,PLATFORM);
+	printf("* Version %01i.%01i.%01i                Platform: %-9s  *\n",MAJOR,MINOR,PATCH,PLATFORM);
 	printf("* ------------------------------------------------- *\n");
-	printf("* INTERACTIVE MODE                                  *\n%s\n", s);
+	printf("* INTERACTIVE MODE (press ENTER by itself to quit)  *\n%s\n", s);
 
 	perm_verb_flag = 1;                                      // Enter permanent verbose mode
 
@@ -740,7 +740,8 @@ void interactive(void)
 		printf("* ");
 		fflush(stdout);                                       // Make prompt visible
 
-		if (gets(ln) == NULL || !*ln)                          // Get input line
+//		if (gets(ln) == NULL || !*ln)                          // Get input line
+		if (fgets(ln, LNSIZ, stdin) == NULL || !*ln)                          // Get input line
 			break;
 
 		argcnt = 0;                                           // Process input line

@@ -1,12 +1,14 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // EAGEN0.C - Effective Address Code Generation
 //            Generated Code for eaN (Included twice by "eagen.c")
 // Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source Utilised with the Kind Permission of Landon Dyer
+//
 
-int eaNgen(WORD siz) {
+int eaNgen(WORD siz)
+{
    WORD w;
    VALUE v;
    WORD tdb;

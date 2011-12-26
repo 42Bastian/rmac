@@ -1,9 +1,10 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // 68KGEN.C - Tool to Generate 68000 Opcode Table
 // Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source Utilised with the Kind Permission of Landon Dyer
+//
 
 #include <stdio.h>
 #include <ctype.h>
@@ -13,16 +14,17 @@
 
 int kwnum = 1;			/* current op# for kwgen output */
 
-FILE *kfp;			/* keyword file */
+FILE * kfp;			/* keyword file */
 
 int lineno = 0;
 
 void error(char *, char *);
 void procln(int, char **);
 
-void main(int argc, char **argv) {
-	char *namv[256];
-	char *s;
+void main(int argc, char ** argv)
+{
+	char * namv[256];
+	char * s;
 	int namcnt;
 	char ln[256];
 
@@ -30,7 +32,8 @@ void main(int argc, char **argv) {
 		if ((kfp = fopen(argv[1], "w")) == NULL)
 			error("Cannot create: %s", argv[1]);
 
-	while (gets(ln) != NULL)
+//	while (gets(ln) != NULL)
+	while (fgets(ln, 256, stdin) != NULL)
 	{
 		++lineno;			/* bump line# */
 		if (*ln == '#')		/* ignore comments */
@@ -42,17 +45,22 @@ void main(int argc, char **argv) {
 		 */
 		namcnt = 0;
 		s = ln;
+
 		while (*s)
+		{
 			if (isspace(*s))
 				++s;
 			else
 			{
 				namv[namcnt++] = s;
+
 				while (*s && !isspace(*s))
 					++s;
+
 				if (isspace(*s))
 					*s++ = EOS;
 			}
+		}
 
 		if (namcnt)
 			procln(namcnt, namv);
@@ -63,9 +71,10 @@ void main(int argc, char **argv) {
 /*
  *  Parse line
  */
-void procln(int namc, char **namv) {
+void procln(int namc, char ** namv)
+{
 	int i, j;
-	char *s;
+	char * s;
 
 	if (namc == 1)		/* alias for previous entry */
 	{
@@ -92,30 +101,32 @@ void procln(int namc, char **namv) {
 
 	if (*namv[4] == '%')		/* enforce little fascist percent signs */
 	{
-		for (i=1, j=0; i < 17; ++i)
+		for(i=1, j=0; i<17; ++i)
 		{
 			j <<= 1;
-			if (namv[4][i] == '1' ||
-				  isupper(namv[4][i]))
+
+			if (namv[4][i] == '1' || isupper(namv[4][i]))
 				++j;
 		}
+
 		printf("0x%04x, ", j);
 	}
-	else printf("%s, ", namv[4]);
+	else
+		printf("%s, ", namv[4]);
 
-	if (namc == 7 &&
-		  *namv[6] == '+')
+	if (namc == 7 && *namv[6] == '+')
 		printf("%d, ", kwnum+1);
-	else printf("0, ");
+	else
+		printf("0, ");
 
 	printf("%s},\n", namv[5]);
 
 	++kwnum;
 }
 
-void error(char *s, char *s1) {
+void error(char * s, char * s1)
+{
 	fprintf(stderr, s, s1);
 	fprintf(stderr, "\n");
 	exit(1);
 }
-

@@ -1,9 +1,10 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // MACH.C - Code Generation
 // Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source Utilised with the Kind Permission of Landon Dyer
+//
 
 #include "mach.h"
 #include "error.h"
@@ -17,13 +18,13 @@
 #include "kwtab.h"
 
 // Common error messages
-char *range_error = "expression out of range";
-char *abs_error = "illegal absolute expression";
-char *seg_error = "bad (section) expression";
-char *rel_error = "illegal relative address";
-char *siz_error = "bad size specified";
-char *undef_error = "undefined expression";
-char *fwd_error = "forward or undefined expression";
+char * range_error = "expression out of range";
+char * abs_error = "illegal absolute expression";
+char * seg_error = "bad (section) expression";
+char * rel_error = "illegal relative address";
+char * siz_error = "bad size specified";
+char * undef_error = "undefined expression";
+char * fwd_error = "forward or undefined expression";
 
 extern int ea0gen(WORD);
 extern int ea1gen(WORD);

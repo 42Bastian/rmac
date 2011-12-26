@@ -88,7 +88,8 @@ int (*dirtab[])() = {
 // --- .org - Set origin  ---------------------------------------------------------------------------
 //
 
-int d_fail(void) {
+int d_fail(void)
+{
    fatal("user abort");
    return(0);
 }
@@ -97,15 +98,17 @@ int d_fail(void) {
 // --- .org - Set origin  ---------------------------------------------------------------------------
 //
 
-int d_org(void) {
+int d_org(void)
+{
    VALUE address;
 
-   if(!rgpu && !rdsp) 
+   if (!rgpu && !rdsp) 
       return(error(".org permitted only in gpu/dsp section"));
 
    orgaddr = 0;
 
-   if(abs_expr(&address) == ERROR) {
+   if (abs_expr(&address) == ERROR)
+   {
       error("cannot determine org'd address");
       return(ERROR);
    }
@@ -120,12 +123,14 @@ int d_org(void) {
 // --- NOP Padding Directive -----------------------------------------------------------------------
 //
 
-int d_jpad(void) {
+int d_jpad(void)
+{
    jpad = 1;
    return(0);
 }
 
-int d_nojpad(void) {
+int d_nojpad(void)
+{
    jpad = 0;
    return(0);
 }
@@ -134,7 +139,8 @@ int d_nojpad(void) {
 // --- Print Directive -----------------------------------------------------------------------------
 //
 
-int d_print(void) {
+int d_print(void)
+{
    char prntstr[LNSIZ];                                     // String for PRINT directive
    char format[LNSIZ];                                      // Format for PRINT directive
    int formatting = 0;                                      // Formatting on/off
@@ -651,28 +657,33 @@ int d_bss(void) {
 // --- .ds[.size] expression -----------------------------------------------------------------------
 //
 
-int d_ds(WORD siz) {
+int d_ds(WORD siz)
+{
    VALUE eval;
 
    // This gets kind of stupid.  This directive is disallowed in normal 68000 mode ("for your own 
    // good!"), but is permitted for 6502 and Alcyon-compatibility modes.
    // For obvious reasons, no auto-even is done in 8-bit processor modes.
-   if(as68_flag == 0 && (scattr & SBSS) == 0)
+   if (as68_flag == 0 && (scattr & SBSS) == 0)
       return(error(".ds permitted only in BSS"));
 
-   if(siz != SIZB && (sloc & 1))                            // Automatic .even 
+   if (siz != SIZB && (sloc & 1))                            // Automatic .even 
       auto_even();
 
-   if(abs_expr(&eval) != OK) return(0);
+   if (abs_expr(&eval) != OK)
+	   return(0);
 
    // In non-TDB section (BSS, ABS and M6502) just advance the location counter appropriately.  
    // In TDB sections, deposit (possibly large) chunks of zeroed memory....
-   if((scattr & SBSS)) {
+   if ((scattr & SBSS))
+   {
       listvalue(eval);
       eval *= siz;
       sloc += eval;
       just_bss = 1;                                         // No data deposited (8-bit CPU mode)
-   } else {
+   }
+   else
+   {
       dep_block(eval, siz, (VALUE)0, (WORD)(DEFINED|ABS), NULL);
    }
 
@@ -684,94 +695,120 @@ int d_ds(WORD siz) {
 // --- dc.b, dc.w / dc, dc.l -----------------------------------------------------------------------
 //
 
-int d_dc(WORD siz) {
+int d_dc(WORD siz)
+{
    WORD eattr;
    VALUE eval;
    WORD tdb;
    WORD defined;
    LONG i;
-   char *p;
+   char * p;
    int movei = 0; // movei flag for dc.i
 
-   if((scattr & SBSS) != 0)
+   if ((scattr & SBSS) != 0)
       return(error("illegal initialization of section"));
 
-   if((siz != SIZB) && (sloc & 1))
+   if ((siz != SIZB) && (sloc & 1))
       auto_even();
 
-   for(;; ++tok) {
+   for(;; ++tok)
+   {
       // dc.b 'string' [,] ...
-      if (siz == SIZB && *tok == STRING && (tok[2] == ',' || tok[2] == EOL)) {
+      if (siz == SIZB && *tok == STRING && (tok[2] == ',' || tok[2] == EOL))
+	  {
          i = strlen((const char*)tok[1]);
-         if((challoc - ch_size) < i) 
+
+		 if ((challoc - ch_size) < i) 
             chcheck(i);
-         for(p = (char *)tok[1]; *p != EOS; ++p)
+
+		 for(p=(char *)tok[1]; *p!=EOS; ++p)
             D_byte(*p);
-         tok += 2;
+
+		 tok += 2;
          goto comma;
       }
 
-      if(*tok == 'I') {
+      if (*tok == 'I')
+	  {
          movei = 1;
          tok++;
          siz = SIZL;
       }
 
       // dc.x <expression>
-      if(expr(exprbuf, &eval, &eattr, NULL) != OK)
+      if (expr(exprbuf, &eval, &eattr, NULL) != OK)
          return(0);
-      tdb = (WORD)(eattr & TDB);
+
+	  tdb = (WORD)(eattr & TDB);
       defined = (WORD)(eattr & DEFINED);
-      if((challoc - ch_size) < 4)
+
+	  if ((challoc - ch_size) < 4)
          chcheck(4L);
 
-      switch(siz) {
+      switch (siz)
+	  {
          case SIZB:
-            if(!defined) {
+            if (!defined)
+			{
                fixup(FU_BYTE|FU_SEXT, sloc, exprbuf);
                D_byte(0);
-            } else {
-               if(tdb)
+            }
+            else
+			{
+               if (tdb)
                   return(error("non-absolute byte value"));
-               if(eval + 0x100 >= 0x200)
+
+			   if (eval + 0x100 >= 0x200)
                   return(error(range_error));
-               D_byte(eval);
+
+			   D_byte(eval);
             }
             break;
          case SIZW:
          case SIZN:
-            if(!defined) {
+            if (!defined)
+			{
                fixup(FU_WORD|FU_SEXT, sloc, exprbuf);
                D_word(0);
-            } else {
-               if(tdb)
+            }
+            else
+			{
+               if (tdb)
                   rmark(cursect, sloc, tdb, MWORD, NULL);
-               if(eval + 0x10000 >= 0x20000)
+
+			   if (eval + 0x10000 >= 0x20000)
                   return(error(range_error));
-               // Deposit 68000 or 6502 (byte-reversed) word 
+
+			   // Deposit 68000 or 6502 (byte-reversed) word 
                D_word(eval);
             }
             break;
          case SIZL:
-            if(!defined) {
-               if(movei)
+            if (!defined)
+			{
+               if (movei)
                   fixup(FU_LONG|FU_MOVEI, sloc, exprbuf);
                else
                   fixup(FU_LONG, sloc, exprbuf);
-               D_long(0);
-            } else {
-               if(tdb)
+
+			   D_long(0);
+            }
+            else
+			{
+               if (tdb)
                   rmark(cursect, sloc, tdb, MLONG, NULL);
-               if(movei) 
+
+			   if (movei) 
                   eval = ((eval >> 16) & 0x0000FFFF) | ((eval << 16) & 0xFFFF0000);
-               D_long(eval);
-            }	
+
+			   D_long(eval);
+            }
             break;
       }
       
       comma:
 
-      if(*tok != ',')
+      if (*tok != ',')
          break;
    }
 
@@ -783,23 +820,24 @@ int d_dc(WORD siz) {
 // --- dcb[.siz] expr1,expr2 - Make 'expr1' copies of 'expr2' --------------------------------------
 //
 
-int d_dcb(WORD siz) {
+int d_dcb(WORD siz)
+{
    VALUE evalc, eval;
    WORD eattr;
 
-   if((scattr & SBSS) != 0)
+   if ((scattr & SBSS) != 0)
       return(error("illegal initialization of section"));
 
-   if(abs_expr(&evalc) != OK)
+   if (abs_expr(&evalc) != OK)
       return(0);
 
-   if(*tok++ != ',')
+   if (*tok++ != ',')
       return(error("missing comma"));
 
-   if(expr(exprbuf, &eval, &eattr, NULL) < 0)
+   if (expr(exprbuf, &eval, &eattr, NULL) < 0)
       return(0);
 
-   if((siz != SIZB) && (sloc & 1))
+   if ((siz != SIZB) && (sloc & 1))
       auto_even();
 
    dep_block(evalc, siz, eval, eattr, exprbuf);
@@ -819,34 +857,41 @@ int d_dcb(WORD siz) {
 // -------------------------------------------------------------------------------------------------
 //
 
-int d_init(WORD def_siz) {
+int d_init(WORD def_siz)
+{
    VALUE count;
    VALUE eval;
    WORD eattr;
    WORD siz;
 
-   if((scattr & SBSS) != 0)
+   if ((scattr & SBSS) != 0)
       return(error(".init not permitted in BSS or ABS"));
 
-   if(rgpu || rdsp)
+   if (rgpu || rdsp)
       return(error("directive forbidden in gpu/dsp mode"));
 
-   for(;;) {
+   for(;;)
+   {
       // Get repeat count (defaults to 1)
-      if(*tok == '#') {
+      if (*tok == '#')
+	  {
          ++tok;
-         if(abs_expr(&count) != OK)
+
+		 if (abs_expr(&count) != OK)
             return(0);
-         if(*tok++ != ',')
+
+		 if (*tok++ != ',')
             return(error(comma_error));
-      } else 
+      }
+      else
          count = 1;
 
       // Evaluate expression to deposit
-      if(expr(exprbuf, &eval, &eattr, NULL) < 0)
+      if (expr(exprbuf, &eval, &eattr, NULL) < 0)
          return(0);
 
-      switch((int)*tok++) {                                 // Determine size of object to deposit
+      switch ((int)*tok++)
+	  {                                 // Determine size of object to deposit
          case DOTB: siz = SIZB; break;
          case DOTW: siz = SIZB; break;
          case DOTL: siz = SIZL; break;
@@ -858,7 +903,8 @@ int d_init(WORD def_siz) {
 
       dep_block(count, siz, eval, eattr, exprbuf);
 
-      switch((int)*tok) {
+      switch ((int)*tok)
+	  {
          case EOL:
             return(0);
          case ',':

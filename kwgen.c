@@ -1,9 +1,10 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // KWGEN.C - Keyword & Mnemonic Definition and State Machine Creation Tool
 // Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source Utilised with the Kind Permission of Landon Dyer
+//
 
 /*
  *  keyword transition-table generation utility
@@ -121,7 +122,9 @@ int main(int argc, char **argv) {
 	 *
 	 */
 	s = strpool;
-	while (gets(s) != NULL)
+
+//	while (gets(s) != NULL)
+	while (fgets(s, STRPOOLSIZ, stdin) != NULL)
 	{
 		if (*s == '#' || !*s)	/* ignore comment and empty lines */
 			continue;
