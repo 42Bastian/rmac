@@ -21,7 +21,7 @@ int lineno = 0;
 void error(char *, char *);
 void procln(int, char **);
 
-void main(int argc, char ** argv)
+int main(int argc, char ** argv)
 {
 	char * namv[256];
 	char * s;
@@ -35,6 +35,7 @@ void main(int argc, char ** argv)
 //	while (gets(ln) != NULL)
 	while (fgets(ln, 256, stdin) != NULL)
 	{
+
 		++lineno;			/* bump line# */
 		if (*ln == '#')		/* ignore comments */
 			continue;
@@ -65,6 +66,7 @@ void main(int argc, char ** argv)
 		if (namcnt)
 			procln(namcnt, namv);
 	}
+	return 0;
 }
 
 
