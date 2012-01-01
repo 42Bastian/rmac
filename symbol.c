@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // SYMBOL.C - Symbol Handling
-// Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2012 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source Utilised with the Kind Permission of Landon Dyer
 //
@@ -364,7 +364,7 @@ int symtable(void) {
             c1 = tdb_text[w & TDB];
             if(c == 'x') strcpy(ln2, "external");
             else {
-               sprintf(ln2, "%08lx", q->svalue);
+               sprintf(ln2, "%08ux", q->svalue);
                uc_string(ln2);
             }
 

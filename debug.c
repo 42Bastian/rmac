@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // DEBUG.C - Debugging Messages
-// Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2012 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source Utilised with the Kind Permission of Landon Dyer
 //
@@ -44,10 +44,10 @@ TOKEN * printexpr(TOKEN * tp)
                ++tp;
                break;
             case CONST:
-               printf("$%lx ", *tp++);
+               printf("$%ux ", *tp++);
                break;
             case ACONST:
-               printf("ACONST=($%lx,$%lx) ", *tp, tp[1]);
+               printf("ACONST=($%ux,$%ux) ", *tp, tp[1]);
                tp += 2;
                break;
             default:
@@ -69,7 +69,7 @@ int chdump(CHUNK * ch, int format)
 {
    while (ch != NULL)
    {
-      printf("chloc=$%08lx, chsize=$%lx\n", ch->chloc, ch->ch_size);
+      printf("chloc=$%08ux, chsize=$%ux\n", ch->chloc, ch->ch_size);
       mdump(ch->chptr, ch->ch_size, format, ch->chloc);
       ch = ch->chnext;
    }
@@ -101,7 +101,7 @@ int fudump(CHUNK * ch)
          file = *p.wp++;
          line = *p.wp++;
 
-         printf("$%04x $%08lx %d.%d: ", (int)attr, loc, (int)file, (int)line);
+         printf("$%04x $%08ux %d.%d: ", (int)attr, loc, (int)file, (int)line);
 
          if (attr & FU_EXPR)
 		 {
@@ -139,11 +139,11 @@ int mudump(void)
 
    for(mch=firstmch; mch!=NULL; mch=mch->mcnext)
    {
-      printf("mch=$%08lx mcptr=$%08lx mcalloc=$%lx mcused=$%x\n",
-             (unsigned long int)mch,
-             (unsigned long int)(mch->mcptr.lw),
+      printf("mch=$%08ux mcptr=$%08ux mcalloc=$%ux mcused=$%x\n",
+             (uint32_t)mch,
+             (mch->mcptr.lw),
              mch->mcalloc,
-             (unsigned int)(mch->mcused));
+             (mch->mcused));
 
       p = mch->mcptr;
 	  
@@ -163,7 +163,7 @@ int mudump(void)
          if (w & MSYMBOL)
             symbol = *p.sy++;
 
-         printf("m=$%04x to=%d loc=$%lx from=%d siz=%s",
+         printf("m=$%04x to=%d loc=$%ux from=%d siz=%s",
                  w, w & 0x00ff, loc, from, (w & MLONG) ? "long" : "word");
 
          if (symbol != NULL)
@@ -201,7 +201,7 @@ int mdump(char *start, LONG count, int flg, LONG base) {
          }
          j = i;
          if(base != -1)
-            printf("%08lx  ", base);
+            printf("%08ux  ", base);
       }
 
       switch(flg & 3) {
@@ -256,14 +256,14 @@ int dumptok(TOKEN * tk)
 
       if (*tk >= 128)
 	  {
-         printf("REG=%ld", *tk++ - 128);
+         printf("REG=%ud", *tk++ - 128);
          continue;
       }
 
       switch ((int)*tk++)
 	  {
          case CONST:                                        // CONST <value>
-            printf("CONST=%ld", *tk++);
+            printf("CONST=%ud", *tk++);
             break;
          case STRING:                                       // STRING <address>
             printf("STRING='%s'", (char *)*tk++);
@@ -318,7 +318,7 @@ int dump_everything(void) {
 
    for(i = 1; i < NSECTS; ++i)
       if(sect[i].scattr & SUSED) {
-         printf("Section %d sloc=$%lx\n", i, sect[i].sloc);
+         printf("Section %d sloc=$%ux\n", i, sect[i].sloc);
          printf("Code:\n");
          chdump(sect[i].sfcode, 1);
 
@@ -330,7 +330,7 @@ int dump_everything(void) {
 
    printf("\nMarks:\n");
    mudump();                                                // Dump marks
-   printf("Total memory allocated=$%lx\n", amemtot);
+   printf("Total memory allocated=$%ux\n", amemtot);
 
    return(0);
 }

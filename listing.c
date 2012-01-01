@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // LISTING.C - Listing Output
-// Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2012 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source Utilised with the Kind Permission of Landon Dyer
 // -------------------------------------------------------------------------------------------------
@@ -256,10 +256,10 @@ void listeol(void) {
    LONG count;
    int fixcount;
 
-   DEBUG printf("~list: lsloc=$%lx sloc=$%lx\n", lsloc, sloc);
+   DEBUG printf("~list: lsloc=$%ux sloc=$%ux\n", lsloc, sloc);
 
    if(lsloc != sloc) {
-      sprintf(buf, "%08lx", lsloc);
+      sprintf(buf, "%08ux", lsloc);
       scopy(lnimage+LOC_COL, buf, 8);
    }
 
@@ -296,7 +296,7 @@ void listeol(void) {
             uc_ln(lnimage);
             ship_ln(lnimage);
             lnfill(lnimage, SRC_COL, SPACE);                // Fill with spaces
-            sprintf(buf, "%08lx", lsloc);
+            sprintf(buf, "%08ux", lsloc);
             scopy(lnimage+LOC_COL, buf, 8);
          }
 
@@ -360,7 +360,7 @@ void lstout(char tag) {
 //
 
 int listvalue(VALUE v) {
-   sprintf(buf, "=%08lx", v);
+   sprintf(buf, "=%08ux", v);
    scopy(lnimage+DATA_COL-1, buf, 9);
    return(0);
 }

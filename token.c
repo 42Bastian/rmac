@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // TOKEN.C - Token Handling
-// Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2012 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source Utilised with the Kind Permission of Landon Dyer
 //
@@ -263,7 +263,7 @@ int mexpand(char * src, char * dest, int destsiz)
                }
                goto copy_d;
             case '~':                                       // ==> unique label string Mnnnn... 
-               sprintf(numbuf, "M%ld", curuniq);
+               sprintf(numbuf, "M%ud", curuniq);
                
                copystr:
 
@@ -365,7 +365,7 @@ int mexpand(char * src, char * dest, int destsiz)
                            continue;
                            break;
                         case CONST:
-                           sprintf(numbuf, "$%lx", (LONG)*tk++);
+                           sprintf(numbuf, "$%ux", (LONG)*tk++);
                            d = numbuf;
                            break;
                         case DEQUALS:

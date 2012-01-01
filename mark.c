@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // MARK.C - A record of things that are defined relative to any of the sections
-// Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2012 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source Utilised with the Kind Permission of Landon Dyer
 //
@@ -202,7 +202,7 @@ LONG bsdmarkimg(char *mp, LONG siz, LONG tsize, int reqseg) {
                      diff |= ((LONG)(*dp++ & 0xff)) << 16;
                      diff |= ((LONG)(*dp++ & 0xff)) << 8;
                      diff |= (LONG)(*dp & 0xff);
-                     DEBUG printf("diff=%lx ==> ", diff);
+                     DEBUG printf("diff=%ux ==> ", diff);
                      if(rflag & 0x01)
                         diff = ((diff >> 16) & 0x0000FFFF) | ((diff << 16) & 0xFFFF0000);
                      diff += sect[TEXT].sloc;
@@ -215,7 +215,7 @@ LONG bsdmarkimg(char *mp, LONG siz, LONG tsize, int reqseg) {
                      *dp++ = (char)(diff >> 16);
                      *dp++ = (char)(diff >> 8);
                      *dp = (char)diff;
-                     DEBUG printf("%lx\n", diff);
+                     DEBUG printf("%ux\n", diff);
                   }
                }
             }
