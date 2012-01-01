@@ -60,11 +60,11 @@
 #endif
 #endif
 
+#include <inttypes.h>
 
-
-#define BYTE         unsigned char
-#define WORD         unsigned short
-#define LONG         unsigned long
+#define BYTE         uint8_t
+#define WORD         uint16_t
+#define LONG         uint32_t
 #define VOID         void
 
 #define ERROR        (-1)                                   // Generic error return
