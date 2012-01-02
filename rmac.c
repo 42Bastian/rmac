@@ -712,6 +712,7 @@ int process(int argc, char **argv) {
    return(errcnt);
 }
 
+#if 0
 //
 // --- Interactive Mode ----------------------------------------------------------------------------
 //
@@ -780,6 +781,7 @@ void interactive(void)
 			printf("%d assembly error%s\n", errcnt, (errcnt > 1) ? "s" : "");
 	}
 }
+#endif
 
 //
 // --- Determine Processor Endianess ---------------------------------------------------------------
@@ -817,10 +819,15 @@ int main(int argc, char ** argv)
 	{                                           // Full command line passed
 		status = process(argc - 1, argv + 1);              
 	}
+	// Interactive mode 
 	else
-	{                                                 // Interactive mode 
-		status = 0;
-		interactive();
+	{
+// Sorry Landon, this is the year 20xx and we haz plenty of resources now ;-)
+//		status = 0;
+//		interactive();
+		// Instead, we show a nice banner and switches :-)
+		display_version();
+		display_help();
 	}
 
 	return status;
