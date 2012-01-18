@@ -88,7 +88,9 @@ void print_tables(void);
 void dumptab(char *, char *, int *, int);
 void traverse(int);
 
-int main(int argc, char **argv) {
+
+int main(int argc, char ** argv)
+{
 	register int i, /*j,*/ k, w;
 	char *s, *s1;
 	int found1;
@@ -102,19 +104,22 @@ int main(int argc, char **argv) {
 	}
 
 	basename = argv[1];
-	for (s = basename, s1 = uppername; *s; ++s, ++s1)
+
+	for(s=basename, s1=uppername; *s; ++s, ++s1)
 		*s1 = (char)toupper(*s);
+
 	*s1 = EOS;
 
 	/*
 	 *  init tables
 	 */
-	for (i = 0; i < TABSIZE; ++i)
+	for(i=0; i<TABSIZE; ++i)
 	{
 		ktab[i] = -1;
 		kcheck[i] = -1;
 		kaccept[i] = -1;
 	}
+
 	nstates = 0;
 
 	/*
@@ -130,6 +135,7 @@ int main(int argc, char **argv) {
 			continue;
 
 		namtab[nnames].nstr = s;
+
 		while (*s && !isspace(*s))
 			++s;
 
@@ -143,6 +149,7 @@ int main(int argc, char **argv) {
 			*s++ = '\0';
 
 		s1 = s;
+
 		while (*s1 && isspace(*s1))
 			++s1;
 
@@ -151,7 +158,8 @@ int main(int argc, char **argv) {
 empty:			/* use previous entry + 1 */
 			if (!nnames)		/* complain if no previous entry */
 				namtab[nnames].nval = 0;
-			else namtab[nnames].nval = namtab[nnames-1].nval + 1;
+			else
+				namtab[nnames].nval = namtab[nnames-1].nval + 1;
 		}
 		else if (isdigit(*s1))
 			namtab[nnames].nval = atoi(s1);
@@ -161,7 +169,8 @@ empty:			/* use previous entry + 1 */
 		{			/* same as previous entry */
 			if (!nnames)		/* zero for first entry */
 				namtab[nnames].nval = 0;
-			else namtab[nnames].nval = namtab[nnames-1].nval;
+			else
+				namtab[nnames].nval = namtab[nnames-1].nval;
 		}
 		else
 		{
@@ -170,8 +179,10 @@ empty:			/* use previous entry + 1 */
 		}
 
 		++nnames;
+
 		if (nnames >= NSTRINGS)
 			panic("name table overflow");
+
 		if (s >= &strpool[STRPOOLSIZ-100])
 			panic("string table overflow");
 	}
@@ -183,39 +194,39 @@ empty:			/* use previous entry + 1 */
 	 */
 	found1 = 1;
 
-	for (k = 1; found1; ++k)
+	for(k=1; found1; ++k)
 	{
 		found1 = 0;
 
-		for (w = 0; w <= nnames; ++w)
+		for(w=0; w<=nnames; ++w)
 		{
-			if (w == 0 ||
-				  w == nnames ||
-				  !nmatch(k-1, namtab[w].nstr, namtab[w-1].nstr))
+			if (w == 0 || w == nnames
+				|| !nmatch(k-1, namtab[w].nstr, namtab[w-1].nstr))
 			{
-				if (w != 0 &&
-					  valid != 0)
+				if (w != 0 && valid != 0)
 				{
 					wiredown();
 
 					if (k > 1)
 					{
 						state = 0;
-						for (i = 0; i < k-2; ++i)
+
+						for(i=0; i<k-2; ++i)
 						{
 							if (ktab[kbase[state] + *(namtab[w-1].nstr + i)] < 0)
 								panic("table build error");
-							else state = ktab[kbase[state] +
-											  *(namtab[w-1].nstr + i)];
+							else
+								state = ktab[kbase[state] + *(namtab[w-1].nstr + i)];
 						}
 
 						ktab[kbase[state] + *(namtab[w-1].nstr + k-2)] = nstates;
 					}
+
 					++nstates;
 					found1 = 1;
 				}
 
-				for (i = 0; i < 128; ++i)
+				for(i=0; i<128; ++i)
 				{
 					tab[i] = UNUSED;
 					accept[i] = -1;
@@ -224,17 +235,18 @@ empty:			/* use previous entry + 1 */
 				valid = 0;
 			}
 
-			if ( w >= nnames ||
-				 (int)strlen(namtab[w].nstr) < k)
+			if (w >= nnames || (int)strlen(namtab[w].nstr) < k)
 			{
 				continue;
 			}
 
 			tab[*(namtab[w].nstr + k-1)] = MARKED;
+
 			if (*(namtab[w].nstr + k) == '\0')
 			{
 				accept[*(namtab[w].nstr + k-1)] = namtab[w].nval;
 			}
+
 			valid = 1;
 		}
 	}
@@ -250,16 +262,17 @@ empty:			/* use previous entry + 1 */
  *  find position for set of characters;
  *
  */
-void wiredown(void) {
+void wiredown(void)
+{
 	register int base;
 	register int i;
 
-	for (base = 0; base < TABSIZE-128; ++base)
+	for(base=0; base<TABSIZE-128; ++base)
 	{
-		for (i = 0; i < 128; ++i)
-			if (ktab[base+i] != UNUSED &&
-				  tab[i] == MARKED)
+		for(i=0; i<128; ++i)
+			if (ktab[base+i] != UNUSED && tab[i] == MARKED)
 				break;
+
 		if (i >= 128)
 			break;
 	}
@@ -267,13 +280,16 @@ void wiredown(void) {
 	if (base >= TABSIZE-128)
 		panic("Cannot build table (won't fit in tables)\n");
 
-	for (i = 0; i < 128; ++i)
+	for(i=0; i<128; ++i)
+	{
 		if (tab[i] == MARKED)
 		{
 			ktab[base + i] = MARKED;
 			kaccept[base + i] = accept[i];
 			kcheck[base + i] = nstates;
 		}
+	}
+
 	kbase[nstates] = base;
 
 	if (kmax < base)
@@ -281,7 +297,8 @@ void wiredown(void) {
 }
 
 
-void print_tables(void) {
+void print_tables(void)
+{
 //	int i;
 
 	printf("\n#ifdef DECL_%s\n", uppername);
@@ -294,48 +311,58 @@ void print_tables(void) {
 }
 
 
-void dumptab(char *tabname, char *tabprefix, int *table, int tabsize) {
+void dumptab(char * tabname, char * tabprefix, int * table, int tabsize)
+{
 	int i, j;
 
-	printf("\nint %s%s[%d] = {\n",
-		   tabprefix, tabname, tabsize);
+	printf("\nint %s%s[%d] = {\n", tabprefix, tabname, tabsize);
 
-	for (i = j = 0; i < tabsize; ++i)
+	for(i=j=0; i<tabsize; ++i)
 	{
 		printf(" %d", table[i]);
+
 		if (i != tabsize-1)
 			putchar(',');
+
 		if (++j == 8)
 		{
 			j = 0;
 			putchar('\n');
 		}
 	}
+
 	if (j)
 		putchar('\n');
+
 	printf("};\n");
 }
 
 
-int comp_entry(struct name_entry *ent1, struct name_entry *ent2) {
+int comp_entry(struct name_entry * ent1, struct name_entry * ent2)
+{
 	return strcmp(ent1->nstr, ent2->nstr);
 }
 
 
-int nmatch(int len, char *s1, char *s2) {
+int nmatch(int len, char * s1, char * s2)
+{
 	while (len--)
+	{
 		if (*s1++ != *s2++)
 			return 0;
+	}
+
 	return 1;
 }
 
 
 char nam[128];
-char *pnam;
+char * pnam;
 
-void traverse(int state) {
+void traverse(int state)
+{
 	register int base, i;//, j;
-	char *s, c;
+	char * s, c;
 
 	if (state == 0)
 	{
@@ -346,42 +373,51 @@ void traverse(int state) {
 	}
 
 	base = kbase[state];
-	for (i = 0; i < 128; ++i)
+
+	for(i=0; i<128; ++i)
+	{
 		if (kcheck[base + i] == state)
 		{
 			*pnam++ = (char)i;
 			*pnam = '\0';
 
-			for (s = nam; *s; ++s)
+			for(s=nam; *s; ++s)
+			{
 				if (isupper(*s))
 					break;
+			}
 
-			if (kaccept[base + i] >= 0 &&
-				  !isupper(*s))
+			if (kaccept[base + i] >= 0 && !isupper(*s))
 			{
 				printf("#define\t%s_", uppername);
-				for (s = nam; (c = *s); ++s)
+
+				for(s=nam; (c=*s); ++s)
 				{
 					if (c == '.')
 						c = '_';
 					else if ((c >= 'a') && (c <= 'z'))
 						c -= 32;
+
 					printf("%c", c);
 				}
+
 				printf("\t%d\n", kaccept[base + i]);
 			}
 
 			if (ktab[base + i] >= 0)
 				traverse(ktab[base + i]);
+
 			*--pnam = '\0';
 		}
+	}
 
 	if (state == 0)
 		printf("#endif\n");
 }
 
 
-void panic(char *s) {
+void panic(char * s)
+{
 	fprintf(stderr, "Panic: %s\n", s);
 	exit(1);
 }

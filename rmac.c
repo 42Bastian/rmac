@@ -22,37 +22,37 @@
 #include "symbol.h"
 #include "object.h"
 
-int perm_verb_flag;                                         // Permanently verbose, interactive mode
-int list_flag;                                              // "-l" Listing flag on command line
-int verb_flag;                                              // Be verbose about what's going on
-int as68_flag;                                              // as68 kludge mode
-int glob_flag;                                              // Assume undefined symbols are global
-int lsym_flag;                                              // Include local symbols in object file
-int sbra_flag;                                              // Warn about possible short branches
-int obj_format;                                             // Object format flag
-int debug;                                                  // [1..9] Enable debugging levels
-int err_flag;                                               // '-e' specified
-int err_fd;                                                 // File to write error messages to 
-int rgpu, rdsp;                                             // Assembling Jaguar GPU or DSP code
-int list_fd;                                                // File to write listing to
-int regbank;                                                // RISC register bank
-int segpadsize;                                             // Segment padding size
-int in_main;                                                // In main memory flag for GPUMAIN
-int endian;                                                 // Processor endianess
-char *objfname;                                             // Object filename pointer
-char *firstfname;                                           // First source filename
-char *cmdlnexec;                                            // Executable name, pointer to ARGV[0]
-char *searchpath;                                           // Search path for include files 
-char defname[] = "noname.o";                                // Default output filename
+int perm_verb_flag;					// Permanently verbose, interactive mode
+int list_flag;						// "-l" Listing flag on command line
+int verb_flag;						// Be verbose about what's going on
+int as68_flag;						// as68 kludge mode
+int glob_flag;						// Assume undefined symbols are global
+int lsym_flag;						// Include local symbols in object file
+int sbra_flag;						// Warn about possible short branches
+int obj_format;						// Object format flag
+int debug;							// [1..9] Enable debugging levels
+int err_flag;						// '-e' specified
+int err_fd;							// File to write error messages to 
+int rgpu, rdsp;						// Assembling Jaguar GPU or DSP code
+int list_fd;						// File to write listing to
+int regbank;						// RISC register bank
+int segpadsize;						// Segment padding size
+int in_main;						// In main memory flag for GPUMAIN
+int endian;							// Host processor endianess
+char * objfname;					// Object filename pointer
+char * firstfname;					// First source filename
+char * cmdlnexec;					// Executable name, pointer to ARGV[0]
+char * searchpath;					// Search path for include files 
+char defname[] = "noname.o";		// Default output filename
 
-// Under Windows and UNIX malloc() is an expensive call, so for small amounts of memory we allocate
-// from a previously allocated buffer.
+// Under Windows and UNIX malloc() is an expensive call, so for small amounts
+// of memory we allocate from a previously allocated buffer.
 
 #define A_AMOUNT        4096                                // Amount to malloc() at a time
 #define A_THRESH        64                                  // Use malloc() for amounts >= A_THRESH
 
 static LONG a_amount;                                       // Amount left at a_ptr 
-static char *a_ptr;                                         // Next free chunk
+static char * a_ptr;                                        // Next free chunk
 LONG amemtot;                                               // amem() total of requests
 
 // Qsort; The THRESHold below is the insertion sort threshold, and has been adjusted
@@ -66,6 +66,8 @@ static int qsz;                                             // Size of each reco
 static int thresh;                                          // THRESHold in chars 
 static int mthresh;                                         // MTHRESHold in chars
 
+
+//
 // qst: Do a quicksort. First, find the median element, and put that one in the first place as 
 // the discriminator.  (This "median" is just the median of the first, last and middle elements).
 // (Using this median instead of the first element is a big win).  Then, the usual 
@@ -75,11 +77,12 @@ static int mthresh;                                         // MTHRESHold in cha
 // and cleaning up with an insertion sort (in our caller) is a huge win. All data swaps are done 
 // in-line, which is space-losing but time-saving. (And there are only three places where 
 // this is done).
-
-static int qst(char *base, char *max) {
-   char c, *i, *j, *jj;
+//
+static int qst(char * base, char * max)
+{
+   char c, * i, * j, * jj;
    int ii;
-   char *mid, *tmp;
+   char * mid, * tmp;
    long lo, hi;
 
    /*
@@ -174,30 +177,37 @@ swap:
    return(0);
 }
 
+
 /*
  * qsort:
  * First, set up some global parameters for qst to share.  Then, quicksort
  * with qst(), and then a cleanup insertion sort ourselves.  Sound simple?
  * It's not...
  */
-
-int rmac_qsort(char *base, int n, int size, int	(*compar)()) {
-	register char c, *i, *j, *lo, *hi;
-	char *min, *max;
+int rmac_qsort(char * base, int n, int size, int	(*compar)())
+{
+	register char c, * i, * j, * lo, * hi;
+	char * min, * max;
 
 	if (n <= 1)
 		return(0);
+
 	qsz = size;
 	qcmp = compar;
 	thresh = qsz * THRESH;
 	mthresh = qsz * MTHRESH;
 	max = base + n * qsz;
-	if (n >= THRESH) {
+
+	if (n >= THRESH)
+	{
 		qst(base, max);
 		hi = base + thresh;
-	} else {
+	}
+	else
+	{
 		hi = max;
 	}
+
 	/*
 	 * First put smallest element, which must be in the first THRESH, in
 	 * the first position as a sentinel.  This is done just by searching
@@ -207,9 +217,12 @@ int rmac_qsort(char *base, int n, int size, int	(*compar)()) {
 	for (j = lo = base; (lo += qsz) < hi; )
 		if (qcmp(j, lo) > 0)
 			j = lo;
-	if (j != base) {
+
+	if (j != base)
+	{
 		/* swap j into place */
-		for (i = base, hi = base + qsz; i < hi; ) {
+		for (i = base, hi = base + qsz; i < hi; )
+		{
 			c = *j;
 			*j++ = *i;
 			*i++ = c;
@@ -237,10 +250,10 @@ int rmac_qsort(char *base, int n, int size, int	(*compar)()) {
    return(0);
 }
 
-//
-// --- Allocate memory; Panic and Quit if we Run Out -----------------------------------------------
-//
 
+//
+// Allocate memory; Panic and Quit if we Run Out
+//
 char * amem(LONG amount)
 {
 	char * p;
@@ -274,32 +287,33 @@ char * amem(LONG amount)
 	return p;
 }
 
-//
-// --- Copy stuff around, return pointer to dest+count+1 (doesn't handle overlap) ------------------
-//
 
+//
+// Copy stuff around, return pointer to dest+count+1 (doesn't handle overlap)
+//
 char * copy(char * dest, char * src, LONG count)
 {
-   while (count--)
-      *dest++ = *src++;
+	while (count--)
+		*dest++ = *src++;
 
-   return dest;
+	return dest;
 }
 
-//
-// --- Clear a region of memory --------------------------------------------------------------------
-//
 
-void clear(char *dest, LONG count)
+//
+// Clear a region of memory
+//
+void clear(char * dest, LONG count)
 {
 	while(count--)
 		*dest++ = 0;
 }
 
-//
-// --- Check to see if the string is a keyword. Returns -1, or a value from the 'accept[]' table ---
-//
 
+//
+// Check to see if the string is a keyword. Returns -1, or a value from the
+// 'accept[]' table
+//
 int kmatch(char * p, int * base, int * check, int * tab, int * accept)
 {
 	int state;
@@ -327,10 +341,10 @@ int kmatch(char * p, int * base, int * check, int * tab, int * accept)
 	return state;
 }
 
-//
-// --- Auto-even a section -------------------------------------------------------------------------
-//
 
+//
+// Auto-even a section
+//
 void autoeven(int sect)
 {
 	switchsect(sect);
@@ -338,53 +352,58 @@ void autoeven(int sect)
 	savsect();
 }
 
+
 //
-// -------------------------------------------------------------------------------------------------
 // Manipulate file extension.
 // `name' must be large enough to hold any possible filename.
 // If `stripp' is nonzero, any old extension is removed.
 // Then, if the file does not already have an extension,
 // `extension' is appended to the filename.
-// -------------------------------------------------------------------------------------------------
 //
+char * fext(char * name, char * extension, int stripp)
+{
+	char * s, * beg;                                           // String pointers
 
-char *fext(char *name, char *extension, int stripp) {
-   char *s, *beg;                                           // String pointers
+	// Find beginning of "real" name
+	beg = name + strlen(name) - 1;
 
-   // Find beginning of "real" name
-   beg = name + strlen(name) - 1;
-   for(; beg > name; --beg) {
-      if(*beg == SLASHCHAR) {
-         ++beg;
-         break;
-      }
-   }
+	for(; beg>name; --beg)
+	{
+		if (*beg == SLASHCHAR)
+		{
+			++beg;
+			break;
+		}
+	}
 
-   if(stripp) {                                             // Clobber any old extension
-      for(s = beg; *s && *s != '.'; ++s) 
-         ;
-      *s = '\0';
-   }
+	if (stripp)
+	{                                             // Clobber any old extension
+		for(s=beg; *s && *s!='.'; ++s) 
+			;
 
-   for(s = beg; *s != '.'; ++s) {
-      if(!*s) {                                             // Append the new extension
-         strcat(beg, extension);
-         break;
-      }
-   }
+		*s = '\0';
+	}
 
-   return(name);
+	for(s=beg; *s!='.'; ++s)
+	{
+		if (!*s)
+		{                                             // Append the new extension
+			strcat(beg, extension);
+			break;
+		}
+	}
+
+	return name;
 }
 
+
 //
-// -------------------------------------------------------------------------------------------------
-// Return `item'nth element of semicolon-seperated pathnames specified in the enviroment string `s'.
-// Copy the pathname to `buf'.  Return 0 if the `item'nth path doesn't exist.
+// Return `item'nth element of semicolon-seperated pathnames specified in the
+// enviroment string `s'. Copy the pathname to `buf'.  Return 0 if the `item'
+// nth path doesn't exist.
 // 
 // [`item' ranges from 0 to N-1, where N = #elements in search path]
-// -------------------------------------------------------------------------------------------------
 //
-
 int nthpath(char * env_var, int itemno, char * buf)
 {
 	char * s = searchpath;
@@ -410,10 +429,10 @@ int nthpath(char * env_var, int itemno, char * buf)
 	return 1;
 }
 
-//
-// --- Display Command Line Help -----------------------------------------------
-//
 
+//
+// Display Command Line Help
+//
 void display_help(void)
 {
 	printf("Usage:\n");
@@ -441,10 +460,10 @@ void display_help(void)
 	printf("\n");
 }
 
-//
-// --- Display Version Information ---------------------------------------------
-//
 
+//
+// Display Version Information
+//
 void display_version(void)
 {
 	printf("\nReboot's Macro Assembler for Atari Jaguar\n"); 
@@ -452,14 +471,15 @@ void display_version(void)
 	printf("V%01i.%01i.%01i %s (%s)\n\n", MAJOR, MINOR, PATCH, __DATE__, PLATFORM);
 }
 
-// 
-// --- Process Command Line Arguments and do an Assembly -------------------------------------------
-//
 
-int process(int argc, char **argv) {
+// 
+// Process Command Line Arguments and do an Assembly
+//
+int process(int argc, char ** argv)
+{
    int argno;                                               // Argument number
-   SYM *sy;                                                 // Pointer to a symbol record
-   char *s;                                                 // String pointer
+   SYM * sy;                                                 // Pointer to a symbol record
+   char * s;                                                 // String pointer
    int fd;                                                  // File descriptor
    char fnbuf[FNSIZ];                                       // Filename buffer 
    int i;                                                   // Iterator
@@ -502,28 +522,28 @@ int process(int argc, char **argv) {
 
    // Process command line arguments and assemble source files
    for(argno = 0; argno < argc; ++argno) {
-      if(*argv[argno] == '-') {
+      if (*argv[argno] == '-') {
          switch(argv[argno][1]) {
             case 'd':                                       // Define symbol
             case 'D':
                for(s = argv[argno] + 2; *s != EOS;) {
-                  if(*s++ == '=') {
+                  if (*s++ == '=') {
                      s[-1] = EOS;
                      break;
 						}
                }
-               if(argv[argno][2] == EOS) {
+               if (argv[argno][2] == EOS) {
                   printf("-d: empty symbol\n");
                   ++errcnt;
                   return(errcnt);
                }
                sy = lookup(argv[argno] + 2, 0, 0);
-               if(sy == NULL) {
+               if (sy == NULL) {
                   sy = newsym(argv[argno] + 2, LABEL, 0);
                   sy->svalue = 0;
                }
                sy->sattr = DEFINED | EQUATED | ABS;
-               if(*s)
+               if (*s)
                   sy->svalue = (VALUE)atoi(s);
                else
                   sy->svalue = 0;
@@ -563,9 +583,9 @@ int process(int argc, char **argv) {
                break;
             case 'o':                                       // Direct object file output
             case 'O':
-               if(argv[argno][2] != EOS) objfname = argv[argno] + 2;
+               if (argv[argno][2] != EOS) objfname = argv[argno] + 2;
                else {
-                  if(++argno >= argc) {
+                  if (++argno >= argc) {
                      printf("Missing argument to -o");
                      ++errcnt;
                      return(errcnt);
@@ -595,7 +615,7 @@ int process(int argc, char **argv) {
             case 'v':                                       // Verbose flag
             case 'V':
                verb_flag++;
-               if(verb_flag > 1) display_version();
+               if (verb_flag > 1) display_version();
                break;
             case 'x':                                       // Turn on debugging
             case 'X':
@@ -605,14 +625,14 @@ int process(int argc, char **argv) {
             case 'y':                                       // -y<pagelen>
             case 'Y':
                pagelen = atoi(argv[argno] + 2);
-               if(pagelen < 10) {
+               if (pagelen < 10) {
                   printf("-y: bad page length\n");
                   ++errcnt;
                   return(errcnt);
                }
                break;
             case EOS:                                       // Input is stdin
-               if(firstfname == NULL)                       // Kludge first filename
+               if (firstfname == NULL)                       // Kludge first filename
                   firstfname = defname;
                include(0, "(stdin)");
                assemble();
@@ -633,12 +653,12 @@ int process(int argc, char **argv) {
          }
       } else {
          // Record first filename.
-         if(firstfname == NULL)
+         if (firstfname == NULL)
             firstfname = argv[argno];
          strcpy(fnbuf, argv[argno]);
          fext(fnbuf, ".s", 0);
          fd = open(fnbuf, 0);
-         if(fd < 0) {
+         if (fd < 0) {
             printf("Cannot open: %s\n", fnbuf);
             ++errcnt;
             continue;
@@ -667,8 +687,8 @@ int process(int argc, char **argv) {
       savsect();
    }
 
-   if(objfname == NULL) {
-      if(firstfname == NULL)
+   if (objfname == NULL) {
+      if (firstfname == NULL)
          firstfname = defname;
       strcpy(fnbuf, firstfname);
       //fext(fnbuf, prg_flag ? ".prg" : ".o", 1);
@@ -684,27 +704,27 @@ int process(int argc, char **argv) {
    // (3)   generate relocation information from left-over fixups.
    fixups();                                                // Do all fixups
    stopmark();                                              // Stop mark tape-recorder
-   if(errcnt == 0) {
-      if((fd = open(objfname, _OPEN_FLAGS, _PERM_MODE)) < 0)
+   if (errcnt == 0) {
+      if ((fd = open(objfname, _OPEN_FLAGS, _PERM_MODE)) < 0)
          cantcreat(objfname);
-      if(verb_flag) {
+      if (verb_flag) {
          s = "object";
          printf("[Writing %s file: %s]\n", s, objfname);
       }
       object((WORD)fd);
       close(fd);
-      if(errcnt != 0)
+      if (errcnt != 0)
          unlink(objfname);
    }
 
-   if(list_flag) {
-      if(verb_flag) printf("[Wrapping-up listing file]\n");
+   if (list_flag) {
+      if (verb_flag) printf("[Wrapping-up listing file]\n");
       listing = 1;
       symtable();
       close(list_fd);
    }
 
-   if(err_flag)
+   if (err_flag)
       close(err_fd);
 
    DEBUG dump_everything();
@@ -712,11 +732,11 @@ int process(int argc, char **argv) {
    return(errcnt);
 }
 
+
 #if 0
 //
-// --- Interactive Mode ----------------------------------------------------------------------------
+// Interactive Mode
 //
-
 void interactive(void)
 {
 	char * s;                                                 // String pointer for banner
@@ -783,10 +803,10 @@ void interactive(void)
 }
 #endif
 
-//
-// --- Determine Processor Endianess ---------------------------------------------------------------
-//
 
+//
+// Determine Processor Endianess
+//
 int get_endianess(void)
 {
 	int i = 1;
@@ -798,10 +818,10 @@ int get_endianess(void)
 	return 1;
 }
 
-//
-// --- Application Entry Point; Handle the Command Line --------------------------------------------
-//
 
+//
+// Application Entry Point; Handle the Command Line
+//
 int main(int argc, char ** argv)
 {
 	int status;                                              // Status flag

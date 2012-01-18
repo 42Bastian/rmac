@@ -15,7 +15,7 @@
 
 // Globals, externals etc
 extern int errcnt;
-extern char *err_fname;
+extern char * err_fname;
 
 // Prototypes
 int error(char *);

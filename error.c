@@ -90,7 +90,7 @@ int error(char * s)
 	taglist('E');
 	++errcnt;
 
-	return(ERROR);
+	return ERROR;
 }
 
 int errors(char * s, char * s1)
@@ -114,7 +114,7 @@ int errors(char * s, char * s1)
 	taglist('E');
 	++errcnt;
 
-	return(ERROR);
+	return ERROR;
 }
 
 int warn(char * s)
@@ -135,7 +135,7 @@ int warn(char * s)
 
 	taglist('W');
 
-	return(OK);
+	return OK;
 }
 
 int warns(char * s, char * s1)
@@ -158,7 +158,7 @@ int warns(char * s, char * s1)
 
 	taglist('W');
 
-	return(OK);
+	return OK;
 }
 
 int warni(char * s, unsigned i)
@@ -181,7 +181,7 @@ int warni(char * s, unsigned i)
 
 	taglist('W');
 
-	return(OK);
+	return OK;
 }
 
 int fatal(char * s)
