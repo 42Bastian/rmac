@@ -92,7 +92,7 @@ extern int a0ixsiz, a1ixsiz;
 extern TOKEN a0oexpr[], a1oexpr[];
 extern VALUE a0oexval, a1oexval;
 extern WORD a0oexattr, a1oexattr;
-extern SYM *a0esym, *a1esym;
+extern SYM * a0esym, * a1esym;
 
 // Mnemonic table structure
 #define MNTAB  struct _mntab

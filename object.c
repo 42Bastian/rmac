@@ -133,6 +133,7 @@ int object(WORD fd)
 
 		// Construct TEXT and DATA segments (without relocation changes)
 		p = buf + BSDHDRSIZE;
+
 		for(i=TEXT; i<=DATA; ++i)
 		{
 			for(cp=sect[i].sfcode; cp!=NULL; cp=cp->chnext)

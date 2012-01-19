@@ -12,7 +12,7 @@
 #include "rmac.h"
 
 // Macros
-#define NBUCKETS        256                                 // Number of hash buckets (power of 2)
+#define NBUCKETS        256			// Number of hash buckets (power of 2)
 
 // Globals, externals etc
 extern int curenv;

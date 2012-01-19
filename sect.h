@@ -80,12 +80,12 @@
 // Chunks are used to hold generated code and fixup records
 #define CHUNK  struct _chunk
 CHUNK {
-   CHUNK *chnext;                                           // Next, previous chunks in section
-   CHUNK *chprev;
+   CHUNK * chnext;                                          // Next, previous chunks in section
+   CHUNK * chprev;
    LONG chloc;                                              // Base addr of this chunk
    LONG challoc;                                            // #bytes allocated for chunk
    LONG ch_size;                                            // #bytes chunk actually uses
-   char *chptr;                                             // Data for this chunk
+   char * chptr;                                            // Data for this chunk
 };
 
 // Section descriptor
@@ -93,10 +93,10 @@ CHUNK {
 SECT {
    WORD scattr;                                             // Section attributes
    LONG sloc;                                               // Current loc-in / size-of section 
-   CHUNK *sfcode;                                           // First chunk in section
-   CHUNK *scode;                                            // Last chunk in section
-   CHUNK *sffix;                                            // First fixup chunk
-   CHUNK *sfix;                                             // Last fixup chunk
+   CHUNK * sfcode;                                          // First chunk in section
+   CHUNK * scode;                                           // Last chunk in section
+   CHUNK * sffix;                                           // First fixup chunk
+   CHUNK * sfix;                                            // Last fixup chunk
 };
 
 // A mark is of the form:
@@ -106,7 +106,7 @@ SECT {
 // .L    [symbol]	symbol involved in external reference
 #define MCHUNK struct _mchunk
 MCHUNK {
-   MCHUNK *mcnext;                                          // Next mark chunk
+   MCHUNK * mcnext;                                         // Next mark chunk
    PTR mcptr;                                               // Vector of marks
    LONG mcalloc;                                            // #marks allocted to mark block
    LONG mcused;                                             // #marks used in block
@@ -127,12 +127,12 @@ extern unsigned fwindex;
 // Globals, external etc
 extern LONG sloc;
 extern WORD scattr;
-extern char *chptr;
+extern char * chptr;
 extern LONG ch_size;
 extern int cursect;
 extern SECT sect[];
 extern LONG challoc;
-extern CHUNK *scode;
+extern CHUNK * scode;
 
 // Prototypes
 void init_sect(void);

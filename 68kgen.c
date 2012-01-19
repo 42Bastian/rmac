@@ -28,15 +28,13 @@ int main(int argc, char ** argv)
 	int namcnt;
 	char ln[256];
 
-	if (argc == 2)
-		if ((kfp = fopen(argv[1], "w")) == NULL)
-			error("Cannot create: %s", argv[1]);
+	if ((argc == 2) && ((kfp = fopen(argv[1], "w")) == NULL))
+		error("Cannot create: %s", argv[1]);
 
-//	while (gets(ln) != NULL)
 	while (fgets(ln, 256, stdin) != NULL)
 	{
-
 		++lineno;			/* bump line# */
+
 		if (*ln == '#')		/* ignore comments */
 			continue;
 
@@ -66,6 +64,7 @@ int main(int argc, char ** argv)
 		if (namcnt)
 			procln(namcnt, namv);
 	}
+
 	return 0;
 }
 
@@ -99,6 +98,7 @@ void procln(int namc, char ** namv)
 		printf("CGSPECIAL");
 	else for (s = namv[1], i=0; *s; ++s)
 		printf("%sSIZ%c", (i++ ? "|" : ""), *s);
+
 	printf(", %s, %s, ", namv[2], namv[3]);
 
 	if (*namv[4] == '%')		/* enforce little fascist percent signs */
@@ -125,6 +125,7 @@ void procln(int namc, char ** namv)
 
 	++kwnum;
 }
+
 
 void error(char * s, char * s1)
 {

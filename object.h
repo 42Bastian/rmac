@@ -14,7 +14,7 @@
 #define BSDHDRSIZE   0x20                                   // Size of BSD header
 
 // Globals, externals etc
-extern char *objimage;
+extern char * objimage;
 
 // Prototypes
 int object(WORD);

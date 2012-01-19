@@ -209,16 +209,16 @@ int mexpand(char * src, char * dest, int destsiz)
 {
 	char * s;
 	char * d = NULL;
-	char * dst;                                               // Next dest slot
-	char * edst;                                              // End+1 of dest buffer
+	char * dst;							// Next dest slot
+	char * edst;						// End+1 of dest buffer
 	int i;
-	int questmark;                                           // \? for testing argument existence
+	int questmark;						// \? for testing argument existence
 	TOKEN * tk;
-	char mname[128];                                         // Assume max size of a formal arg name
+	char mname[128];					// Assume max size of a formal arg name
 	int macnum;
 	SYM * arg;
 	IMACRO * imacro;
-	char numbuf[20];                                         // Buffer for text of CONSTs
+	char numbuf[20];					// Buffer for text of CONSTs
 
 	imacro = cur_inobj->inobj.imacro;
 	macnum = (int)(imacro->im_macro->sattr);

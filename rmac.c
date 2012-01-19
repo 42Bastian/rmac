@@ -68,15 +68,16 @@ static int mthresh;                                         // MTHRESHold in cha
 
 
 //
-// qst: Do a quicksort. First, find the median element, and put that one in the first place as 
-// the discriminator.  (This "median" is just the median of the first, last and middle elements).
-// (Using this median instead of the first element is a big win).  Then, the usual 
-// partitioning/swapping, followed by moving the discriminator into the right place.  Then, 
-// figure out the sizes of the two partions, do the smaller one recursively and the larger one 
-// via a repeat of this code.  Stopping when there are less than THRESH elements in a partition
-// and cleaning up with an insertion sort (in our caller) is a huge win. All data swaps are done 
-// in-line, which is space-losing but time-saving. (And there are only three places where 
-// this is done).
+// qst: Do a quicksort. First, find the median element, and put that one in the
+// first place as the discriminator. (This "median" is just the median of the
+// first, last and middle elements). (Using this median instead of the first
+// element is a big win). Then, the usual partitioning/swapping, followed by
+// moving the discriminator into the right place. Then, figure out the sizes of
+// the two partions, do the smaller one recursively and the larger one via a
+// repeat of this code.  Stopping when there are less than THRESH elements in a
+// partition and cleaning up with an insertion sort (in our caller) is a huge
+// win. All data swaps are done in-line, which is space-losing but time-saving.
+// (And there are only three places where this is done).
 //
 static int qst(char * base, char * max)
 {
@@ -87,58 +88,85 @@ static int qst(char * base, char * max)
 
    /*
 	 * At the top here, lo is the number of characters of elements in the
-	 * current partition.  (Which should be max - base).
+	 * current partition. (Which should be max - base).
 	 * Find the median of the first, last, and middle element and make
-	 * that the middle element.  Set j to largest of first and middle.
+	 * that the middle element. Set j to largest of first and middle.
 	 * If max is larger than that guy, then it's that guy, else compare
-	 * max with loser of first and take larger.  Things are set up to
+	 * max with loser of first and take larger. Things are set up to
 	 * prefer the middle, then the first in case of ties.
 	 */
 	lo = max - base;		/* number of elements as chars */
-	do	{
+
+	do
+	{
 		mid = i = base + qsz * ((lo / qsz) >> 1);
-		if (lo >= mthresh) {
+
+		if (lo >= mthresh)
+		{
 			j = (qcmp((jj = base), i) > 0 ? jj : i);
-			if (qcmp(j, (tmp = max - qsz)) > 0) {
+
+			if (qcmp(j, (tmp = max - qsz)) > 0)
+			{
 				/* switch to first loser */
 				j = (j == jj ? i : jj);
+
 				if (qcmp(j, tmp) < 0)
 					j = tmp;
 			}
-			if (j != i) {
+
+			if (j != i)
+			{
 				ii = qsz;
-				do	{
+
+				do
+				{
 					c = *i;
 					*i++ = *j;
 					*j++ = c;
-				} while (--ii);
+				}
+				while (--ii);
 			}
 		}
+
 		/*
 		 * Semi-standard quicksort partitioning/swapping
 		 */
-		for (i = base, j = max - qsz; ; ) {
+		for(i=base, j=max-qsz; ;)
+		{
 			while (i < mid && qcmp(i, mid) <= 0)
 				i += qsz;
-			while (j > mid) {
-				if (qcmp(mid, j) <= 0) {
+
+			while (j > mid)
+			{
+				if (qcmp(mid, j) <= 0)
+				{
 					j -= qsz;
 					continue;
 				}
+
 				tmp = i + qsz;	/* value of i after swap */
-				if (i == mid) {
+
+				if (i == mid)
+				{
 					/* j <-> mid, new mid is j */
 					mid = jj = j;
-				} else {
+				}
+				else
+				{
 					/* i <-> j */
 					jj = j;
 					j -= qsz;
 				}
+
 				goto swap;
 			}
-			if (i == mid) {
+
+			if (i == mid)
+			{
 				break;
-			} else {
+			}
+			else
+			{
 				/* i <-> mid, new mid is i */
 				jj = mid;
 				tmp = mid = i;	/* value of i after swap */
@@ -146,13 +174,18 @@ static int qst(char * base, char * max)
 			}
 swap:
 			ii = qsz;
-			do	{
+
+			do
+			{
 				c = *i;
 				*i++ = *jj;
 				*jj++ = c;
-			} while (--ii);
+			}
+			while (--ii);
+
 			i = tmp;
 		}
+
 		/*
 		 * Look at sizes of the two partitions, do the smaller
 		 * one first by recursion, then do the larger one by
@@ -162,19 +195,26 @@ swap:
 		 * of at least size THRESH.
 		 */
 		i = (j = mid) + qsz;
-		if ((lo = j - base) <= (hi = max - i)) {
+
+		if ((lo = j - base) <= (hi = max - i))
+		{
 			if (lo >= thresh)
 				qst(base, j);
+
 			base = i;
 			lo = hi;
-		} else {
+		}
+		else
+		{
 			if (hi >= thresh)
 				qst(i, max);
+
 			max = j;
 		}
-	} while (lo >= thresh);
+	}
+	while (lo >= thresh);
 
-   return(0);
+	return 0;
 }
 
 
@@ -184,13 +224,13 @@ swap:
  * with qst(), and then a cleanup insertion sort ourselves.  Sound simple?
  * It's not...
  */
-int rmac_qsort(char * base, int n, int size, int	(*compar)())
+int rmac_qsort(char * base, int n, int size, int (*compar)())
 {
 	register char c, * i, * j, * lo, * hi;
 	char * min, * max;
 
 	if (n <= 1)
-		return(0);
+		return 0;
 
 	qsz = size;
 	qcmp = compar;
@@ -214,20 +254,23 @@ int rmac_qsort(char * base, int n, int size, int	(*compar)())
 	 * the first THRESH elements (or the first n if n < THRESH), finding
 	 * the min, and swapping it into the first position.
 	 */
-	for (j = lo = base; (lo += qsz) < hi; )
+	for(j=lo=base; (lo+=qsz)<hi;)
+	{
 		if (qcmp(j, lo) > 0)
 			j = lo;
+	}
 
 	if (j != base)
 	{
 		/* swap j into place */
-		for (i = base, hi = base + qsz; i < hi; )
+		for(i=base, hi=base+qsz; i<hi;)
 		{
 			c = *j;
 			*j++ = *i;
 			*i++ = c;
 		}
 	}
+
 	/*
 	 * With our sentinel in place, we now run the following hyper-fast
 	 * insertion sort.  For each remaining element, min, from [1] to [n-1],
@@ -235,19 +278,26 @@ int rmac_qsort(char * base, int n, int size, int	(*compar)())
 	 * Then, do the standard insertion sort shift on a character at a time
 	 * basis for each element in the frob.
 	 */
-	for (min = base; (hi = min += qsz) < max; ) {
+	for(min=base; (hi=min+=qsz)<max;)
+	{
 		while (qcmp(hi -= qsz, min) > 0)
 			/* void */;
-		if ((hi += qsz) != min) {
-			for (lo = min + qsz; --lo >= min; ) {
+
+		if ((hi += qsz) != min)
+		{
+			for(lo=min+qsz; --lo>=min;)
+			{
 				c = *lo;
-				for (i = j = lo; (j -= qsz) >= hi; i = j)
+
+				for(i=j=lo; (j-=qsz)>=hi; i=j)
 					*i = *j;
+
 				*i = c;
 			}
 		}
 	}
-   return(0);
+
+	return 0;
 }
 
 
@@ -477,331 +527,308 @@ void display_version(void)
 //
 int process(int argc, char ** argv)
 {
-   int argno;                                               // Argument number
-   SYM * sy;                                                 // Pointer to a symbol record
-   char * s;                                                 // String pointer
-   int fd;                                                  // File descriptor
-   char fnbuf[FNSIZ];                                       // Filename buffer 
-   int i;                                                   // Iterator
+	int argno;						// Argument number
+	SYM * sy;						// Pointer to a symbol record
+	char * s;						// String pointer
+	int fd;							// File descriptor
+	char fnbuf[FNSIZ];				// Filename buffer 
+	int i;							// Iterator
 
-   errcnt = 0;                                              // Initialise error count
-   listing = 0;                                             // Initialise listing level
-   list_flag = 0;                                           // Initialise listing flag
-   verb_flag = perm_verb_flag;                              // Initialise verbose flag
-   as68_flag = 0;                                           // Initialise as68 kludge mode
-   glob_flag = 0;                                           // Initialise .globl flag
-   sbra_flag = 0;                                           // Initialise short branch flag
-   debug = 0;                                               // Initialise debug flag
-   searchpath = NULL;                                       // Initialise search path
-   objfname = NULL;                                         // Initialise object filename
-   list_fname = NULL;                                       // Initialise listing filename
-   err_fname = NULL;                                        // Initialise error filename
-   obj_format = BSD;                                        // Initialise object format
-   firstfname = NULL;                                       // Initialise first filename
-   err_fd = ERROUT;                                         // Initialise error file descriptor
-   err_flag = 0;                                            // Initialise error flag
-   rgpu = 0;                                                // Initialise GPU assembly flag
-   rdsp = 0;                                                // Initialise DSP assembly flag
-   lsym_flag = 1;                                           // Include local symbols in object file
-   regbank = BANK_N;                                        // No RISC register bank specified
-   orgactive = 0;                                           // Not in RISC org section
-   orgwarning = 0;                                          // No ORG warning issued
-   a_amount = 0;
-   segpadsize = 2;                                          // Initialise segment padding size
-   in_main = 0;
+	errcnt = 0;						// Initialise error count
+	listing = 0;					// Initialise listing level
+	list_flag = 0;					// Initialise listing flag
+	verb_flag = perm_verb_flag;		// Initialise verbose flag
+	as68_flag = 0;					// Initialise as68 kludge mode
+	glob_flag = 0;					// Initialise .globl flag
+	sbra_flag = 0;					// Initialise short branch flag
+	debug = 0;						// Initialise debug flag
+	searchpath = NULL;				// Initialise search path
+	objfname = NULL;				// Initialise object filename
+	list_fname = NULL;				// Initialise listing filename
+	err_fname = NULL;				// Initialise error filename
+	obj_format = BSD;				// Initialise object format
+	firstfname = NULL;				// Initialise first filename
+	err_fd = ERROUT;				// Initialise error file descriptor
+	err_flag = 0;					// Initialise error flag
+	rgpu = 0;						// Initialise GPU assembly flag
+	rdsp = 0;						// Initialise DSP assembly flag
+	lsym_flag = 1;					// Include local symbols in object file
+	regbank = BANK_N;				// No RISC register bank specified
+	orgactive = 0;					// Not in RISC org section
+	orgwarning = 0;					// No ORG warning issued
+	a_amount = 0;
+	segpadsize = 2;					// Initialise segment padding size
+	in_main = 0;
 
-   // Initialise modules
-	init_sym();                                              // Symbol table
-   init_token();                                            // Tokenizer
-   init_procln();                                           // Line processor
-   init_expr();                                             // Expression analyzer
-   init_sect();                                             // Section manager / code generator
-   init_mark();                                             // Mark tape-recorder
-	init_macro();                                            // Macro processor
-   init_list();                                             // Listing generator
+	// Initialise modules
+	init_sym();						// Symbol table
+	init_token();					// Tokenizer
+	init_procln();					// Line processor
+	init_expr();					// Expression analyzer
+	init_sect();					// Section manager / code generator
+	init_mark();					// Mark tape-recorder
+	init_macro();					// Macro processor
+	init_list();					// Listing generator
 
-   // Process command line arguments and assemble source files
-   for(argno = 0; argno < argc; ++argno) {
-      if (*argv[argno] == '-') {
-         switch(argv[argno][1]) {
-            case 'd':                                       // Define symbol
-            case 'D':
-               for(s = argv[argno] + 2; *s != EOS;) {
-                  if (*s++ == '=') {
-                     s[-1] = EOS;
-                     break;
-						}
-               }
-               if (argv[argno][2] == EOS) {
-                  printf("-d: empty symbol\n");
-                  ++errcnt;
-                  return(errcnt);
-               }
-               sy = lookup(argv[argno] + 2, 0, 0);
-               if (sy == NULL) {
-                  sy = newsym(argv[argno] + 2, LABEL, 0);
-                  sy->svalue = 0;
-               }
-               sy->sattr = DEFINED | EQUATED | ABS;
-               if (*s)
-                  sy->svalue = (VALUE)atoi(s);
-               else
-                  sy->svalue = 0;
-               break;
-            case 'e':                                       // Redirect error message output
-            case 'E':
-               err_fname = argv[argno] + 2;
-               break;
-            case 'f':                                       // -f<format>
-            case 'F':
-               switch(argv[argno][2]) {
-                  case EOS:
-                  case 'b':                                 // -fb = BSD (Jaguar Recommended)
-                  case 'B':
-                     obj_format = BSD;
-                     break;
-                  default:
-                     printf("-f: unknown object format specified\n");
-                     ++errcnt;
-                     return(errcnt);
-               }
-               break;
-            case 'g':                                       // Debugging flag
-            case 'G':
-               printf("Debugging flag (-g) not yet implemented\n");
-               break;
-            case 'i':                                       // Set directory search path
-            case 'I':
-               searchpath = argv[argno] + 2;
-               break;
-            case 'l':                                       // Produce listing file
-            case 'L':
-               list_fname = argv[argno] + 2;
-               listing = 1;
-               list_flag = 1;
-               ++lnsave;
-               break;
-            case 'o':                                       // Direct object file output
-            case 'O':
-               if (argv[argno][2] != EOS) objfname = argv[argno] + 2;
-               else {
-                  if (++argno >= argc) {
-                     printf("Missing argument to -o");
-                     ++errcnt;
-                     return(errcnt);
-                  }
-                  objfname = argv[argno];
-               }
-               break;
-            case 'r':                                       // Pad seg to requested boundary size
-            case 'R':
-               switch(argv[argno][2]) {
-                  case 'w': case 'W': segpadsize = 2;  break;  
-                  case 'l': case 'L': segpadsize = 4;  break;
-                  case 'p': case 'P': segpadsize = 8;  break;
-                  case 'd': case 'D': segpadsize = 16; break;
-                  case 'q': case 'Q': segpadsize = 32; break;
-                  default: segpadsize = 2; break;           // Effective autoeven();
-               }
-               break;
-            case 's':                                       // Warn about possible short branches
-            case 'S':
-               sbra_flag = 1;
-               break;
-            case 'u':                                       // Make undefined symbols .globl
-            case 'U':
-               glob_flag = 1;
-               break;
-            case 'v':                                       // Verbose flag
-            case 'V':
-               verb_flag++;
-               if (verb_flag > 1) display_version();
-               break;
-            case 'x':                                       // Turn on debugging
-            case 'X':
-               debug = 1;
-               printf("~ Debugging ON\n");
-               break;
-            case 'y':                                       // -y<pagelen>
-            case 'Y':
-               pagelen = atoi(argv[argno] + 2);
-               if (pagelen < 10) {
-                  printf("-y: bad page length\n");
-                  ++errcnt;
-                  return(errcnt);
-               }
-               break;
-            case EOS:                                       // Input is stdin
-               if (firstfname == NULL)                       // Kludge first filename
-                  firstfname = defname;
-               include(0, "(stdin)");
-               assemble();
-               break;
-            case 'h':                                       // Display command line usage
-            case 'H':
-            case '?':
-               display_version();
-               display_help();
-               ++errcnt;
-               break;
-            default:
-               display_version();
-               printf("Unknown switch: %s\n\n", argv[argno]);
-               display_help();
-               ++errcnt;
-               break;
-         }
-      } else {
-         // Record first filename.
-         if (firstfname == NULL)
-            firstfname = argv[argno];
-         strcpy(fnbuf, argv[argno]);
-         fext(fnbuf, ".s", 0);
-         fd = open(fnbuf, 0);
-         if (fd < 0) {
-            printf("Cannot open: %s\n", fnbuf);
-            ++errcnt;
-            continue;
-         }
-         include(fd, fnbuf);
-         assemble();
-      }
-   }
-
-   // Wind-up processing;
-   // o  save current section (no more code generation)
-   // o  do auto-even of all sections (or boundary alignment as requested through '-r')
-   // o  determine name of object file:
-   //    -  "foo.o" for linkable output;
-   //    -  "foo.prg" for GEMDOS executable (-p flag).
-   savsect();
-   for(i = TEXT; i <= BSS; i <<= 1) {
-      switchsect(i);
-      switch(segpadsize) {
-         case 2:  d_even();    break;
-         case 4:  d_long();    break;
-         case 8:  d_phrase();  break;
-         case 16: d_dphrase(); break;
-         case 32: d_qphrase(); break;
-      }
-      savsect();
-   }
-
-   if (objfname == NULL) {
-      if (firstfname == NULL)
-         firstfname = defname;
-      strcpy(fnbuf, firstfname);
-      //fext(fnbuf, prg_flag ? ".prg" : ".o", 1);
-      fext(fnbuf, ".o", 1);
-      objfname = fnbuf;
-   }
-
-   // With one pass finished, go back and:
-   // (1)   run through all the fixups and resolve forward references;
-   // (1.5) ensure that remaining fixups can be handled by the linker
-   //       (`lo68' format, extended (postfix) format....)
-   // (2)   generate the output file image and symbol table;
-   // (3)   generate relocation information from left-over fixups.
-   fixups();                                                // Do all fixups
-   stopmark();                                              // Stop mark tape-recorder
-   if (errcnt == 0) {
-      if ((fd = open(objfname, _OPEN_FLAGS, _PERM_MODE)) < 0)
-         cantcreat(objfname);
-      if (verb_flag) {
-         s = "object";
-         printf("[Writing %s file: %s]\n", s, objfname);
-      }
-      object((WORD)fd);
-      close(fd);
-      if (errcnt != 0)
-         unlink(objfname);
-   }
-
-   if (list_flag) {
-      if (verb_flag) printf("[Wrapping-up listing file]\n");
-      listing = 1;
-      symtable();
-      close(list_fd);
-   }
-
-   if (err_flag)
-      close(err_fd);
-
-   DEBUG dump_everything();
-
-   return(errcnt);
-}
-
-
-#if 0
-//
-// Interactive Mode
-//
-void interactive(void)
-{
-	char * s;                                                 // String pointer for banner
-	char ln[LNSIZ];                                          // Input line
-	char * argv[MAXARGV];                                     // Argument values
-	int argcnt;                                              // Argument count
-
-   // As there is no command line, print a copyright message and prompt for command line
-	s = "*****************************************************\n";
-	printf("\n%s* RMAC - Reboot's Macro Assembler for Atari Jaguar  *\n", s);
-	printf("* Copyright (C) 199x Landon Dyer, 2011 Reboot       *\n");
-	printf("* Version %01i.%01i.%01i                Platform: %-9s  *\n",MAJOR,MINOR,PATCH,PLATFORM);
-	printf("* ------------------------------------------------- *\n");
-	printf("* INTERACTIVE MODE (press ENTER by itself to quit)  *\n%s\n", s);
-
-	perm_verb_flag = 1;                                      // Enter permanent verbose mode
-
-	// Handle commandlines until EOF or we get an empty one
-	for(;;)
+	// Process command line arguments and assemble source files
+	for(argno = 0; argno < argc; ++argno)
 	{
-		loop:
-		printf("* ");
-		fflush(stdout);                                       // Make prompt visible
-
-//		if (gets(ln) == NULL || !*ln)                          // Get input line
-		if (fgets(ln, LNSIZ, stdin) == NULL || !*ln)                          // Get input line
-			break;
-
-		argcnt = 0;                                           // Process input line
-		s = ln;
-
-		while (*s)
+		if (*argv[argno] == '-')
 		{
-			if (isspace(*s))
-			{                                  // Skip whitespace
-				++s;
-			}
-			else
+			switch (argv[argno][1])
 			{
-				if (argcnt >= MAXARGV)
+			case 'd':                                       // Define symbol
+			case 'D':
+				for(s=argv[argno]+2; *s!=EOS;)
 				{
-					printf("Too many arguments\n");
-					goto loop;
+					if (*s++ == '=')
+					{
+						s[-1] = EOS;
+						break;
+					}
 				}
 
-				argv[argcnt++] = s;
+				if (argv[argno][2] == EOS)
+				{
+					printf("-d: empty symbol\n");
+					++errcnt;
+					return errcnt;
+				}
 
-				while (*s && !isspace(*s))
-					++s;
+				sy = lookup(argv[argno] + 2, 0, 0);
 
-				if (isspace(*s))
-					*s++ = EOS;
+				if (sy == NULL)
+				{
+					sy = newsym(argv[argno] + 2, LABEL, 0);
+					sy->svalue = 0;
+				}
+
+				sy->sattr = DEFINED | EQUATED | ABS;
+
+				if (*s)
+					sy->svalue = (VALUE)atoi(s);
+				else
+					sy->svalue = 0;
+
+				break;
+			case 'e':                                       // Redirect error message output
+			case 'E':
+				err_fname = argv[argno] + 2;
+				break;
+			case 'f':                                       // -f<format>
+			case 'F':
+				switch (argv[argno][2])
+				{
+				case EOS:
+				case 'b':                                 // -fb = BSD (Jaguar Recommended)
+				case 'B':
+					obj_format = BSD;
+					break;
+				default:
+					printf("-f: unknown object format specified\n");
+					++errcnt;
+					return errcnt;
+				}
+				break;
+			case 'g':                                       // Debugging flag
+			case 'G':
+				printf("Debugging flag (-g) not yet implemented\n");
+				break;
+			case 'i':                                       // Set directory search path
+			case 'I':
+				searchpath = argv[argno] + 2;
+				break;
+			case 'l':                                       // Produce listing file
+			case 'L':
+				list_fname = argv[argno] + 2;
+				listing = 1;
+				list_flag = 1;
+				++lnsave;
+				break;
+			case 'o':                                       // Direct object file output
+			case 'O':
+				if (argv[argno][2] != EOS)
+					objfname = argv[argno] + 2;
+				else
+				{
+					if (++argno >= argc)
+					{
+						printf("Missing argument to -o");
+						++errcnt;
+						return errcnt;
+					}
+					objfname = argv[argno];
+				}
+
+				break;
+			case 'r':                                       // Pad seg to requested boundary size
+			case 'R':
+				switch(argv[argno][2])
+				{
+				case 'w': case 'W': segpadsize = 2;  break;  
+				case 'l': case 'L': segpadsize = 4;  break;
+				case 'p': case 'P': segpadsize = 8;  break;
+				case 'd': case 'D': segpadsize = 16; break;
+				case 'q': case 'Q': segpadsize = 32; break;
+				default: segpadsize = 2; break;           // Effective autoeven();
+				}
+				break;
+			case 's':                                       // Warn about possible short branches
+			case 'S':
+				sbra_flag = 1;
+				break;
+			case 'u':                                       // Make undefined symbols .globl
+			case 'U':
+				glob_flag = 1;
+				break;
+			case 'v':                                       // Verbose flag
+			case 'V':
+				verb_flag++;
+
+				if (verb_flag > 1)
+					display_version();
+
+				break;
+			case 'x':                                       // Turn on debugging
+			case 'X':
+				debug = 1;
+				printf("~ Debugging ON\n");
+				break;
+			case 'y':                                       // -y<pagelen>
+			case 'Y':
+				pagelen = atoi(argv[argno] + 2);
+
+				if (pagelen < 10)
+				{
+					printf("-y: bad page length\n");
+					++errcnt;
+					return errcnt;
+				}
+
+				break;
+			case EOS:                                       // Input is stdin
+				if (firstfname == NULL)                       // Kludge first filename
+					firstfname = defname;
+
+				include(0, "(stdin)");
+				assemble();
+				break;
+			case 'h':                                       // Display command line usage
+			case 'H':
+			case '?':
+				display_version();
+				display_help();
+				++errcnt;
+				break;
+			default:
+				display_version();
+				printf("Unknown switch: %s\n\n", argv[argno]);
+				display_help();
+				++errcnt;
+				break;
 			}
 		}
+		else
+		{
+			// Record first filename.
+			if (firstfname == NULL)
+				firstfname = argv[argno];
 
-		if (argcnt == 0)                                       // Exit if no arguments
-			break;
+			strcpy(fnbuf, argv[argno]);
+			fext(fnbuf, ".s", 0);
+			fd = open(fnbuf, 0);
 
-		process(argcnt, argv);                                // Process arguments
+			if (fd < 0)
+			{
+				printf("Cannot open: %s\n", fnbuf);
+				++errcnt;
+				continue;
+			}
 
-		if (errcnt)
-			printf("%d assembly error%s\n", errcnt, (errcnt > 1) ? "s" : "");
+			include(fd, fnbuf);
+			assemble();
+		}
 	}
+
+	// Wind-up processing;
+	// o  save current section (no more code generation)
+	// o  do auto-even of all sections (or boundary alignment as requested through '-r')
+	// o  determine name of object file:
+	//    -  "foo.o" for linkable output;
+	//    -  "foo.prg" for GEMDOS executable (-p flag).
+	savsect();
+
+	for(i=TEXT; i<=BSS; i<<=1)
+	{
+		switchsect(i);
+
+		switch(segpadsize)
+		{
+		case 2:  d_even();    break;
+		case 4:  d_long();    break;
+		case 8:  d_phrase();  break;
+		case 16: d_dphrase(); break;
+		case 32: d_qphrase(); break;
+		}
+
+		savsect();
+	}
+
+	if (objfname == NULL)
+	{
+		if (firstfname == NULL)
+			firstfname = defname;
+
+		strcpy(fnbuf, firstfname);
+		//fext(fnbuf, prg_flag ? ".prg" : ".o", 1);
+		fext(fnbuf, ".o", 1);
+		objfname = fnbuf;
+	}
+
+	// With one pass finished, go back and:
+	// (1)   run through all the fixups and resolve forward references;
+	// (1.5) ensure that remaining fixups can be handled by the linker
+	//       (`lo68' format, extended (postfix) format....)
+	// (2)   generate the output file image and symbol table;
+	// (3)   generate relocation information from left-over fixups.
+	fixups();                                                // Do all fixups
+	stopmark();                                              // Stop mark tape-recorder
+
+	if (errcnt == 0)
+	{
+		if ((fd = open(objfname, _OPEN_FLAGS, _PERM_MODE)) < 0)
+			cantcreat(objfname);
+
+		if (verb_flag)
+		{
+			s = "object";
+			printf("[Writing %s file: %s]\n", s, objfname);
+		}
+
+		object((WORD)fd);
+		close(fd);
+
+		if (errcnt != 0)
+			unlink(objfname);
+	}
+
+	if (list_flag)
+	{
+		if (verb_flag)
+			printf("[Wrapping-up listing file]\n");
+
+		listing = 1;
+		symtable();
+		close(list_fd);
+	}
+
+	if (err_flag)
+		close(err_fd);
+
+	DEBUG dump_everything();
+
+	return errcnt;
 }
-#endif
 
 
 //
@@ -824,28 +851,24 @@ int get_endianess(void)
 //
 int main(int argc, char ** argv)
 {
-	int status;                                              // Status flag
+	int status;
 	int i;
 
-	perm_verb_flag = 0;                                      // Clobber "permanent" verbose flag
-	cmdlnexec = argv[0];                                     // Obtain executable name
+	perm_verb_flag = 0;				// Clobber "permanent" verbose flag
+	cmdlnexec = argv[0];			// Obtain executable name
 
-	endian = get_endianess();                                // Get processor endianess
+	endian = get_endianess();		// Get processor endianess
 
 	for(i=0; i<MAXFWDJUMPS; i++)
 		fwdjump[i] = 0;
 
+	// Full command line passed
 	if (argc > 1)
-	{                                           // Full command line passed
+	{
 		status = process(argc - 1, argv + 1);              
 	}
-	// Interactive mode 
 	else
 	{
-// Sorry Landon, this is the year 20xx and we haz plenty of resources now ;-)
-//		status = 0;
-//		interactive();
-		// Instead, we show a nice banner and switches :-)
 		display_version();
 		display_help();
 	}

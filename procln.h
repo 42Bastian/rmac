@@ -13,14 +13,14 @@
 #include "token.h"
 
 // Globals, externals etc
-extern IFENT *ifent;
-extern char *comma_error;
-extern char *locgl_error;
-extern char *syntax_error;
+extern IFENT * ifent;
+extern char * comma_error;
+extern char * locgl_error;
+extern char * syntax_error;
 extern int just_bss;
 extern VALUE pcloc;
-extern IFENT *ifent;
-extern SYM *lab_sym;
+extern IFENT * ifent;
+extern SYM * lab_sym;
 extern char extra_stuff[];
 extern LONG amsktab[];
 
