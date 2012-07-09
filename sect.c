@@ -266,8 +266,7 @@ int fixup(WORD attr, LONG loc, TOKEN * fexpr)
 	// no expression if it's just a mark. This code assumes 16 bit WORDs and 32 bit LONGs
 	if (*fexpr == SYMBOL && fexpr[2] == ENDEXPR)
 	{
-		//if ((attr & 0x0F00) == FU_JR) {
-		if ((attr & 0x0200) == FU_JR)
+		if ((attr & 0x0F00) == FU_JR) // SCPCD : correct bit mask for attr (else other FU_xxx will match) NYAN !
 		{
 			i = 18;                  // Just a single symbol
 		}
@@ -336,8 +335,7 @@ int fixup(WORD attr, LONG loc, TOKEN * fexpr)
 		*fchptr.lp++ = (LONG)fexpr[1];
 	}
 
-	//if ((attr & 0x0F00) == FU_JR) {
-	if ((attr & 0x0200) == FU_JR)
+	if ((attr & 0x0F00) == FU_JR)  // SCPCD : correct bit mask for attr (else other FU_xxx will match) NYAN !
 	{
 		if (orgactive)
 			*fchptr.lp++ = orgaddr;
