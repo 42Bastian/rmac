@@ -1,0 +1,10 @@
+68kgen
+68kgen.o
+68ktab.h
+*.o
+*~
+kwtab.h
+mntab.h
+risckw.h
+rmac
+kwgen

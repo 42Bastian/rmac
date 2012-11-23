@@ -12,23 +12,23 @@
 #include "rmac.h"
 
 // Tunable definitions
-#define STKSIZE      64                                     // Size of expression stacks
-#define EVSTACKSIZE  64                                     // Expression evaluator stack size
+#define STKSIZE      64			// Size of expression stacks
+#define EVSTACKSIZE  64			// Expression evaluator stack size
 
 // Token classes in order of precedence
-#define END          0                                      // End/beginning of input
-#define ID           1                                      // Symbol or constant
-#define OPAR         2                                      // (
-#define CPAR         3                                      // )
-#define SUNARY       4                                      // Special unary (^^defined, etc.)
-#define UNARY        5                                      // Unary class: ! ~ -
-#define MULT         6                                      // Multiplicative class: * / %
-#define ADD          7                                      // Additive class: + -
-#define SHIFT        8                                      // Shift class: << >>
-#define REL          9                                      // Relational class: <= >= < > <> = !=
-#define AND          10                                     // Bitwise and: &
-#define XOR          11                                     // Bitwise xor: ^
-#define OR           12                                     // Bitwise or: |
+#define END          0			// End/beginning of input
+#define ID           1			// Symbol or constant
+#define OPAR         2			// (
+#define CPAR         3			// )
+#define SUNARY       4			// Special unary (^^defined, etc.)
+#define UNARY        5			// Unary class: ! ~ -
+#define MULT         6			// Multiplicative class: * / %
+#define ADD          7			// Additive class: + -
+#define SHIFT        8			// Shift class: << >>
+#define REL          9			// Relational class: <= >= < > <> = !=
+#define AND          10			// Bitwise and: &
+#define XOR          11			// Bitwise xor: ^
+#define OR           12			// Bitwise or: |
 
 // Prototypes
 void init_expr(void);

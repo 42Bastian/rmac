@@ -16,38 +16,38 @@
 #include "mach.h"
 #include "risca.h"
 
-#define DEF_KW                                              // Declare keyword values 
-#include "kwtab.h"                                          // Incl generated keyword tables & defs
+#define DEF_KW							// Declare keyword values 
+#include "kwtab.h"						// Incl generated keyword tables & defs
 
-static char tokcl[128];                                     // Generated table of token classes
-static VALUE evstk[EVSTACKSIZE];                            // Evaluator value stack
-static WORD evattr[EVSTACKSIZE];                            // Evaluator attribute stack
+static char tokcl[128];					// Generated table of token classes
+static VALUE evstk[EVSTACKSIZE];		// Evaluator value stack
+static WORD evattr[EVSTACKSIZE];		// Evaluator attribute stack
 
 // Token-class initialization list
 char itokcl[] = {
-	0,                                                       // END
-	CONST, SYMBOL, 0,                                        // ID 
-	'(', '[', '{', 0,                                        // OPAR
-	')', ']', '}', 0,                                        // CPAR 
-	CR_DEFINED, CR_REFERENCED,	                              // SUNARY (special unary)
+	0,									// END
+	CONST, SYMBOL, 0,					// ID 
+	'(', '[', '{', 0,					// OPAR
+	')', ']', '}', 0,					// CPAR 
+	CR_DEFINED, CR_REFERENCED,			// SUNARY (special unary)
 	CR_STREQ, CR_MACDEF,
 	CR_DATE, CR_TIME, 0,
-	'!', '~', UNMINUS, 0,                                    // UNARY
-	'*', '/', '%', 0,                                        // MULT 
-	'+', '-', 0,                                             // ADD 
-	SHL, SHR, 0,                                             // SHIFT 
-	LE, GE, '<', '>', NE, '=', 0,                            // REL 
-	'&', 0,                                                  // AND 
-	'^', 0,                                                  // XOR 
-	'|', 0,                                                  // OR 
-	1                                                        // (the end) 
+	'!', '~', UNMINUS, 0,				// UNARY
+	'*', '/', '%', 0,					// MULT 
+	'+', '-', 0,						// ADD 
+	SHL, SHR, 0,						// SHIFT 
+	LE, GE, '<', '>', NE, '=', 0,		// REL 
+	'&', 0,								// AND 
+	'^', 0,								// XOR 
+	'|', 0,								// OR 
+	1									// (the end) 
 };
 
 char missym_error[] = "missing symbol";
 char * str_error = "missing symbol or string";
 
 // Convert expression to postfix
-static TOKEN * tk;                                           // Deposit tokens here 
+static TOKEN * tk;						// Deposit tokens here 
 SYM * lookup();
 SYM * newsym();
 
@@ -78,10 +78,10 @@ void init_expr(void)
 	for(i=0; i<128; ++i)                                 // Mark all entries END
 		tokcl[i] = END;
 
-	for(i=0, p=itokcl; *p!=1; ++p)
+	for(i=0, p=itokcl; *p!=1; p++)
 	{
 		if (*p == 0)
-			++i;
+			i++;
 		else 
 			tokcl[(int)(*p)] = (char)i;
 	}

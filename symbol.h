@@ -22,7 +22,6 @@ extern char subttl[];
 SYM * lookup(char *, int, int);
 void init_sym(void);
 SYM * newsym(char *, int, int);
-char * nstring(char *);
 void sym_decl(SYM *);
 int syg_fix(void);
 int symtable(void);

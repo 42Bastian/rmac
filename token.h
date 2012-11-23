@@ -28,7 +28,7 @@
 // Tunable definitions
 #define LNSIZ           256					// Maximum size of a line of text
 #define TOKBUFSIZE      400					// Size of token-line buffer
-#define QUANTUM         4096L				// #bytes to eat at a time from a file
+#define QUANTUM         4096L				// # bytes to eat at a time from a file
 #define LNBUFSIZ        (QUANTUM*2)			// Size of file's buffer
 #define KWSIZE          7					// Maximum size of keyword in kwtab.h
 
@@ -142,6 +142,7 @@ extern unsigned orgactive;
 extern unsigned orgaddr;
 extern LONG sloc;
 extern int mjump_align;
+extern char * string[];
 
 // Prototypes
 int include(int, char *);
@@ -152,5 +153,6 @@ int fpop(void);
 //int d_goto(WORD);
 int d_goto(void);
 INOBJ * a_inobj(int);
+void DumpTokenBuffer(void);
 
 #endif // __TOKEN_H__

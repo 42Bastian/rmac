@@ -21,72 +21,72 @@
 #define DEF_KW
 #include "kwtab.h"
 
-TOKEN exprbuf[128];                                         // Expression buffer 
+TOKEN exprbuf[128];		// Expression buffer 
 
 // Directive handler table
 int (*dirtab[])() = {
-   d_org,                                                   // 0 org
-   d_even,                                                  // 1 even
-   d_unimpl,                                                // 2 .6502
-   d_68000,                                                 // 3 .68000 
-   d_bss,                                                   // 4 bss
-   d_data,                                                  // 5 data 
-   d_text,                                                  // 6 text 
-   d_abs,                                                   // 7 abs 
-   d_comm,                                                  // 8 comm 
-   d_init,                                                  // 9 init 
-   d_cargs,                                                 // 10 cargs 
-   d_goto,                                                  // 11 goto 
-   d_dc,                                                    // 12 dc 
-   d_ds,                                                    // 13 ds 
-   d_undmac,                                                // 14 undefmac 
-   d_gpu,                                                   // 15 .gpu
-   d_dsp,                                                   // 16 .dsp
-   d_dcb,                                                   // 17 dcb 
-   d_unimpl,                                                // 18* set 
-   d_unimpl,                                                // 19* reg 
-   d_unimpl,                                                // 20 dump 
-   d_incbin,                                                // 21 .incbin //load 
-   d_unimpl,                                                // 22 disable 
-   d_unimpl,                                                // 23 enable 
-   d_globl,                                                 // 24 globl 
-   d_regbank0,                                              // 25 .regbank0
-   d_regbank1,                                              // 26 .regbank1
-   d_unimpl,                                                // 27 xdef 
-   d_assert,                                                // 28 assert 
-   d_unimpl,                                                // 29* if 
-   d_unimpl,                                                // 30* endif 
-   d_unimpl,                                                // 31* endc 
-   d_unimpl,                                                // 32* iif 
-   d_include,                                               // 33 include 
-   fpop,                                                    // 34 end 
-   d_unimpl,                                                // 35* macro 
-   exitmac,                                                 // 36* exitm 
-   d_unimpl,                                                // 37* endm 
-   d_list,                                                  // 38 list 
-   d_nlist,                                                 // 39 nlist 
-   d_long,                                                  // 40* rept 
-   d_phrase,                                                // 41* endr 
-   d_dphrase,                                               // 42 struct 
-   d_qphrase,                                               // 43 ends 
-   d_title,                                                 // 44 title 
-   d_subttl,                                                // 45 subttl 
-   eject,                                                   // 46 eject 
-   d_unimpl,                                                // 47 error 
-   d_unimpl,                                                // 48 warn 
-   d_noclear,                                               // 49 .noclear
-   d_equrundef,                                             // 50 .equrundef/.regundef
-   d_ccundef,                                               // 51 .ccundef
-   d_print,                                                 // 52 .print
-   d_gpumain,                                               // 53 .gpumain
-   d_jpad,                                                  // 54 .jpad
-   d_nojpad,                                                // 55 .nojpad
-   d_fail,                                                  // 56 .fail
+   d_org,				// 0 org
+   d_even,				// 1 even
+   d_unimpl,			// 2 .6502
+   d_68000,				// 3 .68000 
+   d_bss,				// 4 bss
+   d_data,				// 5 data 
+   d_text,				// 6 text 
+   d_abs,				// 7 abs 
+   d_comm,				// 8 comm 
+   d_init,				// 9 init 
+   d_cargs,				// 10 cargs 
+   d_goto,				// 11 goto 
+   d_dc,				// 12 dc 
+   d_ds,				// 13 ds 
+   d_undmac,			// 14 undefmac 
+   d_gpu,				// 15 .gpu
+   d_dsp,				// 16 .dsp
+   d_dcb,				// 17 dcb 
+   d_unimpl,			// 18* set 
+   d_unimpl,			// 19* reg 
+   d_unimpl,			// 20 dump 
+   d_incbin,			// 21 .incbin //load 
+   d_unimpl,			// 22 disable 
+   d_unimpl,			// 23 enable 
+   d_globl,				// 24 globl 
+   d_regbank0,			// 25 .regbank0
+   d_regbank1,			// 26 .regbank1
+   d_unimpl,			// 27 xdef 
+   d_assert,			// 28 assert 
+   d_unimpl,			// 29* if 
+   d_unimpl,			// 30* endif 
+   d_unimpl,			// 31* endc 
+   d_unimpl,			// 32* iif 
+   d_include,			// 33 include 
+   fpop,				// 34 end 
+   d_unimpl,			// 35* macro 
+   exitmac,				// 36* exitm 
+   d_unimpl,			// 37* endm 
+   d_list,				// 38 list 
+   d_nlist,				// 39 nlist 
+   d_long,				// 40* rept 
+   d_phrase,			// 41* endr 
+   d_dphrase,			// 42 struct 
+   d_qphrase,			// 43 ends 
+   d_title,				// 44 title 
+   d_subttl,			// 45 subttl 
+   eject,				// 46 eject 
+   d_unimpl,			// 47 error 
+   d_unimpl,			// 48 warn 
+   d_noclear,			// 49 .noclear
+   d_equrundef,			// 50 .equrundef/.regundef
+   d_ccundef,			// 51 .ccundef
+   d_print,				// 52 .print
+   d_gpumain,			// 53 .gpumain
+   d_jpad,				// 54 .jpad
+   d_nojpad,			// 55 .nojpad
+   d_fail,				// 56 .fail
 };
 
 
 //
-// .org - Set origin
+// .fail - User abort
 //
 int d_fail(void)
 {
@@ -881,7 +881,7 @@ int d_dc(WORD siz)
 		defined = (WORD)(eattr & DEFINED);
 
 		if ((challoc - ch_size) < 4)
-			chcheck(4L);
+			chcheck(4);
 
 		switch (siz)
 		{

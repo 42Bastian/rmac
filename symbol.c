@@ -11,12 +11,12 @@
 #include "procln.h"
 #include "error.h"
 
-static SYM * sytab[NBUCKETS];                               // User symbol-table header
-int curenv;                                                 // Current enviroment number
-SYM * sorder;                                               // * -> Symbols, in order of reference
-SYM * sordtail;                                             // * -> Last symbol in sorder list
-SYM * sdecl;                                                // * -> Symbols, in order of declaration
-SYM * sdecltail;                                            // * -> Last symbol in sdecl list
+static SYM * sytab[NBUCKETS];               // User symbol-table header
+int curenv;                                 // Current enviroment number
+SYM * sorder;                               // * -> Symbols, in order of reference
+SYM * sordtail;                             // * -> Last symbol in sorder list
+SYM * sdecl;                                // * -> Symbols, in order of declaration
+SYM * sdecltail;                            // * -> Last symbol in sdecl list
 
 // Tags for marking symbol spaces
 // a = absolute
@@ -34,38 +34,16 @@ static char tdb_text[8] = {
 //
 void init_sym(void)
 {
-	int i;                                                   // Iterator
+	int i;                                      // Iterator
 
-	for(i=0; i<NBUCKETS; ++i)                            // Initialise symbol hash table
+	for(i=0; i<NBUCKETS; ++i)                   // Initialise symbol hash table
 		sytab[i] = NULL;
 
-	curenv = 1;                                              // Init local symbol enviroment
-	sorder = NULL;                                           // Init symbol-reference list
+	curenv = 1;                                 // Init local symbol enviroment
+	sorder = NULL;                              // Init symbol-reference list
 	sordtail = NULL;
-	sdecl = NULL;                                            // Init symbol-decl list
+	sdecl = NULL;                               // Init symbol-decl list
 	sdecltail = NULL;
-}
-
-
-//
-// Allocate and Return Pointer to a Copy of a String
-//
-char * nstring(char * str)
-{
-	long i;
-	char * s, * d;
-
-	for(i=0; str[i]; ++i)
-		;
-
-	s = d = amem(i + 1);
-
-	while (*str)
-		*d++ = *str++;
-
-	*d++ = '\0';
-	
-	return s;
 }
 
 
@@ -74,10 +52,9 @@ char * nstring(char * str)
 //
 int syhash(char * name, int envno)
 {
-	int sum, k;                                              // Hash calculation
-	k = 0;
+	int sum, k = 0;                             // Hash calculation
 
-	for(sum=envno; *name; ++name)
+	for(sum=envno; *name; name++)
 	{
 		if (k++ == 1)
 			sum += *name << 2;
@@ -94,11 +71,12 @@ int syhash(char * name, int envno)
 //
 SYM * newsym(char * name, int type, int envno)
 {
-	int hash;                                                // Symbol hash value
-	SYM * sy;                                                // Pointer to symbol
+	int hash;                                   // Symbol hash value
+	SYM * sy;                                   // Pointer to symbol
 
 	// Allocate the symbol
-	sy = (SYM *)amem((long)(sizeof(SYM)));
+//	sy = (SYM *)amem((long)(sizeof(SYM)));
+	sy = (SYM *)malloc(sizeof(SYM));
 
 	if (sy == NULL)
 	{
@@ -106,18 +84,21 @@ SYM * newsym(char * name, int type, int envno)
 		return NULL;
 	}
 
-	sy->sname = nstring(name);
+//	sy->sname = nstring(name);
+	sy->sname = strdup(name);
 
 	// Fill-in the symbol
 	sy->stype  = (BYTE)type;
 	sy->senv   = (WORD)envno;
 	sy->sattr  = 0;
-
+#if 0
 	if (rgpu || rdsp)
 		sy->sattre = RISCSYM;
 	else
 		sy->sattre = 0;
-
+#else
+	sy->sattre = (rgpu || rdsp ? RISCSYM : 0);
+#endif
 	sy->svalue = 0;
 
 	// Install symbol in symbol table
@@ -127,14 +108,14 @@ SYM * newsym(char * name, int type, int envno)
 
 	// Append symbol to symbol-order list
 	if (sorder == NULL)
-		sorder = sy;                                          // Add first symbol 
+		sorder = sy;                            // Add first symbol 
 	else
-		sordtail->sorder = sy;                                // Or append to tail of list
+		sordtail->sorder = sy;                  // Or append to tail of list
 
 	sy->sorder = NULL;
 	sordtail = sy;
 
-	return sy;                                              // Return pointer to symbol
+	return sy;                                  // Return pointer to symbol
 }
 
 
@@ -144,9 +125,10 @@ SYM * newsym(char * name, int type, int envno)
 //
 SYM * lookup(char * name, int type, int envno)
 {
-	SYM * sy;                                                // Symbol record pointer
-	int k, sum;                                              // Hash bucket calculation
-	char * s;                                                // String pointer
+#if 0
+	SYM * sy;                                   // Symbol record pointer
+	int k, sum;                                 // Hash bucket calculation
+	char * s;                                   // String pointer
 
 	// Pick a hash-bucket (SAME algorithm as syhash())
 	k = 0;
@@ -161,20 +143,23 @@ SYM * lookup(char * name, int type, int envno)
 	}
 
 	sy = sytab[sum & (NBUCKETS-1)];
+#else
+	SYM * sy = sytab[syhash(name, envno)];
+#endif
 
 	// Do linear-search for symbol in bucket
 	while (sy != NULL)
 	{
-		if (sy->stype == type &&                         // Type, envno and name must match
-			sy->senv  == envno &&
-			*name == *sy->sname &&                         // Fast check for first character
-			!strcmp(name, sy->sname))
+		if (sy->stype == type                   // Type, envno and name must match
+			&& sy->senv  == envno
+			&& *name == *sy->sname              // Fast check for first character
+			&& !strcmp(name, sy->sname))
 			break;
 		else
 			sy = sy->snext;
 	}
 
-	return sy;                                              // Return NULL or matching symbol
+	return sy;                                  // Return NULL or matching symbol
 }
 
 
@@ -209,7 +194,7 @@ int syg_fix(void)
 
 	// Scan through all symbols;
 	// If a symbol is REFERENCED but not DEFINED, then make it global.
-	for(sy = sorder; sy != NULL; sy = sy->sorder)
+	for(sy=sorder; sy!=NULL; sy=sy->sorder)
 	{
 		if (sy->stype == LABEL && sy->senv == 0
 			&& ((sy->sattr & (REFERENCED|DEFINED)) == REFERENCED))
@@ -225,7 +210,7 @@ int syg_fix(void)
 //
 int uc_string(char * s)
 {
-	for(; *s; ++s)
+	for(; *s; s++)
 	{
 		if (*s >= 'a' && *s <= 'z')
 			*s -= 32;
@@ -240,7 +225,7 @@ int uc_string(char * s)
 // number is put in `.senv'. Return the number of symbols that will be in the
 // symbol table.
 //
-int sy_assign(char * buf, char *(*constr)())
+int sy_assign(char * buf, char *(* constr)())
 {
 	SYM * sy;
 	int scount;
@@ -332,7 +317,8 @@ int symtable(void)
 
 	// Allocate storage for list headers and partition all labels.  
 	// Throw away macros and macro arguments.
-	sy = (SYM **)amem((LONG)(128 * sizeof(LONG)));
+//	sy = (SYM **)amem((LONG)(128 * sizeof(LONG)));
+	sy = (SYM **)malloc(128 * sizeof(LONG));
 
 	for(i=0; i<128; ++i)
 		sy[i] = NULL;
@@ -346,7 +332,7 @@ int symtable(void)
 			r = NULL;
 
 			if (p->stype != LABEL)
-				continue;                    // Ignore non-labels
+				continue;                   // Ignore non-labels
 
 			if (p->sattre & UNDEF_EQUR)
 				continue;
@@ -360,12 +346,12 @@ int symtable(void)
 			}
 
 			if (r == NULL)
-			{                                    // Insert at front of list
+			{                               // Insert at front of list
 				p->snext = sy[j];
 				sy[j] = p;
 			}
 			else
-			{                                           // Insert in middle or append to list
+			{                               // Insert in middle or append to list
 				p->snext = r->snext;
 				r->snext = p;
 			}

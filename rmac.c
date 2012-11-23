@@ -308,14 +308,16 @@ char * amem(LONG amount)
 {
 	char * p;
 
-	if (amount & 1)                                           // Keep word alignment
-		++amount;
+//	if (amount & 1)								// Keep word alignment
+//		amount++;
+	amount = (amount + 1) & ~(0x01);			// Keep word alignment
 
+	// Honor *small* request (< 64 bytes)
 	if (amount < A_THRESH)
-	{                                  // Honor *small* request
+	{
 		if (a_amount < amount)
 		{
-			a_ptr = amem(A_AMOUNT);
+			a_ptr = amem(A_AMOUNT);				// Allocate 4K bytes
 			a_amount = A_AMOUNT;
 		}
 
@@ -325,11 +327,11 @@ char * amem(LONG amount)
 	}
 	else
 	{
-		amemtot += amount;                                    // Bump total alloc
-		p = (char *)malloc(amount);                           // Get memory from malloc
+		amemtot += amount;						// Bump total alloc
+		p = (char *)malloc(amount);				// Get memory from malloc
 
-		if ((LONG)p == (LONG)NULL)
-			fatal("memory exhausted");
+		if (p == NULL)
+			fatal("Memory exhausted!");
 
 		memset(p, 0, amount);
 	}

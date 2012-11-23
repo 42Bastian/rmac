@@ -13,7 +13,7 @@
 
 // Globals, externals etc
 extern LONG curuniq;
-extern TOKEN **argp;
+extern TOKEN ** argp;
 extern int mjump_align;
 
 // Prototypes

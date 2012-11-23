@@ -17,51 +17,51 @@
 #include "listing.h"
 
 // Section descriptors
-SECT sect[NSECTS];                                          // All sections... 
-int cursect;                                                // Current section number
+SECT sect[NSECTS];						// All sections... 
+int cursect;							// Current section number
 
-// These are copied from the section descriptor, the current code chunk descriptor and the current
-// fixup chunk descriptor when a switch is made into a section.  They are copied back to the 
-// descriptors when the section is left.
-WORD scattr;                                                // Section attributes 
-LONG sloc;                                                  // Current loc in section 
+// These are copied from the section descriptor, the current code chunk
+// descriptor and the current fixup chunk descriptor when a switch is made into
+// a section.  They are copied back to the descriptors when the section is left.
+WORD scattr;							// Section attributes 
+LONG sloc;								// Current loc in section 
 
-CHUNK * scode;                                              // Current (last) code chunk 
-LONG challoc;                                               // #bytes alloc'd to code chunk 
-LONG ch_size;                                               // #bytes used in code chunk 
-char * chptr;                                               // Deposit point in code chunk buffer 
+CHUNK * scode;							// Current (last) code chunk 
+LONG challoc;							// # bytes alloc'd to code chunk 
+LONG ch_size;							// # bytes used in code chunk 
+char * chptr;							// Deposit point in code chunk buffer 
 
-CHUNK * sfix;                                               // Current (last) fixup chunk
-LONG fchalloc;                                              // #bytes alloc'd to fixup chunk
-LONG fchsize;                                               // #bytes used in fixup chunk
-PTR fchptr;                                                 // Deposit point in fixup chunk buffer
+CHUNK * sfix;							// Current (last) fixup chunk
+LONG fchalloc;							// # bytes alloc'd to fixup chunk
+LONG fchsize;							// # bytes used in fixup chunk
+PTR fchptr;								// Deposit point in fixup chunk buffer
 
-unsigned fwdjump[MAXFWDJUMPS];                              // forward jump check table
-unsigned fwindex = 0;                                       // forward jump index
+unsigned fwdjump[MAXFWDJUMPS];			// forward jump check table
+unsigned fwindex = 0;					// forward jump index
 
-// Return a size (SIZB, SIZW, SIZL) or 0, depending on what kind of fixup is associated
-// with a location.
+// Return a size (SIZB, SIZW, SIZL) or 0, depending on what kind of fixup is
+// associated with a location.
 static char fusiztab[] = {
-   0,                                                       // FU_QUICK
-   1,                                                       // FU_BYTE
-   2,                                                       // FU_WORD
-   2,                                                       // FU_WBYTE
-   4,                                                       // FU_LONG
-   1,                                                       // FU_BBRA
-   0,                                                       // (unused)
-   1,                                                       // FU_6BRA
+   0,						// FU_QUICK
+   1,						// FU_BYTE
+   2,						// FU_WORD
+   2,						// FU_WBYTE
+   4,						// FU_LONG
+   1,						// FU_BBRA
+   0,						// (unused)
+   1,						// FU_6BRA
 };
 
 // Offset to REAL fixup location
 static char fusizoffs[] = {
-   0,                                                       // FU_QUICK
-   0,                                                       // FU_BYTE
-   0,                                                       // FU_WORD
-   1,                                                       // FU_WBYTE
-   0,                                                       // FU_LONG
-   1,                                                       // FU_BBRA
-   0,                                                       // (unused)
-   0,                                                       // FU_6BRA
+   0,						// FU_QUICK
+   0,						// FU_BYTE
+   0,						// FU_WORD
+   1,						// FU_WBYTE
+   0,						// FU_LONG
+   1,						// FU_BBRA
+   0,						// (unused)
+   0,						// FU_6BRA
 };
 
 
@@ -214,7 +214,7 @@ int chcheck(LONG amt)
 	SECT * p;
 
 	if (scattr & SBSS)
-		return 0;                             // If in BSS section, forget it
+		return 0;							// If in BSS section, forget it
 
 	if (!amt)
 		amt = CH_THRESHOLD;
@@ -226,18 +226,20 @@ int chcheck(LONG amt)
 		amt = CH_CODE_SIZE;
 
 	p = &sect[cursect];
-	cp = (CHUNK *)amem((long)(sizeof(CHUNK) + amt));
+	cp = (CHUNK *)malloc(sizeof(CHUNK) + amt);
 
+	// First chunk in section
 	if (scode == NULL)
-	{                                      // First chunk in section
+	{
 		cp->chprev = NULL;
 		p->sfcode = cp;
 	}
+	// Add chunk to other chunks
 	else
-	{                                                 // Add chunk to other chunks
+	{
 		cp->chprev = scode;
 		scode->chnext = cp;
-		scode->ch_size = ch_size;                             // Save old chunk's globals 
+		scode->ch_size = ch_size;			// Save old chunk's globals 
 	}
 
 	// Setup chunk and global vars
@@ -262,13 +264,14 @@ int fixup(WORD attr, LONG loc, TOKEN * fexpr)
 	CHUNK * cp;
 	SECT * p;
 
-	// Compute length of expression (could be faster); determine if it's the single-symbol case;
-	// no expression if it's just a mark. This code assumes 16 bit WORDs and 32 bit LONGs
+	// Compute length of expression (could be faster); determine if it's the
+	// single-symbol case; no expression if it's just a mark. This code assumes
+	// 16 bit WORDs and 32 bit LONGs
 	if (*fexpr == SYMBOL && fexpr[2] == ENDEXPR)
 	{
 		if ((attr & 0x0F00) == FU_JR) // SCPCD : correct bit mask for attr (else other FU_xxx will match) NYAN !
 		{
-			i = 18;                  // Just a single symbol
+			i = 18;							// Just a single symbol
 		}
 		else
 		{
@@ -279,13 +282,13 @@ int fixup(WORD attr, LONG loc, TOKEN * fexpr)
 	{
 		attr |= FU_EXPR;
 
-		for(len=0; fexpr[len]!=ENDEXPR; ++len)
+		for(len=0; fexpr[len]!=ENDEXPR; len++)
 		{
 			if (fexpr[len] == CONST || fexpr[len] == SYMBOL)
-				++len;
+				len++;
 		}
 
-		++len;                                                // Add 1 for ENDEXPR 
+		len++;								// Add 1 for ENDEXPR 
 		i = (len << 2) + 12;
 	}
 
@@ -293,7 +296,8 @@ int fixup(WORD attr, LONG loc, TOKEN * fexpr)
 	if ((fchalloc - fchsize) < i)
 	{
 		p = &sect[cursect];
-		cp = (CHUNK *)amem((long)(sizeof(CHUNK) + CH_FIXUP_SIZE));
+//		cp = (CHUNK *)amem((long)(sizeof(CHUNK) + CH_FIXUP_SIZE));
+		cp = (CHUNK *)malloc(sizeof(CHUNK) + CH_FIXUP_SIZE);
 
 		if (sfix == NULL)
 		{                                 // First fixup chunk in section
@@ -344,7 +348,6 @@ int fixup(WORD attr, LONG loc, TOKEN * fexpr)
 	}
 
 	fchsize += i;
-
 	return 0;
 }
 

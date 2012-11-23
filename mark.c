@@ -92,7 +92,8 @@ int amark(void)
 	MCHUNK * p;
 
 	// Alloc mark block header (and data) and set it up.
-	p = (MCHUNK *)amem((long)(sizeof(MCHUNK)) + MARK_ALLOC_INCR);
+//	p = (MCHUNK *)amem((long)(sizeof(MCHUNK)) + MARK_ALLOC_INCR);
+	p = (MCHUNK *)malloc(sizeof(MCHUNK) + MARK_ALLOC_INCR);
 	p->mcnext = NULL;
 	p->mcalloc = MARK_ALLOC_INCR;
 	p->mcptr.cp = (char *)(((char *)p) + sizeof(MCHUNK));

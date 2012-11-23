@@ -12,26 +12,27 @@
 #include "macro.h"
 #include "error.h"
 
-#define DECL_KW                                             // Declare keyword arrays
-#define DEF_KW                                              // Declare keyword values 
-#include "kwtab.h"                                          // Incl generated keyword tables & defs
+#define DECL_KW				// Declare keyword arrays
+#define DEF_KW				// Declare keyword values 
+#include "kwtab.h"			// Incl generated keyword tables & defs
 
-int lnsave;                                                 // 1; strcpy() text of current line
-int curlineno;                                              // Current line number
-int totlines;                                               // Total # of lines
-int mjump_align = 0;                                        // mjump alignment flag
-char lntag;                                                 // Line tag
-char * curfname;                                            // Current filename
-char tolowertab[128];                                       // Uppercase ==> lowercase 
-char hextab[128];                                           // Table of hex values
-char dotxtab[128];                                          // Table for ".b", ".s", etc.
-char irbuf[LNSIZ];                                          // Text for .rept block line
-char lnbuf[LNSIZ];                                          // Text of current line
-WORD filecount;                                             // Unique file number counter
-WORD cfileno;                                               // Current file number
-TOKEN * tok;                                                // Ptr to current token
-TOKEN * etok;                                               // Ptr past last token in tokbuf[]
-TOKEN tokeol[1] = {EOL};                                    // Bailout end-of-line token
+int lnsave;					// 1; strcpy() text of current line
+int curlineno;				// Current line number
+int totlines;				// Total # of lines
+int mjump_align = 0;		// mjump alignment flag
+char lntag;					// Line tag
+char * curfname;			// Current filename
+char tolowertab[128];		// Uppercase ==> lowercase 
+char hextab[128];			// Table of hex values
+char dotxtab[128];			// Table for ".b", ".s", etc.
+char irbuf[LNSIZ];			// Text for .rept block line
+char lnbuf[LNSIZ];			// Text of current line
+WORD filecount;				// Unique file number counter
+WORD cfileno;				// Current file number
+TOKEN * tok;				// Ptr to current token
+TOKEN * etok;				// Ptr past last token in tokbuf[]
+TOKEN tokeol[1] = {EOL};	// Bailout end-of-line token
+char * string[TOKBUFSIZE];	// Token buffer string pointer storage
 
 // File record, used to maintain a list of every include file ever visited
 #define FILEREC struct _filerec
@@ -44,74 +45,74 @@ FILEREC
 FILEREC * filerec;
 FILEREC * last_fr;
 
-INOBJ * cur_inobj;                                          // Ptr current input obj (IFILE/IMACRO)
-static INOBJ * f_inobj;                                     // Ptr list of free INOBJs
-static IFILE * f_ifile;                                     // Ptr list of free IFILEs
-static IMACRO * f_imacro;                                   // Ptr list of free IMACROs
+INOBJ * cur_inobj;						// Ptr current input obj (IFILE/IMACRO)
+static INOBJ * f_inobj;					// Ptr list of free INOBJs
+static IFILE * f_ifile;					// Ptr list of free IFILEs
+static IMACRO * f_imacro;				// Ptr list of free IMACROs
 
-static TOKEN tokbuf[TOKBUFSIZE];                            // Token buffer (stack-like, all files)
+static TOKEN tokbuf[TOKBUFSIZE];		// Token buffer (stack-like, all files)
 
 char chrtab[] = {
-   ILLEG, ILLEG, ILLEG, ILLEG,                                    // NUL SOH STX ETX 
-   ILLEG, ILLEG, ILLEG, ILLEG,                                    // EOT ENQ ACK BEL 
-   ILLEG, WHITE, ILLEG, ILLEG,                                    // BS HT LF VT 
-   WHITE, ILLEG, ILLEG, ILLEG,                                    // FF CR SO SI 
+	ILLEG, ILLEG, ILLEG, ILLEG,			// NUL SOH STX ETX 
+	ILLEG, ILLEG, ILLEG, ILLEG,			// EOT ENQ ACK BEL 
+	ILLEG, WHITE, ILLEG, ILLEG,			// BS HT LF VT 
+	WHITE, ILLEG, ILLEG, ILLEG,			// FF CR SO SI 
 
-   ILLEG, ILLEG, ILLEG, ILLEG,                                    // DLE DC1 DC2 DC3 
-   ILLEG, ILLEG, ILLEG, ILLEG,                                    // DC4 NAK SYN ETB 
-   ILLEG, ILLEG, ILLEG, ILLEG,                                    // CAN EM SUB ESC 
-   ILLEG, ILLEG, ILLEG, ILLEG,                                    // FS GS RS US 
+	ILLEG, ILLEG, ILLEG, ILLEG,			// DLE DC1 DC2 DC3 
+	ILLEG, ILLEG, ILLEG, ILLEG,			// DC4 NAK SYN ETB 
+	ILLEG, ILLEG, ILLEG, ILLEG,			// CAN EM SUB ESC 
+	ILLEG, ILLEG, ILLEG, ILLEG,			// FS GS RS US 
 
-   WHITE, MULTX, MULTX, SELF,                                     // SP ! " #
-   MULTX+CTSYM, MULTX, SELF, MULTX,                               // $ % & '
-   SELF, SELF, SELF, SELF,                                        // ( ) * +
-   SELF, SELF, STSYM, SELF,                                       // , - . /
+	WHITE, MULTX, MULTX, SELF,			// SP ! " #
+	MULTX+CTSYM, MULTX, SELF, MULTX,	// $ % & '
+	SELF, SELF, SELF, SELF,				// ( ) * +
+	SELF, SELF, STSYM, SELF,			// , - . /
 
-   DIGIT+HDIGIT+CTSYM, DIGIT+HDIGIT+CTSYM,                        // 0 1 
-   DIGIT+HDIGIT+CTSYM, DIGIT+HDIGIT+CTSYM,                        // 2 3 
-   DIGIT+HDIGIT+CTSYM, DIGIT+HDIGIT+CTSYM,                        // 4 5 
-   DIGIT+HDIGIT+CTSYM, DIGIT+HDIGIT+CTSYM,                        // 6 7 
-   DIGIT+HDIGIT+CTSYM, DIGIT+HDIGIT+CTSYM,                        // 8 9 
-   MULTX, MULTX,                                                  // : ; 
-   MULTX, MULTX, MULTX, STSYM+CTSYM,                              // < = > ? 
+	DIGIT+HDIGIT+CTSYM, DIGIT+HDIGIT+CTSYM,		// 0 1 
+	DIGIT+HDIGIT+CTSYM, DIGIT+HDIGIT+CTSYM,		// 2 3 
+	DIGIT+HDIGIT+CTSYM, DIGIT+HDIGIT+CTSYM,		// 4 5 
+	DIGIT+HDIGIT+CTSYM, DIGIT+HDIGIT+CTSYM,		// 6 7 
+	DIGIT+HDIGIT+CTSYM, DIGIT+HDIGIT+CTSYM,		// 8 9 
+	MULTX, MULTX,								// : ; 
+	MULTX, MULTX, MULTX, STSYM+CTSYM,			// < = > ? 
 
-   MULTX, STSYM+CTSYM+HDIGIT,                                     // @ A
-   (char)((BYTE)DOT)+STSYM+CTSYM+HDIGIT, STSYM+CTSYM+HDIGIT,              // B C
-   STSYM+CTSYM+HDIGIT, STSYM+CTSYM+HDIGIT,                        // D E
-   STSYM+CTSYM+HDIGIT, STSYM+CTSYM,                               // F G
-   STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,            // H I J K
-   (char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,  // L M N O
+	MULTX, STSYM+CTSYM+HDIGIT,									// @ A
+	(char)((BYTE)DOT)+STSYM+CTSYM+HDIGIT, STSYM+CTSYM+HDIGIT,	// B C
+	STSYM+CTSYM+HDIGIT, STSYM+CTSYM+HDIGIT,						// D E
+	STSYM+CTSYM+HDIGIT, STSYM+CTSYM,							// F G
+	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,			// H I J K
+	(char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,	// L M N O
 
-   STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM,  // P Q R S
-   STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM,  // T U V W
-   STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, SELF,                   // X Y Z [
-   SELF, SELF, MULTX, STSYM+CTSYM,                                // \ ] ^ _
+	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM,	// P Q R S
+	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM,	// T U V W
+	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, SELF,				// X Y Z [
+	SELF, SELF, MULTX, STSYM+CTSYM,								// \ ] ^ _
 
-   ILLEG, STSYM+CTSYM+HDIGIT,                                     // ` a
-   (char)((BYTE)DOT)+STSYM+CTSYM+HDIGIT, STSYM+CTSYM+HDIGIT,              // b c
-   STSYM+CTSYM+HDIGIT, STSYM+CTSYM+HDIGIT,                        // d e
-   STSYM+CTSYM+HDIGIT, STSYM+CTSYM,                               // f g
-   STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,            // h i j k
-   (char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,  // l m n o
+	ILLEG, STSYM+CTSYM+HDIGIT,									// ` a
+	(char)((BYTE)DOT)+STSYM+CTSYM+HDIGIT, STSYM+CTSYM+HDIGIT,	// b c
+	STSYM+CTSYM+HDIGIT, STSYM+CTSYM+HDIGIT,						// d e
+	STSYM+CTSYM+HDIGIT, STSYM+CTSYM,							// f g
+	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,			// h i j k
+	(char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,	// l m n o
 
-   STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM,  // p q r s 
-   STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM,  // t u v w 
-   STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, SELF,                   // x y z { 
-   SELF, SELF, SELF, ILLEG                                        // | } ~ DEL 
+	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM,	// p q r s 
+	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM,	// t u v w 
+	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, SELF,				// x y z { 
+	SELF, SELF, SELF, ILLEG										// | } ~ DEL 
 };
 
 // Names of registers
 static char * regname[] = {
-   "d0", "d1",  "d2",  "d3", "d4", "d5", "d6", "d7",
-   "a0", "a1",  "a2",  "a3", "a4", "a5", "a6", "a7",
-   "pc", "ssp", "usp", "sr", "ccr"
+	"d0", "d1",  "d2",  "d3", "d4", "d5", "d6", "d7",
+	"a0", "a1",  "a2",  "a3", "a4", "a5", "a6", "a7",
+	"pc", "ssp", "usp", "sr", "ccr"
 };
 
 static char * riscregname[] = {
-    "r0",  "r1",  "r2",  "r3",  "r4", "r5",   "r6",  "r7", 
-    "r8",  "r9", "r10", "r11", "r12", "r13", "r14", "r15",
-   "r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",
-   "r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31"
+	 "r0",  "r1",  "r2",  "r3",  "r4", "r5",   "r6",  "r7", 
+	 "r8",  "r9", "r10", "r11", "r12", "r13", "r14", "r15",
+	"r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",
+	"r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31"
 };
 
 
@@ -142,7 +143,8 @@ INOBJ * a_inobj(int typ)
 
 	// Allocate and initialize INOBJ first
 	if (f_inobj == NULL)
-		inobj = (INOBJ *)amem((LONG)sizeof(INOBJ));
+//		inobj = (INOBJ *)amem((LONG)sizeof(INOBJ));
+		inobj = (INOBJ *)malloc(sizeof(INOBJ));
 	else
 	{
 		inobj = f_inobj;
@@ -151,9 +153,10 @@ INOBJ * a_inobj(int typ)
 
 	switch (typ)
 	{
-	case SRC_IFILE:                                       // Alloc and init an IFILE
+	case SRC_IFILE:							// Alloc and init an IFILE
 		if (f_ifile == NULL)
-			ifile = (IFILE *)amem((LONG)sizeof(IFILE));
+//			ifile = (IFILE *)amem((LONG)sizeof(IFILE));
+			ifile = (IFILE *)malloc(sizeof(IFILE));
 		else
 		{
 			ifile = f_ifile;
@@ -162,9 +165,10 @@ INOBJ * a_inobj(int typ)
 
 		inobj->inobj.ifile = ifile;
 		break;
-	case SRC_IMACRO:                                      // Alloc and init an IMACRO 
+	case SRC_IMACRO:						// Alloc and init an IMACRO 
 		if (f_imacro == NULL)
-			imacro = (IMACRO *)amem((LONG)sizeof(IMACRO));
+//			imacro = (IMACRO *)amem((LONG)sizeof(IMACRO));
+			imacro = (IMACRO *)malloc(sizeof(IMACRO));
 		else
 		{
 			imacro = f_imacro;
@@ -173,14 +177,15 @@ INOBJ * a_inobj(int typ)
 
 		inobj->inobj.imacro = imacro;
 		break;
-	case SRC_IREPT:                                       // Alloc and init an IREPT
-		inobj->inobj.irept = (IREPT *)amem((LONG)sizeof(IREPT));
+	case SRC_IREPT:							// Alloc and init an IREPT
+//		inobj->inobj.irept = (IREPT *)amem((LONG)sizeof(IREPT));
+		inobj->inobj.irept = (IREPT *)malloc(sizeof(IREPT));
 		DEBUG printf("alloc IREPT\n");
 		break;
 	}
 
 	// Install INOBJ on top of input stack
-	inobj->in_ifent = ifent;                                 // Record .if context on entry
+	inobj->in_ifent = ifent;				// Record .if context on entry
 	inobj->in_type = (WORD)typ;
 	inobj->in_otok = tok;
 	inobj->in_etok = etok;
@@ -209,66 +214,69 @@ int mexpand(char * src, char * dest, int destsiz)
 {
 	char * s;
 	char * d = NULL;
-	char * dst;							// Next dest slot
-	char * edst;						// End+1 of dest buffer
+	char * dst;				// Next dest slot
+	char * edst;			// End+1 of dest buffer
 	int i;
-	int questmark;						// \? for testing argument existence
+	int questmark;			// \? for testing argument existence
 	TOKEN * tk;
-	char mname[128];					// Assume max size of a formal arg name
+	char mname[128];		// Assume max size of a formal arg name
 	int macnum;
 	SYM * arg;
 	IMACRO * imacro;
-	char numbuf[20];					// Buffer for text of CONSTs
+	char numbuf[20];		// Buffer for text of CONSTs
 
 	imacro = cur_inobj->inobj.imacro;
 	macnum = (int)(imacro->im_macro->sattr);
 
-	--destsiz;
+	destsiz--;
 	dst = dest;
 	edst = dest + destsiz;
 
 	// Check for (and skip over) any "label" on the line
 	s = src;
+
 	if (*s == ':')
 	{
 		while (*s != EOS && !(chrtab[*s] & WHITE))
-			++s;
+			s++;
 
 		if (*s != EOS)
-			++s;                                    // Skip first whitespace
+			s++;							// Skip first whitespace
 	}
 
 	// Expand the rest of the line
 	while (*s != EOS)
 	{
+		// Copy single character
 		if (*s != '\\')
-		{                                      // Copy single character
+		{
 			if (dst >= edst)
 				goto overflow;
 
 			*dst++ = *s++;
 		}
+		// Do macro expansion
 		else
-		{                                              // Do macro expansion
+		{
 			questmark = 0;
 
 			// Do special cases
 			switch (*++s)
 			{
-			case '\\':                                      // \\, \ (collapse to single backslash)
+			case '\\':						// \\, \ (collapse to single backslash)
 				if (dst >= edst)
 					goto overflow;
 
 				*dst++ = *s++;
 				continue;
-			case '?':                                       // \? <macro>  set `questmark' flag 
+			case '?':						// \? <macro>  set `questmark' flag 
 				++s;
 				questmark = 1;
 				break;
-			case '#':                                       // \#, number of arguments 
+			case '#':						// \#, number of arguments 
 				sprintf(numbuf, "%d", (int)imacro->im_nargs);
 				goto copystr;
-			case '!':                                       // \! size suffix supplied on invocation
+			case '!':						// \! size suffix supplied on invocation
 				switch ((int)imacro->im_siz)
 				{
 				case SIZN: d = "";   break;
@@ -278,7 +286,7 @@ int mexpand(char * src, char * dest, int destsiz)
 				}
 
 				goto copy_d;
-			case '~':                                       // ==> unique label string Mnnnn... 
+			case '~':						// ==> unique label string Mnnnn... 
 				sprintf(numbuf, "M%ud", curuniq);
 copystr:
 				d = numbuf;
@@ -311,16 +319,19 @@ copy_d:
 
 			// Get argument name: \name, \{name}
 			d = mname;
+
+			// \foo
 			if (*s != '{')
-			{                                    // \foo
+			{
 				do
 				{
 					*d++ = *s++;
 				}
 				while (chrtab[*s] & CTSYM);
 			}
+			// \\{foo} 
 			else
-			{                                          // \\{foo} 
+			{
 				for(++s; *s != EOS && *s != '}';)
 					*d++ = *s++;
 
@@ -332,15 +343,17 @@ copy_d:
 
 			*d = EOS;
 
-			// Lookup the argument and copy its (string) value into the destination string
+			// Lookup the argument and copy its (string) value into the
+			// destination string
 			DEBUG printf("mname='%s'\n", mname);
 
 			if ((arg = lookup(mname, MACARG, macnum)) == NULL)
 				return errors("undefined argument: '%s'", mname);
 			else
 			{
-				// Convert a string of tokens (terminated with EOL) back into text. If an argument 
-				// is out of range (not specified in the macro invocation) then it is ignored.
+				// Convert a string of tokens (terminated with EOL) back into
+				// text. If an argument is out of range (not specified in the
+				// macro invocation) then it is ignored.
 				i = (int)arg->svalue;
 arg_num:
 				DEBUG printf("~argnumber=%d\n", i);
@@ -365,12 +378,12 @@ arg_num:
 					continue;
 				}
 
-				if (tk != NULL)                                  // arg# is in range, so expand it
+				if (tk != NULL)				// arg# is in range, so expand it
 				{
 					while (*tk != EOL)
 					{
-						// Reverse-translation from a token number to a string.  This is a hack.
-						// It might be better table-driven.
+						// Reverse-translation from a token number to a string.
+						// This is a hack. It might be better table-driven.
 						d = NULL;
 
 						if ((*tk >= KW_D0) && !rdsp && !rgpu)
@@ -477,7 +490,7 @@ arg_num:
 								if (dst >= edst)
 									goto overflow;
 
-								*dst++ = (char)*(tk-1);
+								*dst++ = (char)*(tk - 1);
 								break;
 							}
 						}
@@ -516,14 +529,12 @@ overflow:
 //
 char * getmln(void)
 {
-	IMACRO * imacro;
-	LONG * strp;
 	unsigned source_addr;
 
-	imacro = cur_inobj->inobj.imacro;
-	strp = imacro->im_nextln;
+	IMACRO * imacro = cur_inobj->inobj.imacro;
+	LONG * strp = imacro->im_nextln;
 
-	if (strp == NULL)                                         // End-of-macro
+	if (strp == NULL)						// End-of-macro
 		return NULL;
 
 	imacro->im_nextln = (LONG *)*strp;
@@ -531,9 +542,9 @@ char * getmln(void)
 
 	if (!strcmp(imacro->im_macro->sname, "mjump") && !mjump_align)
 	{
-		// if we need to adjust the alignment of the jump source address to meet the rules of
-		// gpu main execution we need to skip the first nop of the macro. This is simpler than
-		// trying to insert nop's mid macro.
+		// if we need to adjust the alignment of the jump source address to
+		// meet the rules of gpu main execution we need to skip the first nop
+		// of the macro. This is simpler than trying to insert nop's mid macro.
 		source_addr = (orgactive) ? orgaddr : sloc;
 		source_addr += 8;
 
@@ -560,17 +571,15 @@ char * getmln(void)
 //
 char * getrln(void)
 {
-	IREPT * irept;
-	LONG * strp;
 
-	irept = cur_inobj->inobj.irept;
-	strp = irept->ir_nextln;         // initial null
+	IREPT * irept = cur_inobj->inobj.irept;
+	LONG * strp = irept->ir_nextln;			// initial null
 
 	// Do repeat at end of .rept block's string list
 	if (strp == NULL)
 	{
 		DEBUG printf("back-to-top-of-repeat-block count=%d\n", (int)irept->ir_count);
-		irept->ir_nextln = irept->ir_firstln;  // copy first line
+		irept->ir_nextln = irept->ir_firstln;	// copy first line
 
 		if (irept->ir_count-- == 0)
 		{
@@ -578,11 +587,10 @@ char * getrln(void)
 			return NULL;
 		}
 
-		strp = irept->ir_nextln;               //strp
+		strp = irept->ir_nextln;			//strp
 	}
 
-	strcpy(irbuf, (char*)(irept->ir_nextln + 1));
-
+	strcpy(irbuf, (char *)(irept->ir_nextln + 1));
 	DEBUG printf("repeat line='%s'\n", irbuf);
 	irept->ir_nextln = (LONG *)*strp;
 
@@ -599,31 +607,33 @@ int include(int handle, char * fname)
 	INOBJ * inobj;
 	FILEREC * fr;
 
+	// Verbose mode
 	if (verb_flag)
-		printf("[Including: %s]\n", fname);        // Verbose mode
+		printf("[Including: %s]\n", fname);
 
 	// Alloc and initialize include-descriptors
 	inobj = a_inobj(SRC_IFILE);
 	ifile = inobj->inobj.ifile;
 
-	ifile->ifhandle = handle;                                // Setup file handle
-	ifile->ifind = ifile->ifcnt = 0;                         // Setup buffer indices
-	ifile->ifoldlineno = curlineno;                          // Save old line number
-	ifile->ifoldfname = curfname;                            // Save old filename
-	ifile->ifno = cfileno;                                   // Save old file number
-	cfileno = ++filecount;                                   // Compute new file number
-	curfname = nstring(fname);	                              // Set current filename (alloc storage)
-	curlineno = 0;                                           // Start on line zero
+	ifile->ifhandle = handle;				// Setup file handle
+	ifile->ifind = ifile->ifcnt = 0;		// Setup buffer indices
+	ifile->ifoldlineno = curlineno;			// Save old line number
+	ifile->ifoldfname = curfname;			// Save old filename
+	ifile->ifno = cfileno;					// Save old file number
+	cfileno = filecount++;					// Compute new file number
+	curfname = strdup(fname);				// Set current filename (alloc storage)
+	curlineno = 0;							// Start on line zero
 
 	// Add another file to the file-record
-	fr = (FILEREC *)amem((LONG)sizeof(FILEREC));
+//	fr = (FILEREC *)amem((LONG)sizeof(FILEREC));
+	fr = (FILEREC *)malloc(sizeof(FILEREC));
 	fr->frec_next = NULL;
 	fr->frec_name = curfname;
 
 	if (last_fr == NULL)
-		filerec = fr;                                         // Add first filerec 
+		filerec = fr;						// Add first filerec 
 	else
-		last_fr->frec_next = fr;                              // Append to list of filerecs 
+		last_fr->frec_next = fr;			// Append to list of filerecs 
 
 	last_fr = fr;
 
@@ -636,13 +646,13 @@ int include(int handle, char * fname)
 //
 void init_token(void)
 {
-	int i;                                                   // Iterator
-	char * htab = "0123456789abcdefABCDEF";                   // Hex character table
+	int i;									// Iterator
+	char * htab = "0123456789abcdefABCDEF";	// Hex character table
 
-	lnsave = 0;                                              // Don't save lines
-	curfname = "";                                           // No file, empty filename
+	lnsave = 0;								// Don't save lines
+	curfname = "";							// No file, empty filename
 	filecount = (WORD)-1;
-	cfileno = (WORD)-1;                                      // cfileno gets bumped to 0
+	cfileno = (WORD)-1;						// cfileno gets bumped to 0
 	curlineno = 0;
 	totlines = 0;
 	etok = tokbuf;
@@ -655,29 +665,29 @@ void init_token(void)
 	lntag = SPACE;
 
 	// Initialize hex, "dot" and tolower tables
-	for(i=0; i<128; ++i)
+	for(i=0; i<128; i++)
 	{
 		hextab[i] = -1;
 		dotxtab[i] = 0;
 		tolowertab[i] = (char)i;
 	}
 
-	for(i=0; htab[i]!=EOS; ++i)
+	for(i=0; htab[i]!=EOS; i++)
 		hextab[htab[i]] = (char)((i < 16) ? i : i - 6);
 
-	for(i='A'; i<='Z'; ++i)
+	for(i='A'; i<='Z'; i++)
 		tolowertab[i] |= 0x20;
 
 	// These characters are legal immediately after a period
-	dotxtab['b'] = DOTB;                                     // .b .B .s .S 
+	dotxtab['b'] = DOTB;					// .b .B .s .S 
 	dotxtab['B'] = DOTB;
 	dotxtab['s'] = DOTB;
 	dotxtab['S'] = DOTB;
-	dotxtab['w'] = DOTW;                                     // .w .W 
+	dotxtab['w'] = DOTW;					// .w .W 
 	dotxtab['W'] = DOTW;
-	dotxtab['l'] = DOTL;                                     // .l .L 
+	dotxtab['l'] = DOTL;					// .l .L 
 	dotxtab['L'] = DOTL;
-	dotxtab['I'] = DOTI;                                     // .l .L 
+	dotxtab['I'] = DOTI;					// .l .L 
 	dotxtab['I'] = DOTI;
 }
 
@@ -696,35 +706,35 @@ int fpop(void)
 
 	if (inobj != NULL)
 	{
-		// Pop IFENT levels until we reach the conditional assembly context we were at when the 
-		// input object was entered.
+		// Pop IFENT levels until we reach the conditional assembly context we
+		// were at when the input object was entered.
 		while (ifent != inobj->in_ifent)
-			d_endif ();
+			d_endif();
 
-		tok = inobj->in_otok;                                 // Restore tok and otok
+		tok = inobj->in_otok;				// Restore tok and otok
 		etok = inobj->in_etok;
 
 		switch (inobj->in_type)
 		{
-		case SRC_IFILE:                                    // Pop and release an IFILE
+		case SRC_IFILE:						// Pop and release an IFILE
 			if (verb_flag)
 				printf("[Leaving: %s]\n", curfname);
 
 			ifile = inobj->inobj.ifile;
 			ifile->if_link = f_ifile;
 			f_ifile = ifile;
-			close(ifile->ifhandle);                         // Close source file
-			curfname = ifile->ifoldfname;                   // Set current filename
-			curlineno = ifile->ifoldlineno;                 // Set current line# 
+			close(ifile->ifhandle);			// Close source file
+			curfname = ifile->ifoldfname;	// Set current filename
+			curlineno = ifile->ifoldlineno;	// Set current line# 
 			DEBUG printf("cfileno=%d ifile->ifno=%d\n", (int)cfileno, (int)ifile->ifno);
-			cfileno = ifile->ifno;                          // Restore current file number
+			cfileno = ifile->ifno;			// Restore current file number
 			break;
-		case SRC_IMACRO:                                   // Pop and release an IMACRO
+		case SRC_IMACRO:					// Pop and release an IMACRO
 			imacro = inobj->inobj.imacro;
 			imacro->im_link = f_imacro;
 			f_imacro = imacro;
 			break;
-		case SRC_IREPT:                                    // Pop and release an IREPT
+		case SRC_IREPT:						// Pop and release an IREPT
 			DEBUG printf("dealloc IREPT\n");
 			p = inobj->inobj.irept->ir_firstln;
 
@@ -752,37 +762,35 @@ int fpop(void)
 //
 char * getln(void)
 {
-	IFILE * fl;
 	int i, j;
 	char * p, * d;
-	int readamt;
-
-	readamt = -1;                                            // 0 if last read() yeilded 0 bytes
-	fl = cur_inobj->inobj.ifile;
+	int readamt = -1;						// 0 if last read() yeilded 0 bytes
+	IFILE * fl = cur_inobj->inobj.ifile;
 
 	for(;;)
 	{
-		// Scan for next end-of-line; handle stupid text formats by treating \r\n the same as \n.
-		// (lone '\r' at end of buffer means we have to check for '\n').
+		// Scan for next end-of-line; handle stupid text formats by treating
+		// \r\n the same as \n. (lone '\r' at end of buffer means we have to
+		// check for '\n').
 		i = 0;
 		j = fl->ifcnt;
 		d = &fl->ifbuf[fl->ifind];
 
-		for(p=d; i<j; ++i, ++p)
+		for(p=d; i<j; i++, p++)
 		{
 			if (*p == '\r' || *p == '\n')
 			{
-				++i;
+				i++;
 
 				if (*p == '\r')
 				{
 					if (i >= j)
 					{
-						break;                                    // Look for '\n' to eat 
+						break;				// Look for '\n' to eat 
 					}
 					else if (p[1] == '\n')
 					{
-						++i;
+						i++;
 					}
 				}
 
@@ -794,7 +802,8 @@ char * getln(void)
 			}
 		}
 
-		// Handle hanging lines by ignoring them (Input file is exhausted, no \r or \n on last line)
+		// Handle hanging lines by ignoring them (Input file is exhausted, no
+		// \r or \n on last line)
 		if (!readamt && fl->ifcnt)
 		{
 			fl->ifcnt = 0;
@@ -810,14 +819,15 @@ char * getln(void)
 			return &fl->ifbuf[fl->ifind];
 		}
 
-		// Relocate what's left of a line to the beginning of the buffer, and read some more of the 
-		// file in; return NULL if the buffer's empty and on EOF.
+		// Relocate what's left of a line to the beginning of the buffer, and
+		// read some more of the file in; return NULL if the buffer's empty and
+		// on EOF.
 		if (fl->ifind != 0)
 		{
 			p = &fl->ifbuf[fl->ifind];
 			d = &fl->ifbuf[fl->ifcnt & 1];
 
-			for(i = 0; i < fl->ifcnt; ++i)
+			for(i=0; i<fl->ifcnt; i++)
 				*d++ = *p++;
 
 			fl->ifind = fl->ifcnt & 1;
@@ -837,23 +847,25 @@ char * getln(void)
 //
 int tokln(void)
 {
-	char * ln = NULL;                                         // Ptr to current position in line
-	char * p;                                                 // Random character ptr
-	TOKEN *tk;                                               // Token-deposit ptr
-	int state = 0;                                           // State for keyword detector
-	int j = 0;                                               // Var for keyword detector
-	char c;                                                  // Random char
-	VALUE v;                                                 // Random value
-	char * nullspot = NULL;                                   // Spot to clobber for SYMBOL terminatn
-	int stuffnull;                                           // 1:terminate SYMBOL '\0' at *nullspot
+	char * ln = NULL;				// Ptr to current position in line
+	char * p;						// Random character ptr
+	TOKEN * tk;						// Token-deposit ptr
+	int state = 0;					// State for keyword detector
+	int j = 0;						// Var for keyword detector
+	char c;							// Random char
+	VALUE v;						// Random value
+	char * nullspot = NULL;			// Spot to clobber for SYMBOL terminatn
+	int stuffnull;					// 1:terminate SYMBOL '\0' at *nullspot
 	char c1;
+	int stringNum = 0;				// Pointer to string locations in tokenized line
 
 	retry:
 
-	if (cur_inobj == NULL)                                    // Return EOF if input stack is empty
+	if (cur_inobj == NULL)					// Return EOF if input stack is empty
 		return TKEOF;
 
-	// Get another line of input from the current input source: a file, a macro, or a repeat-block
+	// Get another line of input from the current input source: a file,
+	// a macro, or a repeat-block
 	switch (cur_inobj->in_type)
 	{
 	// Include-file:
@@ -864,16 +876,17 @@ int tokln(void)
 	case SRC_IFILE:
 		if ((ln = getln()) == NULL)
 		{
-			fpop();                                         // Pop input level
-			goto retry;                                     // Try for more lines 
+			fpop();							// Pop input level
+			goto retry;						// Try for more lines 
 		}
 
-		++curlineno;                                       // Bump line number
+		curlineno++;						// Bump line number
 		lntag = SPACE;
 
 		if (as68_flag)
 		{
-			// AS68 compatibility, throw away all lines starting with back-quotes, tildes, or '*'
+			// AS68 compatibility, throw away all lines starting with
+			// back-quotes, tildes, or '*'
 			// On other lines, turn the first '*' into a semi-colon.
 			if (*ln == '`' || *ln == '~' || *ln == '*')
 				*ln = ';';
@@ -897,8 +910,8 @@ int tokln(void)
 	case SRC_IMACRO:
 		if ((ln = getmln()) == NULL)
 		{
-			exitmac();                                      // Exit macro (pop args, do fpop(), etc)
-			goto retry;                                     // Try for more lines...
+			exitmac();						// Exit macro (pop args, do fpop(), etc)
+			goto retry;						// Try for more lines...
 		}
 
 		lntag = '@';
@@ -917,19 +930,21 @@ int tokln(void)
 		break;
 	}
 
-	// Save text of the line.  We only do this during listings and within macro-type blocks, 
-	// since it is expensive to unconditionally copy every line.
+	// Save text of the line.  We only do this during listings and within
+	// macro-type blocks, since it is expensive to unconditionally copy every
+	// line.
 	if (lnsave)
 		strcpy(lnbuf, ln);
 
 	// General house-keeping
-	tok = tokeol;                                            // Set "tok" to EOL in case of error
-	tk = etok;                                               // Reset token ptr
-	stuffnull = 0;                                           // Don't stuff nulls
-	++totlines;                                              // Bump total #lines assembled
+	tok = tokeol;							// Set "tok" to EOL in case of error
+	tk = etok;								// Reset token ptr
+	stuffnull = 0;							// Don't stuff nulls
+	totlines++;								// Bump total #lines assembled
 
-	// See if the entire line is a comment.  This is a win if the programmer puts in lots of comments
-	if (*ln == '*' || *ln == ';' || ((*ln == '/') && (*(ln+1) == '/')))
+	// See if the entire line is a comment. This is a win if the programmer
+	// puts in lots of comments
+	if (*ln == '*' || *ln == ';' || ((*ln == '/') && (*(ln + 1) == '/')))
 		goto goteol;
 
 	// Main tokenization loop;
@@ -942,39 +957,41 @@ int tokln(void)
 	{
 		// Skip whitespace, handle EOL
 		while ((int)chrtab[*ln] & WHITE)
-			++ln;
+			ln++;
 
 		// Handle EOL, comment with ';'
-		if (*ln == EOS || *ln == ';'|| ((*ln == '/') && (*(ln+1) == '/'))) 
+		if (*ln == EOS || *ln == ';'|| ((*ln == '/') && (*(ln + 1) == '/'))) 
 			break;
 
-		// Handle start of symbol. Symbols are null-terminated in place. The termination is
-		// always one symbol behind, since there may be no place for a null in the case that 
-		// an operator immediately follows the name.
+		// Handle start of symbol. Symbols are null-terminated in place. The
+		// termination is always one symbol behind, since there may be no place
+		// for a null in the case that an operator immediately follows the name.
 		c = chrtab[*ln];
 
 		if (c & STSYM)
 		{
-			if (stuffnull)                                      // Terminate old symbol 
+			if (stuffnull)					// Terminate old symbol 
 				*nullspot = EOS;
 
-			v = 0;                                             // Assume no DOT attrib follows symbol
+			v = 0;							// Assume no DOT attrib follows symbol
 			stuffnull = 1;
-			p = nullspot = ln++;                               // Nullspot -> start of this symbol
+			p = nullspot = ln++;			// Nullspot -> start of this symbol
 
 			// Find end of symbol (and compute its length)
-			for(j=1; (int)chrtab[*ln]&CTSYM; ++j)
-				++ln;
+			for(j=1; (int)chrtab[*ln]&CTSYM; j++)
+				ln++;
 
-			// Handle "DOT" special forms (like ".b") that follow a normal symbol or keyword:
+			// Handle "DOT" special forms (like ".b") that follow a normal
+			// symbol or keyword:
 			if (*ln == '.')
 			{
-				*ln++ = EOS;                                    // Terminate symbol
-				stuffnull = 0;                                  // And never try it again 
+				*ln++ = EOS;				// Terminate symbol
+				stuffnull = 0;				// And never try it again 
 
-				// Character following the `.' must have a DOT attribute, and the chararacter after 
-				// THAT one must not have a start-symbol attribute (to prevent symbols that look
-				// like, for example, "zingo.barf", which might be a good idea anyway....)
+				// Character following the `.' must have a DOT attribute, and
+				// the chararacter after THAT one must not have a start-symbol
+				// attribute (to prevent symbols that look like, for example,
+				// "zingo.barf", which might be a good idea anyway....)
 				if ((((int)chrtab[*ln] & DOT) == 0) || ((int)dotxtab[*ln] <= 0))
 					return error("[bwsl] must follow `.' in symbol");
 
@@ -984,7 +1001,8 @@ int tokln(void)
 					return error("misuse of `.', not allowed in symbols");
 			}
 
-			// If the symbol is small, check to see if it's really the name of a register.
+			// If the symbol is small, check to see if it's really the name of
+			// a register.
 			if (j <= KWSIZE)
 			{
 				for(state=0; state>=0;)
@@ -1029,6 +1047,9 @@ int tokln(void)
 			if (j < 0 || state < 0)
 			{
 				*tk++ = SYMBOL;
+#warning
+//problem here: nullspot is a char * but TOKEN is a uint32_t. On a 64-bit system,
+//this will cause all kinds of mischief.
 				*tk++ = (TOKEN)nullspot;
 			}
 			else
@@ -1037,10 +1058,10 @@ int tokln(void)
 				stuffnull = 0;
 			}
 
-			if (v)                                              // Record attribute token (if any)
+			if (v)							// Record attribute token (if any)
 				*tk++ = (TOKEN)v;
 
-			if (stuffnull)                                      // Arrange for string termination 
+			if (stuffnull)					// Arrange for string termination 
 				nullspot = ln;
 
 			continue;
@@ -1072,6 +1093,9 @@ int tokln(void)
 			case '\"':                                      // "string" 
 				c1 = ln[-1];
 				*tk++ = STRING;
+#warning
+// More char * stuffing (8 bytes) into the space of 4 (TOKEN).
+// Need to figure out how to fix this crap.
 				*tk++ = (TOKEN)ln;
 
 				for(p=ln; *ln!=EOS && *ln!=c1;)
@@ -1229,19 +1253,19 @@ int tokln(void)
 
 				if (*ln == '.')
 				{
-					if ((*(ln+1) == 'b') || (*(ln+1) == 'B'))
+					if ((*(ln + 1) == 'b') || (*(ln + 1) == 'B'))
 					{
 						v &= 0x000000FF;
 						ln += 2;
 					}
 
-					if ((*(ln+1) == 'w') || (*(ln+1) == 'W'))
+					if ((*(ln + 1) == 'w') || (*(ln + 1) == 'W'))
 					{
 						v &= 0x0000FFFF;
 						ln += 2;
 					}
 
-					if ((*(ln+1) == 'l') || (*(ln+1) == 'L'))
+					if ((*(ln + 1) == 'l') || (*(ln + 1) == 'L'))
 					{
 						ln += 2;
 					}
@@ -1350,6 +1374,7 @@ int tokln(void)
 			while ((int)chrtab[*ln] & DIGIT)
 				v = (v * 10) + *ln++ - '0';
 
+			// See if there's a .[bwl] after the constant, & deal with it
 			if (*ln == '.')
 			{
 				if ((*(ln+1) == 'b') || (*(ln+1) == 'B'))
@@ -1382,9 +1407,9 @@ int tokln(void)
 	// Terminate line of tokens and return "success."
 
 goteol:
-	tok = etok;                                              // Set tok to beginning of line
+	tok = etok;								// Set tok to beginning of line
 
-	if (stuffnull)                                            // Terminate last SYMBOL
+	if (stuffnull)							// Terminate last SYMBOL
 		*nullspot = EOS;
 
 	*tk++ = EOL;
@@ -1460,4 +1485,87 @@ int d_goto(void)
 	}
 
 	return error("goto label not found");
+}
+
+void DumpTokenBuffer(void)
+{
+	TOKEN * t;
+	printf("Tokens: ");
+
+	for(t=tokbuf; *t!=EOL; t++)
+	{
+		if (*t == COLON)
+			printf("[COLON]");
+		else if (*t == CONST)
+		{
+			t++;
+			printf("[CONST: $%X]", (uint32_t)*t);
+		}
+		else if (*t == ACONST)
+			printf("[ACONST]");
+		else if (*t == STRING)
+			printf("[STRING]");
+		else if (*t == SYMBOL)
+		{
+			t++;
+			printf("[SYMBOL:\"%s\"]", (char *)*t);
+		}
+		else if (*t == EOS)
+			printf("[EOS]");
+		else if (*t == TKEOF)
+			printf("[TKEOF]");
+		else if (*t == DEQUALS)
+			printf("[DEQUALS]");
+		else if (*t == SET)
+			printf("[SET]");
+		else if (*t == REG)
+			printf("[REG]");
+		else if (*t == DCOLON)
+			printf("[DCOLON]");
+		else if (*t == GE)
+			printf("[GE]");
+		else if (*t == LE)
+			printf("[LE]");
+		else if (*t == NE)
+			printf("[NE]");
+		else if (*t == SHR)
+			printf("[SHR]");
+		else if (*t == SHL)
+			printf("[SHL]");
+		else if (*t == UNMINUS)
+			printf("[UNMINUS]");
+		else if (*t == DOTB)
+			printf("[DOTB]");
+		else if (*t == DOTW)
+			printf("[DOTW]");
+		else if (*t == DOTL)
+			printf("[DOTL]");
+		else if (*t == DOTI)
+			printf("[DOTI]");
+		else if (*t == ENDEXPR)
+			printf("[ENDEXPR]");
+		else if (*t == CR_DEFINED)
+			printf("[CR_DEFINED]");
+		else if (*t == CR_REFERENCED)
+			printf("[CR_REFERENCED]");
+		else if (*t == CR_STREQ)
+			printf("[CR_STREQ]");
+		else if (*t == CR_MACDEF)
+			printf("[CR_MACDEF]");
+		else if (*t == CR_TIME)
+			printf("[CR_TIME]");
+		else if (*t == CR_DATE)
+			printf("[CR_DATE]");
+		else if (*t >= 0x20 && *t <= 0x2F)
+			printf("[%c]", (char)*t);
+		else if (*t >= 0x80 && *t <= 0x87)
+			printf("[D%u]", ((uint32_t)*t) - 0x80);
+		else if (*t >= 0x88 && *t <= 0x8F)
+			printf("[A%u]", ((uint32_t)*t) - 0x88);
+		else
+//			printf("[%X:%c]", (uint32_t)*t, (char)*t);
+			printf("[%X]", (uint32_t)*t);
+	}
+
+	printf("[EOL]\n");
 }

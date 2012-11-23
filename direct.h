@@ -13,7 +13,7 @@
 
 // Globals, Externals etc
 extern TOKEN exprbuf[];
-extern int (*dirtab[])();
+extern int (* dirtab[])();
 
 // Prototypes
 int d_even(void);

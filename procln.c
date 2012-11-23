@@ -18,26 +18,25 @@
 #include "symbol.h"
 #include "risca.h"
 
-#define DEF_KW                                              // Declare keyword values 
-#include "kwtab.h"                                          // Incl generated keyword tables & defs
+#define DEF_KW					// Declare keyword values 
+#include "kwtab.h"				// Incl generated keyword tables & defs
 
-#define DEF_MN                                              // Incl 68k keyword definitions
-#define DECL_MN                                             // Incl 68k keyword state machine tables
+#define DEF_MN					// Incl 68k keyword definitions
+#define DECL_MN					// Incl 68k keyword state machine tables
 #include "mntab.h"
 
 #define DEF_MR
 #define DECL_MR
 #include "risckw.h"
 
-IFENT * ifent;                                               // Current ifent
-static IFENT ifent0;                                        // Root ifent
-static IFENT * f_ifent;                                      // Freelist of ifents
-static int disabled;                                        // Assembly conditionally disabled
-int just_bss;                                               // 1, ds.b in microprocessor mode 
-VALUE pcloc;                                                // Value of "PC" at beginning of line 
-IFENT * ifent;                                               // Current ifent
-SYM * lab_sym;                                               // Label on line (or NULL)
-
+IFENT * ifent;					// Current ifent
+static IFENT ifent0;			// Root ifent
+static IFENT * f_ifent;			// Freelist of ifents
+static int disabled;			// Assembly conditionally disabled
+int just_bss;					// 1, ds.b in microprocessor mode 
+VALUE pcloc;					// Value of "PC" at beginning of line 
+IFENT * ifent;					// Current ifent
+SYM * lab_sym;					// Label on line (or NULL)
 
 char extra_stuff[] = "extra (unexpected) text found after addressing mode";
 char * comma_error = "missing comma";
@@ -68,25 +67,25 @@ LONG amsktab[0112] = {
 	M_AINDEXED, M_AINDEXED, M_AINDEXED, M_AINDEXED,
 	M_AINDEXED, M_AINDEXED, M_AINDEXED, M_AINDEXED,
 
-	M_ABSW,                                                  // 070
-	M_ABSL,                                                  // 071
-	M_PCDISP,                                                // 072
-	M_PCINDEXED,                                             // 073
-	M_IMMED,                                                 // 074
-	0L,                                                      // 075
-	0L,                                                      // 076
-	0L,                                                      // 077
-	M_ABASE,                                                 // 0100
-	M_MEMPOST,                                               // 0101 
-	M_MEMPRE,                                                // 0102 
-	M_PCBASE,                                                // 0103
-	M_PCMPOST,                                               // 0104
-	M_PCMPRE,                                                // 0105
-	M_AM_USP,                                                // 0106
-	M_AM_SR,                                                 // 0107 
-	M_AM_CCR,                                                // 0110
-	M_AM_NONE                                                // 0111 
-};                                                          // 0112 length
+	M_ABSW,											// 070
+	M_ABSL,											// 071
+	M_PCDISP,										// 072
+	M_PCINDEXED,									// 073
+	M_IMMED,										// 074
+	0L,												// 075
+	0L,												// 076
+	0L,												// 077
+	M_ABASE,										// 0100
+	M_MEMPOST,										// 0101 
+	M_MEMPRE,										// 0102 
+	M_PCBASE,										// 0103
+	M_PCMPOST,										// 0104
+	M_PCMPRE,										// 0105
+	M_AM_USP,										// 0106
+	M_AM_SR,										// 0107 
+	M_AM_CCR,										// 0110
+	M_AM_NONE										// 0111 
+};													// 0112 length
 
 
 //
@@ -106,74 +105,78 @@ void init_procln(void)
 //
 void assemble(void)
 {
-	int state;                                               // Keyword machine state (output)
-	int j;                                                   // Random int, must be fast
-	char * p;                                                // Random char ptr, must be fast
-	TOKEN * tk;                                              // First token in line
-	char * label;                                            // Symbol (or NULL)
-	char * equate;                                           // Symbol (or NULL)
-	int labtyp = 0;                                          // Label type (':', DCOLON)
-	int equtyp = 0;                                          // Equ type ('=', DEQUALS)
-	VALUE eval;                                              // Expression value
-	WORD eattr;                                              // Expression attributes
-	SYM * esym;                                              // External symbol involved in expr.
-	WORD siz = 0;                                            // Size suffix to mnem/diretve/macro
-	LONG amsk0, amsk1;                                       // Address-type masks for ea0, ea1
-	MNTAB * m;                                               // Code generation table pointer
-	SYM * sy, * sy2;                                         // Symbol (temp usage)
-	char * opname = NULL;                                    // Name of dirctve/mnemonic/macro
-	int listflag;                                            // 0: Don't call listeol()
-	int as68mode = 0;                                        // 1: Handle multiple labels
-	WORD rmask;                                              // Register list, for REG
-	int registerbank;                                        // RISC register bank
-	int riscreg;                                             // RISC register
+	int state;					// Keyword machine state (output)
+	int j;						// Random int, must be fast
+	char * p;					// Random char ptr, must be fast
+	TOKEN * tk;					// First token in line
+	char * label;				// Symbol (or NULL)
+	char * equate;				// Symbol (or NULL)
+	int labtyp = 0;				// Label type (':', DCOLON)
+	int equtyp = 0;				// Equ type ('=', DEQUALS)
+	VALUE eval;					// Expression value
+	WORD eattr;					// Expression attributes
+	SYM * esym;					// External symbol involved in expr.
+	WORD siz = 0;				// Size suffix to mnem/diretve/macro
+	LONG amsk0, amsk1;			// Address-type masks for ea0, ea1
+	MNTAB * m;					// Code generation table pointer
+	SYM * sy, * sy2;			// Symbol (temp usage)
+	char * opname = NULL;		// Name of dirctve/mnemonic/macro
+	int listflag;				// 0: Don't call listeol()
+	int as68mode = 0;			// 1: Handle multiple labels
+	WORD rmask;					// Register list, for REG
+	int registerbank;			// RISC register bank
+	int riscreg;				// RISC register
 
-	listflag = 0;                                            // Initialise listing flag
+	listflag = 0;				// Initialise listing flag
 
-loop:                                                        // Line processing loop label
+loop:							// Line processing loop label
 
+	// Get another line of tokens
 	if (tokln() == TKEOF)
-	{                                   // Get another line of tokens
-		if (list_flag && listflag)                             // Flush last line of source
+	{
+		if (list_flag && listflag)			// Flush last line of source
 			listeol();
 
-		if (ifent->if_prev != NULL)                            // Check conditional token
+		if (ifent->if_prev != NULL)			// Check conditional token
 			error("hit EOF without finding matching .endif");
 
 		return;
 	}
 
+	DEBUG DumpTokenBuffer();
+
 	if (list_flag)
 	{
 		if (listflag && listing > 0)
-			listeol();                // Tell listing generator about EOL
+			listeol();						// Tell listing generator about EOL
 
-		lstout((char)(disabled ? '-' : lntag));	            // Prepare new line for listing
-		listflag = 1;                                         // OK to call `listeol' now
-		just_bss = 0;                                         // Reset just_bss mode
+		lstout((char)(disabled ? '-' : lntag));	// Prepare new line for listing
+		listflag = 1;						// OK to call `listeol' now
+		just_bss = 0;						// Reset just_bss mode
 	}
 
-	state = -3;                                              // No keyword (just EOL)
-	label = NULL;                                            // No label
-	lab_sym = NULL;                                          // No (exported) label
-	equate = NULL;                                           // No equate
-	tk = tok;                                                // Save first token in line
-	pcloc = (VALUE)sloc;                                     // Set beginning-of-line PC
+	state = -3;								// No keyword (just EOL)
+	label = NULL;							// No label
+	lab_sym = NULL;							// No (exported) label
+	equate = NULL;							// No equate
+	tk = tok;								// Save first token in line
+	pcloc = (VALUE)sloc;					// Set beginning-of-line PC
 
-	loop1:                                                   // Internal line processing loop
+loop1:										// Internal line processing loop
 
-	if (*tok == EOL)                                          // Restart loop if end-of-line
+	if (*tok == EOL)						// Restart loop if end-of-line
 		goto loop;
 
+	// First token MUST be a symbol
 	if (*tok != SYMBOL)
-	{                                     // First token MUST be a symbol
+	{
 		error(syntax_error);
 		goto loop;
 	}
 
-	j = (int)tok[2];                                         // Skip equates (normal statements)
+	j = (int)tok[2];						// Skip equates (normal statements)
 
-	if (j == '=' ||	j == DEQUALS || j == SET || j == REG || j == EQUREG || j == CCDEF)
+	if (j == '=' || j == DEQUALS || j == SET || j == REG || j == EQUREG || j == CCDEF)
 	{
 		equate = (char *)tok[1];
 		equtyp = j;
@@ -181,12 +184,13 @@ loop:                                                        // Line processing 
 		goto normal;
 	}
 
+	// Skip past label (but record it)
 	if (j == ':' || j == DCOLON)
-	{                            // Skip past label (but record it)
+	{
 as68label:
-		label = (char *)tok[1];                               // Get label name
-		labtyp = tok[2];                                      // Get label type
-		tok += 3;                                             // Go to next line token
+		label = (char *)tok[1];				// Get label name
+		labtyp = tok[2];					// Get label type
+		tok += 3;							// Go to next line token
 
 		// Handle multiple labels; if there's another label, go process it, 
 		// and come back at `as68label' above.
@@ -202,16 +206,20 @@ as68label:
 		}
 	}
 
-	if (*tok == EOL)                                          // EOL is legal here...
+	if (*tok == EOL)						// EOL is legal here...
 		goto normal;
 
+	// Next token MUST be a symbol
 	if (*tok++ != SYMBOL)
-	{                                   // Next token MUST be a symbol
+	{
 		error(syntax_error);
 		goto loop;
 	}
 
-	opname = p = (char *)*tok++;                             // Store opcode name here
+// This is the problem here: On 64-bit platforms, this cuts the native pointer
+// in half. We need to figure out how to fix this.
+#warning "!!! Bad pointer !!!"
+	opname = p = (char *)*tok++;			// Store opcode name here
 
 	// Check to see if the SYMBOL is a keyword (a mnemonic or directive).
 	// On output, `state' will have one of the values:
@@ -224,15 +232,17 @@ as68label:
 	{
 		j = mnbase[state] + (int)tolowertab[*p];
 
+		// Reject, character doesn't match
 		if (mncheck[j] != state)
-		{                             // Reject, character doesn't match
-			state = -1;                                        // No match
+		{
+			state = -1;						// No match
 			break;
 		}
 
+		// Must accept or reject at EOS
 		if (!*++p)
-		{                                           // Must accept or reject at EOS
-			state = mnaccept[j];                               // (-1 on no terminal match)
+		{
+			state = mnaccept[j];			// (-1 on no terminal match)
 			break;
 		}
 
@@ -263,7 +273,7 @@ as68label:
 		case MN_ENDIF:
 			d_endif ();
 			goto loop;
-		case MN_IIF:                                       // .iif --- immediate if
+		case MN_IIF:						// .iif --- immediate if
 			if (disabled || expr(exprbuf, &eval, &eattr, &esym) != OK)
 				goto loop;
 
@@ -283,7 +293,7 @@ as68label:
 				goto loop;
 
 			goto loop1;
-		case MN_MACRO:                                     // .macro --- macro definition
+		case MN_MACRO:						// .macro --- macro definition
 			if (!disabled)
 			{
 				if (label != NULL)
@@ -293,8 +303,8 @@ as68label:
 			}
 
 			goto loop;
-		case MN_EXITM:                                     // .exitm --- exit macro
-		case MN_ENDM:                                      // .endm --- same as .exitm
+		case MN_EXITM:						// .exitm --- exit macro
+		case MN_ENDM:						// .endm --- same as .exitm
 			if (!disabled)
 			{
 				if (label != NULL)
@@ -323,13 +333,13 @@ as68label:
 	}
 
 normal:
-	if (disabled)                                             // Conditionally disabled code
+	if (disabled)							// Conditionally disabled code
 		goto loop;
 
 	// Do equates
 	if (equate != NULL)
 	{
-		j = 0;                                                // Pick global or local sym enviroment
+		j = 0;								// Pick global or local sym enviroment
 
 		if (*equate == '.')
 			j = curenv;
@@ -343,8 +353,9 @@ normal:
 
 			if (equtyp == DEQUALS)
 			{
+				// Can't GLOBAL a local symbol
 				if (j)
-				{                                         // Can't GLOBAL a local symbol
+				{
 					error(locgl_error);
 					goto loop;
 				}
@@ -381,17 +392,19 @@ normal:
 		// o  everything else
 		if (equtyp == EQUREG)
 		{
+			// Check that we are in a RISC section
 			if (!rgpu && !rdsp)
-			{                               // Check that we are in a RISC section
+			{
 				error(".equr/.regequ must be defined in .gpu/.dsp section");
 				goto loop;
 			}
 
+			// Check for register to equate to
 			if ((*tok >= KW_R0) && (*tok <= KW_R31))
-			{          // Check for register to equate to
-				sy->sattre  = EQUATEDREG | RISCSYM;             // Mark as equated register
+			{
+				sy->sattre  = EQUATEDREG | RISCSYM;	// Mark as equated register
 				riscreg = (*tok - KW_R0);
-				sy->sattre |= (riscreg << 8);                   // Store register number
+				sy->sattre |= (riscreg << 8);		// Store register number
 
 				if ((tok[1] == ',') && (tok[2] == CONST))
 				{
@@ -409,23 +422,25 @@ normal:
 					registerbank = BANK_N;
 				}
 
-				sy->sattre |= regbank;                          // Store register bank
+				sy->sattre |= regbank;		// Store register bank
 				eattr = ABS | DEFINED | GLOBAL;
 				eval = 0x80000080 + (riscreg) + (registerbank << 8);
 				tok++;
 			}
+			// Checking for a register symbol
 			else if (tok[0] == SYMBOL)
-			{                      // Checking for a register symbol
+			{
 				sy2 = lookup((char *)tok[1], LABEL, j);
 
+				// Make sure symbol is a valid equreg
 				if (!sy2 || !(sy2->sattre & EQUATEDREG))
-				{       // Make sure symbol is a valid equreg
+				{
 					error("invalid GPU/DSP .equr/.regequ definition");
 					goto loop;
 				}
 				else
 				{
-					eattr = ABS | DEFINED | GLOBAL;              // Copy symbols attributes
+					eattr = ABS | DEFINED | GLOBAL;	// Copy symbols attributes
 					sy->sattre = sy2->sattre;
 					eval = (sy2->svalue & 0xFFFFF0FF);
 					tok += 2;
@@ -470,8 +485,9 @@ normal:
 			else if (expr(exprbuf, &eval, &eattr, &esym) != OK)
 				goto loop;
 		}
+		//equ a equr
 		else if (*tok == SYMBOL)
-		{  //equ a equr
+		{
 			sy2 = lookup((char *)tok[1], LABEL, j);
 
 			if (sy2 && (sy2->sattre & EQUATEDREG))
@@ -494,13 +510,13 @@ normal:
 			goto loop;
 		}
 
-		
-		sy->sattr |= eattr | EQUATED;                         // Symbol inherits value and attributes
+		sy->sattr |= eattr | EQUATED;		// Symbol inherits value and attributes
 		sy->svalue = eval;
-		if (list_flag)                                         // Put value in listing
+
+		if (list_flag)						// Put value in listing
 			listvalue(eval);
 
-		at_eol();                                             // Must be at EOL now
+		at_eol();							// Must be at EOL now
 		goto loop;
 	}
 
@@ -547,8 +563,9 @@ do_label:
 		if (!j)
 			++curenv;
 
+		// Make label global
 		if (labtyp == DCOLON)
-		{                                // Make label global
+		{
 			if (j)
 			{
 				error(locgl_error);
@@ -567,22 +584,25 @@ do_label:
 	if (state == -3)
 		goto loop;
 
-	// If we are in GPU or DSP mode and still in need of a mnemonic then search for one
+	// If we are in GPU or DSP mode and still in need of a mnemonic then search
+	// for one
 	if ((rgpu || rdsp) && (state < 0 || state >= 1000))
 	{
 		for(state=0, p=opname; state>=0;)
 		{
 			j = mrbase[state] + (int)tolowertab[*p];
 
+			// Reject, character doesn't match
 			if (mrcheck[j] != state)
-			{                          // Reject, character doesn't match
-				state = -1;                                     // No match
+			{
+				state = -1;					// No match
 				break;
 			}
 
+			// Must accept or reject at EOS
 			if (!*++p)
-			{                                        // Must accept or reject at EOS
-				state = mraccept[j];                            // (-1 on no terminal match)
+			{
+				state = mraccept[j];		// (-1 on no terminal match)
 				break;
 			}
 
@@ -626,21 +646,22 @@ do_label:
 		goto loop;
 	}
 
-	if (sloc & 1)                                             // Automatic .even
+	if (sloc & 1)							// Automatic .even
 		auto_even();
 
-	if (challoc - ch_size < 18)                               // Make sure have space in current chunk
-		chcheck(0L);
+	if (challoc - ch_size < 18)				// Make sure have space in current chunk
+		chcheck(0);
 
 	m = &machtab[state - 1000];
 
+	// Call special-mode handler
 	if (m->mnattr & CGSPECIAL)
-	{                              // Call special-mode handler
+	{
 		(*m->mnfunc)(m->mninst, siz);
 		goto loop;
 	}
 
-	if (amode(1) < 0)                                         // Parse 0, 1 or 2 addr modes
+	if (amode(1) < 0)						// Parse 0, 1 or 2 addr modes
 		goto loop;
 
 	if (*tok != EOL)
@@ -649,7 +670,8 @@ do_label:
 	amsk0 = amsktab[am0];
 	amsk1 = amsktab[am1];
 
-	// Catch attempts to use ".B" with an address register (yes, this check does work at this level)
+	// Catch attempts to use ".B" with an address register (yes, this check
+	// does work at this level)
 	if (siz == SIZB && (am0 == AREG || am1 == AREG))
 	{
 		error("cannot use '.b' with an address register");
@@ -672,7 +694,7 @@ do_label:
 // 
 // .if, Start Conditional Assembly
 //
-int d_if (void)
+int d_if(void)
 {
 	IFENT * rif;
 	WORD eattr;
@@ -681,7 +703,8 @@ int d_if (void)
 
 	// Alloc an IFENTRY
 	if ((rif = f_ifent) == NULL)
-		rif = (IFENT *)amem((LONG)sizeof(IFENT));
+//		rif = (IFENT *)amem((LONG)sizeof(IFENT));
+		rif = (IFENT *)malloc(sizeof(IFENT));
 	else
 		f_ifent = rif->if_prev;
 
