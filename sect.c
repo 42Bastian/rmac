@@ -279,7 +279,8 @@ int fixup(WORD attr, LONG loc, TOKEN * fexpr)
 		if ((attr & 0x0F00) == FU_JR)
 		{
 //			i = 18;
-			i = FIXUP_BASE_SIZE + (sizeof(LONG) * 2);
+//			i = FIXUP_BASE_SIZE + (sizeof(LONG) * 2);
+			i = FIXUP_BASE_SIZE + sizeof(SYM *) + sizeof(LONG);
 		}
 		else
 		{

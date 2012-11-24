@@ -118,6 +118,9 @@ int fudump(CHUNK * ch)
 				printf("`%s' ;\n", (*p.sy)->sname);
 				p.sy++;
 			}
+
+			if ((attr & 0x0F00) == FU_JR)
+				p.lp++;
 		}
 
 		ch = ch->chnext;
