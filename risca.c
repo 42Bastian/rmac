@@ -15,20 +15,20 @@
 #include "mark.h"
 #include "amode.h"
 
-#define DEF_MR                                              // Declar keyword values
-#include "risckw.h"                                         // Incl generated risc keywords
+#define DEF_MR							// Declar keyword values
+#include "risckw.h"						// Incl generated risc keywords
 
-#define DEF_KW                                              // Declare keyword values 
-#include "kwtab.h"                                          // Incl generated keyword tables & defs
+#define DEF_KW							// Declare keyword values 
+#include "kwtab.h"						// Incl generated keyword tables & defs
 
-unsigned altbankok = 0;                                     // Ok to use alternate register bank
-unsigned orgactive = 0;                                     // RISC org directive active
-unsigned orgaddr = 0;                                       // Org'd address
-unsigned orgwarning = 0;                                    // Has an ORG warning been issued
+unsigned altbankok = 0;					// Ok to use alternate register bank
+unsigned orgactive = 0;					// RISC org directive active
+unsigned orgaddr = 0;					// Org'd address
+unsigned orgwarning = 0;				// Has an ORG warning been issued
 int jpad = 0;
-unsigned previousop = 0;                                    // Used for NOP padding checks
-unsigned currentop = 0;                                     // Used for NOP padding checks
-unsigned mjump_defined, mjump_dest;                         // mjump macro flags, values etc
+unsigned previousop = 0;				// Used for NOP padding checks
+unsigned currentop = 0;					// Used for NOP padding checks
+unsigned mjump_defined, mjump_dest;		// mjump macro flags, values etc
 
 char reg_err[] = "missing register R0...R31";
 
@@ -249,33 +249,33 @@ int getregister(WORD rattr)
 //
 int risccg(int state)
 {
-	unsigned short parm;                                     // Opcode parameters
-	unsigned type;                                           // Opcode type
-	int reg1;                                                // Register 1
-	int reg2;                                                // Register 2
-	int val = 0;                                             // Constructed value
+	unsigned short parm;					// Opcode parameters
+	unsigned type;							// Opcode type
+	int reg1;								// Register 1
+	int reg2;								// Register 2
+	int val = 0;							// Constructed value
 	char scratch[80];
 	SYM * ccsym;
 	SYM * sy;
-	int i;                                                   // Iterator
+	int i;									// Iterator
 	int t, c;
 	WORD tdb;
-	unsigned locptr = 0;                                     // Address location pointer
-	unsigned page_jump = 0;                                  // Memory page jump flag
-	VALUE eval;                                              // Expression value
-	WORD eattr;                                              // Expression attributes
-	SYM * esym;                                              // External symbol involved in expr.
-	TOKEN r_expr[EXPRSIZE];                                  // Expression token list
-	WORD defined;                                            // Symbol defined flag
+	unsigned locptr = 0;					// Address location pointer
+	unsigned page_jump = 0;					// Memory page jump flag
+	VALUE eval;								// Expression value
+	WORD eattr;								// Expression attributes
+	SYM * esym;								// External symbol involved in expr.
+	TOKEN r_expr[EXPRSIZE];					// Expression token list
+	WORD defined;							// Symbol defined flag
 	WORD attrflg;
-	int indexed;                                             // Indexed register flag
+	int indexed;							// Indexed register flag
 
-	parm = (WORD)(roptbl[state-3000].parm);                  // Get opcode parameter and type
+	parm = (WORD)(roptbl[state-3000].parm);	// Get opcode parameter and type
 	type = roptbl[state-3000].typ;
 
-	// Detect whether the opcode parmeter passed determines that the opcode is specific to only one 
-	// of the RISC processors and ensure it is legal in the current code section. 
-	// If not then error and return.
+	// Detect whether the opcode parmeter passed determines that the opcode is
+	// specific to only one of the RISC processors and ensure it is legal in
+	// the current code section. If not then error and return.
 	if (((parm & GPUONLY) && rdsp) || ((parm & DSPONLY) && rgpu))
 	{
 		error("opcode is not valid in this code section");
@@ -472,13 +472,16 @@ int risccg(int state)
 		if (*tok != '(')
 			goto malformed;
 
-		++tok;
+		tok++;
+
 		if ((*tok == KW_R14 || *tok == KW_R15) && (*(tok+1) != ')')) 
 			indexed = (*tok - KW_R0);
 
 		if (*tok == SYMBOL)
 		{
-			sy = lookup((char *)tok[1], LABEL, 0);
+//			sy = lookup((char *)tok[1], LABEL, 0);
+			sy = lookup(string[tok[1]], LABEL, 0);
+
 			if (!sy)
 			{
 				error(reg_err);
@@ -518,7 +521,8 @@ int risccg(int state)
 
 				if (*tok == SYMBOL)
 				{
-					sy = lookup((char *)tok[1], LABEL, 0);
+//					sy = lookup((char *)tok[1], LABEL, 0);
+					sy = lookup(string[tok[1]], LABEL, 0);
 
 					if (!sy)
 					{
@@ -615,7 +619,8 @@ int risccg(int state)
 
 		if (*tok == SYMBOL)
 		{
-			sy = lookup((char *)tok[1], LABEL, 0);
+//			sy = lookup((char *)tok[1], LABEL, 0);
+			sy = lookup(string[tok[1]], LABEL, 0);
 
 			if (!sy)
 			{
@@ -656,7 +661,8 @@ int risccg(int state)
 
 				if (*tok == SYMBOL)
 				{
-					sy = lookup((char *)tok[1], LABEL, 0);
+//					sy = lookup((char *)tok[1], LABEL, 0);
+					sy = lookup(string[tok[1]], LABEL, 0);
 
 					if (!sy)
 					{
@@ -795,7 +801,8 @@ int risccg(int state)
 
 				for(i=0; i<MAXINTERNCC; i++)
 				{
-					strcpy(scratch, (char *)tok[1]);
+//					strcpy(scratch, (char *)tok[1]);
+					strcpy(scratch, string[tok[1]]);
 					strtoupper(scratch);
 
 					if (!strcmp(condname[i], scratch)) 
@@ -804,7 +811,8 @@ int risccg(int state)
 
 				if (val == 99)
 				{
-					ccsym = lookup((char *)tok[1], LABEL, 0);
+//					ccsym = lookup((char *)tok[1], LABEL, 0);
+					ccsym = lookup(string[tok[1]], LABEL, 0);
 
 					if (ccsym && (ccsym->sattre & EQUATEDCC) && !(ccsym->sattre & UNDEF_CC))
 					{

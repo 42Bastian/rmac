@@ -18,13 +18,13 @@
 #include "kwtab.h"
 
 // Common error messages
-char * range_error = "expression out of range";
-char * abs_error = "illegal absolute expression";
-char * seg_error = "bad (section) expression";
-char * rel_error = "illegal relative address";
-char * siz_error = "bad size specified";
-char * undef_error = "undefined expression";
-char * fwd_error = "forward or undefined expression";
+char range_error[] = "expression out of range";
+char abs_error[] = "illegal absolute expression";
+char seg_error[] = "bad (section) expression";
+char rel_error[] = "illegal relative address";
+char siz_error[] = "bad size specified";
+char undef_error[] = "undefined expression";
+char fwd_error[] = "forward or undefined expression";
 
 extern int ea0gen(WORD);
 extern int ea1gen(WORD);
@@ -445,9 +445,10 @@ int m_moveq(WORD inst, WORD siz)
 {
 	siz = siz;
 
+	// Arrange for future fixup 
 	if (!(a0exattr & DEFINED))
-	{                              // Arrange for future fixup 
-		fixup(FU_BYTE|FU_SEXT, sloc+1, a0expr);
+	{
+		fixup(FU_BYTE | FU_SEXT, sloc + 1, a0expr);
 		a0exval = 0; 
 	}
 	else if (a0exval + 0x100 >= 0x200)

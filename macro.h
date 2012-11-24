@@ -13,18 +13,18 @@
 
 // Globals, externals etc
 extern LONG curuniq;
-extern TOKEN ** argp;
+//extern TOKEN ** argp;
 extern int mjump_align;
+extern TOKEN * argPtrs[];
 
 // Prototypes
 void init_macro(void);
 int exitmac(void);
-int defmac(void);
+int DefineMacro(void);
 int defrept(void);
 int lncatch(int (*)(), char *);
 int kwmatch(char *, char *);
-int invokemac(SYM *, WORD);
+int InvokeMacro(SYM *, WORD);
 void ib_macro(void);
 
 #endif // __MACRO_H__
-

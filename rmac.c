@@ -563,7 +563,7 @@ int process(int argc, char ** argv)
 	in_main = 0;
 
 	// Initialise modules
-	init_sym();						// Symbol table
+	InitSymbolTable();				// Symbol table
 	init_token();					// Tokenizer
 	init_procln();					// Line processor
 	init_expr();					// Expression analyzer
@@ -601,7 +601,7 @@ int process(int argc, char ** argv)
 
 				if (sy == NULL)
 				{
-					sy = newsym(argv[argno] + 2, LABEL, 0);
+					sy = NewSymbol(argv[argno] + 2, LABEL, 0);
 					sy->svalue = 0;
 				}
 
@@ -793,8 +793,8 @@ int process(int argc, char ** argv)
 	//       (`lo68' format, extended (postfix) format....)
 	// (2)   generate the output file image and symbol table;
 	// (3)   generate relocation information from left-over fixups.
-	fixups();                                                // Do all fixups
-	stopmark();                                              // Stop mark tape-recorder
+	ResolveAllFixups();						// Do all fixups
+	stopmark();								// Stop mark tape-recorder
 
 	if (errcnt == 0)
 	{

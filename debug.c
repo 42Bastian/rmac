@@ -7,11 +7,14 @@
 //
 
 #include "debug.h"
-#include "sect.h"
 #include "amode.h"
+#include "direct.h"
 #include "mark.h"
+#include "sect.h"
+#include "token.h"
 
-static int siztab[4] = {3, 5, 9, 9};
+
+static int siztab[4] = { 3, 5, 9, 9 };
 
 
 //
@@ -40,8 +43,9 @@ TOKEN * printexpr(TOKEN * tp)
 			switch ((int)*tp++)
 			{
 			case SYMBOL:
-				printf("`%s' ", ((SYM *)*tp)->sname);
-				++tp;
+//				printf("`%s' ", ((SYM *)*tp)->sname);
+				printf("`%s' ", symbolPtr[*tp]->sname);
+				tp++;
 				break;
 			case CONST:
 				printf("$%ux ", *tp++);
@@ -94,7 +98,7 @@ int fudump(CHUNK * ch)
 		p.cp = ch->chptr;
 		ep = ch->chptr + ch->ch_size;
 
-		while(p.cp < ep)
+		while (p.cp < ep)
 		{
 			attr = *p.wp++;
 			loc = *p.lp++;
@@ -112,7 +116,7 @@ int fudump(CHUNK * ch)
 			else
 			{
 				printf("`%s' ;\n", (*p.sy)->sname);
-				++p.lp;
+				p.sy++;
 			}
 		}
 
@@ -278,10 +282,12 @@ int dumptok(TOKEN * tk)
 			printf("CONST=%ud", *tk++);
 			break;
 		case STRING:                                       // STRING <address>
-			printf("STRING='%s'", (char *)*tk++);
+//			printf("STRING='%s'", (char *)*tk++);
+			printf("STRING='%s'", string[*tk++]);
 			break;
 		case SYMBOL:                                       // SYMBOL <address> 
-			printf("SYMBOL='%s'", (char *)*tk++);
+//			printf("SYMBOL='%s'", (char *)*tk++);
+			printf("SYMBOL='%s'", string[*tk++]);
 			break;
 		case EOL:                                          // End of line 
 			printf("EOL");
@@ -329,7 +335,7 @@ int dump_everything(void)
 {
 	int i;
 
-	for(i = 1; i < NSECTS; ++i)
+	for(i=1; i<NSECTS; i++)
 	{
 		if (sect[i].scattr & SUSED)
 		{

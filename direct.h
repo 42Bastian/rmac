@@ -13,6 +13,7 @@
 
 // Globals, Externals etc
 extern TOKEN exprbuf[];
+extern SYM * symbolPtr[];
 extern int (* dirtab[])();
 
 // Prototypes

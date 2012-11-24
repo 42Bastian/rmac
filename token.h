@@ -113,7 +113,8 @@ IFILE {
 // Information about a macro invocation
 IMACRO {
 	IMACRO * im_link;		// Pointer to ancient IMACROs
-	LONG * im_nextln;		// Next line to include
+//	LONG * im_nextln;		// Next line to include
+	struct LineList * im_nextln;	// Next line to include
 	WORD im_nargs;			// # of arguments supplied on invocation
 	WORD im_siz;			// Size suffix supplied on invocation
 	LONG im_olduniq;		// Old value of 'macuniq'
@@ -150,8 +151,8 @@ void init_token(void);
 void setfnum(WORD);
 int tokln(void);
 int fpop(void);
-//int d_goto(WORD);
-int d_goto(void);
+int d_goto(WORD);
+//int d_goto(void);
 INOBJ * a_inobj(int);
 void DumpTokenBuffer(void);
 

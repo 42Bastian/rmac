@@ -11,12 +11,15 @@
 #include "procln.h"
 #include "error.h"
 
-static SYM * sytab[NBUCKETS];               // User symbol-table header
-int curenv;                                 // Current enviroment number
-SYM * sorder;                               // * -> Symbols, in order of reference
-SYM * sordtail;                             // * -> Last symbol in sorder list
-SYM * sdecl;                                // * -> Symbols, in order of declaration
-SYM * sdecltail;                            // * -> Last symbol in sdecl list
+// Macros
+#define NBUCKETS 256					// Number of hash buckets (power of 2)
+
+static SYM * symbolTable[NBUCKETS];		// User symbol-table header
+int curenv;								// Current enviroment number
+static SYM * sorder;					// * -> Symbols, in order of reference
+static SYM * sordtail;					// * -> Last symbol in sorder list
+static SYM * sdecl;						// * -> Symbols, in order of declaration
+static SYM * sdecltail;					// * -> Last symbol in sdecl list
 
 // Tags for marking symbol spaces
 // a = absolute
@@ -32,17 +35,17 @@ static char tdb_text[8] = {
 //
 // Initialize Symbol Table
 //
-void init_sym(void)
+void InitSymbolTable(void)
 {
-	int i;                                      // Iterator
+	int i;									// Iterator
 
-	for(i=0; i<NBUCKETS; ++i)                   // Initialise symbol hash table
-		sytab[i] = NULL;
+	for(i=0; i<NBUCKETS; i++)				// Initialise symbol hash table
+		symbolTable[i] = NULL;
 
-	curenv = 1;                                 // Init local symbol enviroment
-	sorder = NULL;                              // Init symbol-reference list
+	curenv = 1;								// Init local symbol enviroment
+	sorder = NULL;							// Init symbol-reference list
 	sordtail = NULL;
-	sdecl = NULL;                               // Init symbol-decl list
+	sdecl = NULL;							// Init symbol-decl list
 	sdecltail = NULL;
 }
 
@@ -50,9 +53,9 @@ void init_sym(void)
 //
 // Hash the Print Name and Enviroment Number
 //
-int syhash(char * name, int envno)
+int HashSymbol(char * name, int envno)
 {
-	int sum, k = 0;                             // Hash calculation
+	int sum, k = 0;							// Hash calculation
 
 	for(sum=envno; *name; name++)
 	{
@@ -69,53 +72,41 @@ int syhash(char * name, int envno)
 //
 // Make a new symbol of type `type' in enviroment `envno'
 //
-SYM * newsym(char * name, int type, int envno)
+SYM * NewSymbol(char * name, int type, int envno)
 {
-	int hash;                                   // Symbol hash value
-	SYM * sy;                                   // Pointer to symbol
-
 	// Allocate the symbol
-//	sy = (SYM *)amem((long)(sizeof(SYM)));
-	sy = (SYM *)malloc(sizeof(SYM));
+	SYM * symbol = malloc(sizeof(SYM));
 
-	if (sy == NULL)
+	if (symbol == NULL)
 	{
 		printf("SYMALLOC ERROR (%s)\n", name);
 		return NULL;
 	}
 
-//	sy->sname = nstring(name);
-	sy->sname = strdup(name);
+	symbol->sname = strdup(name);
 
 	// Fill-in the symbol
-	sy->stype  = (BYTE)type;
-	sy->senv   = (WORD)envno;
-	sy->sattr  = 0;
-#if 0
-	if (rgpu || rdsp)
-		sy->sattre = RISCSYM;
-	else
-		sy->sattre = 0;
-#else
-	sy->sattre = (rgpu || rdsp ? RISCSYM : 0);
-#endif
-	sy->svalue = 0;
+	symbol->stype  = (BYTE)type;
+	symbol->senv   = (WORD)envno;
+	symbol->sattr  = 0;
+	symbol->sattre = (rgpu || rdsp ? RISCSYM : 0);
+	symbol->svalue = 0;
 
 	// Install symbol in symbol table
-	hash = syhash(name, envno);
-	sy->snext = sytab[hash];
-	sytab[hash] = sy;
+	int hash = HashSymbol(name, envno);
+	symbol->snext = symbolTable[hash];
+	symbolTable[hash] = symbol;
 
 	// Append symbol to symbol-order list
 	if (sorder == NULL)
-		sorder = sy;                            // Add first symbol 
+		sorder = symbol;					// Add first symbol 
 	else
-		sordtail->sorder = sy;                  // Or append to tail of list
+		sordtail->sorder = symbol;			// Or append to tail of list
 
-	sy->sorder = NULL;
-	sordtail = sy;
+	symbol->sorder = NULL;
+	sordtail = symbol;
 
-	return sy;                                  // Return pointer to symbol
+	return symbol;
 }
 
 
@@ -130,7 +121,7 @@ SYM * lookup(char * name, int type, int envno)
 	int k, sum;                                 // Hash bucket calculation
 	char * s;                                   // String pointer
 
-	// Pick a hash-bucket (SAME algorithm as syhash())
+	// Pick a hash-bucket (SAME algorithm as HashSymbol())
 	k = 0;
 	s = name;
 
@@ -142,24 +133,24 @@ SYM * lookup(char * name, int type, int envno)
 			sum += *s++;
 	}
 
-	sy = sytab[sum & (NBUCKETS-1)];
+	sy = symbolTable[sum & (NBUCKETS-1)];
 #else
-	SYM * sy = sytab[syhash(name, envno)];
+	SYM * symbol = symbolTable[HashSymbol(name, envno)];
 #endif
 
 	// Do linear-search for symbol in bucket
-	while (sy != NULL)
+	while (symbol != NULL)
 	{
-		if (sy->stype == type                   // Type, envno and name must match
-			&& sy->senv  == envno
-			&& *name == *sy->sname              // Fast check for first character
-			&& !strcmp(name, sy->sname))
+		if (symbol->stype == type			// Type, envno and name must match
+			&& symbol->senv  == envno
+			&& *name == *symbol->sname		// Fast check for first character
+			&& !strcmp(name, symbol->sname))
 			break;
 		else
-			sy = sy->snext;
+			symbol = symbol->snext;
 	}
 
-	return sy;                                  // Return NULL or matching symbol
+	return symbol;							// Return NULL or matching symbol
 }
 
 
@@ -197,7 +188,7 @@ int syg_fix(void)
 	for(sy=sorder; sy!=NULL; sy=sy->sorder)
 	{
 		if (sy->stype == LABEL && sy->senv == 0
-			&& ((sy->sattr & (REFERENCED|DEFINED)) == REFERENCED))
+			&& ((sy->sattr & (REFERENCED | DEFINED)) == REFERENCED))
 			sy->sattr |= GLOBAL;
 	}
 
@@ -267,8 +258,8 @@ int sy_assign(char * buf, char *(* constr)())
 		
 		// Export or import external references, and export COMMON blocks.
 		if ((sy->stype == LABEL)
-			&& ((sy->sattr & (GLOBAL|DEFINED)) == (GLOBAL|DEFINED)
-			|| (sy->sattr & (GLOBAL|REFERENCED)) == (GLOBAL|REFERENCED))
+			&& ((sy->sattr & (GLOBAL | DEFINED)) == (GLOBAL | DEFINED)
+			|| (sy->sattr & (GLOBAL | REFERENCED)) == (GLOBAL | REFERENCED))
 			|| (sy->sattr & COMMON))
 		{
 			sy->senv = (WORD)scount++;
@@ -279,7 +270,7 @@ int sy_assign(char * buf, char *(* constr)())
 		// Export vanilla labels (but don't make them global). An exception is
 		// made for equates, which are not exported unless they are referenced.
 		else if (sy->stype == LABEL && lsym_flag
-			&& (sy->sattr & (DEFINED|REFERENCED)) != 0
+			&& (sy->sattr & (DEFINED | REFERENCED)) != 0
 			&& (!as68_flag || *sy->sname != 'L'))
 		{
 			sy->senv = (WORD)scount++;
@@ -325,7 +316,7 @@ int symtable(void)
 
 	for(i=0; i<NBUCKETS; ++i)
 	{
-		for(p=sytab[i]; p!=NULL; p=k)
+		for(p=symbolTable[i]; p!=NULL; p=k)
 		{
 			k = p->snext;
 			j = *p->sname;

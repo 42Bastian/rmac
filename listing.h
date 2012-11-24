@@ -31,9 +31,9 @@ extern LONG lsloc;
 
 // Prototypes
 void init_list(void);
-void ship_ln(char *);
+void ship_ln(const char *);
 void taglist(char);
-void println(char *);
+void println(const char *);
 void listeol(void);
 VALUE dos_date(void);
 VALUE dos_time(void);

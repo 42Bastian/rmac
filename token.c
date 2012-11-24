@@ -7,10 +7,10 @@
 //
 
 #include "token.h"
-#include "symbol.h"
-#include "procln.h"
-#include "macro.h"
 #include "error.h"
+#include "macro.h"
+#include "procln.h"
+#include "symbol.h"
 
 #define DECL_KW				// Declare keyword arrays
 #define DEF_KW				// Declare keyword values 
@@ -210,30 +210,27 @@ INOBJ * a_inobj(int typ)
 // (the colon must be in the first column). These labels are stripped before
 // macro expansion takes place.
 //
-int mexpand(char * src, char * dest, int destsiz)
+int ExpandMacro(char * src, char * dest, int destsiz)
 {
-	char * s;
-	char * d = NULL;
-	char * dst;				// Next dest slot
-	char * edst;			// End+1 of dest buffer
 	int i;
 	int questmark;			// \? for testing argument existence
-	TOKEN * tk;
 	char mname[128];		// Assume max size of a formal arg name
-	int macnum;
-	SYM * arg;
-	IMACRO * imacro;
 	char numbuf[20];		// Buffer for text of CONSTs
+	TOKEN * tk;
+	SYM * arg;
 
-	imacro = cur_inobj->inobj.imacro;
-	macnum = (int)(imacro->im_macro->sattr);
+	DEBUG { printf("EM: src=\"%s\"\n", src); }
 
-	destsiz--;
-	dst = dest;
-	edst = dest + destsiz;
+	IMACRO * imacro = cur_inobj->inobj.imacro;
+	int macnum = (int)(imacro->im_macro->sattr);
+
+//	destsiz--;
+	char * dst = dest;						// Next dest slot
+	char * edst = dest + destsiz - 1;		// End + 1(?) of dest buffer
 
 	// Check for (and skip over) any "label" on the line
-	s = src;
+	char * s = src;
+	char * d = NULL;
 
 	if (*s == ':')
 	{
@@ -291,7 +288,7 @@ int mexpand(char * src, char * dest, int destsiz)
 copystr:
 				d = numbuf;
 copy_d:
-				++s;
+				s++;
 
 				while (*d != EOS)
 				{
@@ -320,7 +317,7 @@ copy_d:
 			// Get argument name: \name, \{name}
 			d = mname;
 
-			// \foo
+			// \label
 			if (*s != '{')
 			{
 				do
@@ -329,7 +326,7 @@ copy_d:
 				}
 				while (chrtab[*s] & CTSYM);
 			}
-			// \\{foo} 
+			// \\{label}
 			else
 			{
 				for(++s; *s != EOS && *s != '}';)
@@ -338,14 +335,14 @@ copy_d:
 				if (*s != '}')
 					return error("missing '}'");
 				else
-					++s;
+					s++;
 			}
 
 			*d = EOS;
 
 			// Lookup the argument and copy its (string) value into the
 			// destination string
-			DEBUG printf("mname='%s'\n", mname);
+			DEBUG printf("argument='%s'\n", mname);
 
 			if ((arg = lookup(mname, MACARG, macnum)) == NULL)
 				return errors("undefined argument: '%s'", mname);
@@ -361,7 +358,8 @@ arg_num:
 				tk = NULL;
 
 				if (i < imacro->im_nargs)
-					tk = argp[i];
+//					tk = argp[i];
+					tk = argPtrs[i];
 
 				// \?arg yields:
 				//    0  if the argument is empty or non-existant,
@@ -378,7 +376,7 @@ arg_num:
 					continue;
 				}
 
-				if (tk != NULL)				// arg# is in range, so expand it
+				if (tk != NULL)				// arg # is in range, so expand it
 				{
 					while (*tk != EOL)
 					{
@@ -401,10 +399,12 @@ arg_num:
 							switch ((int)*tk++)
 							{
 							case SYMBOL:
-								d = (char *)*tk++;
+//								d = (char *)*tk++;
+								d = string[*tk++];
 								break;
 							case STRING:
-								d = (char *)*tk++;
+//								d = (char *)*tk++;
+								d = string[*tk++];
 
 								if (dst >= edst)
 									goto overflow;
@@ -532,20 +532,23 @@ char * getmln(void)
 	unsigned source_addr;
 
 	IMACRO * imacro = cur_inobj->inobj.imacro;
-	LONG * strp = imacro->im_nextln;
+//	LONG * strp = imacro->im_nextln;
+	struct LineList * strp = imacro->im_nextln;
 
 	if (strp == NULL)						// End-of-macro
 		return NULL;
 
-	imacro->im_nextln = (LONG *)*strp;
-	mexpand((char *)(strp + 1), imacro->im_lnbuf, LNSIZ);
+//	imacro->im_nextln = (LONG *)*strp;
+	imacro->im_nextln = strp->next;
+//	ExpandMacro((char *)(strp + 1), imacro->im_lnbuf, LNSIZ);
+	ExpandMacro(strp->line, imacro->im_lnbuf, LNSIZ);
 
 	if (!strcmp(imacro->im_macro->sname, "mjump") && !mjump_align)
 	{
 		// if we need to adjust the alignment of the jump source address to
 		// meet the rules of gpu main execution we need to skip the first nop
 		// of the macro. This is simpler than trying to insert nop's mid macro.
-		source_addr = (orgactive) ? orgaddr : sloc;
+		source_addr = (orgactive ? orgaddr : sloc);
 		source_addr += 8;
 
 		if (source_addr % 4)
@@ -555,8 +558,10 @@ char * getmln(void)
 			if (strp == NULL)
 				return NULL;
 
-			imacro->im_nextln = (LONG *)*strp;
-			mexpand((char *)(strp + 1), imacro->im_lnbuf, LNSIZ);
+//			imacro->im_nextln = (LONG *)*strp;
+//			ExpandMacro((char *)(strp + 1), imacro->im_lnbuf, LNSIZ);
+			imacro->im_nextln = strp->next;
+			ExpandMacro(strp->line, imacro->im_lnbuf, LNSIZ);
 		}
 
 		mjump_align = 1;
@@ -697,12 +702,10 @@ void init_token(void)
 //
 int fpop(void)
 {
-	INOBJ * inobj;
 	IFILE * ifile;
 	IMACRO * imacro;
 	LONG * p, * p1;
-
-	inobj = cur_inobj;
+	INOBJ * inobj = cur_inobj;
 
 	if (inobj != NULL)
 	{
@@ -892,7 +895,7 @@ int tokln(void)
 				*ln = ';';
 			else
 			{
-				for(p=ln; *p!=EOS; ++p)
+				for(p=ln; *p!=EOS; p++)
 				{
 					if (*p == '*')
 					{
@@ -970,7 +973,7 @@ int tokln(void)
 
 		if (c & STSYM)
 		{
-			if (stuffnull)					// Terminate old symbol 
+			if (stuffnull)					// Terminate old symbol from previous pass
 				*nullspot = EOS;
 
 			v = 0;							// Assume no DOT attrib follows symbol
@@ -1050,7 +1053,13 @@ int tokln(void)
 #warning
 //problem here: nullspot is a char * but TOKEN is a uint32_t. On a 64-bit system,
 //this will cause all kinds of mischief.
+#if 0
 				*tk++ = (TOKEN)nullspot;
+#else
+				string[stringNum] = nullspot;
+				*tk++ = stringNum;
+				stringNum++;
+#endif
 			}
 			else
 			{
@@ -1061,7 +1070,7 @@ int tokln(void)
 			if (v)							// Record attribute token (if any)
 				*tk++ = (TOKEN)v;
 
-			if (stuffnull)					// Arrange for string termination 
+			if (stuffnull)					// Arrange for string termination on next pass
 				nullspot = ln;
 
 			continue;
@@ -1096,7 +1105,13 @@ int tokln(void)
 #warning
 // More char * stuffing (8 bytes) into the space of 4 (TOKEN).
 // Need to figure out how to fix this crap.
+#if 0
 				*tk++ = (TOKEN)ln;
+#else
+				string[stringNum] = ln;
+				*tk++ = stringNum;
+				stringNum++;
+#endif
 
 				for(p=ln; *ln!=EOS && *ln!=c1;)
 				{
@@ -1434,35 +1449,43 @@ goteol:
 // be EOL.
 //
 //int d_goto(WORD siz) {
-int d_goto(void)
+//int d_goto(void)
+int d_goto(WORD unused)
 {
-	char * sym;                                               // Label to search for 
-	LONG * defln;                                             // Macro definition strings 
+//	char * sym;                                               // Label to search for 
+//	LONG * defln;                                             // Macro definition strings 
 	char * s1;                                                // Temps for string comparison 
 	char * s2;
-	IMACRO * imacro;                                          // Macro invocation block
+//	IMACRO * imacro;                                          // Macro invocation block
 
 	// Setup for the search
 	if (*tok != SYMBOL)
 		return error("missing label");
 
-	sym = (char *)tok[1];
+//	sym = (char *)tok[1];
+	char * sym = string[tok[1]];
 	tok += 2;
 
 	if (cur_inobj->in_type != SRC_IMACRO)
 		return error("goto not in macro");
 
-	imacro = cur_inobj->inobj.imacro;
-	defln = (LONG *)imacro->im_macro->svalue;
+	IMACRO * imacro = cur_inobj->inobj.imacro;
+//	defln = (LONG *)imacro->im_macro->svalue;
+	struct LineList * defln = imacro->im_macro->lineList;
 
 	// Find the label, starting with the first line.
-	for(; defln!=NULL; defln=(LONG *)*defln)
+//	for(; defln!=NULL; defln=(LONG *)*defln)
+	for(; defln!=NULL; defln=defln->next)
 	{
-		if (*(char *)(defln + 1) == ':')
+//		if (*(char *)(defln + 1) == ':')
+		if (defln->line[0] == ':')
 		{
 			// Compare names (sleazo string compare)
+			// This string compare is not right. Doesn't check for lengths.
+#warning "!!! Bad string comparison !!!"
 			s1 = sym;
-			s2 = (char *)(defln + 1) + 1;
+//			s2 = (char *)(defln + 1) + 1;
+			s2 = defln->line;
 
 			while (*s1 == *s2)
 			{
@@ -1470,8 +1493,8 @@ int d_goto(void)
 					break;
 				else
 				{
-					++s1;
-					++s2;
+					s1++;
+					s2++;
 				}
 			}
 
@@ -1504,11 +1527,15 @@ void DumpTokenBuffer(void)
 		else if (*t == ACONST)
 			printf("[ACONST]");
 		else if (*t == STRING)
-			printf("[STRING]");
+//			printf("[STRING]");
+		{
+			t++;
+			printf("[STRING:\"%s\"]", string[*t]);
+		}
 		else if (*t == SYMBOL)
 		{
 			t++;
-			printf("[SYMBOL:\"%s\"]", (char *)*t);
+			printf("[SYMBOL:\"%s\"]", string[*t]);
 		}
 		else if (*t == EOS)
 			printf("[EOS]");
@@ -1558,13 +1585,15 @@ void DumpTokenBuffer(void)
 			printf("[CR_DATE]");
 		else if (*t >= 0x20 && *t <= 0x2F)
 			printf("[%c]", (char)*t);
+		else if (*t >= 0x3A && *t <= 0x3F)
+			printf("[%c]", (char)*t);
 		else if (*t >= 0x80 && *t <= 0x87)
 			printf("[D%u]", ((uint32_t)*t) - 0x80);
 		else if (*t >= 0x88 && *t <= 0x8F)
 			printf("[A%u]", ((uint32_t)*t) - 0x88);
 		else
-//			printf("[%X:%c]", (uint32_t)*t, (char)*t);
-			printf("[%X]", (uint32_t)*t);
+			printf("[%X:%c]", (uint32_t)*t, (char)*t);
+//			printf("[%X]", (uint32_t)*t);
 	}
 
 	printf("[EOL]\n");

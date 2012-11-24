@@ -13,11 +13,11 @@
 #include "amode.h"
 
 // Globals, Externals etc
-extern char *seg_error;
-extern char *undef_error;
-extern char *rel_error;
-extern char *range_error;
-extern char *abs_error;
+extern char seg_error[];
+extern char undef_error[];
+extern char rel_error[];
+extern char range_error[];
+extern char abs_error[];
 extern MNTAB machtab[];
 
 // Prototypes 

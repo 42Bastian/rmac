@@ -12,7 +12,6 @@
 //
 // TARGET SPECIFIC BUILD SETTINGS
 //
-
 #ifdef WIN32
 	#define PLATFORM        "Win32"			// Release platform - windows
 	#define _OPEN_FLAGS     _O_TRUNC|_O_CREAT|_O_BINARY|_O_RDWR
@@ -60,7 +59,11 @@
 	#endif
 #endif
 
+//
+// Non-target specific stuff
+//
 #include <inttypes.h>
+#include "symbol.h"
 
 #define BYTE         uint8_t
 #define WORD         uint16_t
@@ -112,21 +115,6 @@
 #define ALCYON       0				// Alcyon/DRI C object format
 #define MWC          1				// Mark Williams object format
 #define BSD          2				// BSD object format
-
-// Symbols
-#define  SYM         struct _sym
-SYM
-{
-   SYM * snext;						// * -> Next symbol on hash-chain
-   SYM * sorder;					// * -> Next sym in order of refrence
-   SYM * sdecl;						// * -> Next sym in order of declaration
-   BYTE stype;						// Symbol type 
-   WORD sattr;						// Attribute bits
-   LONG sattre;						// Extended attribute bits
-   WORD senv;						// Enviroment number
-   LONG svalue;						// Symbol value
-   char * sname;					// * -> Symbol's print-name
-};
 
 // Pointer type that can point to (almost) anything
 #define PTR union _ptr

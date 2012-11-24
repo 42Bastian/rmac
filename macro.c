@@ -7,22 +7,24 @@
 //
 
 #include "macro.h"
-#include "token.h"
+#include "debug.h"
+#include "direct.h"
 #include "error.h"
 #include "expr.h"
 #include "listing.h"
-#include "symbol.h"
 #include "procln.h"
-#include "direct.h"
-#include "debug.h"
+#include "symbol.h"
+#include "token.h"
 
 LONG curuniq;								// Current macro's unique number
-TOKEN ** argp;								// Free spot in argptrs[]
+//TOKEN ** argp;								// Free spot in argptrs[]
 int macnum;									// Unique number for macro definition
+TOKEN * argPtrs[128];						// 128 arguments ought to be enough for anyone
+static int argp;
 
 static LONG macuniq;						// Unique-per-macro number
 static SYM * curmac;						// Macro currently being defined
-static char ** curmln;						// Previous macro line (or NULL)
+//static char ** curmln;						// Previous macro line (or NULL)
 static VALUE argno;							// Formal argument count 
 
 static LONG * firstrpt;						// First .rept line 
@@ -37,22 +39,20 @@ void init_macro(void)
 {
 	macuniq = 0;
 	macnum = 1;
-	argp = NULL;
+//	argp = NULL;
+	argp = 0;
 	ib_macro();
 }
 
 
 //
 // Exit from a Macro;
-// o  pop any intervening include files and repeat blocks;
-// o  restore argument stack;
-// o  pop the macro.
+// -- pop any intervening include files and repeat blocks;
+// -- restore argument stack;
+// -- pop the macro.
 //
 int exitmac(void)
 {
-	IMACRO * imacro;
-	TOKEN ** p;
-
 	// Pop intervening include files and .rept blocks
 	while (cur_inobj != NULL && cur_inobj->in_type != SRC_IMACRO)
 		fpop();
@@ -65,16 +65,14 @@ int exitmac(void)
 	// o  old unique number
 	// ...and then pop the macro.
 
-	imacro = cur_inobj->inobj.imacro;
+	IMACRO * imacro = cur_inobj->inobj.imacro;
 	curuniq = imacro->im_olduniq;
 
-	p = --argp;
-	argp = (TOKEN **)*argp;
+	/*TOKEN ** p = */argp--;
+//	argp = (TOKEN **)*argp;
 
 	fpop();
-
 	mjump_align = 0;
-
 	return 0;
 }
 
@@ -87,8 +85,9 @@ int defmac2(char * argname)
 	SYM * arg;
 
 	if (lookup(argname, MACARG, (int)curmac->sattr) != NULL)
-		return(error("multiple formal argument definition"));
-	arg = newsym(argname, MACARG, (int)curmac->sattr);
+		return error("multiple formal argument definition");
+
+	arg = NewSymbol(argname, MACARG, (int)curmac->sattr);
 	arg->svalue = argno++;
 
 	return OK;
@@ -98,39 +97,74 @@ int defmac2(char * argname)
 //
 // Add a line to a macro definition; also print lines to listing file (if
 // enabled). The last line of the macro (containing .endm) is not included in
-// the macro. A label on that line will be lost. `endflg' is misleading here.
-// It is -1 for all lines but the last one (.endm), when it is 0.
+// the macro. A label on that line will be lost.
+// notEndFlag is -1 for all lines but the last one (.endm), when it is 0.
 //
-int defmac1(char * ln, int endflg)
+int defmac1(char * ln, int notEndFlag)
 {
 	PTR p;
 	LONG len;
 
 	if (list_flag)
 	{
-		listeol();								// Flush previous source line
-		lstout('.');							// Mark macro definition with period
+		listeol();							// Flush previous source line
+		lstout('.');						// Mark macro definition with period
 	}
 
-	if (endflg)
+	// This is just wrong, wrong, wrong. It makes up a weird kind of string with
+	// a pointer on front, and then uses a ** to manage them: This is a recipe
+	// for disaster.
+	// How to manage it then?
+	// Could use a linked list, like Landon uses everywhere else.
+/*
+How it works:
+Allocate a space big enough for the string + NULL + pointer.
+Set the pointer to NULL.
+Copy the string to the space after the pointer.
+If this is the 1st time through, set the SYM * "svalue" to the pointer.
+If this is the 2nd time through, derefence the ** to point to the memory you just allocated.
+Then, set the ** to the location of the memory you allocated for the next pass through.
+
+This is a really low level way to do a linked list, and by bypassing all the safety
+features of the language. Seems like we can do better here.
+*/
+	if (notEndFlag)
 	{
+#if 0
 		len = strlen(ln) + 1 + sizeof(LONG);
-//		p.cp = amem(len);
 		p.cp = malloc(len);
 		*p.lp = 0;
 		strcpy(p.cp + sizeof(LONG), ln);
 
 		// Link line of text onto end of list
 		if (curmln == NULL)
-			curmac->svalue = (VALUE)p.cp;
+			curmac->svalue = p.cp;
 		else
 			*curmln = p.cp;
 
 		curmln = (char **)p.cp;
-		return 1;								// Keep looking 
+		return 1;							// Keep looking 
+#else
+		if (curmac->lineList == NULL)
+		{
+			curmac->lineList = malloc(sizeof(struct LineList));
+			curmac->lineList->next = NULL;
+			curmac->lineList->line = strdup(ln);
+			curmac->last = curmac->lineList;
+		}
+		else
+		{
+			curmac->last->next = malloc(sizeof(struct LineList));
+			curmac->last->next->next = NULL;
+			curmac->last->next->line = strdup(ln);
+			curmac->last = curmac->last->next;
+		}
+
+		return 1;							// Keep looking
+#endif
 	}
-	else 
-		return 0;								// Stop looking at the end
+
+	return 0;								// Stop looking at the end
 }
 
 
@@ -147,24 +181,22 @@ int defmac1(char * ln, int endflg)
 //  `defmac1' adds lines of text to the macro definition
 //  `defmac2' processes the formal arguments (and sticks them into the symbol table)
 //
-int defmac(void)
+int DefineMacro(void)
 {
-	char * p;
-	SYM * mac;
-
-	// Setup entry in symbol table, make sure the macro isn't a duplicate entry, and that
-	// it doesn't override any processor mnemonic or assembler directive.
+	// Setup entry in symbol table, make sure the macro isn't a duplicate
+	// entry, and that it doesn't override any processor mnemonic or assembler
+	// directive.
 	if (*tok++ != SYMBOL)
 		return error("missing symbol");
 
-	p = (char *)*tok++;
+	char * name = string[*tok++];
 
-	if (lookup(p, MACRO, 0) != NULL)
-		return error("multiple macro definition");
+	if (lookup(name, MACRO, 0) != NULL)
+		return error("duplicate macro definition");
 
-	curmac = mac = newsym(p, MACRO, 0);
-	mac->svalue = 0;
-	mac->sattr = (WORD)(macnum++);
+	curmac = NewSymbol(name, MACRO, 0);
+	curmac->svalue = 0;
+	curmac->sattr = (WORD)(macnum++);
 
 	// Parse and define formal arguments in symbol table
 	if (*tok != EOL)
@@ -176,7 +208,8 @@ int defmac(void)
 
 	// Suck in the macro definition; we're looking for an ENDM symbol on a line
 	// by itself to terminate the definition.
-	curmln = NULL;
+//	curmln = NULL;
+	curmac->lineList = NULL;
 	lncatch(defmac1, "endm ");
 
 	return 0;
@@ -204,8 +237,10 @@ int defr1(char * ln, int kwno)
 		return(0);
 		goto addln;
 	case 1:										// .rept 
-		++rptlevel;
+		rptlevel++;
 	default:
+//MORE stupidity here...
+#warning "!!! Casting (char *) as LONG !!!"
 	addln:
 		// Allocate length of line + 1('\0') + LONG
 		len = strlen(ln) + 1 + sizeof(LONG);
@@ -286,7 +321,7 @@ int lncatch(int (* lnfunc)(), char * dirlist)
 	int k;
 
 	if (lnfunc != NULL)
-		++lnsave;								// Tell tokenizer to keep lines 
+		lnsave++;								// Tell tokenizer to keep lines 
 
 	for(;;)
 	{
@@ -307,18 +342,26 @@ int lncatch(int (* lnfunc)(), char * dirlist)
 			if ((tok[2] == ':' || tok[2] == DCOLON))
 			{
 				if (tok[3] == SYMBOL)			// label: symbol
+#if 0
 					p = (char *)tok[4];
+#else
+					p = string[tok[4]];
+#endif
 			}
 			else
 			{
+#if 0
 				p = (char *)tok[1];				// symbol 
+#else
+				p = string[tok[1]];				// Symbol
+#endif
 			}
 		}
 
 		if (p != NULL)
 		{
 			if (*p == '.')						// ignore leading '.'s 
-				++p;
+				p++;
 
 			k = kwmatch(p, dirlist);
 		}
@@ -334,7 +377,7 @@ int lncatch(int (* lnfunc)(), char * dirlist)
 	}
 
 	if (lnfunc != NULL)
-		--lnsave;								// Tell tokenizer to stop keeping lines
+		lnsave--;								// Tell tokenizer to stop keeping lines
 
 	return 0;
 }
@@ -374,7 +417,7 @@ int kwmatch(char * kw, char * kwlist)
 			++kwlist;
 
 		if (*kwlist== ' ')
-			++kwlist;
+			kwlist++;
 	}
 
 	return -1;
@@ -386,16 +429,14 @@ int kwmatch(char * kw, char * kwlist)
 // o  parse, count and copy arguments
 // o  push macro's string-stream
 //
-int invokemac(SYM * mac, WORD siz)
+int InvokeMacro(SYM * mac, WORD siz)
 {
 	TOKEN * p = NULL;
-	IMACRO * imacro;
-	INOBJ * inobj;
 	int dry_run;
-	WORD nargs;
 	WORD arg_siz = 0;
-	TOKEN ** argptr = NULL;
-	TOKEN * beg_tok;
+//	TOKEN ** argptr = NULL;
+//Doesn't need to be global! (or does it???)
+	argp = 0;
 
 	if ((!strcmp(mac->sname, "mjump") || !strcmp(mac->sname, "mpad")) && !in_main)
 	{
@@ -403,20 +444,24 @@ int invokemac(SYM * mac, WORD siz)
 		return ERROR;
 	}
 
-	inobj = a_inobj(SRC_IMACRO);				// Alloc and init IMACRO 
-	imacro = inobj->inobj.imacro;
+	INOBJ * inobj = a_inobj(SRC_IMACRO);		// Alloc and init IMACRO 
+	IMACRO * imacro = inobj->inobj.imacro;
 	imacro->im_siz = siz;
-	nargs = 0;
-	beg_tok = tok;								// 'tok' comes from token.c
+	WORD nargs = 0;
+	TOKEN * beg_tok = tok;						// 'tok' comes from token.c
 
-	for(dry_run=1;; --dry_run)
+	for(dry_run=1; ; dry_run--)
 	{
 		for(tok=beg_tok; *tok!=EOL;)
 		{
 			if (dry_run)
 				nargs++;
 			else
+#if 0				
 				*argptr++ = p;
+#else
+				argPtrs[argp++] = p;
+#endif
 
 			// Keep going while tok isn't pointing at a comma or EOL
 			while (*tok != ',' && *tok != EOL)
@@ -468,12 +513,17 @@ int invokemac(SYM * mac, WORD siz)
 		{
 			if (nargs != 0)
 //Barfing here with memory corruption in glibc. TOKEN is defined as LONG, which is uint32_t
-//				p = (TOKEN *)malloc(arg_siz + 1);
-				p = (TOKEN *)malloc(arg_siz + sizeof(TOKEN));
+				p = (TOKEN *)malloc(arg_siz);
+//				p = (TOKEN *)malloc(arg_siz + sizeof(TOKEN));
 
+// This construct is meant to deal with nested macros, so the simple minded way
+// we deal with them now won't work. :-/ Have to think about how to fix.
+#if 0
 			argptr = (TOKEN **)malloc((nargs + 1) * sizeof(LONG));
 			*argptr++ = (TOKEN *)argp;
 			argp = argptr;
+#else
+#endif
 		}
 		else 
 			break;
@@ -487,18 +537,10 @@ int invokemac(SYM * mac, WORD siz)
 	// o  bump `macuniq' counter and set 'curuniq' to it;
 	imacro->im_nargs = nargs;
 	imacro->im_macro = mac;
-	imacro->im_nextln = (TOKEN *)mac->svalue;
+//	imacro->im_nextln = (TOKEN *)mac->svalue;
+	imacro->im_nextln = mac->lineList;
 	imacro->im_olduniq = curuniq;
 	curuniq = macuniq++;
-/*IMACRO {
-	IMACRO * im_link;		// Pointer to ancient IMACROs
-	LONG * im_nextln;		// Next line to include
-	WORD im_nargs;			// # of arguments supplied on invocation
-	WORD im_siz;			// Size suffix supplied on invocation
-	LONG im_olduniq;		// Old value of 'macuniq'
-	SYM * im_macro;			// Pointer to macro we're in
-	char im_lnbuf[LNSIZ];	// Line buffer
-};*/
 
 	DEBUG
 	{
@@ -507,7 +549,8 @@ int invokemac(SYM * mac, WORD siz)
 		for(nargs=0; nargs<imacro->im_nargs; ++nargs)
 		{
 			printf("arg%d=", nargs);
-			dumptok(argp[imacro->im_nargs - nargs - 1]);
+//			dumptok(argp[imacro->im_nargs - nargs - 1]);
+			dumptok(argPtrs[imacro->im_nargs - nargs - 1]);
 		}
 	}
 
@@ -520,40 +563,41 @@ int invokemac(SYM * mac, WORD siz)
 //
 void ib_macro(void)
 {
-	SYM * mac;
-
-	curmac = mac = newsym("mjump", MACRO, 0);
-	mac->svalue = 0;
-	mac->sattr = (WORD)(macnum++);
+	curmac = NewSymbol("mjump", MACRO, 0);
+	curmac->svalue = 0;
+	curmac->sattr = (WORD)(macnum++);
 	argno = 0;
 	defmac2("cc");
 	defmac2("addr");
 	defmac2("jreg");
-	curmln = NULL;
-	defmac1("      nop", -1);
-	defmac1("      movei #\\addr,\\jreg", -1);
-	defmac1("      jump  \\cc,(\\jreg)", -1);
-	defmac1("      nop", -1);
-	defmac1("      nop", -1);
+//	curmln = NULL;
+	curmac->lineList = NULL;
+	defmac1("  nop", -1);
+	defmac1("  movei #\\addr,\\jreg", -1);
+	defmac1("  jump  \\cc,(\\jreg)", -1);
+	defmac1("  nop", -1);
+	defmac1("  nop", -1);
 
-	curmac = mac = newsym("mjr", MACRO, 0);
-	mac->svalue = 0;
-	mac->sattr = (WORD)(macnum++);
+	curmac = NewSymbol("mjr", MACRO, 0);
+	curmac->svalue = 0;
+	curmac->sattr = (WORD)(macnum++);
 	argno = 0;
 	defmac2("cc");
 	defmac2("addr");
-	curmln = NULL;
-	defmac1("      jr    \\cc,\\addr", -1);
-	defmac1("      nop", -1);
-	defmac1("      nop", -1);
+//	curmln = NULL;
+	curmac->lineList = NULL;
+	defmac1("  jr    \\cc,\\addr", -1);
+	defmac1("  nop", -1);
+	defmac1("  nop", -1);
 
-	curmac = mac = newsym("mpad", MACRO, 0);
-	mac->svalue = 0;
-	mac->sattr = (WORD)(macnum++);
+	curmac = NewSymbol("mpad", MACRO, 0);
+	curmac->svalue = 0;
+	curmac->sattr = (WORD)(macnum++);
 	argno = 0;
 	defmac2("size");
-	curmln = NULL;
-	defmac1("      .rept (\\size/2)", -1);
-	defmac1("         nop", -1);
-	defmac1("      .endr", -1);
+//	curmln = NULL;
+	curmac->lineList = NULL;
+	defmac1("  .rept (\\size/2)", -1);
+	defmac1("     nop", -1);
+	defmac1("  .endr", -1);
 }

@@ -21,7 +21,8 @@
 #define DEF_KW
 #include "kwtab.h"
 
-TOKEN exprbuf[128];		// Expression buffer 
+TOKEN exprbuf[128];			// Expression buffer 
+SYM * symbolPtr[1000000];	// Symbol pointers table
 
 // Directive handler table
 int (*dirtab[])() = {
@@ -158,7 +159,8 @@ int d_print(void)
 		switch(*tok)
 		{
 		case STRING:
-			sprintf(prntstr, "%s", (char *)tok[1]);
+//			sprintf(prntstr, "%s", (char *)tok[1]);
+			sprintf(prntstr, "%s", string[tok[1]]);
 			printf("%s", prntstr);
 
 			if (list_fd) 
@@ -172,7 +174,8 @@ int d_print(void)
 			if (tok[1] != SYMBOL)
 				goto token_err;
 
-			strcpy(prntstr, (char *)tok[2]);
+//			strcpy(prntstr, (char *)tok[2]);
+			strcpy(prntstr, string[tok[2]]);
 
 			switch(prntstr[0])
 			{
@@ -253,7 +256,8 @@ int d_ccundef(void)
 		return ERROR;
 	}
 
-	ccname = lookup((char *)tok[1], LABEL, 0);
+//	ccname = lookup((char *)tok[1], LABEL, 0);
+	ccname = lookup(string[tok[1]], LABEL, 0);
 
 	// Make sure symbol is a valid ccdef
 	if (!ccname || !(ccname->sattre & EQUATEDCC))
@@ -296,7 +300,8 @@ int d_equrundef(void)
 		}
 
 		// Lookup and undef if equated register
-		regname = lookup((char *)tok[1], LABEL, 0);
+//		regname = lookup((char *)tok[1], LABEL, 0);
+		regname = lookup(string[tok[1]], LABEL, 0);
 
 		if (regname && (regname->sattre & EQUATEDREG))
 			regname->sattre |= UNDEF_EQUR;
@@ -334,7 +339,8 @@ int d_incbin(void)
 		return ERROR;
 	}
 
-	if ((j = open((char *)tok[1],  _OPEN_INC)) >= 0)
+//	if ((j = open((char *)tok[1],  _OPEN_INC)) >= 0)
+	if ((j = open(string[tok[1]],  _OPEN_INC)) >= 0)
 	{
 		size = lseek(j, 0L, SEEK_END);
 		chcheck(size);
@@ -349,7 +355,8 @@ int d_incbin(void)
 	}
 	else
 	{
-		errors("cannot open include binary file (%s)", (char *)tok[1]);
+//		errors("cannot open include binary file (%s)", (char *)tok[1]);
+		errors("cannot open include binary file (%s)", string[tok[1]]);
 		return ERROR;
 	}
 
@@ -595,7 +602,11 @@ int symlist(int(* func)())
 		if (*tok != SYMBOL)
 			return error(em);
 
+#if 0
 		if ((*func)(tok[1]) != OK)
+#else
+		if ((*func)(string[tok[1]]) != OK)
+#endif
 			break;
 
 		tok += 2;
@@ -624,15 +635,23 @@ int d_include(void)
 	char buf[128];
 	char buf1[128];
 
-	if (*tok == STRING)                                       // Leave strings ALONE 
+	if (*tok == STRING)							// Leave strings ALONE 
+#if 0
 		fn = (char *)*++tok;
+#else
+		fn = string[*++tok];
+#endif
 	else if (*tok == SYMBOL)					// Try to append ".s" to symbols
 	{
+#if 0
 		strcpy(buf, (char *)*++tok);
+#else
+		strcpy(buf, string[*++tok]);
+#endif
 		fext(buf, ".s", 0);
 		fn = &buf[0];
 	}
-	else                                                   // Punt if no STRING or SYMBOL 
+	else										// Punt if no STRING or SYMBOL 
 		return error("missing filename");
 
 	// Make sure the user didn't try anything like:
@@ -640,15 +659,16 @@ int d_include(void)
 	if (*++tok != EOL)
 		return error("extra stuff after filename -- enclose it in quotes");
 
-	// Attempt to open the include file in the current directory, then (if that failed) try list
-	// of include files passed in the enviroment string or by the "-d" option.
+	// Attempt to open the include file in the current directory, then (if that
+	// failed) try list of include files passed in the enviroment string or by
+	// the "-d" option.
 	if ((j = open(fn, 0)) < 0)
 	{
 		for(i=0; nthpath("RMACPATH", i, buf1)!=0; ++i)
 		{
 			j = strlen(buf1);
 
-			if (j > 0 && buf1[j-1] != SLASHCHAR)                // Append path char if necessary 
+			if (j > 0 && buf1[j-1] != SLASHCHAR)	// Append path char if necessary 
 				strcat(buf1, SLASHSTRING);
 
 			strcat(buf1, fn);
@@ -703,7 +723,7 @@ int globl1(char * p)
 
 	if ((sy = lookup(p, LABEL, 0)) == NULL)
 	{
-		sy = newsym(p, LABEL, 0);
+		sy = NewSymbol(p, LABEL, 0);
 		sy->svalue = 0;
 		sy->sattr = GLOBAL;
 	}
@@ -854,12 +874,13 @@ int d_dc(WORD siz)
 		// dc.b 'string' [,] ...
 		if (siz == SIZB && *tok == STRING && (tok[2] == ',' || tok[2] == EOL))
 		{
-			i = strlen((const char*)tok[1]);
+//			i = strlen((const char*)tok[1]);
+			i = strlen(string[tok[1]]);
 
 			if ((challoc - ch_size) < i) 
 				chcheck(i);
 
-			for(p=(char *)tok[1]; *p!=EOS; ++p)
+			for(p=string[tok[1]]; *p!=EOS; ++p)
 				D_byte(*p);
 
 			tok += 2;
@@ -1144,29 +1165,30 @@ int d_comm(void)
 	if (*tok != SYMBOL)
 		return error("missing symbol");
 
-	p = (char *)tok[1];
+//	p = (char *)tok[1];
+	p = string[tok[1]];
 	tok += 2;
 
-	if (*p == '.')                                            // Cannot .comm a local symbol
+	if (*p == '.')							// Cannot .comm a local symbol
 		return error(locgl_error);
 
 	if ((sym = lookup(p, LABEL, 0)) == NULL)
-		sym = newsym(p, LABEL, 0);
+		sym = NewSymbol(p, LABEL, 0);
 	else
 	{
 		if (sym->sattr & DEFINED)
 			return error(".comm symbol already defined");
 	}
 
-	sym->sattr = GLOBAL|COMMON|BSS;
+	sym->sattr = GLOBAL | COMMON | BSS;
 
 	if (*tok++ != ',')
 		return error(comma_error);
 
-	if (abs_expr(&eval) != OK)                                // Parse size of common region
+	if (abs_expr(&eval) != OK)				// Parse size of common region
 		return 0;
 
-	sym->svalue = eval;                                      // Install common symbol's size
+	sym->svalue = eval;						// Install common symbol's size
 	at_eol();
 	return 0;
 }
@@ -1323,7 +1345,7 @@ int d_cargs(void)
 		if (abs_expr(&eval) != OK)
 			return 0;
 
-		if (*tok == ',')                                       // Eat comma if it's there
+		if (*tok == ',')					// Eat comma if it's there
 			++tok;
 	}
 	else 
@@ -1333,7 +1355,8 @@ int d_cargs(void)
 	{
 		if (*tok == SYMBOL)
 		{
-			p = (char *)tok[1];
+//			p = (char *)tok[1];
+			p = string[tok[1]];
 
 			if (*p == '.')
 				env = curenv;
@@ -1344,7 +1367,7 @@ int d_cargs(void)
 
 			if (sy == NULL)
 			{
-				sy = newsym(p, LABEL, env);
+				sy = NewSymbol(p, LABEL, env);
 				sy->sattr = 0;
 			}
 			else if (sy->sattr & DEFINED)

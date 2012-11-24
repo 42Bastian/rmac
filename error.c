@@ -69,7 +69,7 @@ void err_setup(void)
 //
 // Display Error Message
 //
-int error(char * s)
+int error(const char * s)
 {
 	char buf[EBUFSIZ];
 	unsigned int length;
@@ -88,7 +88,7 @@ int error(char * s)
 		printf("%s", buf);
 
 	taglist('E');
-	++errcnt;
+	errcnt++;
 
 	return ERROR;
 }

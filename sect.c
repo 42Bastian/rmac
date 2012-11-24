@@ -7,14 +7,15 @@
 //
 
 #include "sect.h"
+#include "direct.h"
 #include "error.h"
-#include "mach.h"
-#include "token.h"
-#include "mark.h"
 #include "expr.h"
-#include "symbol.h"
-#include "risca.h"
 #include "listing.h"
+#include "mach.h"
+#include "mark.h"
+#include "risca.h"
+#include "symbol.h"
+#include "token.h"
 
 // Section descriptors
 SECT sect[NSECTS];						// All sections... 
@@ -86,19 +87,18 @@ void mksect(int sno, WORD attr)
 //
 void switchsect(int sno)
 {
-	SECT * p;                                                // Section pointer
-	CHUNK * cp;                                              // Chunk pointer
-
+	CHUNK * cp;								// Chunk pointer
 	cursect = sno;
-	p = &sect[sno];
+	SECT * p = &sect[sno];
 
-	scattr = p->scattr;                                      // Copy section vars
+	scattr = p->scattr;						// Copy section vars
 	sloc = p->sloc;
 	scode = p->scode;
 	sfix = p->sfix;
 
+	// Copy code chunk vars
 	if ((cp = scode) != NULL)
-	{                               // Copy code chunk vars
+	{
 		challoc = cp->challoc;
 		ch_size = cp->ch_size;
 		chptr = cp->chptr + ch_size;
@@ -106,8 +106,9 @@ void switchsect(int sno)
 	else
 		challoc = ch_size = 0;
 
+	// Copy fixup chunk vars 
 	if ((cp = sfix) != NULL)
-	{                                // Copy fixup chunk vars 
+	{
 		fchalloc = cp->challoc;
 		fchsize = cp->ch_size;
 		fchptr.cp = cp->chptr + fchsize;
@@ -140,20 +141,20 @@ void savsect(void)
 //
 void init_sect(void)
 {
-	int i;                                                   // Iterator
+	int i;
 
 	// Cleanup all sections
-	for(i=0; i<NSECTS; ++i)
+	for(i=0; i<NSECTS; i++)
 		mksect(i, 0);
 
 	// Construct default sections, make TEXT the current section
-	mksect(ABS,   SUSED|SABS|SBSS);                          // ABS
-	mksect(TEXT,  SUSED|TEXT     );                          // TEXT
-	mksect(DATA,  SUSED|DATA     );                          // DATA
-	mksect(BSS,   SUSED|BSS |SBSS);                          // BSS
-//	mksect(M6502, SUSED|TEXT     );                          // 6502 code section
+	mksect(ABS,   SUSED | SABS | SBSS);		// ABS
+	mksect(TEXT,  SUSED | TEXT       );		// TEXT
+	mksect(DATA,  SUSED | DATA       );		// DATA
+	mksect(BSS,   SUSED | BSS | SBSS );		// BSS
+//	mksect(M6502, SUSED | TEXT       );		// 6502 code section
 
-	switchsect(TEXT);                                        // Switch to TEXT for starters
+	switchsect(TEXT);						// Switch to TEXT for starters
 }
 
 
@@ -169,10 +170,11 @@ int fixtest(int sno, LONG loc)
 	WORD w;
 	LONG xloc;
 
-	stopmark();                                              // Force update to sect[] variables
+	stopmark();								// Force update to sect[] variables
 
 	// Hairy, ugly linear search for a mark on our location;
-	// the speed doesn't matter, since this is only done when generating a listing, which is SLOW.
+	// the speed doesn't matter, since this is only done when generating a
+	// listing, which is SLOW.
 	for(ch=sect[sno].sffix; ch!=NULL; ch=ch->chnext)
 	{
 		fup.cp = (char *)ch->chptr;
@@ -210,11 +212,9 @@ int fixtest(int sno, LONG loc)
 //
 int chcheck(LONG amt)
 {
-	CHUNK * cp;
-	SECT * p;
-
+	// If in BSS section, no allocation required
 	if (scattr & SBSS)
-		return 0;							// If in BSS section, forget it
+		return 0;
 
 	if (!amt)
 		amt = CH_THRESHOLD;
@@ -225,8 +225,8 @@ int chcheck(LONG amt)
 	if (amt < CH_CODE_SIZE)
 		amt = CH_CODE_SIZE;
 
-	p = &sect[cursect];
-	cp = (CHUNK *)malloc(sizeof(CHUNK) + amt);
+	SECT * p = &sect[cursect];
+	CHUNK * cp = malloc(sizeof(CHUNK) + amt);
 
 	// First chunk in section
 	if (scode == NULL)
@@ -254,6 +254,9 @@ int chcheck(LONG amt)
 }
 
 
+// This is really wrong. We need to make some proper structures here so we don't
+// have to count sizes of objects, that's what the compiler's for! :-P
+#define FIXUP_BASE_SIZE (sizeof(WORD) + sizeof(LONG) + sizeof(WORD) + sizeof(WORD))
 //
 // Arrange for a fixup on a location
 //
@@ -263,19 +266,25 @@ int fixup(WORD attr, LONG loc, TOKEN * fexpr)
 	LONG len = 0;
 	CHUNK * cp;
 	SECT * p;
+	// Shamus: Expression lengths are voodoo ATM (varibale "i"). Need to fix this.
+	DEBUG printf("FIXUP@$%X: $%X\n", loc, attr);
 
 	// Compute length of expression (could be faster); determine if it's the
 	// single-symbol case; no expression if it's just a mark. This code assumes
 	// 16 bit WORDs and 32 bit LONGs
 	if (*fexpr == SYMBOL && fexpr[2] == ENDEXPR)
 	{
-		if ((attr & 0x0F00) == FU_JR) // SCPCD : correct bit mask for attr (else other FU_xxx will match) NYAN !
+		// Just a single symbol
+		// SCPCD : correct bit mask for attr (else other FU_xxx will match) NYAN !
+		if ((attr & 0x0F00) == FU_JR)
 		{
-			i = 18;							// Just a single symbol
+//			i = 18;
+			i = FIXUP_BASE_SIZE + (sizeof(LONG) * 2);
 		}
 		else
 		{
-			i = 14;
+//			i = 14;
+			i = FIXUP_BASE_SIZE + sizeof(SYM *);
 		}
 	}
 	else
@@ -289,23 +298,25 @@ int fixup(WORD attr, LONG loc, TOKEN * fexpr)
 		}
 
 		len++;								// Add 1 for ENDEXPR 
-		i = (len << 2) + 12;
+//		i = (len << 2) + 12;
+		i = FIXUP_BASE_SIZE + sizeof(WORD) + (len * sizeof(TOKEN));
 	}
 
 	// Maybe alloc another fixup chunk for this one to fit in
 	if ((fchalloc - fchsize) < i)
 	{
 		p = &sect[cursect];
-//		cp = (CHUNK *)amem((long)(sizeof(CHUNK) + CH_FIXUP_SIZE));
 		cp = (CHUNK *)malloc(sizeof(CHUNK) + CH_FIXUP_SIZE);
 
+		// First fixup chunk in section
 		if (sfix == NULL)
-		{                                 // First fixup chunk in section
+		{
 			cp->chprev = NULL;
 			p->sffix = cp;
 		}
+		// Add to other chunks
 		else
-		{                                           // Add to other chunks
+		{
 			cp->chprev = sfix;
 			sfix->chnext = cp;
 			sfix->ch_size = fchsize;
@@ -319,14 +330,15 @@ int fixup(WORD attr, LONG loc, TOKEN * fexpr)
 		sfix = p->sfix = cp;
 	}
 
-	// Record fixup type, fixup location, and the file number and line number the fixup is 
-	// located at.
+	// Record fixup type, fixup location, and the file number and line number
+	// the fixup is located at.
 	*fchptr.wp++ = attr;
 	*fchptr.lp++ = loc;
 	*fchptr.wp++ = cfileno;
 	*fchptr.wp++ = (WORD)curlineno;
 
-	// Store postfix expression or pointer to a single symbol, or nothing for a mark.
+	// Store postfix expression or pointer to a single symbol, or nothing for a
+	// mark.
 	if (attr & FU_EXPR)
 	{
 		*fchptr.wp++ = (WORD)len;
@@ -336,10 +348,12 @@ int fixup(WORD attr, LONG loc, TOKEN * fexpr)
 	}
 	else
 	{
-		*fchptr.lp++ = (LONG)fexpr[1];
+//		*fchptr.lp++ = (LONG)fexpr[1];
+		*fchptr.sy++ = symbolPtr[fexpr[1]];
 	}
 
-	if ((attr & 0x0F00) == FU_JR)  // SCPCD : correct bit mask for attr (else other FU_xxx will match) NYAN !
+	// SCPCD : correct bit mask for attr (else other FU_xxx will match) NYAN !
+	if ((attr & 0x0F00) == FU_JR)
 	{
 		if (orgactive)
 			*fchptr.lp++ = orgaddr;
@@ -355,7 +369,7 @@ int fixup(WORD attr, LONG loc, TOKEN * fexpr)
 //
 // Resolve all Fixups
 //
-int fixups(void)
+int ResolveAllFixups(void)
 {
 	unsigned i;
 	char buf[EBUFSIZ];
@@ -364,10 +378,13 @@ int fixups(void)
 	if (glob_flag)
 		syg_fix();
 
-	resfix(TEXT);
-	resfix(DATA);
+	DEBUG printf("Resolving TEXT sections...\n");
+	ResolveFixups(TEXT);
+	DEBUG printf("Resolving DATA sections...\n");
+	ResolveFixups(DATA);
 	
-	// We need to do a final check of forward 'jump' destination addresses that are external
+	// We need to do a final check of forward 'jump' destination addresses that
+	// are external
 	for(i=0; i<MAXFWDJUMPS; i++)
 	{
 		if (fwdjump[i])
@@ -392,13 +409,10 @@ int fixups(void)
 //
 // Resolve Fixups in a Section
 //
-int resfix(int sno)
+int ResolveFixups(int sno)
 {
-	SECT * sc;					// Section
-	CHUNK * ch;
 	PTR fup;					// Current fixup
 	WORD * fuend;				// End of last fixup (in this chunk)
-	CHUNK * cch;				// Cached chunk for target
 	WORD w;						// Fixup word (type+modes+flags)
 	char * locp;				// Location to fix (in cached chunk) 
 	LONG loc;					// Location to fixup
@@ -416,21 +430,21 @@ int resfix(int sno)
 	unsigned j;
 	char buf[EBUFSIZ];
 	
-	sc = &sect[sno];
-	ch = sc->sffix;
+	SECT * sc = &sect[sno];
+	CHUNK * ch = sc->sffix;
 
 	if (ch == NULL)
 		return 0;
 
-	cch = sc->sfcode;                                        // "cache" first chunk
+	CHUNK * cch = sc->sfcode;				// "cache" first chunk
 
-	if (cch == NULL)                                          // Can't fixup a sect with nothing in it
+	if (cch == NULL)						// Can't fixup a sect with nothing in it
 		return 0;
 
 	do
 	{
-		fup.cp = ch->chptr;                                   // fup -> start of chunk
-		fuend = (WORD *)(fup.cp + ch->ch_size);               // fuend -> end of chunk
+		fup.cp = ch->chptr;					// fup -> start of chunk
+		fuend = (WORD *)(fup.cp + ch->ch_size);	// fuend -> end of chunk
 
 		while (fup.wp < fuend)
 		{
@@ -441,9 +455,10 @@ int resfix(int sno)
 
 			esym = NULL;
 
-			// Search for chunk containing location to fix up; compute a pointer to the location 
-			// (in the chunk). Often we will find the fixup is in the "cached" chunk, so the 
-			// linear-search is seldom executed.
+			// Search for chunk containing location to fix up; compute a
+			// pointer to the location (in the chunk). Often we will find the
+			// fixup is in the "cached" chunk, so the linear-search is seldom
+			// executed.
 			if (loc < cch->chloc || loc >= (cch->chloc + cch->ch_size))
 			{
 				for(cch=sc->sfcode; cch!=NULL; cch=cch->chnext)
@@ -454,18 +469,18 @@ int resfix(int sno)
 
 				if (cch == NULL)
 				{
-					interror(7);                                 // Fixup (loc) out of range 
+					interror(7);			// Fixup (loc) out of range 
 					// NOTREACHED
 				}
 			}
 
 			locp = cch->chptr + (loc - cch->chloc);
-
 			eattr = 0;
 
 			// Compute expression/symbol value and attribs
+			// Complex expression
 			if (w & FU_EXPR)
-			{                                  // Complex expression
+			{
 				i = *fup.wp++;
 
 				if (evexpr(fup.tk, &eval, &eattr, &esym) != OK)
@@ -476,8 +491,9 @@ int resfix(int sno)
 
 				fup.lp += i;
 			}
+			// Simple symbol
 			else
-			{                                           // Simple symbol
+			{
 				sy = *fup.sy++;
 				eattr = sy->sattr;
 
@@ -486,7 +502,7 @@ int resfix(int sno)
 				else
 					eval = 0;
 
-				if ((eattr & (GLOBAL|DEFINED)) == GLOBAL)
+				if ((eattr & (GLOBAL | DEFINED)) == GLOBAL)
 					esym = sy;
 			}
 
@@ -505,14 +521,17 @@ int resfix(int sno)
 
 			// Do the fixup
 			// 
-			// If a PC-relative fixup is undefined, its value is *not* subtracted from the location
-			// (that will happen in the linker when the external reference is resolved).
+			// If a PC-relative fixup is undefined, its value is *not*
+			// subtracted from the location (that will happen in the linker
+			// when the external reference is resolved).
 			// 
-			// MWC expects PC-relative things to have the LOC subtracted from the value, if the 
-			// value is external (that is, undefined at this point).
+			// MWC expects PC-relative things to have the LOC subtracted from
+			// the value, if the value is external (that is, undefined at this
+			// point).
 			// 
-			// PC-relative fixups must be DEFINED and either in the same section (whereupon the 
-			// subtraction takes place) or ABS (with no subtract).
+			// PC-relative fixups must be DEFINED and either in the same
+			// section (whereupon the subtraction takes place) or ABS (with no
+			// subtract).
 			if (w & FU_PCREL)
 			{
 				if (eattr & DEFINED)
@@ -591,7 +610,8 @@ int resfix(int sno)
 				*locp = (char)eval;
 				break;
 			// Fixup WORD forward references; 
-			// the word could be unaligned in the section buffer, so we have to be careful.
+			// the word could be unaligned in the section buffer, so we have to
+			// be careful.
 			case FU_WORD:
 				if (((w & 0x0F00) == FU_JR) || ((w & 0x0F00) == FU_MJR))
 				{
@@ -608,7 +628,8 @@ int resfix(int sno)
 
 					if ((w & 0x0F00) == FU_MJR)
 					{
-						// Main code destination alignment checking here for forward declared labels
+						// Main code destination alignment checking here for
+						// forward declared labels
 						address = (oaddr) ? oaddr : loc;
 
 						if (((address >= 0xF03000) && (address < 0xF04000)
@@ -624,7 +645,8 @@ int resfix(int sno)
 
 							if (page_jump)
 							{
-								// This jump is to a page outside of the current 256 byte page
+								// This jump is to a page outside of the
+								// current 256 byte page
 								if (eval % 4)
 								{
 									warni("* \'jr\' at $%08X - destination address not aligned for long page jump, insert a \'nop\' before the destination address", address);
@@ -762,7 +784,8 @@ int resfix(int sno)
 				*locp = (char)eval;
 				break;
 			// Fixup LONG forward references;
-			// the long could be unaligned in the section buffer, so be careful (again).
+			// the long could be unaligned in the section buffer, so be careful
+			// (again).
 			case FU_LONG:
 				if ((w & 0x0F00) == FU_MOVEI)
 				{

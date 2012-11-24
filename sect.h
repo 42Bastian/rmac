@@ -83,8 +83,8 @@ CHUNK {
    CHUNK * chnext;					// Next, previous chunks in section
    CHUNK * chprev;
    LONG chloc;						// Base addr of this chunk
-   LONG challoc;					// #bytes allocated for chunk
-   LONG ch_size;					// #bytes chunk actually uses
+   LONG challoc;					// # bytes allocated for chunk
+   LONG ch_size;					// # bytes chunk actually uses
    char * chptr;					// Data for this chunk
 };
 
@@ -108,8 +108,8 @@ SECT {
 MCHUNK {
    MCHUNK * mcnext;					// Next mark chunk
    PTR mcptr;						// Vector of marks
-   LONG mcalloc;					// #marks allocted to mark block
-   LONG mcused;						// #marks used in block
+   LONG mcalloc;					// # marks allocted to mark block
+   LONG mcused;						// # marks used in block
 };
 
 #define MWORD        0x0000			// Marked word
@@ -141,7 +141,7 @@ void savsect(void);
 int fixtest(int, LONG);
 int chcheck(LONG);
 int fixup(WORD, LONG, TOKEN *);
-int fixups(void);
-int resfix(int);
+int ResolveAllFixups(void);
+//int ResolveFixups(int);
 
 #endif // __SECT_H__

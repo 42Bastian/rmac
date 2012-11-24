@@ -178,7 +178,8 @@ loop1:										// Internal line processing loop
 
 	if (j == '=' || j == DEQUALS || j == SET || j == REG || j == EQUREG || j == CCDEF)
 	{
-		equate = (char *)tok[1];
+//		equate = (char *)tok[1];
+		equate = string[tok[1]];
 		equtyp = j;
 		tok += 3;
 		goto normal;
@@ -188,7 +189,8 @@ loop1:										// Internal line processing loop
 	if (j == ':' || j == DCOLON)
 	{
 as68label:
-		label = (char *)tok[1];				// Get label name
+//		label = (char *)tok[1];				// Get label name
+		label = string[tok[1]];				// Get label name
 		labtyp = tok[2];					// Get label type
 		tok += 3;							// Go to next line token
 
@@ -218,8 +220,12 @@ as68label:
 
 // This is the problem here: On 64-bit platforms, this cuts the native pointer
 // in half. We need to figure out how to fix this.
-#warning "!!! Bad pointer !!!"
+//#warning "!!! Bad pointer !!!"
+#if 0
 	opname = p = (char *)*tok++;			// Store opcode name here
+#else
+	opname = p = string[*tok++];
+#endif
 
 	// Check to see if the SYMBOL is a keyword (a mnemonic or directive).
 	// On output, `state' will have one of the values:
@@ -299,7 +305,7 @@ as68label:
 				if (label != NULL)
 					warn(lab_ignored);
 
-				defmac();
+				DefineMacro();
 			}
 
 			goto loop;
@@ -348,7 +354,7 @@ normal:
 
 		if (sy == NULL)
 		{
-			sy = newsym(equate, LABEL, j);
+			sy = NewSymbol(equate, LABEL, j);
 			sy->sattr = 0;
 
 			if (equtyp == DEQUALS)
@@ -430,7 +436,8 @@ normal:
 			// Checking for a register symbol
 			else if (tok[0] == SYMBOL)
 			{
-				sy2 = lookup((char *)tok[1], LABEL, j);
+//				sy2 = lookup((char *)tok[1], LABEL, j);
+				sy2 = lookup(string[tok[1]], LABEL, j);
 
 				// Make sure symbol is a valid equreg
 				if (!sy2 || !(sy2->sattre & EQUATEDREG))
@@ -467,7 +474,8 @@ normal:
 
 			if (tok[0] == SYMBOL)
 			{
-				sy2 = lookup((char *)tok[1], LABEL, j);
+//				sy2 = lookup((char *)tok[1], LABEL, j);
+				sy2 = lookup(string[tok[1]], LABEL, j);
 
 				if (!sy2 || !(sy2->sattre & EQUATEDCC))
 				{
@@ -488,7 +496,8 @@ normal:
 		//equ a equr
 		else if (*tok == SYMBOL)
 		{
-			sy2 = lookup((char *)tok[1], LABEL, j);
+//			sy2 = lookup((char *)tok[1], LABEL, j);
+			sy2 = lookup(string[tok[1]], LABEL, j);
 
 			if (sy2 && (sy2->sattre & EQUATEDREG))
 			{
@@ -533,7 +542,7 @@ do_label:
 
 		if (sy == NULL)
 		{
-			sy = newsym(label, LABEL, j);
+			sy = NewSymbol(label, LABEL, j);
 			sy->sattr = 0;
 			sy->sattre = RISCSYM;
 		}
@@ -621,7 +630,7 @@ do_label:
 	if (state < 0)
 	{
 		if ((sy = lookup(opname, MACRO, 0)) != NULL) 
-			invokemac(sy, siz);
+			InvokeMacro(sy, siz);
 		else
 			errors("unknown op '%s'", opname);
 
@@ -703,7 +712,6 @@ int d_if(void)
 
 	// Alloc an IFENTRY
 	if ((rif = f_ifent) == NULL)
-//		rif = (IFENT *)amem((LONG)sizeof(IFENT));
 		rif = (IFENT *)malloc(sizeof(IFENT));
 	else
 		f_ifent = rif->if_prev;
@@ -713,7 +721,8 @@ int d_if(void)
 
 	if (!disabled)
 	{
-		if (expr(exprbuf, &eval, &eattr, &esym) != OK) return 0;
+		if (expr(exprbuf, &eval, &eattr, &esym) != OK)
+			return 0;
 
 		if ((eattr & DEFINED) == 0)
 			return error(undef_error);

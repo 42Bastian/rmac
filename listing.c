@@ -204,7 +204,7 @@ void taglist(char chr)
 //
 // Print a Line to the Listing File
 //
-void println(char * ln)
+void println(const char * ln)
 {
 	unsigned int length;
 
@@ -220,7 +220,7 @@ void println(char * ln)
 //
 // Ship Line `ln' Out; Do Page Breaks and Title Stuff
 //
-void ship_ln(char * ln)
+void ship_ln(const char * ln)
 {
 	// If listing level is <= 0, then don't print anything
 	if (listing <= 0)
@@ -443,7 +443,8 @@ int d_subttl(void)
 	if (*tok != STRING)
 		return error("missing string");
 
-	strcpy(subttl, (char *)tok[1]);
+//	strcpy(subttl, (char *)tok[1]);
+	strcpy(subttl, string[tok[1]]);
 
 	tok += 2;
 
@@ -464,7 +465,8 @@ int d_title(void)
 	if (*tok != STRING)
 		return error("missing string");
 	
-	strcpy(title, (char*)tok[1]);
+//	strcpy(title, (char*)tok[1]);
+	strcpy(title, string[tok[1]]);
 	tok += 2;
 
 	if (pageno > 1)

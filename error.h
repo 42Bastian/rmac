@@ -18,7 +18,7 @@ extern int errcnt;
 extern char * err_fname;
 
 // Prototypes
-int error(char *);
+int error(const char *);
 int errors(char *, char *);
 int fatal(char *);
 int warn(char *);

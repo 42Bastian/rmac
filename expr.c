@@ -7,14 +7,15 @@
 //
 
 #include "expr.h"
-#include "token.h"
-#include "listing.h"
+#include "direct.h"
 #include "error.h"
-#include "procln.h"
-#include "symbol.h"
-#include "sect.h"
+#include "listing.h"
 #include "mach.h"
+#include "procln.h"
 #include "risca.h"
+#include "sect.h"
+#include "symbol.h"
+#include "token.h"
 
 #define DEF_KW							// Declare keyword values 
 #include "kwtab.h"						// Incl generated keyword tables & defs
@@ -43,13 +44,13 @@ char itokcl[] = {
 	1									// (the end) 
 };
 
-char missym_error[] = "missing symbol";
-char * str_error = "missing symbol or string";
+const char missym_error[] = "missing symbol";
+const char str_error[] = "missing symbol or string";
 
 // Convert expression to postfix
-static TOKEN * tk;						// Deposit tokens here 
-SYM * lookup();
-SYM * newsym();
+static TOKEN * tk;						// Deposit tokens here (this is really a
+										// pointer to exprbuf from direct.c)
+static symbolNum;						// Pointer to the entry in symbolPtr[]
 
 
 //
@@ -71,11 +72,11 @@ static VALUE str_value(char * p)
 //
 void init_expr(void)
 {
-	int i;                                                   // Iterator
-	char * p;                                                 // Token pointer
+	int i;									// Iterator
+	char * p;								// Token pointer
 
 	// Initialize token-class table
-	for(i=0; i<128; ++i)                                 // Mark all entries END
+	for(i=0; i<128; ++i)					// Mark all entries END
 		tokcl[i] = END;
 
 	for(i=0, p=itokcl; *p!=1; p++)
@@ -85,6 +86,8 @@ void init_expr(void)
 		else 
 			tokcl[(int)(*p)] = (char)i;
 	}
+
+	symbolNum = 0;
 }
 
 
@@ -154,12 +157,20 @@ int expr1(void)
 			if (*tok++ != SYMBOL)
 				return error(missym_error);
 
+#if 0
 			p = (char *)*tok++;
+#else
+			p = string[*tok++];
+#endif
 
+#if 0
 			if (lookup(p, MACRO, 0) == NULL)
 				w = 0;
 			else
 				w = 1;
+#else
+			w = (lookup(p, MACRO, 0) == NULL ? 0 : 1);
+#endif
 
 			*tk++ = CONST;
 			*tk++ = (TOKEN)w;
@@ -173,16 +184,24 @@ getsym:
 			if (*tok++ != SYMBOL)
 				return error(missym_error);
 
+#if 0
 			p = (char *)*tok++;
+#else
+			p = string[*tok++];
+#endif
 			j = 0;
 
 			if (*p == '.')
 				j = curenv;
 
+#if 0
 			if ((sy = lookup(p, LABEL, j)) != NULL && (sy->sattr & w))
 				w = 1;
 			else
 				w = 0;
+#else
+			w = ((sy = lookup(p, LABEL, j)) != NULL && (sy->sattr & w) ? 1 : 0);
+#endif
 
 			*tk++ = CONST;
 			*tk++ = (TOKEN)w;
@@ -191,7 +210,11 @@ getsym:
 			if (*tok != SYMBOL && *tok != STRING)
 				return error(str_error);
 
+#if 0
 			p = (char *)tok[1];
+#else
+			p = string[tok[1]];
+#endif
 			tok +=2;
 
 			if (*tok++ != ',')
@@ -200,7 +223,11 @@ getsym:
 			if (*tok != SYMBOL && *tok != STRING)
 				return error(str_error);
 
+#if 0
 			p2 = (char *)tok[1];
+#else
+			p = string[tok[1]];
+#endif
 			tok += 2;
 
 			w = (WORD)(!strcmp(p, p2));
@@ -232,7 +259,11 @@ int expr2(void)
 		*tk++ = *tok++;
 		break;
 	case SYMBOL:
+#if 0
 		p = (char *)*tok++;
+#else
+		p = string[*tok++];
+#endif
 		j = 0;
 
 		if (*p == '.')
@@ -241,7 +272,7 @@ int expr2(void)
 		sy = lookup(p, LABEL, j);
 
 		if (sy == NULL)
-			sy = newsym(p, LABEL, j);
+			sy = NewSymbol(p, LABEL, j);
 
 		// Check register bank usage
 		if (sy->sattre & EQUATEDREG)
@@ -254,11 +285,21 @@ int expr2(void)
 		}
 
 		*tk++ = SYMBOL;
+#if 0
 		*tk++ = (TOKEN)sy;
+#else
+		*tk++ = symbolNum;
+		symbolPtr[symbolNum] = sy;
+		symbolNum++;
+#endif
 		break;
 	case STRING:
 		*tk++ = CONST;
+#if 0
 		*tk++ = str_value((char *)*tok++);
+#else
+		*tk++ = str_value(string[*tok++]);
+#endif
 		break;
 	case '(':
 		if (expr0() != OK)
@@ -308,7 +349,8 @@ int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 	char * p;
 	int j;
 
-	tk = otk;
+	tk = otk;								// Set token pointer to 'exprbuf' (direct.c)
+//	symbolNum = 0;							// Set symbol number in symbolPtr[] to 0
 
 	// Optimize for single constant or single symbol.
 	if ((tok[1] == EOL)
@@ -356,7 +398,11 @@ int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 		}
 		else
 		{
+#if 0
 			p = (char *)tok[1];
+#else
+			p = string[tok[1]];
+#endif
 			j = 0;
 
 			if (*p == '.')
@@ -365,7 +411,7 @@ int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			sy = lookup(p, LABEL, j);
 
 			if (sy == NULL)
-				sy = newsym(p, LABEL, j);
+				sy = NewSymbol(p, LABEL, j);
 
 			sy->sattr |= REFERENCED;
 
@@ -380,7 +426,13 @@ int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			}
 
 			*tk++ = SYMBOL;
+#if 0
 			*tk++ = (TOKEN)sy;
+#else
+			*tk++ = symbolNum;
+			symbolPtr[symbolNum] = sy;
+			symbolNum++;
+#endif
 
 			if (sy->sattr & DEFINED)
 				*a_value = sy->svalue;
@@ -392,7 +444,7 @@ int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 
 			*a_attr = (WORD)(sy->sattr & ~GLOBAL);
 
-			if ((sy->sattr & (GLOBAL|DEFINED)) == GLOBAL && a_esym != NULL)
+			if ((sy->sattr & (GLOBAL | DEFINED)) == GLOBAL && a_esym != NULL)
 				*a_esym = sy;
 		}
 
@@ -424,9 +476,9 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 	SYM * esym;
 	WORD sym_seg;
 
-	sval = evstk;                                            // (Empty) initial stack
+	sval = evstk;							// (Empty) initial stack
 	sattr = evattr;
-	esym = NULL;                                             // No external symbol involved
+	esym = NULL;							// No external symbol involved
 	sym_seg = 0;
 
 	while (*tk != ENDEXPR)
@@ -434,19 +486,21 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 		switch ((int)*tk++)
 		{
 		case SYMBOL:
-			sy = (SYM *)*tk++;
-			sy->sattr |= REFERENCED;                        // Set "referenced" bit 
+//			sy = (SYM *)*tk++;
+			sy = symbolPtr[*tk++];
+			sy->sattr |= REFERENCED;		// Set "referenced" bit 
 
 			if (!(sy->sattr & DEFINED))
 			{
+				// Reference to undefined symbol
 				if (!(sy->sattr & GLOBAL))
-				{                  // Reference to undefined symbol
+				{
 					*a_attr = 0;
 					*a_value = 0;
 					return OK;
 				}
 
-				if (esym != NULL)                             // Check for multiple externals
+				if (esym != NULL)			// Check for multiple externals
 					return error(seg_error);
 
 				esym = sy;
@@ -454,23 +508,23 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 
 			if (sy->sattr & DEFINED)
 			{
-				*++sval = sy->svalue;                        // Push symbol's value
+				*++sval = sy->svalue;		// Push symbol's value
 			}
 			else
 			{
-				*++sval = 0;                               // 0 for undefined symbols 
+				*++sval = 0;				// 0 for undefined symbols 
 			}
 
-			*++sattr = (WORD)(sy->sattr & ~GLOBAL);         // Push attribs
-			sym_seg = (WORD)(sy->sattr & (TEXT|DATA|BSS));
+			*++sattr = (WORD)(sy->sattr & ~GLOBAL);	// Push attribs
+			sym_seg = (WORD)(sy->sattr & (TEXT | DATA | BSS));
 			break;
 		case CONST:
-			*++sval = *tk++;                                // Push value
-			*++sattr = ABS|DEFINED;                         // Push simple attribs
+			*++sval = *tk++;				// Push value
+			*++sattr = ABS | DEFINED;		// Push simple attribs
 			break;
 		case ACONST:
-			*++sval = *tk++;                                // Push value
-			*++sattr = (WORD)*tk++;                         // Push attribs
+			*++sval = *tk++;				// Push value
+			*++sattr = (WORD)*tk++;			// Push attribs
 			break;
 
 			// Binary "+" and "-" matrix:
@@ -485,58 +539,58 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			//   [1] + : Error
 			//       - : ABS
 		case '+':
-			--sval;                                         // Pop value
-			--sattr;                                        // Pop attrib 
-			*sval += sval[1];                               // Compute value
+			--sval;							// Pop value
+			--sattr;						// Pop attrib 
+			*sval += sval[1];				// Compute value
 
-			if (!(*sattr & (TEXT|DATA|BSS)))
+			if (!(*sattr & (TEXT | DATA | BSS)))
 				*sattr = sattr[1];
-			else if (sattr[1] & (TEXT|DATA|BSS))
+			else if (sattr[1] & (TEXT | DATA | BSS))
 				return error(seg_error);
 
 			break;
 		case '-':
-			--sval;                                         // Pop value
-			--sattr;                                        // Pop attrib 
-			*sval -= sval[1];                               // Compute value
+			--sval;							// Pop value
+			--sattr;						// Pop attrib 
+			*sval -= sval[1];				// Compute value
 
-			attr = (WORD)(*sattr & (TEXT|DATA|BSS));
+			attr = (WORD)(*sattr & (TEXT | DATA | BSS));
 
 			if (!attr)
 				*sattr = sattr[1];
-			else if (sattr[1] & (TEXT|DATA|BSS))
+			else if (sattr[1] & (TEXT | DATA | BSS))
 			{
 				if (!(attr & sattr[1]))
 					return error(seg_error);
 				else
-					*sattr &= ~(TEXT|DATA|BSS);
+					*sattr &= ~(TEXT | DATA | BSS);
 			}
 
 			break;
-			// Unary operators only work on ABS items
+		// Unary operators only work on ABS items
 		case UNMINUS:
-			if (*sattr & (TEXT|DATA|BSS))
+			if (*sattr & (TEXT | DATA | BSS))
 				error(seg_error);
 
 			*sval = -(int)*sval;
-			*sattr = ABS|DEFINED;                           // Expr becomes absolute
+			*sattr = ABS | DEFINED;			// Expr becomes absolute
 			break;
 		case '!':
-			if (*sattr & (TEXT|DATA|BSS))
+			if (*sattr & (TEXT | DATA | BSS))
 				error(seg_error);
 
 			*sval = !*sval;
-			*sattr = ABS|DEFINED;                           // Expr becomes absolute
+			*sattr = ABS | DEFINED;			// Expr becomes absolute
 			break;
 		case '~':
-			if (*sattr & (TEXT|DATA|BSS))
+			if (*sattr & (TEXT | DATA | BSS))
 				error(seg_error);
 
 			*sval = ~*sval;
-			*sattr = ABS|DEFINED;                           // Expr becomes absolute
+			*sattr = ABS | DEFINED;			// Expr becomes absolute
 			break;
-			// Comparison operators must have two values that
-			// are in the same segment, but that's the only requirement.
+		// Comparison operators must have two values that
+		// are in the same segment, but that's the only requirement.
 		case LE:
 			--sattr;
 			--sval;
@@ -544,7 +598,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			if ((*sattr & TDB) != (sattr[1] & TDB))
 				error(seg_error);
 
-			*sattr = ABS|DEFINED;
+			*sattr = ABS | DEFINED;
 			*sval = *sval <= sval[1];
 			break;
 		case GE:
@@ -554,7 +608,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			if ((*sattr & TDB) != (sattr[1] & TDB))
 				error(seg_error);
 
-			*sattr = ABS|DEFINED;
+			*sattr = ABS | DEFINED;
 			*sval = *sval >= sval[1];
 			break;
 		case '>':
@@ -564,7 +618,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			if ((*sattr & TDB) != (sattr[1] & TDB))
 				error(seg_error);
 
-			*sattr = ABS|DEFINED;
+			*sattr = ABS | DEFINED;
 			*sval = *sval > sval[1];
 			break;
 		case '<':
@@ -574,7 +628,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			if ((*sattr & TDB) != (sattr[1] & TDB))
 				error(seg_error);
 
-			*sattr = ABS|DEFINED;
+			*sattr = ABS | DEFINED;
 			*sval = *sval < sval[1];
 			break;
 		case NE:
@@ -584,7 +638,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			if ((*sattr & TDB) != (sattr[1] & TDB))
 				error(seg_error);
 
-			*sattr = ABS|DEFINED;
+			*sattr = ABS | DEFINED;
 			*sval = *sval != sval[1];
 			break;
 		case '=':
@@ -594,27 +648,27 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			if ((*sattr & TDB) != (sattr[1] & TDB))
 				error(seg_error);
 
-			*sattr = ABS|DEFINED;
+			*sattr = ABS | DEFINED;
 			*sval = *sval == sval[1];
 			break;
-			// All other binary operators must have two ABS items
-			// to work with.  They all produce an ABS value.
+		// All other binary operators must have two ABS items
+		// to work with.  They all produce an ABS value.
 		default:
 			// GH - Removed for v1.0.15 as part of the fix for indexed loads.
 			//if ((*sattr & (TEXT|DATA|BSS)) || (*--sattr & (TEXT|DATA|BSS)))
 			//error(seg_error);
-			*sattr = ABS|DEFINED;                           // Expr becomes absolute
+			*sattr = ABS | DEFINED;			// Expr becomes absolute
 
 			switch ((int)tk[-1])
 			{
 			case '*':
 				--sval;
-				--sattr;                                        // Pop attrib 
+				--sattr;					// Pop attrib 
 				*sval *= sval[1];
 				break;
 			case '/':
 				--sval;
-				--sattr;                                        // Pop attrib 
+				--sattr;					// Pop attrib 
 
 				if (sval[1] == 0)
 					return error("divide by zero");
@@ -623,7 +677,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 				break;
 			case '%':
 				--sval;
-				--sattr;                                        // Pop attrib 
+				--sattr;					// Pop attrib 
 
 				if (sval[1] == 0)
 					return error("mod (%) by zero");
@@ -632,31 +686,31 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 				break;
 			case SHL:
 				--sval;
-				--sattr;                                        // Pop attrib 
+				--sattr;					// Pop attrib 
 				*sval <<= sval[1];
 				break;
 			case SHR:
 				--sval;
-				--sattr;                                        // Pop attrib 
+				--sattr;					// Pop attrib 
 				*sval >>= sval[1];
 				break;
 			case '&':
 				--sval;
-				--sattr;                                        // Pop attrib 
+				--sattr;					// Pop attrib 
 				*sval &= sval[1];
 				break;
 			case '^':
 				--sval;
-				--sattr;                                        // Pop attrib 
+				--sattr;					// Pop attrib 
 				*sval ^= sval[1];
 				break;
 			case '|':
 				--sval;
-				--sattr;                                        // Pop attrib 
+				--sattr;					// Pop attrib 
 				*sval |= sval[1];
 				break;
 			default:
-				interror(5);                              // Bad operator in expression stream
+				interror(5);				// Bad operator in expression stream
 			}
 		}
 	}
@@ -672,7 +726,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 	// overiding the symbol segments and not being included :(
 	//*a_attr = *sattr | sym_seg;                                        // Copy value + attrib
 
-	*a_attr = *sattr;                                        // Copy value + attrib
+	*a_attr = *sattr;						// Copy value + attrib
 	*a_value = *sval;
 
 	return OK;
