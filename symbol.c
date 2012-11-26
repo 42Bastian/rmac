@@ -20,6 +20,7 @@ static SYM * sorder;					// * -> Symbols, in order of reference
 static SYM * sordtail;					// * -> Last symbol in sorder list
 static SYM * sdecl;						// * -> Symbols, in order of declaration
 static SYM * sdecltail;					// * -> Last symbol in sdecl list
+static uint32_t currentUID;				// Symbol UID tracking (done by NewSymbol())
 
 // Tags for marking symbol spaces
 // a = absolute
@@ -47,6 +48,7 @@ void InitSymbolTable(void)
 	sordtail = NULL;
 	sdecl = NULL;							// Init symbol-decl list
 	sdecltail = NULL;
+	currentUID = 0;
 }
 
 
@@ -79,18 +81,19 @@ SYM * NewSymbol(char * name, int type, int envno)
 
 	if (symbol == NULL)
 	{
-		printf("SYMALLOC ERROR (%s)\n", name);
+		printf("NewSymbol: MALLOC ERROR (symbol=\"%s\")\n", name);
 		return NULL;
 	}
 
-	symbol->sname = strdup(name);
-
 	// Fill-in the symbol
+	symbol->sname  = strdup(name);
 	symbol->stype  = (BYTE)type;
 	symbol->senv   = (WORD)envno;
 	symbol->sattr  = 0;
 	symbol->sattre = (rgpu || rdsp ? RISCSYM : 0);
 	symbol->svalue = 0;
+	symbol->sorder = NULL;
+	symbol->uid    = currentUID++;
 
 	// Install symbol in symbol table
 	int hash = HashSymbol(name, envno);
@@ -103,10 +106,33 @@ SYM * NewSymbol(char * name, int type, int envno)
 	else
 		sordtail->sorder = symbol;			// Or append to tail of list
 
-	symbol->sorder = NULL;
 	sordtail = symbol;
-
 	return symbol;
+}
+
+
+//
+// Look up the symbol name by its UID and return the pointer to the name.
+// If it's not found, return NULL.
+//
+char * GetSymbolNameByUID(uint32_t uid)
+{
+	//problem is with string lookup, that's why we're writing this
+	//so once this is written, we can put the uid in the token stream
+
+	// A much better approach to the symbol order list would be to make an
+	// array--that way you can do away with the UIDs and all the rest, and
+	// simply do an array lookup based on position. But meh, let's do this for
+	// now until we can rewrite things so they make sense.
+	SYM * symbol = sorder;
+
+	for(; symbol; symbol=symbol->sorder)
+	{
+		if (symbol->uid == uid)
+			return symbol->sname;
+	}
+
+	return NULL;
 }
 
 
@@ -116,27 +142,7 @@ SYM * NewSymbol(char * name, int type, int envno)
 //
 SYM * lookup(char * name, int type, int envno)
 {
-#if 0
-	SYM * sy;                                   // Symbol record pointer
-	int k, sum;                                 // Hash bucket calculation
-	char * s;                                   // String pointer
-
-	// Pick a hash-bucket (SAME algorithm as HashSymbol())
-	k = 0;
-	s = name;
-
-	for(sum=envno; *s;)
-	{
-		if (k++ == 1)
-			sum += *s++ << 2;
-		else
-			sum += *s++;
-	}
-
-	sy = symbolTable[sum & (NBUCKETS-1)];
-#else
 	SYM * symbol = symbolTable[HashSymbol(name, envno)];
-#endif
 
 	// Do linear-search for symbol in bucket
 	while (symbol != NULL)
@@ -146,8 +152,8 @@ SYM * lookup(char * name, int type, int envno)
 			&& *name == *symbol->sname		// Fast check for first character
 			&& !strcmp(name, symbol->sname))
 			break;
-		else
-			symbol = symbol->snext;
+
+		symbol = symbol->snext;
 	}
 
 	return symbol;							// Return NULL or matching symbol
@@ -157,20 +163,20 @@ SYM * lookup(char * name, int type, int envno)
 //
 // Put symbol on "order-of-declaration" list of symbols
 //
-void sym_decl(SYM * sym)
+void sym_decl(SYM * symbol)
 {
-	if (sym->sattr & SDECLLIST)
+	if (symbol->sattr & SDECLLIST)
 		return;								// Already on list
 
-	sym->sattr |= SDECLLIST;				// Mark "already on list"
+	symbol->sattr |= SDECLLIST;				// Mark "already on list"
 
 	if (sdecl == NULL)
-		sdecl = sym;						// First on decl-list
+		sdecl = symbol;						// First on decl-list
 	else 
-		sdecltail->sdecl = sym;				// Add to end of list
+		sdecltail->sdecl = symbol;			// Add to end of list
 
-	sym->sdecl = NULL;						// Fix up list's tail
-	sdecltail = sym;
+	symbol->sdecl = NULL;					// Fix up list's tail
+	sdecltail = symbol;
 }
 
 
@@ -423,7 +429,7 @@ int symtable(void)
 					strcpy(ln2, "external");
 				else
 				{
-					sprintf(ln2, "%08ux", q->svalue);
+					sprintf(ln2, "%08X", q->svalue);
 					uc_string(ln2);
 				}
 

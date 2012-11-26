@@ -18,13 +18,12 @@ extern int mjump_align;
 extern TOKEN * argPtrs[];
 
 // Prototypes
-void init_macro(void);
-int exitmac(void);
+void InitMacro(void);
+int ExitMacro(void);
 int DefineMacro(void);
 int defrept(void);
 int lncatch(int (*)(), char *);
 int kwmatch(char *, char *);
 int InvokeMacro(SYM *, WORD);
-void ib_macro(void);
 
 #endif // __MACRO_H__

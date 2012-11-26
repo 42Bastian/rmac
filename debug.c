@@ -48,10 +48,10 @@ TOKEN * printexpr(TOKEN * tp)
 				tp++;
 				break;
 			case CONST:
-				printf("$%ux ", *tp++);
+				printf("$%X ", *tp++);
 				break;
 			case ACONST:
-				printf("ACONST=($%ux,$%ux) ", *tp, tp[1]);
+				printf("ACONST=($%X,$%X) ", *tp, tp[1]);
 				tp += 2;
 				break;
 			default:
@@ -61,7 +61,7 @@ TOKEN * printexpr(TOKEN * tp)
 		}
 	}
 
-	printf(";\n");
+//	printf(";\n");
 	return tp + 1;
 }
 
@@ -73,7 +73,7 @@ int chdump(CHUNK * ch, int format)
 {
 	while (ch != NULL)
 	{
-		printf("chloc=$%08ux, chsize=$%ux\n", ch->chloc, ch->ch_size);
+		printf("chloc=$%08X, chsize=$%X\n", ch->chloc, ch->ch_size);
 		mdump(ch->chptr, ch->ch_size, format, ch->chloc);
 		ch = ch->chnext;
 	}
@@ -105,7 +105,7 @@ int fudump(CHUNK * ch)
 			file = *p.wp++;
 			line = *p.wp++;
 
-			printf("$%04x $%08ux %d.%d: ", (int)attr, loc, (int)file, (int)line);
+			printf("$%04X $%08X %d.%d: ", (int)attr, loc, (int)file, (int)line);
 
 			if (attr & FU_EXPR)
 			{
@@ -115,12 +115,18 @@ int fudump(CHUNK * ch)
 			}
 			else
 			{
-				printf("`%s' ;\n", (*p.sy)->sname);
+//				printf("`%s' ;\n", (*p.sy)->sname);
+				printf("`%s' ;", (*p.sy)->sname);
 				p.sy++;
 			}
 
 			if ((attr & 0x0F00) == FU_JR)
+			{
+				printf(" *=$%X", *p.lp);
 				p.lp++;
+			}
+
+			printf("\n");
 		}
 
 		ch = ch->chnext;
@@ -146,7 +152,7 @@ int mudump(void)
 
 	for(mch=firstmch; mch!=NULL; mch=mch->mcnext)
 	{
-		printf("mch=$%08ux mcptr=$%08ux mcalloc=$%ux mcused=$%x\n",
+		printf("mch=$%08X mcptr=$%08X mcalloc=$%X mcused=$%X\n",
 			(uint32_t)mch,
 			(mch->mcptr.lw),
 			mch->mcalloc,
@@ -170,8 +176,8 @@ int mudump(void)
 			if (w & MSYMBOL)
 				symbol = *p.sy++;
 
-			printf("m=$%04x to=%d loc=$%ux from=%d siz=%s",
-					w, w & 0x00ff, loc, from, (w & MLONG) ? "long" : "word");
+			printf("m=$%04X to=%d loc=$%X from=%d siz=%s",
+					w, w & 0x00FF, loc, from, (w & MLONG) ? "long" : "word");
 
 			if (symbol != NULL)
 				printf(" sym=`%s'", symbol->sname);
@@ -214,21 +220,21 @@ int mdump(char * start, LONG count, int flg, LONG base)
 			j = i;
 
 			if (base != -1)
-				printf("%08ux  ", base);
+				printf("%08X  ", base);
 		}
 
 		switch (flg & 3)
 		{
 		case 0:
-			printf("%02x ", start[i] & 0xff);
+			printf("%02X ", start[i] & 0xff);
 			++i;
 			break;
 		case 1:
-			printf("%02x%02x ", start[i] & 0xff, start[i+1] & 0xff);
+			printf("%02X%02X ", start[i] & 0xff, start[i+1] & 0xff);
 			i += 2;
 			break;
 		case 2:
-			printf("%02x%02x%02x%02x ", start[i] & 0xff, start[i+1] & 0xff,
+			printf("%02X%02X%02X%02X ", start[i] & 0xff, start[i+1] & 0xff,
 				start[i+2] & 0xff, start[i+3] & 0xff);
 			i += 4;
 			break;
@@ -275,21 +281,19 @@ int dumptok(TOKEN * tk)
 
 		if (*tk >= 128)
 		{
-			printf("REG=%ud", *tk++ - 128);
+			printf("REG=%u", *tk++ - 128);
 			continue;
 		}
 
 		switch ((int)*tk++)
 		{
 		case CONST:                                        // CONST <value>
-			printf("CONST=%ud", *tk++);
+			printf("CONST=%u", *tk++);
 			break;
 		case STRING:                                       // STRING <address>
-//			printf("STRING='%s'", (char *)*tk++);
 			printf("STRING='%s'", string[*tk++]);
 			break;
 		case SYMBOL:                                       // SYMBOL <address> 
-//			printf("SYMBOL='%s'", (char *)*tk++);
 			printf("SYMBOL='%s'", string[*tk++]);
 			break;
 		case EOL:                                          // End of line 
@@ -342,7 +346,7 @@ int dump_everything(void)
 	{
 		if (sect[i].scattr & SUSED)
 		{
-			printf("Section %d sloc=$%ux\n", i, sect[i].sloc);
+			printf("Section %d sloc=$%X\n", i, sect[i].sloc);
 			printf("Code:\n");
 			chdump(sect[i].sfcode, 1);
 
@@ -354,8 +358,8 @@ int dump_everything(void)
 	}
 
 	printf("\nMarks:\n");
-	mudump();                                                // Dump marks
-	printf("Total memory allocated=$%ux\n", amemtot);
+	mudump();								// Dump marks
+	printf("Total memory allocated=$%X\n", amemtot);
 
 	return 0;
 }

@@ -39,7 +39,7 @@ int d_assert(void);
 int d_if(void);
 int d_endif(void);
 int d_include(void);
-int exitmac(void);
+int ExitMacro(void);
 int d_list(void);
 int d_nlist(void);
 int d_title(void);

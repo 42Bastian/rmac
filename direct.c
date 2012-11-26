@@ -62,7 +62,7 @@ int (*dirtab[])() = {
    d_include,			// 33 include 
    fpop,				// 34 end 
    d_unimpl,			// 35* macro 
-   exitmac,				// 36* exitm 
+   ExitMacro,			// 36* exitm 
    d_unimpl,			// 37* endm 
    d_list,				// 38 list 
    d_nlist,				// 39 nlist 

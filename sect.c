@@ -71,9 +71,7 @@ static char fusizoffs[] = {
 //
 void mksect(int sno, WORD attr)
 {
-	SECT * p;                                                 // Section pointer
-
-	p = &sect[sno];
+	SECT * p = &sect[sno];
 	p->scattr = attr;
 	p->sloc = 0;
 	p->scode = p->sfcode = NULL;
@@ -125,13 +123,13 @@ void savsect(void)
 {
 	SECT * p = &sect[cursect];
 
-	p->scattr = scattr;                                      // Bailout section vars
+	p->scattr = scattr;						// Bailout section vars
 	p->sloc = sloc;
 
-	if (scode != NULL)                                        // Bailout code chunk
+	if (scode != NULL)						// Bailout code chunk
 		scode->ch_size = ch_size;
 
-	if (sfix != NULL)                                         // Bailout fixup chunk
+	if (sfix != NULL)						// Bailout fixup chunk
 		sfix->ch_size = fchsize;
 }
 

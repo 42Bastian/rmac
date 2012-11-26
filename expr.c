@@ -60,7 +60,7 @@ static VALUE str_value(char * p)
 {
 	VALUE v;
 
-	for(v=0; *p; ++p)
+	for(v=0; *p; p++)
 		v = (v << 8) | (*p & 0xFF);
 
 	return v;
@@ -76,7 +76,7 @@ void init_expr(void)
 	char * p;								// Token pointer
 
 	// Initialize token-class table
-	for(i=0; i<128; ++i)					// Mark all entries END
+	for(i=0; i<128; i++)					// Mark all entries END
 		tokcl[i] = END;
 
 	for(i=0, p=itokcl; *p!=1; p++)
@@ -162,16 +162,7 @@ int expr1(void)
 #else
 			p = string[*tok++];
 #endif
-
-#if 0
-			if (lookup(p, MACRO, 0) == NULL)
-				w = 0;
-			else
-				w = 1;
-#else
 			w = (lookup(p, MACRO, 0) == NULL ? 0 : 1);
-#endif
-
 			*tk++ = CONST;
 			*tk++ = (TOKEN)w;
 			break;
@@ -194,15 +185,7 @@ getsym:
 			if (*p == '.')
 				j = curenv;
 
-#if 0
-			if ((sy = lookup(p, LABEL, j)) != NULL && (sy->sattr & w))
-				w = 1;
-			else
-				w = 0;
-#else
 			w = ((sy = lookup(p, LABEL, j)) != NULL && (sy->sattr & w) ? 1 : 0);
-#endif
-
 			*tk++ = CONST;
 			*tk++ = (TOKEN)w;
 			break;

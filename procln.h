@@ -26,7 +26,7 @@ extern LONG amsktab[];
 
 // Prototypes
 void init_procln(void);
-void assemble(void);
+void Assemble(void);
 int eject(void);
 int d_if(void);
 int d_else(void);

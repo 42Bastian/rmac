@@ -33,6 +33,7 @@ SYM
 	char * sname;					// * -> Symbol's print-name
 	struct LineList * lineList;		// * -> Macro's linked list of lines
 	struct LineList * last;			// * -> end of macro linked list
+	uint32_t uid;					// Symbol's unique ID
 };
 
 // Globals, externals etc
@@ -47,5 +48,6 @@ void sym_decl(SYM *);
 int syg_fix(void);
 int symtable(void);
 int sy_assign(char *, char *(*)());
+char * GetSymbolNameByUID(uint32_t);
 
 #endif // __SYMBOL_H__

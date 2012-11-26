@@ -16,6 +16,9 @@
 #include "symbol.h"
 #include "token.h"
 
+
+static void SetupDefaultMacros(void);
+
 LONG curuniq;								// Current macro's unique number
 //TOKEN ** argp;								// Free spot in argptrs[]
 int macnum;									// Unique number for macro definition
@@ -35,13 +38,13 @@ static int rptlevel;						// .rept nesting level
 //
 // Initialize Macro Processor
 //
-void init_macro(void)
+void InitMacro(void)
 {
 	macuniq = 0;
 	macnum = 1;
 //	argp = NULL;
 	argp = 0;
-	ib_macro();
+	SetupDefaultMacros();
 }
 
 
@@ -51,8 +54,14 @@ void init_macro(void)
 // -- restore argument stack;
 // -- pop the macro.
 //
-int exitmac(void)
+int ExitMacro(void)
 {
+#warning !!! Bad macro exiting !!!
+/*
+This is a problem. Currently, the argument logic just keeps the current
+arguments and doesn't save anything if a new macro is called in the middle
+of another (nested macros). Need to fix that somehow.
+*/
 	// Pop intervening include files and .rept blocks
 	while (cur_inobj != NULL && cur_inobj->in_type != SRC_IMACRO)
 		fpop();
@@ -68,8 +77,11 @@ int exitmac(void)
 	IMACRO * imacro = cur_inobj->inobj.imacro;
 	curuniq = imacro->im_olduniq;
 
-	/*TOKEN ** p = */argp--;
+//	/*TOKEN ** p = */argp--;
 //	argp = (TOKEN **)*argp;
+	DEBUG printf("ExitMacro: argp: %d -> ", argp);
+	argp -= imacro->im_nargs;
+	DEBUG printf("%d (nargs = %d)\n", argp, imacro->im_nargs);
 
 	fpop();
 	mjump_align = 0;
@@ -435,8 +447,9 @@ int InvokeMacro(SYM * mac, WORD siz)
 	int dry_run;
 	WORD arg_siz = 0;
 //	TOKEN ** argptr = NULL;
-//Doesn't need to be global! (or does it???)
-	argp = 0;
+//Doesn't need to be global! (or does it???--it does)
+//	argp = 0;
+	DEBUG printf("InvokeMacro: argp: %d -> ", argp);
 
 	if ((!strcmp(mac->sname, "mjump") || !strcmp(mac->sname, "mpad")) && !in_main)
 	{
@@ -449,6 +462,11 @@ int InvokeMacro(SYM * mac, WORD siz)
 	imacro->im_siz = siz;
 	WORD nargs = 0;
 	TOKEN * beg_tok = tok;						// 'tok' comes from token.c
+	TOKEN * startOfArg;
+	TOKEN * dest;
+	int stringNum = 0;
+	int argumentNum = 0;
+	int i;
 
 	for(dry_run=1; ; dry_run--)
 	{
@@ -457,11 +475,14 @@ int InvokeMacro(SYM * mac, WORD siz)
 			if (dry_run)
 				nargs++;
 			else
+			{
 #if 0				
 				*argptr++ = p;
 #else
 				argPtrs[argp++] = p;
+				startOfArg = p;
 #endif
+			}
 
 			// Keep going while tok isn't pointing at a comma or EOL
 			while (*tok != ',' && *tok != EOL)
@@ -474,6 +495,7 @@ int InvokeMacro(SYM * mac, WORD siz)
 				{
 				case CONST:
 				case SYMBOL:
+//Shamus: Possible bug. ACONST has 2 tokens after it, not just 1
 				case ACONST:
 					if (dry_run)
 					{
@@ -481,7 +503,9 @@ int InvokeMacro(SYM * mac, WORD siz)
 						tok++;
 					}
 					else
+					{
 						*p++ = *tok++;
+					}
 				// FALLTHROUGH (picks up the arg after a CONST, SYMBOL or ACONST)
 				default:
 					if (dry_run)
@@ -490,7 +514,9 @@ int InvokeMacro(SYM * mac, WORD siz)
 						tok++;
 					}
 					else
+					{
 						*p++ = *tok++;
+					}
 
 					break;
 				}
@@ -505,6 +531,31 @@ int InvokeMacro(SYM * mac, WORD siz)
 			// If we hit the comma instead of an EOL, skip over it
 			if (*tok == ',')
 				tok++;
+
+			// Do our QnD token grabbing (this will be redone once we get all
+			// the data structures fixed as this is a really dirty hack)
+			if (!dry_run)
+			{
+				dest = imacro->argument[argumentNum].token;
+				stringNum = 0;
+
+				do
+				{
+					// Remap strings to point the IMACRO internal token storage
+					if (*startOfArg == SYMBOL || *startOfArg == STRING)
+					{
+						*dest++ = *startOfArg++;
+						imacro->argument[argumentNum].string[stringNum] = strdup(string[*startOfArg++]);
+						*dest++ = stringNum++;
+					}
+					else
+						*dest++ = *startOfArg++;
+				}
+				while (*startOfArg != EOL);
+
+				*dest = *startOfArg;		// Copy EOL...
+				argumentNum++;
+			}
 		}
 
 		// Allocate space for argument ptrs and so on and then go back and
@@ -512,25 +563,38 @@ int InvokeMacro(SYM * mac, WORD siz)
 		if (dry_run)
 		{
 			if (nargs != 0)
-//Barfing here with memory corruption in glibc. TOKEN is defined as LONG, which is uint32_t
 				p = (TOKEN *)malloc(arg_siz);
 //				p = (TOKEN *)malloc(arg_siz + sizeof(TOKEN));
 
-// This construct is meant to deal with nested macros, so the simple minded way
-// we deal with them now won't work. :-/ Have to think about how to fix.
+/*
+Shamus:
+This construct is meant to deal with nested macros, so the simple minded way
+we deal with them now won't work. :-/ Have to think about how to fix.
+What we could do is simply move the argp with each call, and move it back by the
+number of arguments in the macro that's ending. That would solve the problem nicely.
+[Which we do now. But that uncovered another problem: the token strings are all
+stale by the time a nested macro gets to the end. But they're supposed to be symbols,
+which means if we put symbol references into the argument token streams, we can
+alleviate this problem.]
+*/
 #if 0
 			argptr = (TOKEN **)malloc((nargs + 1) * sizeof(LONG));
 			*argptr++ = (TOKEN *)argp;
 			argp = argptr;
 #else
+			// We don't need to do anything here since we already advance argp
+			// when parsing the arguments.
+//			argp += nargs;
 #endif
 		}
 		else 
 			break;
 	}
 
+	DEBUG printf("%d\n", argp);
+
 	// Setup imacro:
-	// o  #arguments;
+	// o  # arguments;
 	// o  -> macro symbol;
 	// o  -> macro definition string list;
 	// o  save 'curuniq', to be restored when the macro pops;
@@ -541,16 +605,18 @@ int InvokeMacro(SYM * mac, WORD siz)
 	imacro->im_nextln = mac->lineList;
 	imacro->im_olduniq = curuniq;
 	curuniq = macuniq++;
+	imacro->argBase = argp - nargs;			// Shamus: keep track of argument base
 
 	DEBUG
 	{
 		printf("nargs=%d\n", nargs);
 
-		for(nargs=0; nargs<imacro->im_nargs; ++nargs)
+		for(nargs=0; nargs<imacro->im_nargs; nargs++)
 		{
 			printf("arg%d=", nargs);
 //			dumptok(argp[imacro->im_nargs - nargs - 1]);
-			dumptok(argPtrs[imacro->im_nargs - nargs - 1]);
+//			dumptok(argPtrs[imacro->im_nargs - nargs - 1]);
+			dumptok(argPtrs[(argp - imacro->im_nargs) + nargs]);
 		}
 	}
 
@@ -559,9 +625,9 @@ int InvokeMacro(SYM * mac, WORD siz)
 
 
 //
-// Setup inbuilt macros
+// Setup inbuilt macros (SubQMod)
 //
-void ib_macro(void)
+static void SetupDefaultMacros(void)
 {
 	curmac = NewSymbol("mjump", MACRO, 0);
 	curmac->svalue = 0;

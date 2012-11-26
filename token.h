@@ -110,6 +110,12 @@ IFILE {
 	char ifbuf[LNBUFSIZ];	// Line buffer
 };
 
+#define TOKENSTREAM struct _tokenstream
+TOKENSTREAM {
+	TOKEN token[10];		// 10 ought to be enough for anybody
+	char * string[10];		// same for attached strings
+};
+
 // Information about a macro invocation
 IMACRO {
 	IMACRO * im_link;		// Pointer to ancient IMACROs
@@ -120,6 +126,8 @@ IMACRO {
 	LONG im_olduniq;		// Old value of 'macuniq'
 	SYM * im_macro;			// Pointer to macro we're in
 	char im_lnbuf[LNSIZ];	// Line buffer
+	uint32_t argBase;		// Base in argPtrs[] for current macro
+	TOKENSTREAM argument[20];	// Assume no more than 20 arguments in an invocation
 };
 
 // Information about a .rept invocation

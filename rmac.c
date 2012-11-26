@@ -569,7 +569,7 @@ int process(int argc, char ** argv)
 	init_expr();					// Expression analyzer
 	init_sect();					// Section manager / code generator
 	init_mark();					// Mark tape-recorder
-	init_macro();					// Macro processor
+	InitMacro();					// Macro processor
 	init_list();					// Listing generator
 
 	// Process command line arguments and assemble source files
@@ -628,7 +628,7 @@ int process(int argc, char ** argv)
 					break;
 				default:
 					printf("-f: unknown object format specified\n");
-					++errcnt;
+					errcnt++;
 					return errcnt;
 				}
 				break;
@@ -645,7 +645,7 @@ int process(int argc, char ** argv)
 				list_fname = argv[argno] + 2;
 				listing = 1;
 				list_flag = 1;
-				++lnsave;
+				lnsave++;
 				break;
 			case 'o':                                       // Direct object file output
 			case 'O':
@@ -656,7 +656,7 @@ int process(int argc, char ** argv)
 					if (++argno >= argc)
 					{
 						printf("Missing argument to -o");
-						++errcnt;
+						errcnt++;
 						return errcnt;
 					}
 					objfname = argv[argno];
@@ -713,20 +713,20 @@ int process(int argc, char ** argv)
 					firstfname = defname;
 
 				include(0, "(stdin)");
-				assemble();
+				Assemble();
 				break;
 			case 'h':                                       // Display command line usage
 			case 'H':
 			case '?':
 				display_version();
 				display_help();
-				++errcnt;
+				errcnt++;
 				break;
 			default:
 				display_version();
 				printf("Unknown switch: %s\n\n", argv[argno]);
 				display_help();
-				++errcnt;
+				errcnt++;
 				break;
 			}
 		}
@@ -743,12 +743,12 @@ int process(int argc, char ** argv)
 			if (fd < 0)
 			{
 				printf("Cannot open: %s\n", fnbuf);
-				++errcnt;
+				errcnt++;
 				continue;
 			}
 
 			include(fd, fnbuf);
-			assemble();
+			Assemble();
 		}
 	}
 

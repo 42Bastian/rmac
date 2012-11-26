@@ -103,7 +103,7 @@ void init_procln(void)
 //
 // Line Processor
 //
-void assemble(void)
+void Assemble(void)
 {
 	int state;					// Keyword machine state (output)
 	int j;						// Random int, must be fast
@@ -316,7 +316,7 @@ as68label:
 				if (label != NULL)
 					warn(lab_ignored);
 
-				exitmac();
+				ExitMacro();
 			}
 
 			goto loop;
@@ -533,10 +533,15 @@ normal:
 	if (label != NULL)
 	{
 do_label:
+		// Check for dot in front of label; means this is a local label if present
+#if 0
 		j = 0;
 
 		if (*label == '.')
 			j = curenv;
+#else
+		j = (*label == '.' ? curenv : 0);
+#endif
 
 		sy = lookup(label, LABEL, j);
 
@@ -570,7 +575,7 @@ do_label:
 		lab_sym = sy;
 
 		if (!j)
-			++curenv;
+			curenv++;
 
 		// Make label global
 		if (labtyp == DCOLON)

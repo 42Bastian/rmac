@@ -32,7 +32,7 @@ WORD cfileno;				// Current file number
 TOKEN * tok;				// Ptr to current token
 TOKEN * etok;				// Ptr past last token in tokbuf[]
 TOKEN tokeol[1] = {EOL};	// Bailout end-of-line token
-char * string[TOKBUFSIZE];	// Token buffer string pointer storage
+char * string[TOKBUFSIZE*2];	// Token buffer string pointer storage
 
 // File record, used to maintain a list of every include file ever visited
 #define FILEREC struct _filerec
@@ -143,8 +143,7 @@ INOBJ * a_inobj(int typ)
 
 	// Allocate and initialize INOBJ first
 	if (f_inobj == NULL)
-//		inobj = (INOBJ *)amem((LONG)sizeof(INOBJ));
-		inobj = (INOBJ *)malloc(sizeof(INOBJ));
+		inobj = malloc(sizeof(INOBJ));
 	else
 	{
 		inobj = f_inobj;
@@ -155,8 +154,7 @@ INOBJ * a_inobj(int typ)
 	{
 	case SRC_IFILE:							// Alloc and init an IFILE
 		if (f_ifile == NULL)
-//			ifile = (IFILE *)amem((LONG)sizeof(IFILE));
-			ifile = (IFILE *)malloc(sizeof(IFILE));
+			ifile = malloc(sizeof(IFILE));
 		else
 		{
 			ifile = f_ifile;
@@ -167,8 +165,7 @@ INOBJ * a_inobj(int typ)
 		break;
 	case SRC_IMACRO:						// Alloc and init an IMACRO 
 		if (f_imacro == NULL)
-//			imacro = (IMACRO *)amem((LONG)sizeof(IMACRO));
-			imacro = (IMACRO *)malloc(sizeof(IMACRO));
+			imacro = malloc(sizeof(IMACRO));
 		else
 		{
 			imacro = f_imacro;
@@ -178,8 +175,7 @@ INOBJ * a_inobj(int typ)
 		inobj->inobj.imacro = imacro;
 		break;
 	case SRC_IREPT:							// Alloc and init an IREPT
-//		inobj->inobj.irept = (IREPT *)amem((LONG)sizeof(IREPT));
-		inobj->inobj.irept = (IREPT *)malloc(sizeof(IREPT));
+		inobj->inobj.irept = malloc(sizeof(IREPT));
 		DEBUG printf("alloc IREPT\n");
 		break;
 	}
@@ -218,8 +214,9 @@ int ExpandMacro(char * src, char * dest, int destsiz)
 	char numbuf[20];		// Buffer for text of CONSTs
 	TOKEN * tk;
 	SYM * arg;
+	char ** symbolString;
 
-	DEBUG { printf("EM: src=\"%s\"\n", src); }
+	DEBUG { printf("ExM: src=\"%s\"\n", src); }
 
 	IMACRO * imacro = cur_inobj->inobj.imacro;
 	int macnum = (int)(imacro->im_macro->sattr);
@@ -284,7 +281,7 @@ int ExpandMacro(char * src, char * dest, int destsiz)
 
 				goto copy_d;
 			case '~':						// ==> unique label string Mnnnn... 
-				sprintf(numbuf, "M%ud", curuniq);
+				sprintf(numbuf, "M%u", curuniq);
 copystr:
 				d = numbuf;
 copy_d:
@@ -353,13 +350,25 @@ copy_d:
 				// macro invocation) then it is ignored.
 				i = (int)arg->svalue;
 arg_num:
-				DEBUG printf("~argnumber=%d\n", i);
-
+				DEBUG printf("~argnumber=%d (argBase=%u)\n", i, imacro->argBase);
 				tk = NULL;
 
 				if (i < imacro->im_nargs)
+				{
+#if 0
 //					tk = argp[i];
-					tk = argPtrs[i];
+//					tk = argPtrs[i];
+					tk = argPtrs[imacro->argBase + i];
+#else
+					tk = imacro->argument[i].token;
+					symbolString = imacro->argument[i].string;
+//DEBUG
+//{
+//	printf("ExM: Preparing to parse argument #%u...\n", i);
+//	dumptok(tk);
+//}
+#endif
+				}
 
 				// \?arg yields:
 				//    0  if the argument is empty or non-existant,
@@ -399,13 +408,22 @@ arg_num:
 							switch ((int)*tk++)
 							{
 							case SYMBOL:
+#if 0
 //								d = (char *)*tk++;
 								d = string[*tk++];
+#else
+								// This fix should be done for strings too
+								d = symbolString[*tk++];
+DEBUG printf("ExM: SYMBOL=\"%s\"", d);
+#endif
 								break;
 							case STRING:
+#if 0
 //								d = (char *)*tk++;
 								d = string[*tk++];
-
+#else
+								d = symbolString[*tk++];
+#endif
 								if (dst >= edst)
 									goto overflow;
 
@@ -516,10 +534,12 @@ strcopy:
 	}
 
 	*dst = EOS;
+	DEBUG { printf("ExM: dst=\"%s\"\n", dest); }
 	return OK;
 
 overflow:
 	*dst = EOS;
+	DEBUG printf("*** OVERFLOW LINE ***\n%s\n", dest);
 	return fatal("line too long as a result of macro expansion");
 }
 
@@ -913,7 +933,7 @@ int tokln(void)
 	case SRC_IMACRO:
 		if ((ln = getmln()) == NULL)
 		{
-			exitmac();						// Exit macro (pop args, do fpop(), etc)
+			ExitMacro();					// Exit macro (pop args, do fpop(), etc)
 			goto retry;						// Try for more lines...
 		}
 
@@ -1050,7 +1070,7 @@ int tokln(void)
 			if (j < 0 || state < 0)
 			{
 				*tk++ = SYMBOL;
-#warning
+//#warning
 //problem here: nullspot is a char * but TOKEN is a uint32_t. On a 64-bit system,
 //this will cause all kinds of mischief.
 #if 0
@@ -1102,7 +1122,7 @@ int tokln(void)
 			case '\"':                                      // "string" 
 				c1 = ln[-1];
 				*tk++ = STRING;
-#warning
+//#warning
 // More char * stuffing (8 bytes) into the space of 4 (TOKEN).
 // Need to figure out how to fix this crap.
 #if 0
@@ -1513,7 +1533,7 @@ int d_goto(WORD unused)
 void DumpTokenBuffer(void)
 {
 	TOKEN * t;
-	printf("Tokens: ");
+	printf("Tokens [%X]: ", sloc);
 
 	for(t=tokbuf; *t!=EOL; t++)
 	{
