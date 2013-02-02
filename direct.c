@@ -333,6 +333,13 @@ int d_incbin(void)
 	long pos, size;
 	char buf;
 
+	// Check to see if we're in BSS, and, if so, throw an error
+	if (scattr & SBSS)
+	{
+		errors("Cannot include binary file \"%s\" in BSS section", string[tok[1]]);
+		return ERROR;
+	}
+
 	if (*tok != STRING)
 	{
 		error(syntax_error);
@@ -345,7 +352,12 @@ int d_incbin(void)
 		size = lseek(j, 0L, SEEK_END);
 		chcheck(size);
 		pos = lseek(j, 0L, SEEK_SET);
-		
+
+		DEBUG
+		{
+			printf("INCBIN: File '%s' is %li bytes.\n", string[tok[1]], size);
+		}
+
 		for(i=0; i<size; i++)
 		{
 			buf = '\0';

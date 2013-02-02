@@ -210,6 +210,7 @@ int fixtest(int sno, LONG loc)
 //
 int chcheck(LONG amt)
 {
+	DEBUG { printf("chcheck(%u)\n", amt); }
 	// If in BSS section, no allocation required
 	if (scattr & SBSS)
 		return 0;
@@ -217,12 +218,14 @@ int chcheck(LONG amt)
 	if (!amt)
 		amt = CH_THRESHOLD;
 
+	DEBUG { printf("    challoc=%i, ch_size=%i, diff=%i\n", challoc, ch_size, challoc-ch_size); }
 	if ((int)(challoc - ch_size) >= (int)amt) 
 		return 0;
 
 	if (amt < CH_CODE_SIZE)
 		amt = CH_CODE_SIZE;
 
+	DEBUG { printf("    amt (adjusted)=%u\n", amt); }
 	SECT * p = &sect[cursect];
 	CHUNK * cp = malloc(sizeof(CHUNK) + amt);
 
