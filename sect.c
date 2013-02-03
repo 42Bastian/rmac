@@ -454,6 +454,7 @@ int ResolveFixups(int sno)
 			loc = *fup.lp++;
 			cfileno = *fup.wp++;
 			curlineno = (int)*fup.wp++;
+DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 
 			esym = NULL;
 

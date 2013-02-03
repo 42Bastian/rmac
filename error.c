@@ -47,7 +47,9 @@ void err_setup(void)
 {
 	char fnbuf[FNSIZ];
 
-	setfnum(cfileno);
+// This seems like it's unnecessary, as token.c seems to take care of this all by itself.
+// Can restore if it's really needed. If not, into the bit bucket it goes. :-)
+//	setfnum(cfileno);
 
 	if (err_fname != NULL)
 	{
@@ -79,7 +81,7 @@ int error(const char * s)
 	if (listing > 0)
 		ship_ln(s);
 
-	sprintf(buf, "%s%d: Error: %s%s", curfname, curlineno, s, nl);
+	sprintf(buf, "%s %d: Error: %s%s", curfname, curlineno, s, nl);
 	length = strlen(buf);
 
 	if (err_flag)
@@ -93,6 +95,7 @@ int error(const char * s)
 	return ERROR;
 }
 
+
 int errors(char * s, char * s1)
 {
 	char buf[EBUFSIZ];
@@ -104,7 +107,7 @@ int errors(char * s, char * s1)
 	if (listing > 0)
 		ship_ln(buf);
 
-	sprintf(buf1, "%s%d: Error: %s%s", curfname, curlineno, buf, nl);
+	sprintf(buf1, "%s %d: Error: %s%s", curfname, curlineno, buf, nl);
 
 	if (err_flag)
 		write(err_fd, buf1, (LONG)strlen(buf1));
@@ -117,6 +120,7 @@ int errors(char * s, char * s1)
 	return ERROR;
 }
 
+
 int warn(char * s)
 {
 	char buf[EBUFSIZ];
@@ -126,7 +130,7 @@ int warn(char * s)
 	if (listing > 0)
 		ship_ln(s);
 
-	sprintf(buf, "%s%d: Warning: %s%s", curfname, curlineno, s, nl);
+	sprintf(buf, "%s %d: Warning: %s%s", curfname, curlineno, s, nl);
 
 	if (err_flag)
 		write(err_fd, buf, (LONG)strlen(buf));
@@ -137,6 +141,7 @@ int warn(char * s)
 
 	return OK;
 }
+
 
 int warns(char * s, char * s1)
 {
@@ -149,7 +154,7 @@ int warns(char * s, char * s1)
 	if (listing > 0)
 		ship_ln(s);
 
-	sprintf(buf1, "%s%d: Warning: %s%s", curfname, curlineno, buf, nl);
+	sprintf(buf1, "%s %d: Warning: %s%s", curfname, curlineno, buf, nl);
 
 	if (err_flag)
 		write(err_fd, buf1, (LONG)strlen(buf1));
@@ -160,6 +165,7 @@ int warns(char * s, char * s1)
 
 	return OK;
 }
+
 
 int warni(char * s, unsigned i)
 {
@@ -172,7 +178,7 @@ int warni(char * s, unsigned i)
 	if (listing > 0)
 		ship_ln(buf);
 
-	sprintf(buf1, "%s%d: Warning: %s%s", curfname, curlineno, buf, nl);
+	sprintf(buf1, "%s %d: Warning: %s%s", curfname, curlineno, buf, nl);
 
 	if (err_flag)
 		write(err_fd, buf1, (LONG)strlen(buf1));
@@ -184,6 +190,7 @@ int warni(char * s, unsigned i)
 	return OK;
 }
 
+
 int fatal(char * s)
 {
 	char buf[EBUFSIZ];
@@ -193,7 +200,7 @@ int fatal(char * s)
 	if (listing > 0)
 		ship_ln(s);
 
-	sprintf(buf, "%s%d: Fatal: %s%s", curfname, curlineno, s, nl);
+	sprintf(buf, "%s %d: Fatal: %s%s", curfname, curlineno, s, nl);
 
 	if (err_flag)
 		write(err_fd, buf, (LONG)strlen(buf));
@@ -203,12 +210,13 @@ int fatal(char * s)
 	exit(1);
 }
 
+
 int interror(int n)
 {
 	char buf[EBUFSIZ];
 
 	err_setup();
-	sprintf(buf, "%s%d: Internal Error Number %d%s", curfname, curlineno, n, nl);
+	sprintf(buf, "%s %d: Internal Error Number %d%s", curfname, curlineno, n, nl);
 
 	if (listing > 0)
 		ship_ln(buf);

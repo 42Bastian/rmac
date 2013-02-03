@@ -116,20 +116,61 @@ static char * riscregname[] = {
 };
 
 
+// Removing this, provided it doesn't cause unwanted side-effects :-P
+#if 0
 //
 // Make `fnum' the Current `curfname'
+// NOTE: This is currently only called from error() in error.c
 //
 void setfnum(WORD fnum)
 {
-	FILEREC * fr;
+#if 0
+	// NOTE: fnum is ZERO based, this can cause problems if you're not careful!
+	FILEREC * fr = filerec;
 
-	for(fr=filerec; fr!=NULL && fnum--; fr=fr->frec_next);
+	DEBUG printf("[setfnum: fnum=%u]\n", fnum);
+
+	// Advance to the correct record...
+	while (fr != NULL && fnum != 0)
+	{
+		fr = fr->frec_next;
+		fnum--;
+	}
 
 	if (fr == NULL)
 		curfname = "(*top*)";
 	else
 		curfname = fr->frec_name;
+
+	DEBUG printf("[setfnum: curfname=%s]\n", curfname);
+#else
+	// Check for absolute top filename (this should never happen)
+	if (fnum == -1)
+	{
+		curfname = "(*top*)";
+		return;
+	}
+
+	FILEREC * fr = filerec;
+
+	// Advance to the correct record...
+	while (fr != NULL && fnum != 0)
+	{
+		fr = fr->frec_next;
+		fnum--;
+	}
+
+	// Check for file # record not found (this should never happen either)
+	if (fr == NULL)
+	{
+		curfname = "(*NOT FOUND*)";
+		return;
+	}
+
+	curfname = fr->frec_name;
+#endif
 }
+#endif
 
 
 //
@@ -634,7 +675,7 @@ int include(int handle, char * fname)
 
 	// Verbose mode
 	if (verb_flag)
-		printf("[Including: %s]\n", fname);
+		printf("[include: %s, cfileno=%u]\n", fname, cfileno);
 
 	// Alloc and initialize include-descriptors
 	inobj = a_inobj(SRC_IFILE);
@@ -645,7 +686,8 @@ int include(int handle, char * fname)
 	ifile->ifoldlineno = curlineno;			// Save old line number
 	ifile->ifoldfname = curfname;			// Save old filename
 	ifile->ifno = cfileno;					// Save old file number
-	cfileno = filecount++;					// Compute new file number
+//	cfileno = filecount++;					// Compute new file number
+	cfileno = ++filecount;					// Compute new file number
 	curfname = strdup(fname);				// Set current filename (alloc storage)
 	curlineno = 0;							// Start on line zero
 
@@ -661,6 +703,9 @@ int include(int handle, char * fname)
 		last_fr->frec_next = fr;			// Append to list of filerecs 
 
 	last_fr = fr;
+
+	if (verb_flag)
+		printf("[include: curfname: %s, cfileno=%u]\n", curfname, cfileno);
 
 	return OK;
 }
@@ -747,9 +792,12 @@ int fpop(void)
 			ifile->if_link = f_ifile;
 			f_ifile = ifile;
 			close(ifile->ifhandle);			// Close source file
+if (verb_flag) printf("[fpop (pre):  curfname=%s]\n", curfname);
 			curfname = ifile->ifoldfname;	// Set current filename
+if (verb_flag) printf("[fpop (post): curfname=%s]\n", curfname);
 			curlineno = ifile->ifoldlineno;	// Set current line# 
 			DEBUG printf("cfileno=%d ifile->ifno=%d\n", (int)cfileno, (int)ifile->ifno);
+if (verb_flag) printf("[fpop:        cfileno=%d ifile->ifno=%d]\n", (int)cfileno, (int)ifile->ifno);
 			cfileno = ifile->ifno;			// Restore current file number
 			break;
 		case SRC_IMACRO:					// Pop and release an IMACRO

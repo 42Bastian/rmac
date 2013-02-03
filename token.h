@@ -156,7 +156,7 @@ extern char * string[];
 // Prototypes
 int include(int, char *);
 void init_token(void);
-void setfnum(WORD);
+//void setfnum(WORD);
 int tokln(void);
 int fpop(void);
 int d_goto(WORD);
