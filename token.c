@@ -170,6 +170,36 @@ void setfnum(WORD fnum)
 	curfname = fr->frec_name;
 #endif
 }
+#else
+void SetFilenameForErrorReporting(void)
+{
+	WORD fnum = cfileno;
+
+	// Check for absolute top filename (this should never happen)
+	if (fnum == -1)
+	{
+		curfname = "(*top*)";
+		return;
+	}
+
+	FILEREC * fr = filerec;
+
+	// Advance to the correct record...
+	while (fr != NULL && fnum != 0)
+	{
+		fr = fr->frec_next;
+		fnum--;
+	}
+
+	// Check for file # record not found (this should never happen either)
+	if (fr == NULL)
+	{
+		curfname = "(*NOT FOUND*)";
+		return;
+	}
+
+	curfname = fr->frec_name;
+}
 #endif
 
 
@@ -686,13 +716,14 @@ int include(int handle, char * fname)
 	ifile->ifoldlineno = curlineno;			// Save old line number
 	ifile->ifoldfname = curfname;			// Save old filename
 	ifile->ifno = cfileno;					// Save old file number
+
 //	cfileno = filecount++;					// Compute new file number
-	cfileno = ++filecount;					// Compute new file number
+	// NB: This *must* be preincrement, we're adding one to the filecount here!
+	cfileno = ++filecount;					// Compute NEW file number
 	curfname = strdup(fname);				// Set current filename (alloc storage)
 	curlineno = 0;							// Start on line zero
 
 	// Add another file to the file-record
-//	fr = (FILEREC *)amem((LONG)sizeof(FILEREC));
 	fr = (FILEREC *)malloc(sizeof(FILEREC));
 	fr->frec_next = NULL;
 	fr->frec_name = curfname;
@@ -703,9 +734,7 @@ int include(int handle, char * fname)
 		last_fr->frec_next = fr;			// Append to list of filerecs 
 
 	last_fr = fr;
-
-	if (verb_flag)
-		printf("[include: curfname: %s, cfileno=%u]\n", curfname, cfileno);
+	DEBUG printf("[include: curfname: %s, cfileno=%u]\n", curfname, cfileno);
 
 	return OK;
 }
@@ -795,10 +824,11 @@ int fpop(void)
 if (verb_flag) printf("[fpop (pre):  curfname=%s]\n", curfname);
 			curfname = ifile->ifoldfname;	// Set current filename
 if (verb_flag) printf("[fpop (post): curfname=%s]\n", curfname);
+if (verb_flag) printf("[fpop: (pre)  cfileno=%d ifile->ifno=%d]\n", (int)cfileno, (int)ifile->ifno);
 			curlineno = ifile->ifoldlineno;	// Set current line# 
 			DEBUG printf("cfileno=%d ifile->ifno=%d\n", (int)cfileno, (int)ifile->ifno);
-if (verb_flag) printf("[fpop:        cfileno=%d ifile->ifno=%d]\n", (int)cfileno, (int)ifile->ifno);
 			cfileno = ifile->ifno;			// Restore current file number
+if (verb_flag) printf("[fpop: (post) cfileno=%d ifile->ifno=%d]\n", (int)cfileno, (int)ifile->ifno);
 			break;
 		case SRC_IMACRO:					// Pop and release an IMACRO
 			imacro = inobj->inobj.imacro;
@@ -947,6 +977,7 @@ int tokln(void)
 	case SRC_IFILE:
 		if ((ln = getln()) == NULL)
 		{
+if (verb_flag) printf("tokln: Calling fpop() from SRC_IFILE...\n");
 			fpop();							// Pop input level
 			goto retry;						// Try for more lines 
 		}
@@ -993,6 +1024,7 @@ int tokln(void)
 	case SRC_IREPT:
 		if ((ln = getrln()) == NULL)
 		{
+if (verb_flag) printf("tokln: Calling fpop() from SRC_IREPT...\n");
 			fpop();
 			goto retry;
 		}

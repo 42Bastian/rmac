@@ -455,6 +455,9 @@ int ResolveFixups(int sno)
 			cfileno = *fup.wp++;
 			curlineno = (int)*fup.wp++;
 DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
+			// This is based on global vars cfileno, curfname :-P
+			// This approach is kinda meh as well. I think we can do better than this.
+			SetFilenameForErrorReporting();
 
 			esym = NULL;
 

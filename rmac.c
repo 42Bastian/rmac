@@ -573,7 +573,7 @@ int process(int argc, char ** argv)
 	init_list();					// Listing generator
 
 	// Process command line arguments and assemble source files
-	for(argno = 0; argno < argc; ++argno)
+	for(argno=0; argno<argc; ++argno)
 	{
 		if (*argv[argno] == '-')
 		{
