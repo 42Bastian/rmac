@@ -79,21 +79,11 @@ int (*dirtab[])() = {
    d_equrundef,			// 50 .equrundef/.regundef
    d_ccundef,			// 51 .ccundef
    d_print,				// 52 .print
-   d_gpumain,			// 53 .gpumain
-   d_jpad,				// 54 .jpad
-   d_nojpad,			// 55 .nojpad
-   d_fail,				// 56 .fail
+//   d_gpumain,			// 53 .gpumain
+//   d_jpad,				// 54 .jpad
+//   d_nojpad,			// 55 .nojpad
+//   d_fail,				// 56 .fail
 };
-
-
-//
-// .fail - User abort
-//
-int d_fail(void)
-{
-	fatal("user abort");
-	return 0;
-}
 
 
 //
@@ -117,23 +107,6 @@ int d_org(void)
 	orgaddr = address;
 	orgactive = 1;  
 
-	return 0;
-}
-
-
-//
-// NOP Padding Directive
-//
-int d_jpad(void)
-{
-	jpad = 1;
-	return 0;
-}
-
-
-int d_nojpad(void)
-{
-	jpad = 0;
 	return 0;
 }
 
@@ -1236,7 +1209,7 @@ int d_nlist(void)
 int d_68000(void)
 {
 	rgpu = rdsp = 0;
-	in_main = 0;
+//	in_main = 0;
 	// Switching from gpu/dsp sections should reset any ORG'd Address
 	orgactive = 0;                               
 	orgwarning = 0;
@@ -1267,36 +1240,8 @@ int d_gpu(void)
 	rgpu = 1;                                                // Set GPU assembly
 	rdsp = 0;                                                // Unset DSP assembly
 	regbank = BANK_N;                                        // Set no default register bank
-	in_main = 0;
-	jpad = 0;
-	return 0;
-}
-
-
-//
-// GPU Main Code Directive
-//
-
-int d_gpumain(void)
-{
-	if ((cursect != TEXT) && (cursect != DATA))
-	{
-		error(".gpumain can only be used in the TEXT or DATA segments");
-		return ERROR;
-	}
-
-	// If previous section was dsp or 68000 then we need to reset ORG'd Addresses
-	if (!rgpu)
-	{
-		orgactive = 0;
-		orgwarning = 0;
-	}
-
-	rgpu = 1;                                                // Set GPU assembly
-	rdsp = 0;                                                // Unset DSP assembly
-	regbank = BANK_N;                                        // Set no default register bank
-	in_main = 1;                                             // Enable main code execution rules
-	jpad = 0;
+//	in_main = 0;
+//	jpad = 0;
 	return 0;
 }
 
@@ -1322,8 +1267,8 @@ int d_dsp(void)
 	rdsp = 1;                                                // Set DSP assembly
 	rgpu = 0;                                                // Unset GPU assembly
 	regbank = BANK_N;                                        // Set no default register bank
-	in_main = 0;
-	jpad = 0;
+//	in_main = 0;
+//	jpad = 0;
 	return 0;
 }
 

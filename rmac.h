@@ -183,7 +183,7 @@ extern int lsym_flag;
 extern int sbra_flag;
 extern int obj_format;
 extern LONG amemtot;
-extern int in_main;
+//extern int in_main;
 
 // Prototypes
 void init_sym(void);

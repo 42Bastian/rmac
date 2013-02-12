@@ -14,7 +14,7 @@
 // Globals, externals etc
 extern LONG curuniq;
 //extern TOKEN ** argp;
-extern int mjump_align;
+//extern int mjump_align;
 extern TOKEN * argPtrs[];
 
 // Prototypes

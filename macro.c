@@ -17,7 +17,7 @@
 #include "token.h"
 
 
-static void SetupDefaultMacros(void);
+//static void SetupDefaultMacros(void);
 
 LONG curuniq;								// Current macro's unique number
 //TOKEN ** argp;								// Free spot in argptrs[]
@@ -44,7 +44,7 @@ void InitMacro(void)
 	macnum = 1;
 //	argp = NULL;
 	argp = 0;
-	SetupDefaultMacros();
+//	SetupDefaultMacros();
 }
 
 
@@ -84,7 +84,7 @@ of another (nested macros). Need to fix that somehow.
 	DEBUG printf("%d (nargs = %d)\n", argp, imacro->im_nargs);
 
 	fpop();
-	mjump_align = 0;
+//	mjump_align = 0;
 	return 0;
 }
 
@@ -451,11 +451,13 @@ int InvokeMacro(SYM * mac, WORD siz)
 //	argp = 0;
 	DEBUG printf("InvokeMacro: argp: %d -> ", argp);
 
+#if 0
 	if ((!strcmp(mac->sname, "mjump") || !strcmp(mac->sname, "mpad")) && !in_main)
 	{
 		error("macro cannot be used outside of .gpumain");
 		return ERROR;
 	}
+#endif
 
 	INOBJ * inobj = a_inobj(SRC_IMACRO);		// Alloc and init IMACRO 
 	IMACRO * imacro = inobj->inobj.imacro;
@@ -624,6 +626,7 @@ alleviate this problem.]
 }
 
 
+#if 0
 //
 // Setup inbuilt macros (SubQMod)
 //
@@ -667,3 +670,4 @@ static void SetupDefaultMacros(void)
 	defmac1("     nop", -1);
 	defmac1("  .endr", -1);
 }
+#endif

@@ -87,13 +87,6 @@ regundef 50
 ccundef  51
 .print	52
 print	52
-.gpumain 53
-.jpad 54
-jpad  54
-.nojpad  55
-nojpad   55
-.fail 56
-fail  56 
 .if	500
 if	500
 .else	501

@@ -328,12 +328,17 @@ int expr2(void)
 //
 int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 {
+	// Passed in values (once derefenced, that is) can all be zero. They are
+	// there so that the expression analyzer can fill them in as needed. The
+	// expression analyzer gets its input from "tok", and not from anything
+	// passed in by the user.
 	SYM * sy;
 	char * p;
 	int j;
 
-	tk = otk;								// Set token pointer to 'exprbuf' (direct.c)
-//	symbolNum = 0;							// Set symbol number in symbolPtr[] to 0
+	tk = otk;			// Set token pointer to 'exprbuf' (direct.c)
+						// Also set in various other places too (risca.c, e.g.)
+//	symbolNum = 0;		// Set symbol number in symbolPtr[] to 0
 
 	// Optimize for single constant or single symbol.
 	if ((tok[1] == EOL)

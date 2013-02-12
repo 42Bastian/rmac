@@ -84,7 +84,7 @@ int object(WORD fd)
 	LONG tds;								// TEXT & DATA segment size
 	int i;									// Temporary int
 	CHUNK * cp;								// Chunk (for gather)
-	char * buf;=							// Scratch area
+	char * buf;								// Scratch area
 	char * p;								// Temporary ptr
 	LONG ssize;								// Size of symbols
 	LONG trsize, drsize;					// Size of relocations

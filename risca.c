@@ -25,10 +25,8 @@ unsigned altbankok = 0;					// Ok to use alternate register bank
 unsigned orgactive = 0;					// RISC org directive active
 unsigned orgaddr = 0;					// Org'd address
 unsigned orgwarning = 0;				// Has an ORG warning been issued
-int jpad = 0;
-unsigned previousop = 0;				// Used for NOP padding checks
-unsigned currentop = 0;					// Used for NOP padding checks
-unsigned mjump_defined, mjump_dest;		// mjump macro flags, values etc
+//unsigned previousop = 0;				// Used for NOP padding checks
+//unsigned currentop = 0;					// Used for NOP padding checks
 
 char reg_err[] = "missing register R0...R31";
 
@@ -40,8 +38,8 @@ char condname[MAXINTERNCC][5] = {
 };
 
 // Jaguar Jump Condition Numbers
-char condnumber[] = {1, 2, 4, 5, 6, 8, 9, 10, 20, 21, 22, 24, 25, 26,
-                     0, 0, 1, 2, 4, 4, 5,  8,  8, 20, 24, 31};
+char condnumber[] = { 1, 2, 4, 5, 6, 8, 9, 10, 20, 21, 22, 24, 25, 26,
+                      0, 0, 1, 2, 4, 4, 5,  8,  8, 20, 24, 31};
 
 struct opcoderecord roptbl[] = {
 	{ MR_ADD,     RI_TWO,    0 },
@@ -127,20 +125,23 @@ void strtoupper(char * s)
 //
 void risc_instruction_word(unsigned short parm, int reg1, int reg2)
 {
-	int value = 0xE400;
+//	int value = 0xE400;
 
-	previousop = currentop;                                  // Opcode tracking for nop padding
-	currentop = parm;
+	// Opcode tracking for nop padding
+//	previousop = currentop;
+//	currentop = parm;
 
-	if (!orgwarning)
-	{                                        // Check for absolute address setting
-		if (!orgactive && !in_main)
-		{
+	if (!orgwarning && !orgactive)
+	{
+		// Check for absolute address setting
+//		if (!orgactive && !in_main)
+//		{
 			warn("GPU/DSP code outside of absolute section");
 			orgwarning = 1;
-		}
+//		}
 	}
 
+#if 0
 	if (jpad)
 	{                                               // JPAD directive
 		//                JUMP                   JR                    NOP
@@ -148,7 +149,7 @@ void risc_instruction_word(unsigned short parm, int reg1, int reg2)
 			D_word(value);                                     // Insert NOP
 	}
 	else
-	{
+//	{
 		//               JUMP                   JR
 		if ((previousop == 52) || (previousop == 53))
 		{
@@ -174,25 +175,22 @@ void risc_instruction_word(unsigned short parm, int reg1, int reg2)
 				break;
 			}
 		}
-	}
+//	}
 
 	if (currentop == 20)
 	{                                    // IMACN checks
 		if ((previousop != 18) && (previousop != 20))
-		{
 			error("IMULTN/IMACN instruction must preceed IMACN instruction");
-		}
 	}
 
 	if (currentop == 19)
 	{                                    // RESMAC checks
 		if (previousop != 20)
-		{
 			error("IMACN instruction must preceed RESMAC instruction");
-		}
 	}
+#endif
 
-	value =((parm & 0x3F) << 10) + ((reg1 & 0x1F) << 5) + (reg2 & 0x1F);
+	int value = ((parm & 0x3F) << 10) + ((reg1 & 0x1F) << 5) + (reg2 & 0x1F);
 	D_word(value);
 }
 
@@ -206,40 +204,29 @@ int getregister(WORD rattr)
 	WORD eattr;					// Expression attributes
 	SYM * esym;					// External symbol involved in expr.
 	TOKEN r_expr[EXPRSIZE];		// Expression token list
-	WORD defined;				// Symbol defined flag
 
+	// Evaluate what's in the global "tok" buffer
 	if (expr(r_expr, &eval, &eattr, &esym) != OK)
 	{
-		error("malformed opcode");
+		error("Malformed opcode");
 		return ERROR;
 	}
-	else
+
+	if ((challoc - ch_size) < 4)
+		chcheck(4L);
+
+	if (!(eattr & DEFINED))
 	{
-		defined = (WORD)(eattr & DEFINED);
-
-		if ((challoc - ch_size) < 4)
-			chcheck(4L);
-
-		if (!defined)
-		{
-			fixup((WORD)(FU_WORD|rattr), sloc, r_expr);      
-			return 0;
-		}
-		else
-		{
-			// Check for specified register, r0->r31
-			if ((eval >= 0) && (eval <= 31))
-			{
-				return eval;
-			}
-			else
-			{
-				error(reg_err);
-				return ERROR;
-			}
-		}
+		fixup((WORD)(FU_WORD | rattr), sloc, r_expr);      
+		return 0;
 	}
 
+	// If we got a register in range (0-31), return it
+	if ((eval >= 0) && (eval <= 31))
+		return eval;
+
+	// Otherwise, it's out of range & we flag an error
+	error(reg_err);
 	return ERROR;
 }
 
@@ -249,36 +236,37 @@ int getregister(WORD rattr)
 //
 int risccg(int state)
 {
-	unsigned short parm;					// Opcode parameters
-	unsigned type;							// Opcode type
-	int reg1;								// Register 1
-	int reg2;								// Register 2
-	int val = 0;							// Constructed value
+//	unsigned short parm;		// Opcode parameters
+//	unsigned type;				// Opcode type
+	int reg1;					// Register 1
+	int reg2;					// Register 2
+	int val = 0;				// Constructed value
 	char scratch[80];
 	SYM * ccsym;
 	SYM * sy;
-	int i;									// Iterator
+	int i;						// Iterator
 	int t, c;
 	WORD tdb;
-	unsigned locptr = 0;					// Address location pointer
-	unsigned page_jump = 0;					// Memory page jump flag
-	VALUE eval;								// Expression value
-	WORD eattr;								// Expression attributes
-	SYM * esym;								// External symbol involved in expr.
-	TOKEN r_expr[EXPRSIZE];					// Expression token list
-	WORD defined;							// Symbol defined flag
+	unsigned locptr = 0;		// Address location pointer
+	unsigned page_jump = 0;		// Memory page jump flag
+	VALUE eval;					// Expression value
+	WORD eattr;					// Expression attributes
+	SYM * esym;					// External symbol involved in expr.
+	TOKEN r_expr[EXPRSIZE];		// Expression token list
+	WORD defined;				// Symbol defined flag
 	WORD attrflg;
-	int indexed;							// Indexed register flag
+	int indexed;				// Indexed register flag
 
-	parm = (WORD)(roptbl[state-3000].parm);	// Get opcode parameter and type
-	type = roptbl[state-3000].typ;
+	// Get opcode parameter and type
+	unsigned short parm = (WORD)(roptbl[state - 3000].parm);
+	unsigned type = roptbl[state - 3000].typ;
 
 	// Detect whether the opcode parmeter passed determines that the opcode is
 	// specific to only one of the RISC processors and ensure it is legal in
 	// the current code section. If not then error and return.
 	if (((parm & GPUONLY) && rdsp) || ((parm & DSPONLY) && rgpu))
 	{
-		error("opcode is not valid in this code section");
+		error("Opcode is not valid in this code section");
 		return ERROR;
 	}
 
@@ -290,6 +278,7 @@ int risccg(int state)
 	case RI_NONE: 
 		risc_instruction_word(parm, 0, 0);
 		break;
+
 	// Single operand instructions (Rd)
 	// ABS, MIRROR, NEG, NOT, PACK, RESMAC, SAT8, SAT16, SAT16S, SAT24, SAT32S, UNPACK
 	case RI_ONE:
@@ -297,6 +286,7 @@ int risccg(int state)
 		at_eol();
 		risc_instruction_word(parm, parm >> 6, reg2);
 		break;   
+
 	// Two operand instructions (Rs,Rd)
 	// ADD, ADDC, AND, CMP, DIV, IMACN, IMULT, IMULTN, MOVEFA, MOVETA, MULT, MMULT, 
 	// MTOI, NORMI, OR, ROR, SH, SHA, SUB, SUBC, XOR
@@ -314,12 +304,15 @@ int risccg(int state)
 		at_eol();
 		risc_instruction_word(parm, reg1, reg2);
 		break;
+
 	// Numeric operand (n,Rd) where n = -16..+15
 	// CMPQ
 	case RI_NUM_15:                   
+
 	// Numeric operand (n,Rd) where n = 0..31
 	// BCLR, BSET, BTST, MOVEQ
 	case RI_NUM_31:      
+
 	// Numeric operand (n,Rd) where n = 1..32
 	// ADDQ, ADDQMOD, ADDQT, SHARQ, SHLQ, SHRQ, SUBQ, SUBQMOD, SUBQT, ROLQ, RORQ
 	case RI_NUM_32:                   
@@ -341,7 +334,7 @@ int risccg(int state)
 		{
 			if (*tok == '#')
 			{
-				++tok;
+				tok++;
 
 				if (expr(r_expr, &eval, &eattr, &esym) != OK)
 					goto malformed;
@@ -354,7 +347,7 @@ int risccg(int state)
 
 					if (!defined)
 					{
-						fixup((WORD)(FU_WORD|attrflg), sloc, r_expr);
+						fixup((WORD)(FU_WORD | attrflg), sloc, r_expr);
 						reg1 = 0;
 					}
 					else
@@ -368,7 +361,7 @@ int risccg(int state)
 						if (parm & SUB32) 
 							reg1 = 32 - eval; 
 						else if (type == RI_NUM_32)
-							reg1 = (reg1 == 32) ? 0 : eval;
+							reg1 = (reg1 == 32 ? 0 : eval);
 						else
 							reg1 = eval;
 					}
@@ -383,11 +376,15 @@ int risccg(int state)
 		at_eol();
 		risc_instruction_word(parm, reg1, reg2);
 		break;
-	// Move Immediate - n,Rn - n in Second Word
-	case RI_MOVEI:       
-		if (*tok == '#')
-		{
-			++tok;
+
+	// Move Immediate--n,Rn--n in Second Word
+	case RI_MOVEI:
+		if (*tok != '#')
+			goto malformed;
+
+//		{
+			tok++;
+
 			if (expr(r_expr, &eval, &eattr, &esym) != OK)
 			{
 				malformed:
@@ -397,15 +394,17 @@ int risccg(int state)
 			else
 			{
 				// Opcode tracking for nop padding
-				previousop = currentop;                          
-				currentop = parm;
+//				previousop = currentop;                          
+//				currentop = parm;
 
+#if 0
 				// JUMP or JR
 				if ((previousop == 52) || (previousop == 53) && !jpad)
 				{
 					warn("NOP inserted before MOVEI instruction.");   
 					D_word(0xE400);
 				}
+#endif
 
 				tdb = (WORD)(eattr & TDB);
 				defined = (WORD)(eattr & DEFINED);
@@ -415,37 +414,38 @@ int risccg(int state)
 
 				if (!defined)
 				{
-					fixup(FU_LONG|FU_MOVEI, sloc + 2, r_expr);
+					fixup(FU_LONG | FU_MOVEI, sloc + 2, r_expr);
 					eval = 0;
 				}
 				else
 				{
 					if (tdb)
-					{
-						rmark(cursect, sloc + 2, tdb, MLONG|MMOVEI, NULL);
-					}
+						rmark(cursect, sloc + 2, tdb, MLONG | MMOVEI, NULL);
 				}	
 
 				val = eval;
 
+#if 0
 				// Store the defined flags and value of the movei when used in mjump
 				if (mjump_align)
 				{
 					mjump_defined = defined;
 					mjump_dest = val;
 				}
+#endif
 			}
-		}
-		else
-			goto malformed;
+//		}
+//		else
+//			goto malformed;
 
-		++tok;
+		tok++;
 		reg2 = getregister(FU_REGTWO);
 		at_eol();
 		D_word((((parm & 0x3F) << 10) + reg2));
 		val = ((val >> 16) & 0x0000FFFF) | ((val << 16) & 0xFFFF0000);
 		D_long(val);
 		break;
+
 	case RI_MOVE:                     // PC,Rd or Rs,Rd
 		if (*tok == KW_PC)
 		{
@@ -464,6 +464,7 @@ int risccg(int state)
 		at_eol();
 		risc_instruction_word(parm, reg1, reg2);
 		break;
+
 	// (Rn),Rn = 41 / (R14/R15+n),Rn = 43/44 / (R14/R15+Rn),Rn = 58/59
 	case RI_LOAD:          
 		indexed = 0;
@@ -597,12 +598,13 @@ int risccg(int state)
 		if (*tok != ')')
 			goto malformed;
 
-		++tok;
+		tok++;
 		CHECK_COMMA;
 		reg2 = getregister(FU_REGTWO);
 		at_eol();
 		risc_instruction_word(parm, reg1, reg2);
 		break;
+
 	// Rn,(Rn) = 47 / Rn,(R14/R15+n) = 49/50 / Rn,(R14/R15+Rn) = 60/61
 	case RI_STORE:    
 		parm = 47;
@@ -611,10 +613,10 @@ int risccg(int state)
 
 		if (*tok != '(') goto malformed;
 
-		++tok;
+		tok++;
 		indexed = 0;
 
-		if ((*tok == KW_R14 || *tok == KW_R15) && (*(tok+1) != ')')) 
+		if ((*tok == KW_R14 || *tok == KW_R15) && (*(tok + 1) != ')')) 
 			indexed = (*tok - KW_R0);
 
 		if (*tok == SYMBOL)
@@ -631,10 +633,10 @@ int risccg(int state)
 			if (sy->sattre & EQUATEDREG) 
 			{
 				if (((sy->svalue & 0x1F) == 14 || (sy->svalue & 0x1F) == 15)
-					&& (*(tok+2) != ')'))
+					&& (*(tok + 2) != ')'))
 				{
 					indexed = (sy->svalue & 0x1F);
-					++tok;
+					tok++;
 				}
 			}
 		}
@@ -647,7 +649,7 @@ int risccg(int state)
 		{
 			reg2 = indexed;
 			indexed = 0;
-			++tok;
+			tok++;
 
 			if (*tok == '+')
 			{
@@ -696,7 +698,7 @@ int risccg(int state)
 
 						if (!defined)
 						{
-							fixup(FU_WORD|FU_REGTWO, sloc, r_expr);
+							fixup(FU_WORD | FU_REGTWO, sloc, r_expr);
 							reg2 = 0;
 						}
 						else
@@ -735,27 +737,29 @@ int risccg(int state)
 		if (*tok != ')')
 			goto malformed;
 
-		++tok;
+		tok++;
 		at_eol();
 		risc_instruction_word(parm, reg2, reg1);
 		break;
+
 	// LOADB/LOADP/LOADW (Rn),Rn
 	case RI_LOADN:                    
 		if (*tok != '(')
 			goto malformed;
 
-		++tok;
+		tok++;
 		reg1 = getregister(FU_REGONE);
 
 		if (*tok != ')')
 			goto malformed;
 
-		++tok;
+		tok++;
 		CHECK_COMMA;
 		reg2 = getregister(FU_REGTWO);
 		at_eol();
 		risc_instruction_word(parm, reg1, reg2);
 		break;
+
 	// STOREB/STOREP/STOREW Rn,(Rn)
 	case RI_STOREN:                   
 		reg1 = getregister(FU_REGONE);
@@ -764,51 +768,62 @@ int risccg(int state)
 		if (*tok != '(')
 			goto malformed;
 
-		++tok;
+		tok++;
 		reg2 = getregister(FU_REGTWO);
 
 		if (*tok != ')')
 			goto malformed;
 
-		++tok;
+		tok++;
 		at_eol();
 		risc_instruction_word(parm, reg2, reg1);
 		break;
+
 	case RI_JR:                       // Jump Relative - cc,n - n=-16..+15 words, reg2=cc
 	case RI_JUMP:                     // Jump Absolute - cc,(Rs) - reg2=cc
-		// Check to see if there is a comma in the token string. If not then the JR or JUMP should
-		// default to 0, Jump Always
+		// Check to see if there is a comma in the token string. If not then
+		// the JR or JUMP should default to 0, Jump Always
 		t = i = c = 0;
+
 		while (t != EOL)
 		{
 			t = *(tok + i);
-			if (t == ',') c = 1;
+
+			if (t == ',')
+				c = 1;
+
 			i++;
 		}
 
 		if (c)
-		{                                            // Comma present in token string
+		{
+			// Comma present in token string
 			if (*tok == CONST)
-			{                             // CC using a constant number
-				++tok;
+			{
+				// CC using a constant number
+				tok++;
 				val = *tok;
-				++tok;
+				tok++;
 				CHECK_COMMA;
 			}
 			else if (*tok == SYMBOL)
 			{
 				val = 99;
+//				strcpy(scratch, (char *)tok[1]);
+				strcpy(scratch, string[tok[1]]);
+				strtoupper(scratch);
 
 				for(i=0; i<MAXINTERNCC; i++)
 				{
-//					strcpy(scratch, (char *)tok[1]);
-					strcpy(scratch, string[tok[1]]);
-					strtoupper(scratch);
-
-					if (!strcmp(condname[i], scratch)) 
+					// Look for the condition code & break if found
+					if (strcmp(condname[i], scratch) == 0)
+					{
 						val = condnumber[i];
+						break;
+					}
 				}
 
+				// Standard CC was not found, look for an equated one
 				if (val == 99)
 				{
 //					ccsym = lookup((char *)tok[1], LABEL, 0);
@@ -830,12 +845,14 @@ int risccg(int state)
 			}
 			else if (*tok == '(')
 			{
-				val = 0;                                     // Jump always
+				// Jump always
+				val = 0;
 			}
 		}
 		else
 		{
-			val = 0;                                        // Jump always
+			// Jump always
+			val = 0;
 		}
 
 		if (val < 0 || val > 31)
@@ -845,11 +862,13 @@ int risccg(int state)
 		}
 		else
 		{
-			reg1 = val;                                     // Store condition code
+			// Store condition code
+			reg1 = val;
 		}
 
 		if (type == RI_JR)
-		{                                // JR cc,n
+		{
+			// JR cc,n
 			if (expr(r_expr, &eval, &eattr, &esym) != OK)
 				goto malformed;
 			else
@@ -862,14 +881,16 @@ int risccg(int state)
 
 				if (!defined)
 				{
+#if 0
 					if (in_main)
 					{
 						fixup(FU_WORD|FU_MJR, sloc, r_expr);
 					}
 					else
-					{
-						fixup(FU_WORD|FU_JR, sloc, r_expr);
-					}
+#endif
+//					{
+						fixup(FU_WORD | FU_JR, sloc, r_expr);
+//					}
 
 					reg2 = 0;
 				}
@@ -880,19 +901,24 @@ int risccg(int state)
 					if (orgactive)
 					{
 						reg2 = ((int)(val - (orgaddr + 2))) / 2;
+
 						if ((reg2 < -16) || (reg2 > 15))
-						error("PC relative overflow");
+							error("PC relative overflow");
+
 						locptr = orgaddr;
 					}
 					else
 					{
 						reg2 = ((int)(val - (sloc + 2))) / 2;
+
 						if ((reg2 < -16) || (reg2 > 15))
-						error("PC relative overflow");
+							error("PC relative overflow");
+
 						locptr = sloc;
 					}
 				}	
 
+#if 0
 				if (in_main)
 				{
 					if (defined)
@@ -926,24 +952,27 @@ int risccg(int state)
 						}
 					}
 				}
+#endif
 			}
 
 			risc_instruction_word(parm, reg2, reg1);
 		}
 		else
-		{                                           // JUMP cc, (Rn)
+		{
+			// JUMP cc, (Rn)
 			if (*tok != '(')
 				goto malformed;
 
-			++tok;
+			tok++;
 			reg2 = getregister(FU_REGTWO);
 
 			if (*tok != ')')
 				goto malformed;
 
-			++tok;
+			tok++;
 			at_eol();
 
+#if 0
 			if (in_main)
 			{
 				if (!mjump_align)
@@ -989,6 +1018,7 @@ int risccg(int state)
 					}
 				}
 			}
+#endif
 
 			risc_instruction_word(parm, reg2, reg1);
 		}
@@ -1003,3 +1033,4 @@ int risccg(int state)
 
 	return 0;
 }
+
