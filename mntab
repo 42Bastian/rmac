@@ -87,6 +87,8 @@ regundef 50
 ccundef  51
 .print	52
 print	52
+.cstruct	53
+cstruct	53
 .if	500
 if	500
 .else	501

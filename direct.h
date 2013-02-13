@@ -68,5 +68,6 @@ int d_nojpad(void);
 int d_fail(void);
 int symlist(int(*)());
 int abs_expr(VALUE *);
+int d_cstruct(void);
 
 #endif // __DIRECT_H__

@@ -79,6 +79,7 @@ int (*dirtab[])() = {
    d_equrundef,			// 50 .equrundef/.regundef
    d_ccundef,			// 51 .ccundef
    d_print,				// 52 .print
+   d_cstruct,			// 53 .cstruct
 };
 
 
@@ -1278,7 +1279,8 @@ int d_dsp(void)
 //
 int d_cargs(void)
 {
-	VALUE eval;
+	VALUE eval = 4;		// Default to 4 if no offset specified (to account for
+						// return address)
 	WORD rlist;
 	SYM * symbol;
 	char * p;
@@ -1299,9 +1301,6 @@ int d_cargs(void)
 		if (*tok == ',')
 			tok++;
 	}
-	else 
-		// Default to 4 if not specified (because PC is on stack according to GroovyBee)
-		eval = 4;
 
 	for(;;)
 	{
@@ -1381,6 +1380,139 @@ int d_cargs(void)
 				return 0;
 			default:
 				return error(".cargs syntax");
+			}
+		}
+
+		// Eat commas in between each argument, if they exist
+		if (*tok == ',')
+			tok++;
+	}
+}
+
+
+//
+// .cstruct [#offset], symbol[.size], ...
+// 
+// Lists of registers may also be mentioned; they just take up space. Good for
+// "documentation" purposes:
+// 
+// .cstruct a6, .arg1, .arg2, .arg3...
+// 
+// Symbols thus created are ABS and EQUATED. Note that this is for
+// compatibility with VBCC and the Remover's library. Thanks to GroovyBee for
+// the suggestion.
+//
+int d_cstruct(void)
+{
+	VALUE eval = 0;		// Default, if no offset specified, is zero
+	WORD rlist;
+	SYM * symbol;
+	char * symbolName;
+	int env;
+	int i;
+
+	if (rgpu || rdsp)
+		return error("directive forbidden in gpu/dsp mode");
+
+	if (*tok == '#')
+	{
+		tok++;
+
+		if (abs_expr(&eval) != OK)
+			return 0;
+
+		// Eat the comma, if it's there
+		if (*tok == ',')
+			tok++;
+	}
+
+	for(;;)
+	{
+		if (*tok == SYMBOL)
+		{
+			symbolName = string[tok[1]];
+
+			// Set env to either local (dot prefixed) or global scope
+			env = (symbolName[0] == '.' ? curenv : 0);
+			symbol = lookup(symbolName, LABEL, env);
+
+			// If the symbol wasn't found, then define it. Otherwise, throw an
+			// error.
+			if (symbol == NULL)
+			{
+				symbol = NewSymbol(symbolName, LABEL, env);
+				symbol->sattr = 0;
+			}
+			else if (symbol->sattr & DEFINED)
+				return errors("multiply-defined label '%s'", symbolName);
+
+			// Put symbol in "order of definition" list
+			if (!(symbol->sattr & SDECLLIST))
+				sym_decl(symbol);
+
+			tok += 2;
+
+			// Adjust label start address if it's a word or a long, as a byte
+			// label might have left us on an odd address.
+			switch ((int)*tok)
+			{
+			case DOTW:
+			case DOTL:
+				eval += eval & 0x01;
+			}
+
+			symbol->sattr |= (ABS | DEFINED | EQUATED);
+			symbol->svalue = eval;
+
+			// Check for dot suffixes and adjust space accordingly (longs and
+			// words on an odd boundary get bumped to the next word aligned
+			// address). If no suffix, then throw an error.
+			switch ((int)*tok)
+			{
+			case DOTL:
+				eval += 4;
+				break;
+			case DOTW:
+				eval += 2;
+				break;
+			case DOTB:
+				eval += 1;
+				break;
+			default:
+				return error("Symbol missing dot suffix in .cstruct construct");
+			}
+
+			tok++;
+		}
+		else if (*tok >= KW_D0 && *tok <= KW_A7)
+		{
+			if (reglist(&rlist) < 0)
+				return 0;
+
+			for(i=0; i<16; i++, rlist>>=1)
+			{
+				if (rlist & 1)
+					eval += 4;
+			}
+		}
+		else
+		{
+			switch ((int)*tok)
+			{
+			case KW_USP:
+			case KW_SSP:
+			case KW_PC:
+				eval += 2;
+				// FALLTHROUGH
+			case KW_SR:
+			case KW_CCR:
+				eval += 2;
+				tok++;
+				break;
+			case EOL:
+				return 0;
+			default:
+				return error(".cstruct syntax");
 			}
 		}
 
