@@ -776,7 +776,7 @@ int GenerateRISCCode(int state)
 				else
 					reg2 = ((int)(val - (sloc + 2))) / 2;
 #else
-				reg2 = ((int)(eval - (orgactive ? orgaddr : sloc) + 2)) / 2;
+				reg2 = ((int)(eval - ((orgactive ? orgaddr : sloc) + 2))) / 2;
 #endif
 
 				if ((reg2 < -16) || (reg2 > 15))
