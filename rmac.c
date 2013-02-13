@@ -37,7 +37,6 @@ int rgpu, rdsp;						// Assembling Jaguar GPU or DSP code
 int list_fd;						// File to write listing to
 int regbank;						// RISC register bank
 int segpadsize;						// Segment padding size
-//int in_main;						// In main memory flag for GPUMAIN
 int endian;							// Host processor endianess
 char * objfname;					// Object filename pointer
 char * firstfname;					// First source filename
@@ -560,7 +559,6 @@ int process(int argc, char ** argv)
 	orgwarning = 0;					// No ORG warning issued
 	a_amount = 0;
 	segpadsize = 2;					// Initialise segment padding size
-//	in_main = 0;
 
 	// Initialise modules
 	InitSymbolTable();				// Symbol table

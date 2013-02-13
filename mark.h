@@ -12,7 +12,7 @@
 #include "rmac.h"
 #include "sect.h"
 
-#define MARK_ALLOC_INCR 1024		// #bytes to alloc for more mark space 
+#define MARK_ALLOC_INCR 1024		// # bytes to alloc for more mark space 
 #define MIN_MARK_MEM    (3*sizeof(WORD)+2*sizeof(LONG))
 
 // Globals, Externals etc

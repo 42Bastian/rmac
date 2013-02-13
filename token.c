@@ -16,6 +16,7 @@
 #define DEF_KW				// Declare keyword values 
 #include "kwtab.h"			// Incl generated keyword tables & defs
 
+
 int lnsave;					// 1; strcpy() text of current line
 int curlineno;				// Current line number
 int totlines;				// Total # of lines
@@ -116,61 +117,6 @@ static char * riscregname[] = {
 };
 
 
-// Removing this, provided it doesn't cause unwanted side-effects :-P
-#if 0
-//
-// Make `fnum' the Current `curfname'
-// NOTE: This is currently only called from error() in error.c
-//
-void setfnum(WORD fnum)
-{
-#if 0
-	// NOTE: fnum is ZERO based, this can cause problems if you're not careful!
-	FILEREC * fr = filerec;
-
-	DEBUG printf("[setfnum: fnum=%u]\n", fnum);
-
-	// Advance to the correct record...
-	while (fr != NULL && fnum != 0)
-	{
-		fr = fr->frec_next;
-		fnum--;
-	}
-
-	if (fr == NULL)
-		curfname = "(*top*)";
-	else
-		curfname = fr->frec_name;
-
-	DEBUG printf("[setfnum: curfname=%s]\n", curfname);
-#else
-	// Check for absolute top filename (this should never happen)
-	if (fnum == -1)
-	{
-		curfname = "(*top*)";
-		return;
-	}
-
-	FILEREC * fr = filerec;
-
-	// Advance to the correct record...
-	while (fr != NULL && fnum != 0)
-	{
-		fr = fr->frec_next;
-		fnum--;
-	}
-
-	// Check for file # record not found (this should never happen either)
-	if (fr == NULL)
-	{
-		curfname = "(*NOT FOUND*)";
-		return;
-	}
-
-	curfname = fr->frec_name;
-#endif
-}
-#else
 void SetFilenameForErrorReporting(void)
 {
 	WORD fnum = cfileno;
@@ -200,7 +146,6 @@ void SetFilenameForErrorReporting(void)
 
 	curfname = fr->frec_name;
 }
-#endif
 
 
 //
@@ -634,6 +579,8 @@ char * getmln(void)
 //	ExpandMacro((char *)(strp + 1), imacro->im_lnbuf, LNSIZ);
 	ExpandMacro(strp->line, imacro->im_lnbuf, LNSIZ);
 
+// bollocks
+#if 0
 	if (!strcmp(imacro->im_macro->sname, "mjump") && !mjump_align)
 	{
 		// if we need to adjust the alignment of the jump source address to
@@ -657,6 +604,7 @@ char * getmln(void)
 
 		mjump_align = 1;
 	}
+#endif
 
 	return imacro->im_lnbuf;
 }
@@ -683,7 +631,7 @@ char * getrln(void)
 			return NULL;
 		}
 
-		strp = irept->ir_nextln;			//strp
+		strp = irept->ir_nextln;
 	}
 
 	strcpy(irbuf, (char *)(irept->ir_nextln + 1));
@@ -1610,6 +1558,7 @@ int d_goto(WORD unused)
 	return error("goto label not found");
 }
 
+
 void DumpTokenBuffer(void)
 {
 	TOKEN * t;
@@ -1698,3 +1647,4 @@ void DumpTokenBuffer(void)
 
 	printf("[EOL]\n");
 }
+

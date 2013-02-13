@@ -17,52 +17,53 @@
 #include "symbol.h"
 #include "token.h"
 
+
 // Section descriptors
-SECT sect[NSECTS];						// All sections... 
-int cursect;							// Current section number
+SECT sect[NSECTS];				// All sections... 
+int cursect;					// Current section number
 
 // These are copied from the section descriptor, the current code chunk
 // descriptor and the current fixup chunk descriptor when a switch is made into
 // a section.  They are copied back to the descriptors when the section is left.
-WORD scattr;							// Section attributes 
-LONG sloc;								// Current loc in section 
+WORD scattr;					// Section attributes 
+LONG sloc;						// Current loc in section 
 
-CHUNK * scode;							// Current (last) code chunk 
-LONG challoc;							// # bytes alloc'd to code chunk 
-LONG ch_size;							// # bytes used in code chunk 
-char * chptr;							// Deposit point in code chunk buffer 
+CHUNK * scode;					// Current (last) code chunk 
+LONG challoc;					// # bytes alloc'd to code chunk 
+LONG ch_size;					// # bytes used in code chunk 
+char * chptr;					// Deposit point in code chunk buffer 
 
-CHUNK * sfix;							// Current (last) fixup chunk
-LONG fchalloc;							// # bytes alloc'd to fixup chunk
-LONG fchsize;							// # bytes used in fixup chunk
-PTR fchptr;								// Deposit point in fixup chunk buffer
+CHUNK * sfix;					// Current (last) fixup chunk
+LONG fchalloc;					// # bytes alloc'd to fixup chunk
+LONG fchsize;					// # bytes used in fixup chunk
+PTR fchptr;						// Deposit point in fixup chunk buffer
 
-unsigned fwdjump[MAXFWDJUMPS];			// forward jump check table
-unsigned fwindex = 0;					// forward jump index
+unsigned fwdjump[MAXFWDJUMPS];	// forward jump check table
+unsigned fwindex = 0;			// forward jump index
 
 // Return a size (SIZB, SIZW, SIZL) or 0, depending on what kind of fixup is
 // associated with a location.
 static char fusiztab[] = {
-   0,						// FU_QUICK
-   1,						// FU_BYTE
-   2,						// FU_WORD
-   2,						// FU_WBYTE
-   4,						// FU_LONG
-   1,						// FU_BBRA
-   0,						// (unused)
-   1,						// FU_6BRA
+   0,	// FU_QUICK
+   1,	// FU_BYTE
+   2,	// FU_WORD
+   2,	// FU_WBYTE
+   4,	// FU_LONG
+   1,	// FU_BBRA
+   0,	// (unused)
+   1,	// FU_6BRA
 };
 
 // Offset to REAL fixup location
 static char fusizoffs[] = {
-   0,						// FU_QUICK
-   0,						// FU_BYTE
-   0,						// FU_WORD
-   1,						// FU_WBYTE
-   0,						// FU_LONG
-   1,						// FU_BBRA
-   0,						// (unused)
-   0,						// FU_6BRA
+   0,	// FU_QUICK
+   0,	// FU_BYTE
+   0,	// FU_WORD
+   1,	// FU_WBYTE
+   0,	// FU_LONG
+   1,	// FU_BBRA
+   0,	// (unused)
+   0,	// FU_6BRA
 };
 
 

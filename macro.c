@@ -17,8 +17,6 @@
 #include "token.h"
 
 
-//static void SetupDefaultMacros(void);
-
 LONG curuniq;								// Current macro's unique number
 //TOKEN ** argp;								// Free spot in argptrs[]
 int macnum;									// Unique number for macro definition
@@ -44,7 +42,6 @@ void InitMacro(void)
 	macnum = 1;
 //	argp = NULL;
 	argp = 0;
-//	SetupDefaultMacros();
 }
 
 
@@ -84,7 +81,6 @@ of another (nested macros). Need to fix that somehow.
 	DEBUG printf("%d (nargs = %d)\n", argp, imacro->im_nargs);
 
 	fpop();
-//	mjump_align = 0;
 	return 0;
 }
 
@@ -451,14 +447,6 @@ int InvokeMacro(SYM * mac, WORD siz)
 //	argp = 0;
 	DEBUG printf("InvokeMacro: argp: %d -> ", argp);
 
-#if 0
-	if ((!strcmp(mac->sname, "mjump") || !strcmp(mac->sname, "mpad")) && !in_main)
-	{
-		error("macro cannot be used outside of .gpumain");
-		return ERROR;
-	}
-#endif
-
 	INOBJ * inobj = a_inobj(SRC_IMACRO);		// Alloc and init IMACRO 
 	IMACRO * imacro = inobj->inobj.imacro;
 	imacro->im_siz = siz;
@@ -625,49 +613,3 @@ alleviate this problem.]
 	return OK;
 }
 
-
-#if 0
-//
-// Setup inbuilt macros (SubQMod)
-//
-static void SetupDefaultMacros(void)
-{
-	curmac = NewSymbol("mjump", MACRO, 0);
-	curmac->svalue = 0;
-	curmac->sattr = (WORD)(macnum++);
-	argno = 0;
-	defmac2("cc");
-	defmac2("addr");
-	defmac2("jreg");
-//	curmln = NULL;
-	curmac->lineList = NULL;
-	defmac1("  nop", -1);
-	defmac1("  movei #\\addr,\\jreg", -1);
-	defmac1("  jump  \\cc,(\\jreg)", -1);
-	defmac1("  nop", -1);
-	defmac1("  nop", -1);
-
-	curmac = NewSymbol("mjr", MACRO, 0);
-	curmac->svalue = 0;
-	curmac->sattr = (WORD)(macnum++);
-	argno = 0;
-	defmac2("cc");
-	defmac2("addr");
-//	curmln = NULL;
-	curmac->lineList = NULL;
-	defmac1("  jr    \\cc,\\addr", -1);
-	defmac1("  nop", -1);
-	defmac1("  nop", -1);
-
-	curmac = NewSymbol("mpad", MACRO, 0);
-	curmac->svalue = 0;
-	curmac->sattr = (WORD)(macnum++);
-	argno = 0;
-	defmac2("size");
-//	curmln = NULL;
-	curmac->lineList = NULL;
-	defmac1("  .rept (\\size/2)", -1);
-	defmac1("     nop", -1);
-	defmac1("  .endr", -1);
-}
-#endif

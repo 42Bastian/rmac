@@ -11,6 +11,7 @@
 #include "object.h"
 #include "risca.h"
 
+
 MCHUNK * firstmch;		// First mark chunk
 MCHUNK * curmch;		// Current mark chunk
 PTR markptr;			// Deposit point in current mark chunk

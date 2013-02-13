@@ -79,10 +79,6 @@ int (*dirtab[])() = {
    d_equrundef,			// 50 .equrundef/.regundef
    d_ccundef,			// 51 .ccundef
    d_print,				// 52 .print
-//   d_gpumain,			// 53 .gpumain
-//   d_jpad,				// 54 .jpad
-//   d_nojpad,			// 55 .nojpad
-//   d_fail,				// 56 .fail
 };
 
 
@@ -355,14 +351,16 @@ int d_incbin(void)
 //
 int d_regbank0(void)
 {
-	regbank = BANK_0;                                        // Set active register bank zero
+	// Set active register bank zero
+	regbank = BANK_0;
 	return 0;
 }
 
 
 int d_regbank1(void)
 {
-	regbank = BANK_1;                                        // Set active register bank one
+	// Set active register bank one
+	regbank = BANK_1;
 	return 0;
 }
 
@@ -649,11 +647,11 @@ int d_include(void)
 	// the "-d" option.
 	if ((j = open(fn, 0)) < 0)
 	{
-		for(i=0; nthpath("RMACPATH", i, buf1)!=0; ++i)
+		for(i=0; nthpath("RMACPATH", i, buf1)!=0; i++)
 		{
 			j = strlen(buf1);
 
-			if (j > 0 && buf1[j-1] != SLASHCHAR)	// Append path char if necessary 
+			if (j > 0 && buf1[j - 1] != SLASHCHAR)	// Append path char if necessary 
 				strcat(buf1, SLASHSTRING);
 
 			strcat(buf1, fn);
@@ -894,7 +892,7 @@ int d_dc(WORD siz)
 		case SIZB:
 			if (!defined)
 			{
-				fixup(FU_BYTE|FU_SEXT, sloc, exprbuf);
+				fixup(FU_BYTE | FU_SEXT, sloc, exprbuf);
 				D_byte(0);
 			}
 			else
@@ -913,7 +911,7 @@ int d_dc(WORD siz)
 		case SIZN:
 			if (!defined)
 			{
-				fixup(FU_WORD|FU_SEXT, sloc, exprbuf);
+				fixup(FU_WORD | FU_SEXT, sloc, exprbuf);
 				D_word(0);
 			}
 			else
@@ -933,7 +931,7 @@ int d_dc(WORD siz)
 			if (!defined)
 			{
 				if (movei)
-					fixup(FU_LONG|FU_MOVEI, sloc, exprbuf);
+					fixup(FU_LONG | FU_MOVEI, sloc, exprbuf);
 				else
 					fixup(FU_LONG, sloc, exprbuf);
 
@@ -1081,7 +1079,7 @@ int dep_block(VALUE count, WORD siz, VALUE eval, WORD eattr, TOKEN * exprbuf)
 		case SIZB:
 			if (!defined)
 			{
-				fixup(FU_BYTE|FU_SEXT, sloc, exprbuf);
+				fixup(FU_BYTE | FU_SEXT, sloc, exprbuf);
 				D_byte(0);
 			}
 			else
@@ -1100,7 +1098,7 @@ int dep_block(VALUE count, WORD siz, VALUE eval, WORD eattr, TOKEN * exprbuf)
 		case SIZN:
 			if (!defined)
 			{
-				fixup(FU_WORD|FU_SEXT, sloc, exprbuf);
+				fixup(FU_WORD | FU_SEXT, sloc, exprbuf);
 				D_word(0);
 			}
 			else
@@ -1185,7 +1183,7 @@ int d_comm(void)
 int d_list(void)
 {
 	if (list_flag)
-		++listing;
+		listing++;
 
 	return 0;
 }
@@ -1197,7 +1195,7 @@ int d_list(void)
 int d_nlist(void)
 {
 	if (list_flag)
-		--listing;
+		listing--;
 
 	return 0;
 }
@@ -1209,7 +1207,6 @@ int d_nlist(void)
 int d_68000(void)
 {
 	rgpu = rdsp = 0;
-//	in_main = 0;
 	// Switching from gpu/dsp sections should reset any ORG'd Address
 	orgactive = 0;                               
 	orgwarning = 0;
@@ -1237,11 +1234,9 @@ int d_gpu(void)
 		orgwarning = 0;
 	}
 
-	rgpu = 1;                                                // Set GPU assembly
-	rdsp = 0;                                                // Unset DSP assembly
-	regbank = BANK_N;                                        // Set no default register bank
-//	in_main = 0;
-//	jpad = 0;
+	rgpu = 1;			// Set GPU assembly
+	rdsp = 0;			// Unset DSP assembly
+	regbank = BANK_N;	// Set no default register bank
 	return 0;
 }
 
@@ -1264,11 +1259,9 @@ int d_dsp(void)
 		orgwarning = 0;
 	}
 
-	rdsp = 1;                                                // Set DSP assembly
-	rgpu = 0;                                                // Unset GPU assembly
-	regbank = BANK_N;                                        // Set no default register bank
-//	in_main = 0;
-//	jpad = 0;
+	rdsp = 1;			// Set DSP assembly
+	rgpu = 0;			// Unset GPU assembly
+	regbank = BANK_N;	// Set no default register bank
 	return 0;
 }
 
@@ -1277,17 +1270,17 @@ int d_dsp(void)
 // .cargs [#offset], symbol[.size], ...
 // 
 // Lists of registers may also be mentioned; they just take up space. Good for
-// "documentation" purposes.
+// "documentation" purposes:
 // 
-// .cargs a6,.arg1, .arg2, .arg3...
+// .cargs a6, .arg1, .arg2, .arg3...
 // 
-// The symbols are ABS and EQUATED.
+// Symbols thus created are ABS and EQUATED.
 //
 int d_cargs(void)
 {
 	VALUE eval;
 	WORD rlist;
-	SYM * sy;
+	SYM * symbol;
 	char * p;
 	int env;
 	int i;
@@ -1297,15 +1290,17 @@ int d_cargs(void)
 
 	if (*tok == '#')
 	{
-		++tok;
+		tok++;
 
 		if (abs_expr(&eval) != OK)
 			return 0;
 
-		if (*tok == ',')					// Eat comma if it's there
-			++tok;
+		// Eat the comma, if it's there
+		if (*tok == ',')
+			tok++;
 	}
 	else 
+		// Default to 4 if not specified (because PC is on stack according to GroovyBee)
 		eval = 4;
 
 	for(;;)
@@ -1315,75 +1310,83 @@ int d_cargs(void)
 //			p = (char *)tok[1];
 			p = string[tok[1]];
 
+#if 0
 			if (*p == '.')
-				env = curenv;
+				env = curenv;			// Label is local
 			else
-				env = 0;
+				env = 0;				// Label is global
+#else
+			// Set env to either local (dot prefixed) or global scope
+			env = (*p == '.' ? curenv : 0);
+#endif
+			symbol = lookup(p, LABEL, env);
 
-			sy = lookup(p, LABEL, env);
-
-			if (sy == NULL)
+			if (symbol == NULL)
 			{
-				sy = NewSymbol(p, LABEL, env);
-				sy->sattr = 0;
+				symbol = NewSymbol(p, LABEL, env);
+				symbol->sattr = 0;
 			}
-			else if (sy->sattr & DEFINED)
+			else if (symbol->sattr & DEFINED)
 				return errors("multiply-defined label '%s'", p);
 
 			// Put symbol in "order of definition" list
-			if (!(sy->sattr & SDECLLIST))
-				sym_decl(sy);
+			if (!(symbol->sattr & SDECLLIST))
+				sym_decl(symbol);
 
-			sy->sattr |= ABS|DEFINED|EQUATED;
-			sy->svalue = eval;
+			symbol->sattr |= (ABS | DEFINED | EQUATED);
+			symbol->svalue = eval;
 			tok += 2;
 
-			switch((int)*tok)
+			// What this does is eat any dot suffixes attached to a symbol. If
+			// it's a .L, it adds 4 to eval; if it's .W or .B, it adds 2. If
+			// there is no dot suffix, it assumes a size of 2.
+			switch ((int)*tok)
 			{
 			case DOTL:
 				eval += 2;
 			case DOTB:
 			case DOTW:
-				++tok;
+				tok++;
 			}
 
 			eval += 2;
 		}
-		else 
+		else if (*tok >= KW_D0 && *tok <= KW_A7)
 		{
-			if (*tok >= KW_D0 && *tok <= KW_A7)
-			{
-				if (reglist(&rlist) < 0)
-					return 0;
+			if (reglist(&rlist) < 0)
+				return 0;
 
-				for(i=0; i++<16; rlist>>=1)
-					if (rlist & 1)
-						eval += 4;
-			}
-			else
+//			for(i=0; i++<16; rlist>>=1)
+			for(i=0; i<16; i++, rlist>>=1)
 			{
-				switch((int)*tok)
-				{
-				case KW_USP:
-				case KW_SSP:
-				case KW_PC:
-					eval += 2;
-					// FALLTHROUGH
-				case KW_SR:
-				case KW_CCR:
-					eval += 2;
-					++tok;
-					break;
-				case EOL:
-					return 0;
-				default:
-					return error(".cargs syntax");
-				}
+				if (rlist & 1)
+					eval += 4;
 			}
-
-			if (*tok == ',')
-				++tok;
 		}
+		else
+		{
+			switch ((int)*tok)
+			{
+			case KW_USP:
+			case KW_SSP:
+			case KW_PC:
+				eval += 2;
+				// FALLTHROUGH
+			case KW_SR:
+			case KW_CCR:
+				eval += 2;
+				tok++;
+				break;
+			case EOL:
+				return 0;
+			default:
+				return error(".cargs syntax");
+			}
+		}
+
+		// Eat commas in between each argument, if they exist
+		if (*tok == ',')
+			tok++;
 	}
 }
 
@@ -1393,11 +1396,12 @@ int d_cargs(void)
 //
 int undmac1(char * p)
 {
-	SYM * sy;
+	SYM * symbol = lookup(p, MACRO, 0);
 
-	// If the macro symbol exists, cause it to dissappear
-	if ((sy = lookup(p, MACRO, 0)) != NULL)
-		sy->stype = (BYTE)SY_UNDEF;
+	// If the macro symbol exists, cause it to disappear
+//	if ((sy = lookup(p, MACRO, 0)) != NULL)
+	if (symbol != NULL)
+		symbol->stype = (BYTE)SY_UNDEF;
 
 	return OK;
 }
@@ -1408,3 +1412,4 @@ int d_undmac(void)
 	symlist(undmac1);
 	return 0;
 }
+

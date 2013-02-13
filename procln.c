@@ -29,6 +29,7 @@
 #define DECL_MR
 #include "risckw.h"
 
+
 IFENT * ifent;					// Current ifent
 static IFENT ifent0;			// Root ifent
 static IFENT * f_ifent;			// Freelist of ifents
@@ -627,7 +628,7 @@ do_label:
 		// Call RISC code generator if we found a mnemonic
 		if (state >= 3000)
 		{
-			risccg(state);
+			GenerateRISCCode(state);
 			goto loop;
 		}
 	}

@@ -183,7 +183,6 @@ extern int lsym_flag;
 extern int sbra_flag;
 extern int obj_format;
 extern LONG amemtot;
-//extern int in_main;
 
 // Prototypes
 void init_sym(void);
@@ -196,6 +195,5 @@ int nthpath(char *, int, char *);
 void clear(char *, LONG);
 char * copy(char *, char *, LONG);
 int rmac_qsort(char *, int, int, int (*)());
-//char * amem(LONG);
 
 #endif // __RMAC_H__
