@@ -6,7 +6,8 @@
 #
 
 rm = /bin/rm -f 
-CC = cc 
+CC = $(CROSS)gcc
+HOSTCC = gcc
 
 CFLAGS = -g -D__GCCUNIX__ -I. 
 
@@ -41,16 +42,16 @@ risckw.h : kwtab kwgen
 #
 
 kwgen.o : kwgen.c
-	$(CC) $(CFLAGS) -c kwgen.c
+	$(HOSTCC) $(CFLAGS) -c kwgen.c
 
 kwgen : kwgen.o
-	$(CC) $(CFLAGS) -o kwgen kwgen.o
+	$(HOSTCC) $(CFLAGS) -o kwgen kwgen.o
 
 68kgen.o : 68kgen.c
-	$(CC) $(CFLAGS) -c 68kgen.c 
+	$(HOSTCC) $(CFLAGS) -c 68kgen.c 
 
 68kgen : 68kgen.o
-	$(CC) $(CFLAGS) -o 68kgen 68kgen.o
+	$(HOSTCC) $(CFLAGS) -o 68kgen 68kgen.o
 
 #
 # Build RMAC Executable
