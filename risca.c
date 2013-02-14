@@ -768,16 +768,7 @@ int GenerateRISCCode(int state)
 			}
 			else
 			{
-#if 0
-				val = eval;
-
-				if (orgactive)
-					reg2 = ((int)(val - (orgaddr + 2))) / 2;
-				else
-					reg2 = ((int)(val - (sloc + 2))) / 2;
-#else
 				reg2 = ((int)(eval - ((orgactive ? orgaddr : sloc) + 2))) / 2;
-#endif
 
 				if ((reg2 < -16) || (reg2 > 15))
 					error("PC relative overflow");

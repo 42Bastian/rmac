@@ -9,7 +9,7 @@ rm = /bin/rm -f
 CC = $(CROSS)gcc
 HOSTCC = gcc
 
-CFLAGS = -g -D__GCCUNIX__ -I. 
+CFLAGS = -g -D__GCCUNIX__ -I. -O2
 
 SRCS = amode.c debug.c direct.c eagen.c error.c expr.c listing.c mach.c macro.c mark.c object.c procln.c risca.c rmac.c sect.c symbol.c token.c 
 
