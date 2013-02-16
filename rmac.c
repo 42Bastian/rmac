@@ -300,6 +300,7 @@ int rmac_qsort(char * base, int n, int size, int (*compar)())
 }
 
 
+#if 0
 //
 // Allocate memory; Panic and Quit if we Run Out
 //
@@ -337,6 +338,7 @@ char * amem(LONG amount)
 
 	return p;
 }
+#endif
 
 
 //
@@ -851,27 +853,19 @@ int get_endianess(void)
 //
 int main(int argc, char ** argv)
 {
-	int status;
-	int i;
-
 	perm_verb_flag = 0;				// Clobber "permanent" verbose flag
 	cmdlnexec = argv[0];			// Obtain executable name
 
 	endian = get_endianess();		// Get processor endianess
 
-	for(i=0; i<MAXFWDJUMPS; i++)
-		fwdjump[i] = 0;
-
-	// Full command line passed
+	// If commands were passed in, process them
 	if (argc > 1)
 	{
-		status = process(argc - 1, argv + 1);              
-	}
-	else
-	{
-		display_version();
-		display_help();
+		return process(argc - 1, argv + 1);              
 	}
 
-	return status;
+	display_version();
+	display_help();
+
+	return 0;
 }

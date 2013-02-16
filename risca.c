@@ -200,7 +200,6 @@ int GenerateRISCCode(int state)
 	SYM * sy;
 	int i, commaFound;
 	TOKEN * t;
-	WORD tdb;
 	WORD attrflg;
 	int indexed;				// Indexed register flag
 
@@ -344,12 +343,13 @@ int GenerateRISCCode(int state)
 		else
 		{
 			if (eattr & TDB)
-				rmark(cursect, sloc + 2, tdb, MLONG | MMOVEI, NULL);
-		}	
+//{
+//printf("risca: Doing rmark for RI_MOVEI (tdb=$%X)...\n", eattr & TDB);
+				rmark(cursect, sloc + 2, (eattr & TDB), (MLONG | MMOVEI), NULL);
+//}
+		}
 
-//		val = eval;
 		val = ((eval >> 16) & 0x0000FFFF) | ((eval << 16) & 0xFFFF0000);
-//		tok++;	// assuming a comma here? tsk tsk
 		CHECK_COMMA;
 		reg2 = GetRegister(FU_REGTWO);
 		at_eol();

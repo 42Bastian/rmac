@@ -38,8 +38,9 @@ LONG fchalloc;					// # bytes alloc'd to fixup chunk
 LONG fchsize;					// # bytes used in fixup chunk
 PTR fchptr;						// Deposit point in fixup chunk buffer
 
-unsigned fwdjump[MAXFWDJUMPS];	// forward jump check table
-unsigned fwindex = 0;			// forward jump index
+// BOLLOCKS
+//unsigned fwdjump[MAXFWDJUMPS];	// forward jump check table
+//unsigned fwindex = 0;			// forward jump index
 
 // Return a size (SIZB, SIZW, SIZL) or 0, depending on what kind of fixup is
 // associated with a location.
@@ -269,6 +270,7 @@ int fixup(WORD attr, LONG loc, TOKEN * fexpr)
 	CHUNK * cp;
 	SECT * p;
 	// Shamus: Expression lengths are voodoo ATM (varibale "i"). Need to fix this.
+#warning "!!! fixup() is filled with VOODOO !!!"
 	DEBUG printf("FIXUP@$%X: $%X\n", loc, attr);
 
 	// Compute length of expression (could be faster); determine if it's the
@@ -385,7 +387,9 @@ int ResolveAllFixups(void)
 	ResolveFixups(TEXT);
 	DEBUG printf("Resolving DATA sections...\n");
 	ResolveFixups(DATA);
-	
+
+//No, no we don't.
+#if 0	
 	// We need to do a final check of forward 'jump' destination addresses that
 	// are external
 	for(i=0; i<MAXFWDJUMPS; i++)
@@ -404,6 +408,7 @@ int ResolveAllFixups(void)
 				printf("%s\n", buf);
 		}
 	}
+#endif
 
 	return 0;
 }
@@ -587,7 +592,7 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 				break;
 			// Fixup one-byte value at locp + 1.
 			case FU_WBYTE:
-				++locp;
+				locp++;
 				// FALLTHROUGH
 			// Fixup one-byte forward references
 			case FU_BYTE:
@@ -620,19 +625,16 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 			// the word could be unaligned in the section buffer, so we have to
 			// be careful.
 			case FU_WORD:
-				if (((w & 0x0F00) == FU_JR) || ((w & 0x0F00) == FU_MJR))
+				if ((w & 0x0F00) == FU_JR)// || ((w & 0x0F00) == FU_MJR))
 				{
 					oaddr = *fup.lp++;
 
 					if (oaddr)
-					{
 						reg2 = (signed)((eval - (oaddr + 2)) / 2);// & 0x1F;
-					}
 					else
-					{
 						reg2 = (signed)((eval - (loc + 2)) / 2);// & 0x1F;
-					}
 
+#if 0
 					if ((w & 0x0F00) == FU_MJR)
 					{
 						// Main code destination alignment checking here for
@@ -669,6 +671,7 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 							}
 						}
 					}
+#endif
 
 					if ((reg2 < -16) || (reg2 > 15))
 					{
@@ -796,6 +799,7 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 			case FU_LONG:
 				if ((w & 0x0F00) == FU_MOVEI)
 				{
+#if 0
 					address = loc + 4;
 
 					if (eattr & DEFINED)
@@ -845,27 +849,33 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 							}
 						}
 					}
+#endif
 
 					eval = ((eval >> 16) & 0x0000FFFF) | ((eval << 16) & 0xFFFF0000);
-					flags = (MLONG|MMOVEI);
+					flags = (MLONG | MMOVEI);
 				}
 				else
 					flags = MLONG;
 
 				if (!(eattr & DEFINED))
 				{
+//printf("Fixup (long): Symbol undefined. loc = $%X, long = $%X, flags = $%x\n", loc, eval, flags);
 					rmark(sno, loc, 0, flags, esym);
 				}
 				else if (tdb)
 				{
+//printf("Fixup (long): TDB = $%X. loc =$%X, long = $%X, flags = $%x\n", tdb, loc, eval, flags);
 					rmark(sno, loc, tdb, flags, NULL);
 				}
+//else
+//printf("Fixup (long): TDB = $%X. loc =$%X, long = $%X, flags = $%x\n", tdb, loc, eval, flags);
 
 				*locp++ = (char)(eval >> 24);
 				*locp++ = (char)(eval >> 16);
 				*locp++ = (char)(eval >> 8);
 				*locp = (char)eval;
 				break;
+
 			// Fixup a 3-bit "QUICK" reference in bits 9..1
 			// (range of 1..8) in a word.  Really bits 1..3 in a byte.
 			case FU_QUICK:
@@ -880,6 +890,7 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 
 				*locp |= (eval & 7) << 1;
 				break;
+
 			// Fix up 6502 funny branch
 			case FU_6BRA:
 				eval -= (loc + 1);
@@ -889,6 +900,7 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 
 				*locp = (char)eval;
 				break;
+
 			default:
 				interror(4);                                 // Bad fixup type
 				// NOTREACHED
@@ -904,3 +916,4 @@ range:
 
 	return 0;
 }
+

@@ -66,7 +66,7 @@
 
 #define FU_MOVEI     0x0100
 #define FU_JR        0x0200
-#define FU_MJR       0x0300
+//#define FU_MJR       0x0300
 #define FU_REGONE    0x0400
 #define FU_NUM15     0x0500
 #define FU_NUM31     0x0600
@@ -120,9 +120,9 @@ MCHUNK {
 #define MCHEND       0x2000			// Indicates end of mark chunk
 #define MPCREL       0x1000			// Mark is PC-relative
 
-#define MAXFWDJUMPS  1024			// Maximum forward jumps to check
-extern unsigned fwdjump[MAXFWDJUMPS];
-extern unsigned fwindex;
+//#define MAXFWDJUMPS  1024			// Maximum forward jumps to check
+//extern unsigned fwdjump[MAXFWDJUMPS];
+//extern unsigned fwindex;
 
 // Globals, external etc
 extern LONG sloc;
