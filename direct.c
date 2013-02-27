@@ -298,15 +298,15 @@ int d_noclear(void)
 //
 int d_incbin(void)
 {
-	int i, j;
+	int fd;
 	int bytes = 0;
-	long pos, size;
-	char buf;
+	long pos, size, bytesRead;
+	char msg[256];
 
 	// Check to see if we're in BSS, and, if so, throw an error
 	if (scattr & SBSS)
 	{
-		errors("Cannot include binary file \"%s\" in BSS section", string[tok[1]]);
+		errors("cannot include binary file \"%s\" in BSS section", string[tok[1]]);
 		return ERROR;
 	}
 
@@ -316,7 +316,7 @@ int d_incbin(void)
 		return ERROR;
 	}
 
-//	if ((j = open((char *)tok[1],  _OPEN_INC)) >= 0)
+#if 0
 	if ((j = open(string[tok[1]],  _OPEN_INC)) >= 0)
 	{
 		size = lseek(j, 0L, SEEK_END);
@@ -337,12 +337,57 @@ int d_incbin(void)
 	}
 	else
 	{
-//		errors("cannot open include binary file (%s)", (char *)tok[1]);
+		errors("cannot open include binary file (%s)", string[tok[1]]);
+		return ERROR;
+	}
+#else
+	if ((fd = open(string[tok[1]],  _OPEN_INC)) < 0)
+	{
 		errors("cannot open include binary file (%s)", string[tok[1]]);
 		return ERROR;
 	}
 
-	close(j);
+	size = lseek(fd, 0L, SEEK_END);
+	pos = lseek(fd, 0L, SEEK_SET);
+	chcheck(size);
+
+	DEBUG
+	{
+		printf("INCBIN: File '%s' is %li bytes.\n", string[tok[1]], size);
+	}
+
+#if 0
+	for(i=0; i<size; i++)
+	{
+		buf = '\0';
+		bytes = read(j, &buf, 1);
+		D_byte(buf);
+	}
+#else
+	char * fileBuffer = (char *)malloc(size);
+	bytesRead = read(fd, fileBuffer, size);
+
+	if (bytesRead != size)
+	{
+		sprintf(msg, "was only able to read %li bytes from binary file (%s, %li bytes)", bytesRead, string[tok[1]], size);
+		error(msg);
+		return ERROR;
+	}
+
+//#define D_byte(b)    {*chptr++=(char)b; ++sloc; ++ch_size; if(orgactive) ++orgaddr;}
+	memcpy(chptr, fileBuffer, size);
+	chptr += size;
+	sloc += size;
+	ch_size += size;
+
+	if (orgactive)
+		orgaddr += size;
+
+	free(fileBuffer);
+#endif
+#endif
+
+	close(fd);
 	return 0;
 }
 
@@ -799,6 +844,9 @@ int d_bss(void)
 //
 int d_ds(WORD siz)
 {
+if (verb_flag)
+	printf("Directive: .ds.[size] = %u, sloc = $%X\n", siz, sloc);
+
 	VALUE eval;
 
 	// This gets kind of stupid.  This directive is disallowed in normal 68000
@@ -817,7 +865,7 @@ int d_ds(WORD siz)
 	// In non-TDB section (BSS, ABS and M6502) just advance the location
 	// counter appropriately. In TDB sections, deposit (possibly large) chunks
 	//of zeroed memory....
-	if ((scattr & SBSS))
+	if (scattr & SBSS)
 	{
 		listvalue(eval);
 		eval *= siz;
@@ -826,7 +874,7 @@ int d_ds(WORD siz)
 	}
 	else
 	{
-		dep_block(eval, siz, (VALUE)0, (WORD)(DEFINED|ABS), NULL);
+		dep_block(eval, siz, (VALUE)0, (WORD)(DEFINED | ABS), NULL);
 	}
 
 	at_eol();
