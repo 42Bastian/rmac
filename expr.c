@@ -12,7 +12,7 @@
 #include "listing.h"
 #include "mach.h"
 #include "procln.h"
-#include "risca.h"
+#include "riscasm.h"
 #include "sect.h"
 #include "symbol.h"
 #include "token.h"
@@ -337,7 +337,7 @@ int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 	int j;
 
 	tk = otk;			// Set token pointer to 'exprbuf' (direct.c)
-						// Also set in various other places too (risca.c, e.g.)
+						// Also set in various other places too (riscasm.c, e.g.)
 //	symbolNum = 0;		// Set symbol number in symbolPtr[] to 0
 
 	// Optimize for single constant or single symbol.
@@ -386,15 +386,16 @@ int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 		}
 		else
 		{
-#if 0
-			p = (char *)tok[1];
-#else
 			p = string[tok[1]];
-#endif
+
+#if 0
 			j = 0;
 
 			if (*p == '.')
 				j = curenv;
+#else
+			j = (*p == '.' ? curenv : 0);
+#endif
 
 			sy = lookup(p, LABEL, j);
 
@@ -403,14 +404,22 @@ int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 
 			sy->sattr |= REFERENCED;
 
+			// Check for undefined register equates
+			if (sy->sattre & UNDEF_EQUR)
+			{
+				errors("undefined register equate '%s'", sy->sname);
+//if we return right away, it returns some spurious errors...
+//				return ERROR;
+			}
+
 			// Check register bank usage
 			if (sy->sattre & EQUATEDREG)
 			{
 				if ((regbank == BANK_0) && (sy->sattre & BANK_1) && !altbankok)   
-					warns("equated symbol \'%s\' cannot be used in register bank 0", sy->sname);
+					warns("equated symbol '%s' cannot be used in register bank 0", sy->sname);
 
 				if ((regbank == BANK_1) && (sy->sattre & BANK_0) && !altbankok)
-					warns("equated symbol \'%s\' cannot be used in register bank 1", sy->sname);
+					warns("equated symbol '%s' cannot be used in register bank 1", sy->sname);
 			}
 
 			*tk++ = SYMBOL;

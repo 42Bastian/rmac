@@ -151,13 +151,14 @@ SYM * lookup(char * name, int type, int envno)
 		if (symbol->stype == type			// Type, envno and name must match
 			&& symbol->senv  == envno
 			&& *name == *symbol->sname		// Fast check for first character
-			&& !strcmp(name, symbol->sname))
+			&& !strcmp(name, symbol->sname))	// More expensive check
 			break;
 
 		symbol = symbol->snext;
 	}
 
-	return symbol;							// Return NULL or matching symbol
+	// Return NULL or matching symbol
+	return symbol;
 }
 
 

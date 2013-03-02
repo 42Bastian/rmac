@@ -16,7 +16,7 @@
 #include "direct.h"
 #include "macro.h"
 #include "symbol.h"
-#include "risca.h"
+#include "riscasm.h"
 
 #define DEF_KW					// Declare keyword values 
 #include "kwtab.h"				// Incl generated keyword tables & defs
@@ -375,12 +375,14 @@ normal:
 		{
 			if ((equtyp == EQUREG) && (sy->sattre & UNDEF_EQUR))
 			{
-				sy->sattre |= ~UNDEF_EQUR; 
+//REALLY?				sy->sattre |= ~UNDEF_EQUR; 
+				sy->sattre &= ~UNDEF_EQUR; 
 				sy->svalue  = 0;
 			}
 			else if ((equtyp == CCDEF) && (sy->sattre & UNDEF_CC))
 			{
-				sy->sattre |= ~UNDEF_CC;
+//REALLY?				sy->sattre |= ~UNDEF_CC;
+				sy->sattre &= ~UNDEF_CC;
 				sy->svalue = 0;
 			}
 			else

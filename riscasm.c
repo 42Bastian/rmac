@@ -6,7 +6,7 @@
 // Source Utilised with the Kind Permission of Landon Dyer
 //
 
-#include "risca.h"
+#include "riscasm.h"
 #include "error.h"
 #include "sect.h"
 #include "token.h"
@@ -170,6 +170,15 @@ int GetRegister(WORD rattr)
 
 	if ((challoc - ch_size) < 4)
 		chcheck(4L);
+
+	// See if this symbol has been defined, then undefined:
+//does nothing
+//segfaults now (esym == NULL?)
+/*	if (esym->sattre & UNDEF_EQUR)
+	{
+		error("undefined register");
+		return ERROR;
+	}*/
 
 	if (!(eattr & DEFINED))
 	{

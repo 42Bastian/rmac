@@ -11,7 +11,7 @@
 #include "symbol.h"
 #include "mark.h"
 #include "error.h"
-#include "risca.h"
+#include "riscasm.h"
 
 LONG symsize = 0;							// Size of BSD symbol table
 LONG strindx = 0x00000004;					// BSD string table index

@@ -11,9 +11,9 @@ HOSTCC = gcc
 
 CFLAGS = -g -D__GCCUNIX__ -I. -O2
 
-SRCS = amode.c debug.c direct.c eagen.c error.c expr.c listing.c mach.c macro.c mark.c object.c procln.c risca.c rmac.c sect.c symbol.c token.c 
+SRCS = amode.c debug.c direct.c eagen.c error.c expr.c listing.c mach.c macro.c mark.c object.c procln.c riscasm.c rmac.c sect.c symbol.c token.c 
 
-OBJS = amode.o debug.o direct.o eagen.o error.o expr.o listing.o mach.o macro.o mark.o object.o procln.o risca.o rmac.o sect.o symbol.o token.o
+OBJS = amode.o debug.o direct.o eagen.o error.o expr.o listing.o mach.o macro.o mark.o object.o procln.o riscasm.o rmac.o sect.o symbol.o token.o
 
 #
 # Build everything

@@ -13,7 +13,7 @@
 #include "listing.h"
 #include "mach.h"
 #include "mark.h"
-#include "risca.h"
+#include "riscasm.h"
 #include "symbol.h"
 #include "token.h"
 

@@ -15,7 +15,7 @@
 #include "sect.h"
 #include "mark.h"
 #include "macro.h"
-#include "risca.h"
+#include "riscasm.h"
 #include "direct.h"
 #include "version.h"
 #include "debug.h"

@@ -12,7 +12,7 @@
 #include "mark.h"
 #include "error.h"
 #include "mach.h"
-#include "risca.h"
+#include "riscasm.h"
 
 #define eaNgen    ea0gen
 #define amN       am0

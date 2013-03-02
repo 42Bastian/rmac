@@ -10,7 +10,6 @@
 #define __TOKEN_H__
 
 #include "rmac.h"
-//#include "risca.h"
 
 // Include Files and Macros
 #define SRC_IFILE       0					// Input source is IFILE

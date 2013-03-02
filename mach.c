@@ -12,7 +12,7 @@
 #include "direct.h"
 #include "token.h"
 #include "procln.h"
-#include "risca.h"
+#include "riscasm.h"
 
 #define DEF_KW
 #include "kwtab.h"

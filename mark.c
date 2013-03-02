@@ -9,7 +9,7 @@
 #include "mark.h"
 #include "error.h"
 #include "object.h"
-#include "risca.h"
+#include "riscasm.h"
 
 
 MCHUNK * firstmch;		// First mark chunk
