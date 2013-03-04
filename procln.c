@@ -180,7 +180,6 @@ loop1:										// Internal line processing loop
 
 	if (j == '=' || j == DEQUALS || j == SET || j == REG || j == EQUREG || j == CCDEF)
 	{
-//		equate = (char *)tok[1];
 		equate = string[tok[1]];
 		equtyp = j;
 		tok += 3;
@@ -347,11 +346,15 @@ normal:
 	// Do equates
 	if (equate != NULL)
 	{
-		j = 0;								// Pick global or local sym enviroment
+		// Pick global or local symbol enviroment
+#if 0
+		j = 0;
 
 		if (*equate == '.')
 			j = curenv;
-
+#else
+		j = (*equate == '.' ? curenv : 0);
+#endif
 		sy = lookup(equate, LABEL, j);
 
 		if (sy == NULL)
@@ -402,6 +405,14 @@ normal:
 		// o  everything else
 		if (equtyp == EQUREG)
 		{
+//Linko's request to issue a warning on labels that equated to the same register
+//would go here. Not sure how to implement it though. :-/
+/*
+Maybe like this way:
+have an array of bools with 64 entries. Whenever a register is equated, set the
+corresponding register bool to true. Whenever it's undef'ed, set it to false. When
+checking to see if it's already been equated, issue a warning.
+*/
 			// Check that we are in a RISC section
 			if (!rgpu && !rdsp)
 			{
@@ -414,33 +425,42 @@ normal:
 			{
 				sy->sattre  = EQUATEDREG | RISCSYM;	// Mark as equated register
 				riscreg = (*tok - KW_R0);
+//is there any reason to do this, since we're putting this in svalue?
 				sy->sattre |= (riscreg << 8);		// Store register number
 
+				// Default is no register bank specified
+				registerbank = BANK_N;
+
+				// Check for ",<bank #>" notation
 				if ((tok[1] == ',') && (tok[2] == CONST))
 				{
+					// Advance token pointer to the constant
 					tok += 3;
 
+					// Anything other than a 0 or a 1 will result in "No Bank"
 					if (*tok == 0)
 						registerbank = BANK_0;
 					else if (*tok == 1)
 						registerbank = BANK_1;
-					else
-						registerbank = BANK_N;
-				}
-				else
-				{
-					registerbank = BANK_N;
 				}
 
+// What needs to happen here is to prime registerbank with regbank, then use
+// registerbank down below for the bank marking.
+#warning "!!! regbank <-> registerbank confusion here !!!"
+// The question here is why, if we're allowed to override the ".regbankN" rules above,
+// then why is it using the one set by the directive in the extended attributes and
+// not in what ends up in symbol->svalue?
+// ".regbankN" is not an original Madmac directive, so it's suspect
 				sy->sattre |= regbank;		// Store register bank
 				eattr = ABS | DEFINED | GLOBAL;
-				eval = 0x80000080 + (riscreg) + (registerbank << 8);
+// & what does this $80000080 constant mean???
+//				eval = 0x80000080 + (riscreg) + (registerbank << 8);
+				eval = riscreg;
 				tok++;
 			}
 			// Checking for a register symbol
 			else if (tok[0] == SYMBOL)
 			{
-//				sy2 = lookup((char *)tok[1], LABEL, j);
 				sy2 = lookup(string[tok[1]], LABEL, j);
 
 				// Make sure symbol is a valid equreg
@@ -478,7 +498,6 @@ normal:
 
 			if (tok[0] == SYMBOL)
 			{
-//				sy2 = lookup((char *)tok[1], LABEL, j);
 				sy2 = lookup(string[tok[1]], LABEL, j);
 
 				if (!sy2 || !(sy2->sattre & EQUATEDCC))
@@ -500,7 +519,6 @@ normal:
 		//equ a equr
 		else if (*tok == SYMBOL)
 		{
-//			sy2 = lookup((char *)tok[1], LABEL, j);
 			sy2 = lookup(string[tok[1]], LABEL, j);
 
 			if (sy2 && (sy2->sattre & EQUATEDREG))

@@ -20,7 +20,7 @@
 #define DEF_KW							// Declare keyword values 
 #include "kwtab.h"						// Incl generated keyword tables & defs
 
-static char tokcl[128];					// Generated table of token classes
+static char tokenClass[128];					// Generated table of token classes
 static VALUE evstk[EVSTACKSIZE];		// Evaluator value stack
 static WORD evattr[EVSTACKSIZE];		// Evaluator attribute stack
 
@@ -48,8 +48,9 @@ const char missym_error[] = "missing symbol";
 const char str_error[] = "missing symbol or string";
 
 // Convert expression to postfix
-static TOKEN * tk;						// Deposit tokens here (this is really a
+static TOKEN * evalTokenBuffer;			// Deposit tokens here (this is really a
 										// pointer to exprbuf from direct.c)
+										// (Can also be from others, like riscasm.c)
 static symbolNum;						// Pointer to the entry in symbolPtr[]
 
 
@@ -75,16 +76,16 @@ void init_expr(void)
 	int i;									// Iterator
 	char * p;								// Token pointer
 
-	// Initialize token-class table
-	for(i=0; i<128; i++)					// Mark all entries END
-		tokcl[i] = END;
+	// Initialize token-class table (all set to END)
+	for(i=0; i<128; i++)
+		tokenClass[i] = END;
 
 	for(i=0, p=itokcl; *p!=1; p++)
 	{
 		if (*p == 0)
 			i++;
 		else 
-			tokcl[(int)(*p)] = (char)i;
+			tokenClass[(int)(*p)] = (char)i;
 	}
 
 	symbolNum = 0;
@@ -101,14 +102,14 @@ int expr0(void)
 	if (expr1() != OK)
 		return ERROR;
 	
-	while (tokcl[*tok] >= MULT)
+	while (tokenClass[*tok] >= MULT)
 	{
 		t = *tok++;
 
 		if (expr1() != OK)
 			return ERROR;
 
-		*tk++ = t;
+		*evalTokenBuffer++ = t;
 	}
 
 	return OK;
@@ -127,7 +128,7 @@ int expr1(void)
 	WORD w;
 	int j;
 
-	class = tokcl[*tok];
+	class = tokenClass[*tok];
 
 	if (*tok == '-' || class == UNARY)
 	{
@@ -139,32 +140,28 @@ int expr1(void)
 		if (t == '-')
 			t = UNMINUS;
 
-		*tk++ = t;
+		*evalTokenBuffer++ = t;
 	}
 	else if (class == SUNARY)
 	{
 		switch ((int)*tok++)
 		{
 		case CR_TIME:
-			*tk++ = CONST;
-			*tk++ = dos_time();
+			*evalTokenBuffer++ = CONST;
+			*evalTokenBuffer++ = dos_time();
 			break;
 		case CR_DATE:
-			*tk++ = CONST;
-			*tk++ = dos_date();
+			*evalTokenBuffer++ = CONST;
+			*evalTokenBuffer++ = dos_date();
 			break;
 		case CR_MACDEF:                                    // ^^macdef <macro-name>
 			if (*tok++ != SYMBOL)
 				return error(missym_error);
 
-#if 0
-			p = (char *)*tok++;
-#else
 			p = string[*tok++];
-#endif
 			w = (lookup(p, MACRO, 0) == NULL ? 0 : 1);
-			*tk++ = CONST;
-			*tk++ = (TOKEN)w;
+			*evalTokenBuffer++ = CONST;
+			*evalTokenBuffer++ = (TOKEN)w;
 			break;
 		case CR_DEFINED:
 			w = DEFINED;
@@ -175,29 +172,17 @@ getsym:
 			if (*tok++ != SYMBOL)
 				return error(missym_error);
 
-#if 0
-			p = (char *)*tok++;
-#else
 			p = string[*tok++];
-#endif
-			j = 0;
-
-			if (*p == '.')
-				j = curenv;
-
+			j = (*p == '.' ? curenv : 0);
 			w = ((sy = lookup(p, LABEL, j)) != NULL && (sy->sattr & w) ? 1 : 0);
-			*tk++ = CONST;
-			*tk++ = (TOKEN)w;
+			*evalTokenBuffer++ = CONST;
+			*evalTokenBuffer++ = (TOKEN)w;
 			break;
 		case CR_STREQ:
 			if (*tok != SYMBOL && *tok != STRING)
 				return error(str_error);
 
-#if 0
-			p = (char *)tok[1];
-#else
 			p = string[tok[1]];
-#endif
 			tok +=2;
 
 			if (*tok++ != ',')
@@ -206,16 +191,12 @@ getsym:
 			if (*tok != SYMBOL && *tok != STRING)
 				return error(str_error);
 
-#if 0
-			p2 = (char *)tok[1];
-#else
 			p = string[tok[1]];
-#endif
 			tok += 2;
 
 			w = (WORD)(!strcmp(p, p2));
-			*tk++ = CONST;
-			*tk++ = (TOKEN)w;
+			*evalTokenBuffer++ = CONST;
+			*evalTokenBuffer++ = (TOKEN)w;
 			break;
 		}
 	}
@@ -238,20 +219,12 @@ int expr2(void)
 	switch ((int)*tok++)
 	{
 	case CONST:
-		*tk++ = CONST;
-		*tk++ = *tok++;
+		*evalTokenBuffer++ = CONST;
+		*evalTokenBuffer++ = *tok++;
 		break;
 	case SYMBOL:
-#if 0
-		p = (char *)*tok++;
-#else
 		p = string[*tok++];
-#endif
-		j = 0;
-
-		if (*p == '.')
-			j = curenv;
-
+		j = (*p == '.' ? curenv : 0);
 		sy = lookup(p, LABEL, j);
 
 		if (sy == NULL)
@@ -267,22 +240,18 @@ int expr2(void)
 				warns("equated symbol \'%s\' cannot be used in register bank 1", sy->sname);
 		}
 
-		*tk++ = SYMBOL;
+		*evalTokenBuffer++ = SYMBOL;
 #if 0
-		*tk++ = (TOKEN)sy;
+		*evalTokenBuffer++ = (TOKEN)sy;
 #else
-		*tk++ = symbolNum;
+		*evalTokenBuffer++ = symbolNum;
 		symbolPtr[symbolNum] = sy;
 		symbolNum++;
 #endif
 		break;
 	case STRING:
-		*tk++ = CONST;
-#if 0
-		*tk++ = str_value((char *)*tok++);
-#else
-		*tk++ = str_value(string[*tok++]);
-#endif
+		*evalTokenBuffer++ = CONST;
+		*evalTokenBuffer++ = str_value(string[*tok++]);
 		break;
 	case '(':
 		if (expr0() != OK)
@@ -301,19 +270,19 @@ int expr2(void)
 
 		break;
 	case '$':
-		*tk++ = ACONST;                                    // Attributed const
-		*tk++ = sloc;                                      // Current location
-		*tk++ = cursect | DEFINED;                         // Store attribs
+		*evalTokenBuffer++ = ACONST;				// Attributed const
+		*evalTokenBuffer++ = sloc;					// Current location
+		*evalTokenBuffer++ = cursect | DEFINED;		// Store attribs
 		break;
 	case '*':
-		*tk++ = ACONST;                                    // Attributed const
+		*evalTokenBuffer++ = ACONST;				// Attributed const
 
 		if (orgactive)
-			*tk++ = orgaddr;
+			*evalTokenBuffer++ = orgaddr;
 		else
-			*tk++ = pcloc;                                  // Location at start of line
+			*evalTokenBuffer++ = pcloc;				// Location at start of line
 
-		*tk++ = ABS | DEFINED;                             // Store attribs
+		*evalTokenBuffer++ = ABS | DEFINED;			// Store attribs
 		break;
 	default:
 		return error("bad expression");
@@ -330,38 +299,37 @@ int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 {
 	// Passed in values (once derefenced, that is) can all be zero. They are
 	// there so that the expression analyzer can fill them in as needed. The
-	// expression analyzer gets its input from "tok", and not from anything
-	// passed in by the user.
-	SYM * sy;
+	// expression analyzer gets its input from the global token pointer "tok",
+	// and not from anything passed in by the user.
+	SYM * symbol;
 	char * p;
 	int j;
 
-	tk = otk;			// Set token pointer to 'exprbuf' (direct.c)
-						// Also set in various other places too (riscasm.c, e.g.)
-//	symbolNum = 0;		// Set symbol number in symbolPtr[] to 0
+	evalTokenBuffer = otk;	// Set token pointer to 'exprbuf' (direct.c)
+							// Also set in various other places too (riscasm.c, e.g.)
 
 	// Optimize for single constant or single symbol.
 	if ((tok[1] == EOL)
 		|| (((*tok == CONST || *tok == SYMBOL) || (*tok >= KW_R0 && *tok <= KW_R31))
-		&& (tokcl[tok[2]] < UNARY)))
+		&& (tokenClass[tok[2]] < UNARY)))
 	{
 		if (*tok >= KW_R0 && *tok <= KW_R31)
 		{
-			*tk++ = CONST;
-			*tk++ = *a_value = (*tok - KW_R0);
+			*evalTokenBuffer++ = CONST;
+			*evalTokenBuffer++ = *a_value = (*tok - KW_R0);
 			*a_attr = ABS | DEFINED;
 
 			if (a_esym != NULL)
 				*a_esym = NULL;
 
 			tok++;
-			*tk++ = ENDEXPR;
+			*evalTokenBuffer++ = ENDEXPR;
 			return OK;
 		}
 		else if (*tok == CONST)
 		{
-			*tk++ = CONST;
-			*tk++ = *a_value = tok[1];
+			*evalTokenBuffer++ = CONST;
+			*evalTokenBuffer++ = *a_value = tok[1];
 			*a_attr = ABS | DEFINED;
 
 			if (a_esym != NULL)
@@ -369,15 +337,14 @@ int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 		}
 		else if (*tok == '*')
 		{
-			*tk++ = CONST;
+			*evalTokenBuffer++ = CONST;
 
 			if (orgactive)
-				*tk++ = *a_value = orgaddr;
+				*evalTokenBuffer++ = *a_value = orgaddr;
 			else
-				*tk++ = *a_value = pcloc;
+				*evalTokenBuffer++ = *a_value = pcloc;
 
 			*a_attr = ABS | DEFINED;
-			//*tk++ = 
 
 			if (a_esym != NULL)
 				*a_esym = NULL;
@@ -387,73 +354,73 @@ int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 		else
 		{
 			p = string[tok[1]];
-
-#if 0
-			j = 0;
-
-			if (*p == '.')
-				j = curenv;
-#else
 			j = (*p == '.' ? curenv : 0);
-#endif
+			symbol = lookup(p, LABEL, j);
 
-			sy = lookup(p, LABEL, j);
+			if (symbol == NULL)
+				symbol = NewSymbol(p, LABEL, j);
 
-			if (sy == NULL)
-				sy = NewSymbol(p, LABEL, j);
-
-			sy->sattr |= REFERENCED;
+			symbol->sattr |= REFERENCED;
 
 			// Check for undefined register equates
-			if (sy->sattre & UNDEF_EQUR)
+			if (symbol->sattre & UNDEF_EQUR)
 			{
-				errors("undefined register equate '%s'", sy->sname);
+				errors("undefined register equate '%s'", symbol->sname);
 //if we return right away, it returns some spurious errors...
 //				return ERROR;
 			}
 
 			// Check register bank usage
-			if (sy->sattre & EQUATEDREG)
+			if (symbol->sattre & EQUATEDREG)
 			{
-				if ((regbank == BANK_0) && (sy->sattre & BANK_1) && !altbankok)   
-					warns("equated symbol '%s' cannot be used in register bank 0", sy->sname);
+				if ((regbank == BANK_0) && (symbol->sattre & BANK_1) && !altbankok)   
+					warns("equated symbol '%s' cannot be used in register bank 0", symbol->sname);
 
-				if ((regbank == BANK_1) && (sy->sattre & BANK_0) && !altbankok)
-					warns("equated symbol '%s' cannot be used in register bank 1", sy->sname);
+				if ((regbank == BANK_1) && (symbol->sattre & BANK_0) && !altbankok)
+					warns("equated symbol '%s' cannot be used in register bank 1", symbol->sname);
 			}
 
-			*tk++ = SYMBOL;
+			*evalTokenBuffer++ = SYMBOL;
 #if 0
-			*tk++ = (TOKEN)sy;
+			*evalTokenBuffer++ = (TOKEN)symbol;
 #else
-			*tk++ = symbolNum;
-			symbolPtr[symbolNum] = sy;
+/*
+While this approach works, it's wasteful. It would be better to use something
+that's already available, like the symbol "order defined" table (which needs to
+be converted from a linked list into an array).
+*/
+			*evalTokenBuffer++ = symbolNum;
+			symbolPtr[symbolNum] = symbol;
 			symbolNum++;
 #endif
 
-			if (sy->sattr & DEFINED)
-				*a_value = sy->svalue;
+			if (symbol->sattr & DEFINED)
+				*a_value = symbol->svalue;
 			else
 				*a_value = 0;
 
-			if (sy->sattre & EQUATEDREG) 
+/*
+All that extra crap that was put into the svalue when doing the equr stuff is
+thrown away right here. What the hell is it for?
+*/
+			if (symbol->sattre & EQUATEDREG) 
 				*a_value &= 0x1F;
 
-			*a_attr = (WORD)(sy->sattr & ~GLOBAL);
+			*a_attr = (WORD)(symbol->sattr & ~GLOBAL);
 
-			if ((sy->sattr & (GLOBAL | DEFINED)) == GLOBAL && a_esym != NULL)
-				*a_esym = sy;
+			if ((symbol->sattr & (GLOBAL | DEFINED)) == GLOBAL && a_esym != NULL)
+				*a_esym = symbol;
 		}
 
 		tok += 2;
-		*tk++ = ENDEXPR;
+		*evalTokenBuffer++ = ENDEXPR;
 		return OK;
 	}
 
 	if (expr0() != OK)
 		return ERROR;
 
-	*tk++ = ENDEXPR;
+	*evalTokenBuffer++ = ENDEXPR;
 	return evexpr(otk, a_value, a_attr, a_esym);
 }
 

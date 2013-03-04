@@ -65,7 +65,8 @@ static int qsz;                                             // Size of each reco
 static int thresh;                                          // THRESHold in chars 
 static int mthresh;                                         // MTHRESHold in chars
 
-
+// This is unused BOLLOCKS
+#if 0
 //
 // qst: Do a quicksort. First, find the median element, and put that one in the
 // first place as the discriminator. (This "median" is just the median of the
@@ -298,7 +299,7 @@ int rmac_qsort(char * base, int n, int size, int (*compar)())
 
 	return 0;
 }
-
+#endif
 
 #if 0
 //

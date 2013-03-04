@@ -269,7 +269,7 @@ int fixup(WORD attr, LONG loc, TOKEN * fexpr)
 	LONG len = 0;
 	CHUNK * cp;
 	SECT * p;
-	// Shamus: Expression lengths are voodoo ATM (varibale "i"). Need to fix this.
+	// Shamus: Expression lengths are voodoo ATM (variable "i"). Need to fix this.
 #warning "!!! fixup() is filled with VOODOO !!!"
 	DEBUG printf("FIXUP@$%X: $%X\n", loc, attr);
 
