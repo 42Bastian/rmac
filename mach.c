@@ -17,6 +17,33 @@
 #define DEF_KW
 #include "kwtab.h"
 
+
+// Fucntion prototypes 
+int m_unimp(WORD, WORD), m_badmode(WORD, WORD), m_bad6mode(WORD, WORD), m_bad6inst(WORD, WORD);
+int m_self(WORD, WORD);
+int m_abcd(WORD, WORD);
+int m_reg(WORD, WORD);
+int m_imm(WORD, WORD);
+int m_imm8(WORD, WORD);
+int m_shi(WORD, WORD);
+int m_shr(WORD, WORD);
+int m_bitop(WORD, WORD);
+int m_exg(WORD, WORD);
+int m_ea(WORD, WORD);
+int m_br(WORD, WORD);
+int m_dbra(WORD, WORD);
+int m_link(WORD, WORD);
+int m_adda(WORD, WORD);
+int m_addq(WORD, WORD);
+//int m_move(WORD, int);
+int m_move(WORD, WORD);
+int m_moveq(WORD, WORD);
+int m_usp(WORD, WORD);
+int m_movep(WORD, WORD);
+int m_trap(WORD, WORD);
+int m_movem(WORD, WORD);
+int m_clra(WORD, WORD);
+
 // Common error messages
 char range_error[] = "expression out of range";
 char abs_error[] = "illegal absolute expression";
@@ -31,7 +58,8 @@ extern int ea1gen(WORD);
 
 // Include code tables
 MNTAB machtab[] = {
-   { (WORD)-1, (unsigned long)-1L, (unsigned long)-1L, 0x0000, 0, m_badmode }, // 0 
+//   { (WORD)-1, (unsigned long)-1L, (unsigned long)-1L, 0x0000, 0, m_badmode }, // 0 
+   { 0xFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0x0000, 0, m_badmode }, // 0 
    #include "68ktab.h"
    {  0,  0L,  0L, 0x0000, 0, m_unimp   }                   // Last entry
 };
@@ -83,19 +111,20 @@ WORD am_6[] = {
 
 
 // Error messages
-int m_unimp(void)
+int m_unimp(WORD unused1, WORD unused2)
 {
 	return (int)error("unimplemented mnemonic");
 }
 
 
-int m_badmode(void)
+//int m_badmode(void)
+int m_badmode(WORD unused1, WORD unused2)
 {
 	return (int)error("inappropriate addressing mode");
 }
 
 
-int m_self(WORD inst)
+int m_self(WORD inst, WORD usused)
 {
 	D_word(inst);
 	return 0;
@@ -121,43 +150,47 @@ int m_self(WORD inst)
 //
 int m_ea(WORD inst, WORD siz)
 {
-	WORD flg;
+	WORD flg = inst;					// Save flag bits 
+	inst &= ~0x3F;						// Clobber flag bits in instr 
 
-	flg = inst;                                              // Save flag bits 
-	inst &= ~0x3f;                                           // Clobber flag bits in instr 
-
-	if (flg & 4)                                              // Install "standard" instr size bits 
+	// Install "standard" instr size bits 
+	if (flg & 4)
 		inst |= siz_6[siz];
 
 	if (flg & 16)
-	{                                           // OR-in register number 
+	{
+		// OR-in register number 
 		if (flg & 8)
 		{
-			inst |= reg_9[a1reg];                              // ea1reg in bits 9..11 
+			inst |= reg_9[a1reg];		// ea1reg in bits 9..11 
 		}
 		else
 		{
-			inst |= reg_9[a0reg];                              // ea0reg in bits 9..11 
+			inst |= reg_9[a0reg];		// ea0reg in bits 9..11 
 		}
 	}
 
 	if (flg & 1)
-	{                                            // Use am1 
-		inst |= am1 | a1reg;                                  // Get ea1 into instr 
-		D_word(inst);                                         // Deposit instr 
+	{
+		// Use am1 
+		inst |= am1 | a1reg;			// Get ea1 into instr 
+		D_word(inst);					// Deposit instr 
 
-		if (flg & 2)                                           // Generate ea0 if requested 
+		// Generate ea0 if requested 
+		if (flg & 2)
 			ea0gen(siz);
 
-		ea1gen(siz);                                          // Generate ea1 
+		ea1gen(siz);					// Generate ea1 
 	}
 	else
-	{                                                 // Use am0 
-		inst |= am0 | a0reg;	                                 // Get ea0 into instr 
-		D_word(inst);                                         // Deposit instr 
-		ea0gen(siz);                                          // Generate ea0 
+	{
+		// Use am0 
+		inst |= am0 | a0reg;			// Get ea0 into instr 
+		D_word(inst);					// Deposit instr 
+		ea0gen(siz);					// Generate ea0 
 
-		if (flg & 2)                                           // Generate ea1 if requested 
+		// Generate ea1 if requested 
+		if (flg & 2)
 			ea1gen(siz);
 	}
 
@@ -172,8 +205,9 @@ int m_ea(WORD inst, WORD siz)
 int m_abcd(WORD inst, WORD siz)
 {
 	if (inst & 1)
-	{                                           // Install size bits 
-		--inst;
+	{
+		// Install size bits 
+		inst--;
 		inst |= siz_6[siz];
 	}
 
@@ -191,7 +225,7 @@ int m_adda(WORD inst, WORD siz)
 {
 	inst |= am0 | a0reg | lwsiz_8[siz] | reg_9[a1reg];
 	D_word(inst);
-	ea0gen(siz);                                             // Gen EA 
+	ea0gen(siz);	// Generate EA 
 
 	return 0;
 }
@@ -203,14 +237,16 @@ int m_adda(WORD inst, WORD siz)
 // 
 int m_reg(WORD inst, WORD siz)
 {
-	if (inst & 1)                                             // Install size bits 
+	if (inst & 1)
+		// Install size bits 
 		inst |= siz_6[siz];
 
-	if (inst & 2)                                             // Install other register (9..11) 
+	if (inst & 2)
+		// Install other register (9..11) 
 		inst |= reg_9[a1reg];
 
-	inst &= ~7;                                              // Clear off crufty bits 
-	inst |= a0reg;                                           // Install first register 
+	inst &= ~7;			// Clear off crufty bits 
+	inst |= a0reg;		// Install first register 
 	D_word(inst);
 
 	return 0;
@@ -286,11 +322,11 @@ int m_bitop(WORD inst, WORD siz)
 {
 	// Enforce instruction sizes
 	if (am1 == DREG)
-	{                                        // X,Dn must be .n or .l 
-		if (siz & (SIZB|SIZW))
+	{                               // X,Dn must be .n or .l 
+		if (siz & (SIZB | SIZW))
 			return error(siz_error);
 	}
-	else if (siz & (SIZW|SIZL))                                 // X,ea must be .n or .b 
+	else if (siz & (SIZW | SIZL))	// X,ea must be .n or .b 
 		return error(siz_error);
 
 	// Construct instr and EAs
@@ -299,7 +335,7 @@ int m_bitop(WORD inst, WORD siz)
 	if (am0 == IMMED)
 	{
 		D_word(inst);
-		ea0gen(SIZB);                                         // Immediate bit number 
+		ea0gen(SIZB);				// Immediate bit number 
 	}
 	else
 	{
@@ -307,7 +343,8 @@ int m_bitop(WORD inst, WORD siz)
 		D_word(inst);
 	}
 
-	ea1gen(SIZB);                                            // ea to bit-munch 
+	// ea to bit-munch 
+	ea1gen(SIZB);
 
 	return 0;
 }
@@ -335,7 +372,7 @@ int m_dbra(WORD inst, WORD siz)
 	}
 	else
 	{
-		fixup(FU_WORD|FU_PCREL|FU_ISBRA, sloc, a1expr);
+		fixup(FU_WORD | FU_PCREL | FU_ISBRA, sloc, a1expr);
 		D_word(0);
 	}
 
@@ -395,8 +432,12 @@ int m_link(WORD inst, WORD siz)
 // 
 // Optimize MOVE.L #<smalldata>,D0 to a MOVEQ
 //
-int m_move(WORD inst, int siz)
+//int m_move(WORD inst, int siz)
+int m_move(WORD inst, WORD size)
 {
+	// Cast the passed in value to an int
+	int siz = (int)size;
+
 	// Try to optimize to MOVEQ
 	if (siz == SIZL && am0 == IMMED && am1 == DREG
 		&& (a0exattr & (TDB|DEFINED)) == DEFINED && a0exval + 0x80 < 0x100)
@@ -428,9 +469,9 @@ int m_usp(WORD inst, WORD siz)
 	siz = siz;
 
 	if (am0 == AM_USP)
-		inst |= a1reg;                         // USP,An 
+		inst |= a1reg;		// USP, An 
 	else
-		inst |= a0reg;                                      // An,USP 
+		inst |= a0reg;		// An, USP 
 
 	D_word(inst);
 
@@ -454,7 +495,7 @@ int m_moveq(WORD inst, WORD siz)
 	else if (a0exval + 0x100 >= 0x200)
 		return error(range_error);
 
-	inst |= reg_9[a1reg] | (a0exval & 0xff);
+	inst |= reg_9[a1reg] | (a0exval & 0xFF);
 	D_word(inst);
 
 	return 0;
@@ -462,12 +503,10 @@ int m_moveq(WORD inst, WORD siz)
 
 
 //
-// movep Dn,disp(An) -- movep disp(An),Dn
+// movep Dn, disp(An) -- movep disp(An), Dn
 //
 int m_movep(WORD inst, WORD siz)
 {
-	//WORD k;
-
 	if (siz == SIZL)
 		inst |= 0x0040;
 
@@ -477,9 +516,7 @@ int m_movep(WORD inst, WORD siz)
 		D_word(inst);
 
 		if (am1 == AIND)
-		{
 			D_word(0);
-		}
 		else 
 			ea1gen(siz);
 	}
@@ -489,9 +526,7 @@ int m_movep(WORD inst, WORD siz)
 		D_word(inst);
 
 		if (am0 == AIND)
-		{
 			D_word(0);
-		}
 		else 
 			ea0gen(siz);
 	}
@@ -518,13 +553,15 @@ int m_br(WORD inst, WORD siz)
 		if (siz == SIZN)
 		{
 			if (v != 0 && v + 0x80 < 0x100)
-			{                   // Fits in .B 
-				inst |= v & 0xff;
+			{
+				// Fits in .B 
+				inst |= v & 0xFF;
 				D_word(inst);
 				return 0;
 			}
 			else
-			{                                           // Fits in .W 
+			{
+				// Fits in .W 
 				if (v + 0x8000 > 0x10000)
 					return error(range_error);
 
@@ -539,7 +576,7 @@ int m_br(WORD inst, WORD siz)
 			if (v + 0x80 >= 0x100)
 				return error(range_error);
 
-			inst |= v & 0xff;
+			inst |= v & 0xFF;
 			D_word(inst);
 		}
 		else
@@ -557,15 +594,17 @@ int m_br(WORD inst, WORD siz)
 		siz = SIZW;
 
 	if (siz == SIZB)
-	{                                        // .B 
-		fixup(FU_BBRA|FU_PCREL|FU_SEXT, sloc, a0expr);
+	{
+		// .B 
+		fixup(FU_BBRA | FU_PCREL | FU_SEXT, sloc, a0expr);
 		D_word(inst);
 		return 0;
 	}
 	else
-	{                                                 // .W 
+	{
+		// .W 
 		D_word(inst);
-		fixup(FU_WORD|FU_PCREL|FU_LBRA|FU_ISBRA, sloc, a0expr);
+		fixup(FU_WORD | FU_PCREL | FU_LBRA | FU_ISBRA, sloc, a0expr);
 		D_word(0);
 	}
 
@@ -642,8 +681,9 @@ int m_movem(WORD inst, WORD siz)
 		inst |= 0x0040;
 
 	if (*tok == '#')
-	{                                        // Handle #<expr>,ea 
-		++tok;
+	{
+		// Handle #<expr>, ea 
+		tok++;
 
 		if (abs_expr(&eval) != OK)
 			return 0;
@@ -656,7 +696,8 @@ int m_movem(WORD inst, WORD siz)
 	}
 
 	if (*tok >= KW_D0 && *tok <= KW_A7)
-	{                     // <rlist>,ea 
+	{
+		// <rlist>, ea 
 		if (reglist(&rmask) < 0)
 			return 0;
 
@@ -669,7 +710,7 @@ immed1:
 
 		inst |= am0 | a0reg;
 
-		if (!(amsktab[am0] & (C_ALTCTRL|M_APREDEC)))
+		if (!(amsktab[am0] & (C_ALTCTRL | M_APREDEC)))
 			return error("invalid addressing mode");
 
 		// If APREDEC, reverse register mask
@@ -683,7 +724,8 @@ immed1:
 		}
 	}
 	else
-	{                                                 // ea,<rlist> 
+	{
+		// ea, <rlist> 
 		if (amode(0) < 0)
 			return 0;
 
@@ -696,8 +738,9 @@ immed1:
 			return error("missing register list");
 
 		if (*tok == '#')
-		{                                     // ea,#<expr> 
-			++tok;
+		{
+			// ea, #<expr> 
+			tok++;
 
 			if (abs_expr(&eval) != OK)
 				return 0;
@@ -710,7 +753,7 @@ immed1:
 		else if (reglist(&rmask) < 0)
 			return 0;
 
-		if (!(amsktab[am0] & (C_CTRL|M_APOSTINC)))
+		if (!(amsktab[am0] & (C_CTRL | M_APOSTINC)))
 			return error("invalid addressing mode");
 	}
 
@@ -732,3 +775,4 @@ int m_clra(WORD inst, WORD siz)
 
 	return 0;
 }
+

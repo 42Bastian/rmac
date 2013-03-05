@@ -14,18 +14,18 @@
 
 // Globals, externals etc
 extern IFENT * ifent;
-extern char * comma_error;
-extern char * locgl_error;
-extern char * syntax_error;
+extern const char comma_error[];
+extern const char locgl_error[];
+extern const char syntax_error[];
+extern const char extra_stuff[];
 extern int just_bss;
 extern VALUE pcloc;
-extern IFENT * ifent;
+//extern IFENT * ifent;
 extern SYM * lab_sym;
-extern char extra_stuff[];
 extern LONG amsktab[];
 
 // Prototypes
-void init_procln(void);
+void InitLineProcessor(void);
 void Assemble(void);
 int eject(void);
 int d_if(void);

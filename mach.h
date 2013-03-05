@@ -20,29 +20,4 @@ extern char range_error[];
 extern char abs_error[];
 extern MNTAB machtab[];
 
-// Prototypes 
-int m_unimp(), m_badmode(), m_bad6mode(), m_bad6inst();
-int m_self(WORD);
-int m_abcd(WORD, WORD);
-int m_reg(WORD, WORD);
-int m_imm(WORD, WORD);
-int m_imm8(WORD, WORD);
-int m_shi(WORD, WORD);
-int m_shr(WORD, WORD);
-int m_bitop(WORD, WORD);
-int m_exg(WORD, WORD);
-int m_ea(WORD, WORD);
-int m_br(WORD, WORD);
-int m_dbra(WORD, WORD);
-int m_link(WORD, WORD);
-int m_adda(WORD, WORD);
-int m_addq(WORD, WORD);
-int m_move(WORD, int);
-int m_moveq(WORD, WORD);
-int m_usp(WORD, WORD);
-int m_movep(WORD, WORD);
-int m_trap(WORD, WORD);
-int m_movem(WORD, WORD);
-int m_clra(WORD, WORD);
-
 #endif // __MACH_H__

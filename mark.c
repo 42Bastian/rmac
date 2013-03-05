@@ -26,7 +26,7 @@ uint16_t curfrom;			// Current "from" section
 //
 // Initialize Marker
 //
-void init_mark(void)
+void InitMark(void)
 {
 	firstmch = curmch = NULL;
 	mcalloc = mcused = 0;

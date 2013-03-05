@@ -359,7 +359,7 @@ int dump_everything(void)
 
 	printf("\nMarks:\n");
 	mudump();								// Dump marks
-	printf("Total memory allocated=$%X\n", amemtot);
+//	printf("Total memory allocated=$%X\n", amemtot);
 
 	return 0;
 }

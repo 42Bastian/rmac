@@ -10,16 +10,17 @@
 #include <ctype.h>
 #include <stdlib.h>
 
+
 #define	EOS	'\0'
 
 int kwnum = 1;			/* current op# for kwgen output */
-
-FILE * kfp;			/* keyword file */
-
+FILE * kfp;				/* keyword file */
 int lineno = 0;
 
+// Function prototypes
 void error(char *, char *);
 void procln(int, char **);
+
 
 int main(int argc, char ** argv)
 {

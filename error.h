@@ -19,13 +19,13 @@ extern char * err_fname;
 
 // Prototypes
 int error(const char *);
-int errors(char *, char *);
-int fatal(char *);
-int warn(char *);
-int warns(char *, char *);
-int warni(char *, unsigned);
+int errors(const char *, char *);
+int fatal(const char *);
+int warn(const char *);
+int warns(const char *, char *);
+int warni(const char *, unsigned);
 int interror(int);
-void cantcreat(char *);
+void cantcreat(const char *);
 void err_setup(void);
 
 #endif // __ERROR_H__

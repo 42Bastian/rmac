@@ -44,303 +44,6 @@ char * cmdlnexec;					// Executable name, pointer to ARGV[0]
 char * searchpath;					// Search path for include files 
 char defname[] = "noname.o";		// Default output filename
 
-// Under Windows and UNIX malloc() is an expensive call, so for small amounts
-// of memory we allocate from a previously allocated buffer.
-
-#define A_AMOUNT        4096                                // Amount to malloc() at a time
-#define A_THRESH        64                                  // Use malloc() for amounts >= A_THRESH
-
-static LONG a_amount;                                       // Amount left at a_ptr 
-static char * a_ptr;                                        // Next free chunk
-LONG amemtot;                                               // amem() total of requests
-
-// Qsort; The THRESHold below is the insertion sort threshold, and has been adjusted
-// for records of size 48 bytes.The MTHREShold is where we stop finding a better median.
- 
-#define THRESH          4                                   // Threshold for insertion
-#define MTHRESH         6                                   // Threshold for median
-
-static int (*qcmp)();                                       // The comparison routine
-static int qsz;                                             // Size of each record
-static int thresh;                                          // THRESHold in chars 
-static int mthresh;                                         // MTHRESHold in chars
-
-// This is unused BOLLOCKS
-#if 0
-//
-// qst: Do a quicksort. First, find the median element, and put that one in the
-// first place as the discriminator. (This "median" is just the median of the
-// first, last and middle elements). (Using this median instead of the first
-// element is a big win). Then, the usual partitioning/swapping, followed by
-// moving the discriminator into the right place. Then, figure out the sizes of
-// the two partions, do the smaller one recursively and the larger one via a
-// repeat of this code.  Stopping when there are less than THRESH elements in a
-// partition and cleaning up with an insertion sort (in our caller) is a huge
-// win. All data swaps are done in-line, which is space-losing but time-saving.
-// (And there are only three places where this is done).
-//
-static int qst(char * base, char * max)
-{
-   char c, * i, * j, * jj;
-   int ii;
-   char * mid, * tmp;
-   long lo, hi;
-
-   /*
-	 * At the top here, lo is the number of characters of elements in the
-	 * current partition. (Which should be max - base).
-	 * Find the median of the first, last, and middle element and make
-	 * that the middle element. Set j to largest of first and middle.
-	 * If max is larger than that guy, then it's that guy, else compare
-	 * max with loser of first and take larger. Things are set up to
-	 * prefer the middle, then the first in case of ties.
-	 */
-	lo = max - base;		/* number of elements as chars */
-
-	do
-	{
-		mid = i = base + qsz * ((lo / qsz) >> 1);
-
-		if (lo >= mthresh)
-		{
-			j = (qcmp((jj = base), i) > 0 ? jj : i);
-
-			if (qcmp(j, (tmp = max - qsz)) > 0)
-			{
-				/* switch to first loser */
-				j = (j == jj ? i : jj);
-
-				if (qcmp(j, tmp) < 0)
-					j = tmp;
-			}
-
-			if (j != i)
-			{
-				ii = qsz;
-
-				do
-				{
-					c = *i;
-					*i++ = *j;
-					*j++ = c;
-				}
-				while (--ii);
-			}
-		}
-
-		/*
-		 * Semi-standard quicksort partitioning/swapping
-		 */
-		for(i=base, j=max-qsz; ;)
-		{
-			while (i < mid && qcmp(i, mid) <= 0)
-				i += qsz;
-
-			while (j > mid)
-			{
-				if (qcmp(mid, j) <= 0)
-				{
-					j -= qsz;
-					continue;
-				}
-
-				tmp = i + qsz;	/* value of i after swap */
-
-				if (i == mid)
-				{
-					/* j <-> mid, new mid is j */
-					mid = jj = j;
-				}
-				else
-				{
-					/* i <-> j */
-					jj = j;
-					j -= qsz;
-				}
-
-				goto swap;
-			}
-
-			if (i == mid)
-			{
-				break;
-			}
-			else
-			{
-				/* i <-> mid, new mid is i */
-				jj = mid;
-				tmp = mid = i;	/* value of i after swap */
-				j -= qsz;
-			}
-swap:
-			ii = qsz;
-
-			do
-			{
-				c = *i;
-				*i++ = *jj;
-				*jj++ = c;
-			}
-			while (--ii);
-
-			i = tmp;
-		}
-
-		/*
-		 * Look at sizes of the two partitions, do the smaller
-		 * one first by recursion, then do the larger one by
-		 * making sure lo is its size, base and max are update
-		 * correctly, and branching back.  But only repeat
-		 * (recursively or by branching) if the partition is
-		 * of at least size THRESH.
-		 */
-		i = (j = mid) + qsz;
-
-		if ((lo = j - base) <= (hi = max - i))
-		{
-			if (lo >= thresh)
-				qst(base, j);
-
-			base = i;
-			lo = hi;
-		}
-		else
-		{
-			if (hi >= thresh)
-				qst(i, max);
-
-			max = j;
-		}
-	}
-	while (lo >= thresh);
-
-	return 0;
-}
-
-
-/*
- * qsort:
- * First, set up some global parameters for qst to share.  Then, quicksort
- * with qst(), and then a cleanup insertion sort ourselves.  Sound simple?
- * It's not...
- */
-int rmac_qsort(char * base, int n, int size, int (*compar)())
-{
-	register char c, * i, * j, * lo, * hi;
-	char * min, * max;
-
-	if (n <= 1)
-		return 0;
-
-	qsz = size;
-	qcmp = compar;
-	thresh = qsz * THRESH;
-	mthresh = qsz * MTHRESH;
-	max = base + n * qsz;
-
-	if (n >= THRESH)
-	{
-		qst(base, max);
-		hi = base + thresh;
-	}
-	else
-	{
-		hi = max;
-	}
-
-	/*
-	 * First put smallest element, which must be in the first THRESH, in
-	 * the first position as a sentinel.  This is done just by searching
-	 * the first THRESH elements (or the first n if n < THRESH), finding
-	 * the min, and swapping it into the first position.
-	 */
-	for(j=lo=base; (lo+=qsz)<hi;)
-	{
-		if (qcmp(j, lo) > 0)
-			j = lo;
-	}
-
-	if (j != base)
-	{
-		/* swap j into place */
-		for(i=base, hi=base+qsz; i<hi;)
-		{
-			c = *j;
-			*j++ = *i;
-			*i++ = c;
-		}
-	}
-
-	/*
-	 * With our sentinel in place, we now run the following hyper-fast
-	 * insertion sort.  For each remaining element, min, from [1] to [n-1],
-	 * set hi to the index of the element AFTER which this one goes.
-	 * Then, do the standard insertion sort shift on a character at a time
-	 * basis for each element in the frob.
-	 */
-	for(min=base; (hi=min+=qsz)<max;)
-	{
-		while (qcmp(hi -= qsz, min) > 0)
-			/* void */;
-
-		if ((hi += qsz) != min)
-		{
-			for(lo=min+qsz; --lo>=min;)
-			{
-				c = *lo;
-
-				for(i=j=lo; (j-=qsz)>=hi; i=j)
-					*i = *j;
-
-				*i = c;
-			}
-		}
-	}
-
-	return 0;
-}
-#endif
-
-#if 0
-//
-// Allocate memory; Panic and Quit if we Run Out
-//
-char * amem(LONG amount)
-{
-	char * p;
-
-//	if (amount & 1)								// Keep word alignment
-//		amount++;
-	amount = (amount + 1) & ~(0x01);			// Keep word alignment
-
-	// Honor *small* request (< 64 bytes)
-	if (amount < A_THRESH)
-	{
-		if (a_amount < amount)
-		{
-			a_ptr = amem(A_AMOUNT);				// Allocate 4K bytes
-			a_amount = A_AMOUNT;
-		}
-
-		p = a_ptr;
-		a_ptr += amount;
-		a_amount -= amount;
-	}
-	else
-	{
-		amemtot += amount;						// Bump total alloc
-		p = (char *)malloc(amount);				// Get memory from malloc
-
-		if (p == NULL)
-			fatal("Memory exhausted!");
-
-		memset(p, 0, amount);
-	}
-
-	return p;
-}
-#endif
-
 
 //
 // Copy stuff around, return pointer to dest+count+1 (doesn't handle overlap)
@@ -489,29 +192,29 @@ int nthpath(char * env_var, int itemno, char * buf)
 //
 void display_help(void)
 {
-	printf("Usage:\n");
-	printf("    %s [options] srcfile\n", cmdlnexec);
-	printf("\n");
-	printf("Options:\n");
-	printf("   -? or -h              display usage information\n");
-	printf("   -dsymbol[=value]      define symbol\n");
-	printf("   -e[errorfile]         send error messages to file, not stdout\n");
-	printf("   -f[format]            output object file format\n");
-	printf("                         b: BSD (use this for Jaguar)\n");
-	printf("   -i[path]              directory to search for include files\n");
-	printf("   -l[filename]          create an output listing file\n");
-	printf("   -o file               output file name\n");
-	printf("   -r[size]              pad segments to boundary size specified\n");
-	printf("                         w: word (2 bytes, default alignment)\n");
-	printf("                         l: long (4 bytes)\n");
-	printf("                         p: phrase (8 bytes)\n");
-	printf("                         d: double phrase (16 bytes)\n");
-	printf("                         q: quad phrase (32 bytes)\n");
-	printf("   -s                    warn about possible short branches\n");
-	printf("   -u                    force referenced and undefined symbols global\n");
-	printf("   -v                    set verbose mode\n");
-	printf("   -y[pagelen]           set page line length (default: 61)\n");
-	printf("\n");
+	printf("Usage:\n"
+		"    %s [options] srcfile\n"
+		"\n"
+		"Options:\n"
+		"  -? or -h          Display usage information\n"
+		"  -dsymbol[=value]  Define symbol\n"
+		"  -e[errorfile]     Send error messages to file, not stdout\n"
+		"  -f[format]        Output object file format\n"
+		"                    b: BSD (use this for Jaguar)\n"
+		"  -i[path]          Directory to search for include files\n"
+		"  -l[filename]      Create an output listing file\n"
+		"  -o file           Output file name\n"
+		"  -r[size]          Pad segments to boundary size specified\n"
+		"                    w: word (2 bytes, default alignment)\n"
+		"                    l: long (4 bytes)\n"
+		"                    p: phrase (8 bytes)\n"
+		"                    d: double phrase (16 bytes)\n"
+		"                    q: quad phrase (32 bytes)\n"
+		"  -s                Warn about possible short branches\n"
+		"  -u                Force referenced and undefined symbols global\n"
+		"  -v                Set verbose mode\n"
+		"  -y[pagelen]       Set page line length (default: 61)\n"
+		"\n", cmdlnexec);
 }
 
 
@@ -520,9 +223,9 @@ void display_help(void)
 //
 void display_version(void)
 {
-	printf("\nReboot's Macro Assembler for Atari Jaguar\n"); 
-	printf("Copyright (C) 199x Landon Dyer, 2011 Reboot\n"); 
-	printf("V%01i.%01i.%01i %s (%s)\n\n", MAJOR, MINOR, PATCH, __DATE__, PLATFORM);
+	printf("\nReboot's Macro Assembler for Atari Jaguar\n"
+		"Copyright (C) 199x Landon Dyer, 2011 Reboot\n"
+		"V%01i.%01i.%01i %s (%s)\n\n", MAJOR, MINOR, PATCH, __DATE__, PLATFORM);
 }
 
 
@@ -560,18 +263,17 @@ int process(int argc, char ** argv)
 	regbank = BANK_N;				// No RISC register bank specified
 	orgactive = 0;					// Not in RISC org section
 	orgwarning = 0;					// No ORG warning issued
-	a_amount = 0;
 	segpadsize = 2;					// Initialise segment padding size
 
 	// Initialise modules
 	InitSymbolTable();				// Symbol table
-	init_token();					// Tokenizer
-	init_procln();					// Line processor
-	init_expr();					// Expression analyzer
-	init_sect();					// Section manager / code generator
-	init_mark();					// Mark tape-recorder
+	InitTokenizer();				// Tokenizer
+	InitLineProcessor();			// Line processor
+	InitExpression();				// Expression analyzer
+	InitSection();					// Section manager / code generator
+	InitMark();						// Mark tape-recorder
 	InitMacro();					// Macro processor
-	init_list();					// Listing generator
+	InitListing();					// Listing generator
 
 	// Process command line arguments and assemble source files
 	for(argno=0; argno<argc; ++argno)
@@ -594,7 +296,7 @@ int process(int argc, char ** argv)
 				if (argv[argno][2] == EOS)
 				{
 					printf("-d: empty symbol\n");
-					++errcnt;
+					errcnt++;
 					return errcnt;
 				}
 
@@ -607,12 +309,14 @@ int process(int argc, char ** argv)
 				}
 
 				sy->sattr = DEFINED | EQUATED | ABS;
-
+#if 0
 				if (*s)
 					sy->svalue = (VALUE)atoi(s);
 				else
 					sy->svalue = 0;
-
+#else
+				sy->svalue = (*s ? (VALUE)atoi(s) : 0);
+#endif
 				break;
 			case 'e':                                       // Redirect error message output
 			case 'E':

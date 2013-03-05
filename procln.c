@@ -39,11 +39,11 @@ VALUE pcloc;					// Value of "PC" at beginning of line
 IFENT * ifent;					// Current ifent
 SYM * lab_sym;					// Label on line (or NULL)
 
-char extra_stuff[] = "extra (unexpected) text found after addressing mode";
-char * comma_error = "missing comma";
-char * syntax_error = "syntax error";
-char * locgl_error = "cannot GLOBL local symbol";
-char * lab_ignored = "label ignored";
+const char extra_stuff[] = "extra (unexpected) text found after addressing mode";
+const char comma_error[] = "missing comma";
+const char syntax_error[] = "syntax error";
+const char locgl_error[] = "cannot GLOBL local symbol";
+const char lab_ignored[] = "label ignored";
 
 // Table to convert an addressing-mode number to a bitmask.
 LONG amsktab[0112] = {
@@ -92,7 +92,7 @@ LONG amsktab[0112] = {
 //
 // Initialize Line Processor
 //
-void init_procln(void)
+void InitLineProcessor(void)
 {
 	disabled = 0;
 	ifent = &ifent0;
@@ -127,13 +127,12 @@ void Assemble(void)
 	WORD rmask;					// Register list, for REG
 	int registerbank;			// RISC register bank
 	int riscreg;				// RISC register
-
 	listflag = 0;				// Initialise listing flag
 
 loop:							// Line processing loop label
 
 	// Get another line of tokens
-	if (tokln() == TKEOF)
+	if (TokenizeLine() == TKEOF)
 	{
 if (verb_flag) printf("Assemble: Found TKEOF flag...\n");
 		if (list_flag && listflag)			// Flush last line of source
@@ -426,12 +425,20 @@ checking to see if it's already been equated, issue a warning.
 				sy->sattre  = EQUATEDREG | RISCSYM;	// Mark as equated register
 				riscreg = (*tok - KW_R0);
 //is there any reason to do this, since we're putting this in svalue?
-				sy->sattre |= (riscreg << 8);		// Store register number
+//i'm thinking, no. Let's test that out! :-D
+//				sy->sattre |= (riscreg << 8);		// Store register number
+//everything seems to build fine without it... We'll leave it here Just In Case(tm)
 
+#define DEBODGE_REGBANK
+#ifdef DEBODGE_REGBANK
+				// Default is current state of "regbank"
+				registerbank = regbank;
+#else
 				// Default is no register bank specified
 				registerbank = BANK_N;
+#endif
 
-				// Check for ",<bank #>" notation
+				// Check for ",<bank #>" override notation
 				if ((tok[1] == ',') && (tok[2] == CONST))
 				{
 					// Advance token pointer to the constant
@@ -444,6 +451,9 @@ checking to see if it's already been equated, issue a warning.
 						registerbank = BANK_1;
 				}
 
+#ifdef DEBODGE_REGBANK
+				sy->sattre |= registerbank;	// Store register bank
+#else
 // What needs to happen here is to prime registerbank with regbank, then use
 // registerbank down below for the bank marking.
 #warning "!!! regbank <-> registerbank confusion here !!!"
@@ -452,6 +462,7 @@ checking to see if it's already been equated, issue a warning.
 // not in what ends up in symbol->svalue?
 // ".regbankN" is not an original Madmac directive, so it's suspect
 				sy->sattre |= regbank;		// Store register bank
+#endif
 				eattr = ABS | DEFINED | GLOBAL;
 // & what does this $80000080 constant mean???
 //				eval = 0x80000080 + (riscreg) + (registerbank << 8);
@@ -526,7 +537,8 @@ checking to see if it's already been equated, issue a warning.
 				sy->stype = sy2->stype;
 				sy->sattr = sy2->sattr;
 				sy->sattre = sy2->sattre;
-				sy->svalue = (sy2->svalue & 0xFFFFF0FF);
+//ICK				sy->svalue = (sy2->svalue & 0xFFFFF0FF);
+				sy->svalue = sy2->svalue;
 				goto loop;
 			}
 			else if (expr(exprbuf, &eval, &eattr, &esym) != OK)
@@ -556,15 +568,7 @@ checking to see if it's already been equated, issue a warning.
 	{
 do_label:
 		// Check for dot in front of label; means this is a local label if present
-#if 0
-		j = 0;
-
-		if (*label == '.')
-			j = curenv;
-#else
 		j = (*label == '.' ? curenv : 0);
-#endif
-
 		sy = lookup(label, LABEL, j);
 
 		if (sy == NULL)

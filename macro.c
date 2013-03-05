@@ -333,7 +333,7 @@ int lncatch(int (* lnfunc)(), char * dirlist)
 
 	for(;;)
 	{
-		if (tokln() == TKEOF)
+		if (TokenizeLine() == TKEOF)
 		{
 			errors("encountered end-of-file looking for '%s'", dirlist);
 			fatal("cannot continue");
@@ -350,19 +350,11 @@ int lncatch(int (* lnfunc)(), char * dirlist)
 			if ((tok[2] == ':' || tok[2] == DCOLON))
 			{
 				if (tok[3] == SYMBOL)			// label: symbol
-#if 0
-					p = (char *)tok[4];
-#else
 					p = string[tok[4]];
-#endif
 			}
 			else
 			{
-#if 0
-				p = (char *)tok[1];				// symbol 
-#else
 				p = string[tok[1]];				// Symbol
-#endif
 			}
 		}
 

@@ -31,7 +31,7 @@
 #define OR           12			// Bitwise or: |
 
 // Prototypes
-void init_expr(void);
+void InitExpression(void);
 int expr1(void);
 int expr2(void);
 int expr(TOKEN *, VALUE *, WORD *, SYM **);

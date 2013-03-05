@@ -10,10 +10,11 @@
 #include "token.h"
 #include "listing.h"
 
-int errcnt;									// Error count
-char * err_fname;							// Name of error message file
+int errcnt;						// Error count
+char * err_fname;				// Name of error message file
 
-static char nl[] = "\n";
+static const char nl[] = "\n";
+static long unused;				// For supressing 'write' warnings
 
 
 //
@@ -21,20 +22,20 @@ static char nl[] = "\n";
 //
 int at_eol(void)
 {
-   if (*tok != EOL)
-      error("syntax error");
+	if (*tok != EOL)
+		error("syntax error");
 
-   return 0;
+	return 0;
 }
 
 
 //
 // Cannot Create a File
 //
-void cantcreat(char * fn)
+void cantcreat(const char * fn)
 {
-   printf("cannot create: '%s'\n", fn);
-   exit(1);
+	printf("cannot create: '%s'\n", fn);
+	exit(1);
 }
 
 
@@ -85,7 +86,7 @@ int error(const char * s)
 	length = strlen(buf);
 
 	if (err_flag)
-		write(err_fd, buf, length);
+		unused = write(err_fd, buf, length);
 	else
 		printf("%s", buf);
 
@@ -96,7 +97,7 @@ int error(const char * s)
 }
 
 
-int errors(char * s, char * s1)
+int errors(const char * s, char * s1)
 {
 	char buf[EBUFSIZ];
 	char buf1[EBUFSIZ];
@@ -110,7 +111,7 @@ int errors(char * s, char * s1)
 	sprintf(buf1, "%s %d: Error: %s%s", curfname, curlineno, buf, nl);
 
 	if (err_flag)
-		write(err_fd, buf1, (LONG)strlen(buf1));
+		unused = write(err_fd, buf1, (LONG)strlen(buf1));
 	else
 		printf("%s", buf1);
 
@@ -121,7 +122,7 @@ int errors(char * s, char * s1)
 }
 
 
-int warn(char * s)
+int warn(const char * s)
 {
 	char buf[EBUFSIZ];
 
@@ -133,7 +134,7 @@ int warn(char * s)
 	sprintf(buf, "%s %d: Warning: %s%s", curfname, curlineno, s, nl);
 
 	if (err_flag)
-		write(err_fd, buf, (LONG)strlen(buf));
+		unused = write(err_fd, buf, (LONG)strlen(buf));
 	else
 		printf("%s", buf);
 
@@ -143,7 +144,7 @@ int warn(char * s)
 }
 
 
-int warns(char * s, char * s1)
+int warns(const char * s, char * s1)
 {
 	char buf[EBUFSIZ];
 	char buf1[EBUFSIZ];
@@ -157,7 +158,7 @@ int warns(char * s, char * s1)
 	sprintf(buf1, "%s %d: Warning: %s%s", curfname, curlineno, buf, nl);
 
 	if (err_flag)
-		write(err_fd, buf1, (LONG)strlen(buf1));
+		unused = write(err_fd, buf1, (LONG)strlen(buf1));
 	else
 		printf("%s", buf1);
 
@@ -167,7 +168,7 @@ int warns(char * s, char * s1)
 }
 
 
-int warni(char * s, unsigned i)
+int warni(const char * s, unsigned i)
 {
 	char buf[EBUFSIZ];
 	char buf1[EBUFSIZ];
@@ -181,7 +182,7 @@ int warni(char * s, unsigned i)
 	sprintf(buf1, "%s %d: Warning: %s%s", curfname, curlineno, buf, nl);
 
 	if (err_flag)
-		write(err_fd, buf1, (LONG)strlen(buf1));
+		unused = write(err_fd, buf1, (LONG)strlen(buf1));
 	else
 		printf("%s", buf1);
 
@@ -191,7 +192,7 @@ int warni(char * s, unsigned i)
 }
 
 
-int fatal(char * s)
+int fatal(const char * s)
 {
 	char buf[EBUFSIZ];
 
@@ -203,7 +204,7 @@ int fatal(char * s)
 	sprintf(buf, "%s %d: Fatal: %s%s", curfname, curlineno, s, nl);
 
 	if (err_flag)
-		write(err_fd, buf, (LONG)strlen(buf));
+		unused = write(err_fd, buf, (LONG)strlen(buf));
 	else
 		printf("%s", buf);
 
@@ -222,9 +223,10 @@ int interror(int n)
 		ship_ln(buf);
 
 	if (err_flag)
-		write(err_fd, buf, (LONG)strlen(buf));
+		unused = write(err_fd, buf, (LONG)strlen(buf));
 	else
 		printf("%s", buf);
 
 	exit(1);
 }
+

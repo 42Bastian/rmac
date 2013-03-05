@@ -21,8 +21,11 @@
 #define DEF_KW
 #include "kwtab.h"
 
+
 TOKEN exprbuf[128];			// Expression buffer 
 SYM * symbolPtr[1000000];	// Symbol pointers table
+static long unused;			// For supressing 'write' warnings
+
 
 // Directive handler table
 int (*dirtab[])() = {
@@ -134,7 +137,7 @@ int d_print(void)
 			printf("%s", prntstr);
 
 			if (list_fd) 
-				write(list_fd, prntstr, (LONG)strlen(prntstr));
+				unused = write(list_fd, prntstr, (LONG)strlen(prntstr));
 
 			tok += 2;
 			break;
@@ -184,7 +187,7 @@ int d_print(void)
 				printf("%s", prntstr);
 
 				if (list_fd) 
-					write(list_fd, prntstr, (LONG)strlen(prntstr));
+					unused = write(list_fd, prntstr, (LONG)strlen(prntstr));
 
 				formatting = 0;
 				wordlong = 0;

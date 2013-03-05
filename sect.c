@@ -18,6 +18,10 @@
 #include "token.h"
 
 
+// Function prototypes
+void mksect(int, WORD);
+void switchsect(int);
+
 // Section descriptors
 SECT sect[NSECTS];				// All sections... 
 int cursect;					// Current section number
@@ -37,10 +41,6 @@ CHUNK * sfix;					// Current (last) fixup chunk
 LONG fchalloc;					// # bytes alloc'd to fixup chunk
 LONG fchsize;					// # bytes used in fixup chunk
 PTR fchptr;						// Deposit point in fixup chunk buffer
-
-// BOLLOCKS
-//unsigned fwdjump[MAXFWDJUMPS];	// forward jump check table
-//unsigned fwindex = 0;			// forward jump index
 
 // Return a size (SIZB, SIZW, SIZL) or 0, depending on what kind of fixup is
 // associated with a location.
@@ -66,6 +66,28 @@ static char fusizoffs[] = {
    0,	// (unused)
    0,	// FU_6BRA
 };
+
+
+//
+// Initialize Sections; Setup initial ABS, TEXT, DATA and BSS sections
+//
+void InitSection(void)
+{
+	int i;
+
+	// Cleanup all sections
+	for(i=0; i<NSECTS; i++)
+		mksect(i, 0);
+
+	// Construct default sections, make TEXT the current section
+	mksect(ABS,   SUSED | SABS | SBSS);		// ABS
+	mksect(TEXT,  SUSED | TEXT       );		// TEXT
+	mksect(DATA,  SUSED | DATA       );		// DATA
+	mksect(BSS,   SUSED | BSS | SBSS );		// BSS
+//	mksect(M6502, SUSED | TEXT       );		// 6502 code section
+
+	switchsect(TEXT);						// Switch to TEXT for starters
+}
 
 
 //
@@ -133,28 +155,6 @@ void savsect(void)
 
 	if (sfix != NULL)						// Bailout fixup chunk
 		sfix->ch_size = fchsize;
-}
-
-
-//
-// Initialize Sections; Setup initial ABS, TEXT, DATA and BSS sections
-//
-void init_sect(void)
-{
-	int i;
-
-	// Cleanup all sections
-	for(i=0; i<NSECTS; i++)
-		mksect(i, 0);
-
-	// Construct default sections, make TEXT the current section
-	mksect(ABS,   SUSED | SABS | SBSS);		// ABS
-	mksect(TEXT,  SUSED | TEXT       );		// TEXT
-	mksect(DATA,  SUSED | DATA       );		// DATA
-	mksect(BSS,   SUSED | BSS | SBSS );		// BSS
-//	mksect(M6502, SUSED | TEXT       );		// 6502 code section
-
-	switchsect(TEXT);						// Switch to TEXT for starters
 }
 
 

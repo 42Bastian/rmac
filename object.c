@@ -80,14 +80,15 @@ char * constr_bsdsymtab(char * buf, SYM * sym, int globflag)
 //
 int object(WORD fd)
 {
-	LONG t;									// Scratch long
-	LONG tds;								// TEXT & DATA segment size
-	int i;									// Temporary int
-	CHUNK * cp;								// Chunk (for gather)
-	char * buf;								// Scratch area
-	char * p;								// Temporary ptr
-	LONG ssize;								// Size of symbols
-	LONG trsize, drsize;					// Size of relocations
+	LONG t;					// Scratch long
+	LONG tds;				// TEXT & DATA segment size
+	int i;					// Temporary int
+	CHUNK * cp;				// Chunk (for gather)
+	char * buf;				// Scratch area
+	char * p;				// Temporary ptr
+	LONG ssize;				// Size of symbols
+	LONG trsize, drsize;	// Size of relocations
+	long unused;			// For supressing 'write' warnings
 
 	// Write requested object file...
 	switch (obj_format)
@@ -117,19 +118,14 @@ int object(WORD fd)
 
 		// Build object file header
 		chptr = buf;								// Base of header
-		t = 0x00000107;
-		D_long(t);									// Magic number
-		t = sect[TEXT].sloc;						// TEXT size 
-		D_long(t);
-		t = sect[DATA].sloc;						// DATA size 
-		D_long(t);
-		t = sect[BSS].sloc;							// BSS size 
-		D_long(t);
-		t = 0x00000000;
-		D_long(t);									// Symbol size
-		D_long(t);									// First entry (0L)
-		D_long(t);									// TEXT relocation size
-		D_long(t);									// BSD relocation size
+		D_long(0x00000107);							// Magic number
+		D_long(sect[TEXT].sloc);					// TEXT size 
+		D_long(sect[DATA].sloc);					// DATA size 
+		D_long(sect[BSS].sloc);						// BSS size 
+		D_long(0x00000000);							// Symbol size
+		D_long(0x00000000);							// First entry (0L)
+		D_long(0x00000000);							// TEXT relocation size
+		D_long(0x00000000);							// BSD relocation size
 
 		// Construct TEXT and DATA segments (without relocation changes)
 		p = buf + BSDHDRSIZE;
@@ -170,7 +166,7 @@ int object(WORD fd)
 		D_long(strindx);							// Write string table size
 
 		// Write the BSD object file from the object image buffer
-		write(fd, buf, BSDHDRSIZE + tds + trsize + drsize + symsize + strindx + 4);
+		unused = write(fd, buf, BSDHDRSIZE + tds + trsize + drsize + symsize + strindx + 4);
 
 		if (buf)
 			free(buf);								// Free allocated memory

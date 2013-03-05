@@ -19,7 +19,7 @@
 extern MCHUNK * firstmch;
 
 // Prototypes
-void init_mark(void);
+void InitMark(void);
 void stopmark(void);
 //int rmark(int, LONG, int, int, SYM *);
 int rmark(uint16_t, uint32_t, uint16_t, uint16_t, SYM *);

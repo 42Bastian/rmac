@@ -14,17 +14,17 @@
 // Macros to deposit code in the current section
 // D_rword deposits a "6502" format (low, high) word (01).
 // D_rlong deposits a MWC "canonical byte order" longword (2301).
-#define D_byte(b)    {*chptr++=(char)b; ++sloc; ++ch_size; if(orgactive) ++orgaddr;}
-#define D_word(w)	   {chcheck(2);*chptr++=(char)(w>>8); *chptr++=(char)w; \
-                      sloc+=2; ch_size+=2; if(orgactive) orgaddr += 2;}
-#define D_long(lw)   {*chptr++=(char)(lw>>24); *chptr++=(char)(lw>>16);\
-	                   *chptr++=(char)(lw>>8); *chptr++=(char)lw; \
-                      sloc+=4; ch_size += 4; if(orgactive) orgaddr += 4;}
-#define D_rword(w)   {*chptr++=(char)w; *chptr++=(char)(w>>8); \
-                      sloc+=2; ch_size+=2;if(orgactive) orgaddr += 2;}
-#define D_rlong(lw)  {*chptr++=(char)(lw>>16);*chptr++=(char)(lw>>24);\
-                      *chptr++=(char)lw;*chptr++=(char)(lw>>8); \
-                      sloc+=4; ch_size += 4;if(orgactive) orgaddr += 4;}
+#define D_byte(b)	{*chptr++=(char)b; ++sloc; ++ch_size; if(orgactive) ++orgaddr;}
+#define D_word(w)	{chcheck(2);*chptr++=(char)(w>>8); *chptr++=(char)w; \
+						sloc+=2; ch_size+=2; if(orgactive) orgaddr += 2;}
+#define D_long(lw)	{*chptr++=(char)(lw>>24); *chptr++=(char)(lw>>16);\
+						*chptr++=(char)(lw>>8); *chptr++=(char)lw; \
+						sloc+=4; ch_size += 4; if(orgactive) orgaddr += 4;}
+//#define D_rword(w)	{*chptr++=(char)w; *chptr++=(char)(w>>8); \
+//						sloc+=2; ch_size+=2;if(orgactive) orgaddr += 2;}
+//#define D_rlong(lw)	{*chptr++=(char)(lw>>16);*chptr++=(char)(lw>>24);\
+//						*chptr++=(char)lw;*chptr++=(char)(lw>>8); \
+//						sloc+=4; ch_size += 4;if(orgactive) orgaddr += 4;}
 
 #define NSECTS       16				// Max. number of sections
 
@@ -135,13 +135,12 @@ extern LONG challoc;
 extern CHUNK * scode;
 
 // Prototypes
-void init_sect(void);
+void InitSection(void);
 void switchsect(int);
 void savsect(void);
 int fixtest(int, LONG);
 int chcheck(LONG);
 int fixup(WORD, LONG, TOKEN *);
 int ResolveAllFixups(void);
-//int ResolveFixups(int);
 
 #endif // __SECT_H__

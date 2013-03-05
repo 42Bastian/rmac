@@ -30,7 +30,7 @@ extern int nlines;
 extern LONG lsloc;
 
 // Prototypes
-void init_list(void);
+void InitListing(void);
 void ship_ln(const char *);
 void taglist(char);
 void println(const char *);

@@ -20,24 +20,25 @@
 #include "sect.h"
 #include "error.h"
 
-char * list_fname;                                          // Listing filename
-char subttl[TITLESIZ];                                      // Current subtitle
-int listing;                                                // Listing level 
-int pagelen = 61;                                           // Lines on a page
-int nlines;                                                 // #lines on page so far
-LONG lsloc;                                                 // `sloc' at start of line 
+char * list_fname;					// Listing filename
+char subttl[TITLESIZ];				// Current subtitle
+int listing;						// Listing level 
+int pagelen = 61;					// Lines on a page
+int nlines;							// #lines on page so far
+LONG lsloc;							// `sloc' at start of line 
 
 // Private
-static int lcursect;                                        // `cursect' at start of line
-static int llineno;                                         // `curlineno' at start of line 
-static int pageno;                                          // Current page number 
-static int pagewidth;                                       // #columns on a page
-static int subflag;                                         // 0, don't do .eject on subttl (set 1)
-static char lnimage[IMAGESIZ];                              // Image of output line
-static char title[TITLESIZ];                                // Current title
-static char datestr[20];                                    // Current date dd-mon-yyyy 
-static char timestr[20];                                    // Current time hh:mm:ss [am|pm]
-static char buf[IMAGESIZ];                                  // Buffer for numbers
+static int lcursect;				// `cursect' at start of line
+static int llineno;					// `curlineno' at start of line 
+static int pageno;					// Current page number 
+static int pagewidth;				// #columns on a page
+static int subflag;					// 0, don't do .eject on subttl (set 1)
+static char lnimage[IMAGESIZ];		// Image of output line
+static char title[TITLESIZ];		// Current title
+static char datestr[20];			// Current date dd-mon-yyyy 
+static char timestr[20];			// Current time hh:mm:ss [am|pm]
+static char buf[IMAGESIZ];			// Buffer for numbers
+static long unused;					// For supressing 'write' warnings
 
 static char * month[16] = { "",    "Jan", "Feb", "Mar",
                            "Apr", "May", "Jun", "Jul",
@@ -212,8 +213,8 @@ void println(const char * ln)
 		list_setup();
 
 	length = strlen(ln);
-	write(list_fd, ln, length);
-	write(list_fd, "\n", 1L);
+	unused = write(list_fd, ln, length);
+	unused = write(list_fd, "\n", 1L);
 }
 
 
@@ -255,7 +256,7 @@ void ship_ln(const char * ln)
 //
 // Initialize Listing Generator
 //
-void init_list(void)
+void InitListing(void)
 {
 	extern VALUE dos_date(), dos_time();
 

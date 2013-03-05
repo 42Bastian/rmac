@@ -154,9 +154,9 @@ extern char * string[];
 
 // Prototypes
 int include(int, char *);
-void init_token(void);
+void InitTokenizer(void);
 void SetFilenameForErrorReporting(void);
-int tokln(void);
+int TokenizeLine(void);
 int fpop(void);
 int d_goto(WORD);
 //int d_goto(void);

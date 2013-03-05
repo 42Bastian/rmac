@@ -188,12 +188,10 @@ extern LONG amemtot;
 void init_sym(void);
 SYM * newsym(char *, int, int);
 char * fext(char *, char *, int);
-void cantcreat(char *);
 int kmatch(char *, int *, int *, int *, int *);
 void autoeven(int);
 int nthpath(char *, int, char *);
 void clear(char *, LONG);
 char * copy(char *, char *, LONG);
-//int rmac_qsort(char *, int, int, int (*)());
 
 #endif // __RMAC_H__

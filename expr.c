@@ -71,7 +71,7 @@ static VALUE str_value(char * p)
 //
 // Initialize Expression Analyzer
 //
-void init_expr(void)
+void InitExpression(void)
 {
 	int i;									// Iterator
 	char * p;								// Token pointer
