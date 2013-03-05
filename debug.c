@@ -152,11 +152,8 @@ int mudump(void)
 
 	for(mch=firstmch; mch!=NULL; mch=mch->mcnext)
 	{
-		printf("mch=$%08X mcptr=$%08X mcalloc=$%X mcused=$%X\n",
-			(uint32_t)mch,
-			(mch->mcptr.lw),
-			mch->mcalloc,
-			(mch->mcused));
+		printf("mch=$%p mcptr=$%08X mcalloc=$%X mcused=$%X\n",
+			mch, (mch->mcptr.lw), mch->mcalloc, (mch->mcused));
 
 		p = mch->mcptr;
 		

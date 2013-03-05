@@ -516,7 +516,7 @@ int m_movep(WORD inst, WORD siz)
 		D_word(inst);
 
 		if (am1 == AIND)
-			D_word(0);
+			D_word(0)
 		else 
 			ea1gen(siz);
 	}
@@ -526,7 +526,7 @@ int m_movep(WORD inst, WORD siz)
 		D_word(inst);
 
 		if (am0 == AIND)
-			D_word(0);
+			D_word(0)
 		else 
 			ea0gen(siz);
 	}
