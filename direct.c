@@ -83,6 +83,8 @@ int (*dirtab[])() = {
 	d_ccundef,			// 51 .ccundef
 	d_print,			// 52 .print
 	d_cstruct,			// 53 .cstruct
+	d_jpad,				// 54 .jpad (deprecated)
+	d_nojpad,			// 55 .nojpad (deprecated)
 };
 
 
@@ -1555,5 +1557,19 @@ int d_undmac(void)
 {
 	symlist(undmac1);
 	return 0;
+}
+
+
+int d_jpad(void)
+{
+	warn("JPAD directive is deprecated/non-functional");
+	return OK;
+}
+
+
+int d_nojpad(void)
+{
+	warn("NOJPAD directive is deprecated/non-functional");
+	return OK;
 }
 
