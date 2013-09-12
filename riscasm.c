@@ -130,9 +130,11 @@ void strtoupper(char * s)
 // Function to return "malformed expression" error
 // This is done mainly to remove a bunch of GOTO statements in the parser
 //
-static inline int MalformedOpcode(void)
+static inline int MalformedOpcode(int signal)
 {
-	error("Malformed opcode");
+	char buf[16];
+	sprintf(buf, "%02X", signal);
+	errors("Malformed opcode [internal $%s]", buf);
 	return ERROR;
 }
 
@@ -166,7 +168,9 @@ int GetRegister(WORD rattr)
 
 	// Evaluate what's in the global "tok" buffer
 	if (expr(r_expr, &eval, &eattr, &esym) != OK)
-		return MalformedOpcode();
+		// Hmm, the evaluator should report the error to us...
+//		return MalformedOpcode(0x00);
+		return ERROR;
 
 	if ((challoc - ch_size) < 4)
 		chcheck(4L);
@@ -285,12 +289,12 @@ int GenerateRISCCode(int state)
 			attrflg |= FU_SUB32;
 
 		if (*tok != '#')
-			return MalformedOpcode();
+			return MalformedOpcode(0x01);
 
 		tok++;
 
 		if (expr(r_expr, &eval, &eattr, &esym) != OK)
-			return MalformedOpcode();
+			return MalformedOpcode(0x02);
 
 		if ((challoc - ch_size) < 4)
 			chcheck(4L);
@@ -325,12 +329,12 @@ int GenerateRISCCode(int state)
 	// Move Immediate--n,Rn--n in Second Word
 	case RI_MOVEI:
 		if (*tok != '#')
-			return MalformedOpcode();
+			return MalformedOpcode(0x03);
 
 		tok++;
 
 		if (expr(r_expr, &eval, &eattr, &esym) != OK)
-			return MalformedOpcode();
+			return MalformedOpcode(0x04);
 
 		if ((challoc - ch_size) < 4)
 			chcheck(4L);
@@ -383,7 +387,7 @@ int GenerateRISCCode(int state)
 		parm = 41;
 
 		if (*tok != '(')
-			return MalformedOpcode();
+			return MalformedOpcode(0x05);
 
 		tok++;
 
@@ -452,7 +456,7 @@ int GenerateRISCCode(int state)
 				else
 				{
 					if (expr(r_expr, &eval, &eattr, &esym) != OK)
-						return MalformedOpcode();
+						return MalformedOpcode(0x06);
 
 					if ((challoc - ch_size) < 4)
 						chcheck(4L);
@@ -493,7 +497,7 @@ int GenerateRISCCode(int state)
 		}
 
 		if (*tok != ')')
-			return MalformedOpcode();
+			return MalformedOpcode(0x07);
 
 		tok++;
 		CHECK_COMMA;
@@ -509,7 +513,7 @@ int GenerateRISCCode(int state)
 		CHECK_COMMA;
 
 		if (*tok != '(')
-			return MalformedOpcode();
+			return MalformedOpcode(0x08);
 
 		tok++;
 		indexed = 0;
@@ -579,7 +583,7 @@ int GenerateRISCCode(int state)
 				else
 				{
 					if (expr(r_expr, &eval, &eattr, &esym) != OK)
-						return MalformedOpcode();
+						return MalformedOpcode(0x09);
 
 					if ((challoc - ch_size) < 4)
 						chcheck(4L);
@@ -622,7 +626,7 @@ int GenerateRISCCode(int state)
 		}
 
 		if (*tok != ')')
-			return MalformedOpcode();
+			return MalformedOpcode(0x0A);
 
 		tok++;
 		at_eol();
@@ -632,13 +636,13 @@ int GenerateRISCCode(int state)
 	// LOADB/LOADP/LOADW (Rn),Rn
 	case RI_LOADN:                    
 		if (*tok != '(')
-			return MalformedOpcode();
+			return MalformedOpcode(0x0B);
 
 		tok++;
 		reg1 = GetRegister(FU_REGONE);
 
 		if (*tok != ')')
-			return MalformedOpcode();
+			return MalformedOpcode(0x0C);
 
 		tok++;
 		CHECK_COMMA;
@@ -653,13 +657,13 @@ int GenerateRISCCode(int state)
 		CHECK_COMMA;
 
 		if (*tok != '(')
-			return MalformedOpcode();
+			return MalformedOpcode(0x0D);
 
 		tok++;
 		reg2 = GetRegister(FU_REGTWO);
 
 		if (*tok != ')')
-			return MalformedOpcode();
+			return MalformedOpcode(0x0E);
 
 		tok++;
 		at_eol();
@@ -756,7 +760,7 @@ int GenerateRISCCode(int state)
 		{
 			// JR cc,n
 			if (expr(r_expr, &eval, &eattr, &esym) != OK)
-				return MalformedOpcode();
+				return MalformedOpcode(0x0F);
 
 			if ((challoc - ch_size) < 4)
 				chcheck(4L);
@@ -780,13 +784,13 @@ int GenerateRISCCode(int state)
 		{
 			// JUMP cc, (Rn)
 			if (*tok != '(')
-				return MalformedOpcode();
+				return MalformedOpcode(0x10);
 
 			tok++;
 			reg2 = GetRegister(FU_REGTWO);
 
 			if (*tok != ')')
-				return MalformedOpcode();
+				return MalformedOpcode(0x11);
 
 			tok++;
 			at_eol();

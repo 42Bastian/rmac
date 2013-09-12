@@ -351,7 +351,7 @@ int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 
 			tok--;
 		}
-		else
+		else if (*tok == STRING || *tok == SYMBOL)
 		{
 			p = string[tok[1]];
 			j = (*p == '.' ? curenv : 0);
@@ -410,6 +410,13 @@ thrown away right here. What the hell is it for?
 
 			if ((symbol->sattr & (GLOBAL | DEFINED)) == GLOBAL && a_esym != NULL)
 				*a_esym = symbol;
+		}
+		else
+		{
+			// Unknown type here... Alert the user!
+			error("undefined RISC register in expression");
+			tok++;
+			return ERROR;
 		}
 
 		tok += 2;
