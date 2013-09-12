@@ -323,8 +323,8 @@ int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 				*a_esym = NULL;
 
 			tok++;
-			*evalTokenBuffer++ = ENDEXPR;
-			return OK;
+//			*evalTokenBuffer++ = ENDEXPR;
+//			return OK;
 		}
 		else if (*tok == CONST)
 		{
@@ -334,6 +334,8 @@ int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 
 			if (a_esym != NULL)
 				*a_esym = NULL;
+
+			tok += 2;
 		}
 		else if (*tok == '*')
 		{
@@ -349,7 +351,8 @@ int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			if (a_esym != NULL)
 				*a_esym = NULL;
 
-			tok--;
+//			tok--;
+			tok++;
 		}
 		else if (*tok == STRING || *tok == SYMBOL)
 		{
@@ -410,16 +413,19 @@ thrown away right here. What the hell is it for?
 
 			if ((symbol->sattr & (GLOBAL | DEFINED)) == GLOBAL && a_esym != NULL)
 				*a_esym = symbol;
+
+			tok += 2;
 		}
 		else
 		{
 			// Unknown type here... Alert the user!
 			error("undefined RISC register in expression");
+			// Prevent spurious error reporting...
 			tok++;
 			return ERROR;
 		}
 
-		tok += 2;
+//		tok += 2;
 		*evalTokenBuffer++ = ENDEXPR;
 		return OK;
 	}
