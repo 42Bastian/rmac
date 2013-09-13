@@ -1054,6 +1054,12 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 				j = -1;
 			}
 
+			// Make j = -1 if user tries to use a RISC register while in 68K mode
+			if (!(rgpu || rdsp) && ((TOKEN)j >= KW_R0 && (TOKEN)j <= KW_R31))
+			{
+				j = -1;
+			}
+
 			//make j = -1 if time, date etc with no preceeding ^^
 			//defined, referenced, streq, macdef, date and time
 			switch ((TOKEN)j)
@@ -1065,9 +1071,10 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 			case 120:   // time
 			case 121:   // date
 				j = -1;
-				break;
+//				break;
 			}
 
+			// If not tokenized keyword OR token was not found
 			if (j < 0 || state < 0)
 			{
 				*tk++ = SYMBOL;
@@ -1410,22 +1417,20 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 			while ((int)chrtab[*ln] & DIGIT)
 				v = (v * 10) + *ln++ - '0';
 
-			// See if there's a .[bwl] after the constant, & deal with it
+			// See if there's a .[bwl] after the constant & deal with it if so
 			if (*ln == '.')
 			{
-				if ((*(ln+1) == 'b') || (*(ln+1) == 'B'))
+				if ((*(ln + 1) == 'b') || (*(ln + 1) == 'B'))
 				{
 					v &= 0x000000FF;
 					ln += 2;
 				}
-
-				if ((*(ln+1) == 'w') || (*(ln+1) == 'W'))
+				else if ((*(ln + 1) == 'w') || (*(ln + 1) == 'W'))
 				{
 					v &= 0x0000FFFF;
 					ln += 2;
 				}
-
-				if ((*(ln+1) == 'l') || (*(ln+1) == 'L'))
+				else if ((*(ln + 1) == 'l') || (*(ln + 1) == 'L'))
 				{
 					ln += 2;
 				}

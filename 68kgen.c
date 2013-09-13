@@ -34,7 +34,7 @@ int main(int argc, char ** argv)
 
 	while (fgets(ln, 256, stdin) != NULL)
 	{
-		++lineno;			/* bump line# */
+		lineno++;			/* bump line# */
 
 		if (*ln == '#')		/* ignore comments */
 			continue;
@@ -55,7 +55,7 @@ int main(int argc, char ** argv)
 				namv[namcnt++] = s;
 
 				while (*s && !isspace(*s))
-					++s;
+					s++;
 
 				if (isspace(*s))
 					*s++ = EOS;
@@ -70,15 +70,16 @@ int main(int argc, char ** argv)
 }
 
 
-/*
- *  Parse line
- */
+//
+// Parse line
+//
 void procln(int namc, char ** namv)
 {
 	int i, j;
 	char * s;
 
-	if (namc == 1)		/* alias for previous entry */
+	// alias for previous entry
+	if (namc == 1)
 	{
 		fprintf(kfp, "%s\t%d\n", namv[0], kwnum-1+1000);
 		return;
@@ -90,7 +91,8 @@ void procln(int namc, char ** namv)
 		exit(1);
 	}
 
-	if (*namv[0] != '-')		/* output keyword name */
+	// output keyword name
+	if (*namv[0] != '-')
 		fprintf(kfp, "%s\t%d\n", namv[0], kwnum + 1000);
 
 	printf("/*%4d %-6s*/  {", kwnum, namv[0]);
@@ -102,7 +104,8 @@ void procln(int namc, char ** namv)
 
 	printf(", %s, %s, ", namv[2], namv[3]);
 
-	if (*namv[4] == '%')		/* enforce little fascist percent signs */
+	// enforce little fascist percent signs
+	if (*namv[4] == '%')
 	{
 		for(i=1, j=0; i<17; ++i)
 		{
@@ -124,7 +127,7 @@ void procln(int namc, char ** namv)
 
 	printf("%s},\n", namv[5]);
 
-	++kwnum;
+	kwnum++;
 }
 
 
@@ -134,3 +137,4 @@ void error(char * s, char * s1)
 	fprintf(stderr, "\n");
 	exit(1);
 }
+

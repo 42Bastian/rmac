@@ -208,7 +208,8 @@ as68label:
 		}
 	}
 
-	if (*tok == EOL)						// EOL is legal here...
+	// EOL is legal here...
+	if (*tok == EOL)
 		goto normal;
 
 	// Next token MUST be a symbol
@@ -259,11 +260,11 @@ as68label:
 	siz = SIZN;
 
 	if (*tok == DOTW) 
-		siz = SIZW, ++tok;
+		siz = SIZW, tok++;
 	else if (*tok == DOTL)
-		siz = SIZL, ++tok;
+		siz = SIZL, tok++;
 	else if (*tok == DOTB)
-		siz = SIZB, ++tok;
+		siz = SIZB, tok++;
 
 	// Do special directives (500..999) (These must be handled in "real time")
 	if (state >= 500 && state < 1000)

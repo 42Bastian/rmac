@@ -84,7 +84,8 @@ int amode(int acount)
 	if (acount == 0 || *tok != ',')
 		return 1;
 
-	++tok;                                                   // Eat comma
+	// Eat the comma
+	tok++;
 
 	// Parse second addressing mode
 	#define AnOK      a1ok
@@ -126,10 +127,9 @@ int reglist(WORD * a_rmask)
 		0x0100, 0x0200, 0x0400, 0x0800,
 		0x1000, 0x2000, 0x4000, 0x8000
 	};
-	WORD rmask;
-	int r, cnt;
 
-	rmask = 0;
+	WORD rmask = 0;
+	int r, cnt;
 
 	for(;;)
 	{
@@ -140,7 +140,7 @@ int reglist(WORD * a_rmask)
 
 		if (*tok == '-')
 		{
-			++tok;
+			tok++;
 
 			if (*tok >= KW_D0 && *tok <= KW_A7)
 				cnt = *tok++ & 15;
@@ -161,10 +161,11 @@ int reglist(WORD * a_rmask)
 		if (*tok != '/')
 			break;
 
-		++tok;
+		tok++;
 	}
 
 	*a_rmask = rmask;
 
 	return OK;
 }
+

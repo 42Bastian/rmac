@@ -24,7 +24,8 @@
 	}
 	else if (*tok == '#')
 	{
-		++tok;
+		tok++;
+
 		if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
 			return ERROR;
 
@@ -44,7 +45,7 @@
 	// ([bd,PC,Xn],od)
 	else if (*tok == '(')
 	{
-		++tok;
+		tok++;
 
 		if ((*tok >= KW_A0) && (*tok <= KW_A7))
 		{
@@ -52,11 +53,11 @@
 
 			if (*tok == ')')
 			{
-				++tok;
+				tok++;
 
 				if (*tok == '+')
 				{
-					++tok;
+					tok++;
 					AMn = APOSTINC;
 				}
 				else
@@ -70,7 +71,7 @@
 		}
 		else if (*tok == KW_PC)
 		{                            // (PC,Xn[.siz][*scale]) 
-			++tok;
+			tok++;
 			AMn = PCINDEXED;
 
 			// Common index handler; enter here with `tok' pointing at the comma.
@@ -93,13 +94,13 @@
 			switch ((int)*tok)
 			{                                // Index reg size: <empty> | .W | .L 
 			case DOTW:
-				++tok;
+				tok++;
 			default:
 				AnIXSIZ = 0;
 				break;
 			case DOTL:
 				AnIXSIZ = 0x0800;
-				++tok;
+				tok++;
 				break;
 			case DOTB:                                      // .B not allowed here...
 				goto badmode;
@@ -107,7 +108,8 @@
 
 			if (*tok == '*')
 			{                                  // scale: *1, *2, *4, *8 
-				++tok;
+				tok++;
+
 				if (*tok++ != CONST || *tok > 8)
 					goto badmode;
 
@@ -149,7 +151,7 @@
 			if ((*tok >= KW_A0) && (*tok <= KW_A7))
 			{
 				AnREG = *tok & 7;
-				++tok;
+				tok++;
 
 				if (*tok == ',')
 				{
@@ -159,7 +161,7 @@
 				else if (*tok == ')')
 				{
 					AMn = ADISP;
-					++tok;
+					tok++;
 					goto AnOK;
 				}
 				else
@@ -175,7 +177,7 @@
 				else if (*tok == ')')
 				{
 					AMn = PCDISP;                                // expr(PC) 
-					++tok;
+					tok++;
 					goto AnOK;
 				}
 				else
@@ -194,19 +196,19 @@
 	else if (*tok == KW_CCR)
 	{
 		AMn = AM_CCR;
-		++tok;
+		tok++;
 		goto AnOK;
 	}
 	else if (*tok == KW_SR)
 	{
 		AMn = AM_SR;
-		++tok;
+		tok++;
 		goto AnOK;
 	}
 	else if (*tok == KW_USP)
 	{
 		AMn = AM_USP;
-		++tok;
+		tok++;
 		goto AnOK;
 	}
 	// expr
@@ -223,7 +225,7 @@
 
 		if (*tok == DOTW)
 		{                                    // expr.W 
-			++tok;
+			tok++;
 			AMn = ABSW;
 			goto AnOK;
 		}
@@ -237,7 +239,7 @@
 
 			if (*tok == DOTL)
 			{                                 // force .L 
-				++tok;
+				tok++;
 				AMn = ABSL;
 			}
 
@@ -253,7 +255,7 @@
 			if (*tok == ')')
 			{
 				AMn = ADISP;
-				++tok;
+				tok++;
 				goto AnOK;
 			}
 
@@ -265,7 +267,7 @@
 			if (*++tok == ')')
 			{
 				AMn = PCDISP;
-				++tok;
+				tok++;
 				goto AnOK;
 			}
 
