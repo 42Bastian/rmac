@@ -452,7 +452,8 @@ arg_num:
 					continue;
 				}
 
-				if (tk != NULL)				// arg # is in range, so expand it
+				// Argument # is in range, so expand it
+				if (tk != NULL)
 				{
 					while (*tk != EOL)
 					{
@@ -1438,6 +1439,7 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 
 			*tk++ = CONST;
 			*tk++ = v;
+//printf("CONST: %i\n", v);
 			continue;
 		}
 

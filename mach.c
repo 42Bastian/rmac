@@ -545,7 +545,10 @@ int m_br(WORD inst, WORD siz)
 	if (a0exattr & DEFINED)
 	{
 		if ((a0exattr & TDB) != cursect)
+//{
+//printf("m_br(): a0exattr = %X, cursect = %X, a0exval = %X, sloc = %X\n", a0exattr, cursect, a0exval, sloc);
 			return error(rel_error);
+//}
 
 		v = a0exval - (sloc + 2);
 

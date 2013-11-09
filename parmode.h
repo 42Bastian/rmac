@@ -246,7 +246,7 @@
 			goto AnOK;
 		}
 
-		++tok;
+		tok++;
 
 		if ((*tok >= KW_A0) && (*tok <= KW_A7))
 		{

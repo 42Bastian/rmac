@@ -22,8 +22,14 @@ static long unused;				// For supressing 'write' warnings
 //
 int at_eol(void)
 {
+	char msg[256];
+
 	if (*tok != EOL)
-		error("syntax error");
+	{
+//		error("syntax error");
+		sprintf(msg, "syntax error. expected EOL, found $%X ('%c')", *tok, *tok);
+		error(msg);
+	}
 
 	return 0;
 }

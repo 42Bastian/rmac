@@ -171,7 +171,8 @@ loop1:										// Internal line processing loop
 	// First token MUST be a symbol
 	if (*tok != SYMBOL)
 	{
-		error(syntax_error);
+//		error(syntax_error);
+		error("syntax error; expected symbol");
 		goto loop;
 	}
 
@@ -215,7 +216,8 @@ as68label:
 	// Next token MUST be a symbol
 	if (*tok++ != SYMBOL)
 	{
-		error(syntax_error);
+//		error(syntax_error);
+		error("syntax error; expected symbol");
 		goto loop;
 	}
 

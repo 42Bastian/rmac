@@ -227,7 +227,8 @@ int d_ccundef(void)
 
 	if (*tok != SYMBOL)
 	{
-		error(syntax_error);
+//		error(syntax_error);
+		error("syntax error; expected symbol");
 		return ERROR;
 	}
 
@@ -270,7 +271,8 @@ int d_equrundef(void)
 		// Check we are dealing with a symbol
 		if (*tok != SYMBOL)
 		{
-			error(syntax_error);
+//			error(syntax_error);
+			error("syntax error; expected symbol");
 			return ERROR;
 		}
 
@@ -317,7 +319,8 @@ int d_incbin(void)
 
 	if (*tok != STRING)
 	{
-		error(syntax_error);
+//		error(syntax_error);
+		error("syntax error; string missing");
 		return ERROR;
 	}
 

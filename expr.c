@@ -241,13 +241,9 @@ int expr2(void)
 		}
 
 		*evalTokenBuffer++ = SYMBOL;
-#if 0
-		*evalTokenBuffer++ = (TOKEN)sy;
-#else
 		*evalTokenBuffer++ = symbolNum;
 		symbolPtr[symbolNum] = sy;
 		symbolNum++;
-#endif
 		break;
 	case STRING:
 		*evalTokenBuffer++ = CONST;
@@ -277,10 +273,15 @@ int expr2(void)
 	case '*':
 		*evalTokenBuffer++ = ACONST;				// Attributed const
 
+#if 0
 		if (orgactive)
 			*evalTokenBuffer++ = orgaddr;
 		else
 			*evalTokenBuffer++ = pcloc;				// Location at start of line
+#else
+		// pcloc == location at start of line
+		*evalTokenBuffer++ = (orgactive ? orgaddr : pcloc);
+#endif
 
 		*evalTokenBuffer++ = ABS | DEFINED;			// Store attribs
 		break;
@@ -308,8 +309,14 @@ int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 	evalTokenBuffer = otk;	// Set token pointer to 'exprbuf' (direct.c)
 							// Also set in various other places too (riscasm.c, e.g.)
 
+//printf("expr(): tokens 0-2: %i %i %i (%c %c %c); tc[2] = %i\n", tok[0], tok[1], tok[2], tok[0], tok[1], tok[2], tokenClass[tok[2]]);
 	// Optimize for single constant or single symbol.
-	if ((tok[1] == EOL)
+	// Shamus: Subtle bug here. EOL token is 101; if you have a constant token
+	//         followed by the value 101, it will trigger a bad evaluation here.
+	//         This is probably a really bad assumption to be making here...!
+	//         (assuming tok[1] == EOL is a single token that is)
+//	if ((tok[1] == EOL)
+	if ((tok[1] == EOL && tok[0] != CONST)
 		|| (((*tok == CONST || *tok == SYMBOL) || (*tok >= KW_R0 && *tok <= KW_R31))
 		&& (tokenClass[tok[2]] < UNARY)))
 	{
@@ -323,8 +330,6 @@ int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 				*a_esym = NULL;
 
 			tok++;
-//			*evalTokenBuffer++ = ENDEXPR;
-//			return OK;
 		}
 		else if (*tok == CONST)
 		{
@@ -336,6 +341,7 @@ int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 				*a_esym = NULL;
 
 			tok += 2;
+//printf("Quick eval in expr(): CONST = %i, tokenClass[tok[2]] = %i\n", *a_value, tokenClass[*tok]);
 		}
 		else if (*tok == '*')
 		{
@@ -351,7 +357,6 @@ int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			if (a_esym != NULL)
 				*a_esym = NULL;
 
-//			tok--;
 			tok++;
 		}
 		else if (*tok == STRING || *tok == SYMBOL)
@@ -425,7 +430,6 @@ thrown away right here. What the hell is it for?
 			return ERROR;
 		}
 
-//		tok += 2;
 		*evalTokenBuffer++ = ENDEXPR;
 		return OK;
 	}
@@ -463,7 +467,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 		switch ((int)*tk++)
 		{
 		case SYMBOL:
-//			sy = (SYM *)*tk++;
+//printf("evexpr(): SYMBOL\n");
 			sy = symbolPtr[*tk++];
 			sy->sattr |= REFERENCED;		// Set "referenced" bit 
 
@@ -496,10 +500,12 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			sym_seg = (WORD)(sy->sattr & (TEXT | DATA | BSS));
 			break;
 		case CONST:
+//printf("evexpr(): CONST = %i\n", *tk);
 			*++sval = *tk++;				// Push value
 			*++sattr = ABS | DEFINED;		// Push simple attribs
 			break;
 		case ACONST:
+//printf("evexpr(): ACONST = %i\n", *tk);
 			*++sval = *tk++;				// Push value
 			*++sattr = (WORD)*tk++;			// Push attribs
 			break;
@@ -516,6 +522,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			//   [1] + : Error
 			//       - : ABS
 		case '+':
+//printf("evexpr(): +\n");
 			--sval;							// Pop value
 			--sattr;						// Pop attrib 
 			*sval += sval[1];				// Compute value
@@ -527,6 +534,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 
 			break;
 		case '-':
+//printf("evexpr(): -\n");
 			--sval;							// Pop value
 			--sattr;						// Pop attrib 
 			*sval -= sval[1];				// Compute value
@@ -546,6 +554,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			break;
 		// Unary operators only work on ABS items
 		case UNMINUS:
+//printf("evexpr(): UNMINUS\n");
 			if (*sattr & (TEXT | DATA | BSS))
 				error(seg_error);
 
@@ -553,6 +562,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			*sattr = ABS | DEFINED;			// Expr becomes absolute
 			break;
 		case '!':
+//printf("evexpr(): !\n");
 			if (*sattr & (TEXT | DATA | BSS))
 				error(seg_error);
 
@@ -560,6 +570,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			*sattr = ABS | DEFINED;			// Expr becomes absolute
 			break;
 		case '~':
+//printf("evexpr(): ~\n");
 			if (*sattr & (TEXT | DATA | BSS))
 				error(seg_error);
 
@@ -569,6 +580,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 		// Comparison operators must have two values that
 		// are in the same segment, but that's the only requirement.
 		case LE:
+//printf("evexpr(): LE\n");
 			--sattr;
 			--sval;
 
@@ -579,6 +591,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			*sval = *sval <= sval[1];
 			break;
 		case GE:
+//printf("evexpr(): GE\n");
 			--sattr;
 			--sval;
 
@@ -589,6 +602,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			*sval = *sval >= sval[1];
 			break;
 		case '>':
+//printf("evexpr(): >\n");
 			--sattr;
 			--sval;
 
@@ -599,6 +613,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			*sval = *sval > sval[1];
 			break;
 		case '<':
+//printf("evexpr(): <\n");
 			--sattr;
 			--sval;
 
@@ -609,6 +624,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			*sval = *sval < sval[1];
 			break;
 		case NE:
+//printf("evexpr(): NE\n");
 			--sattr;
 			--sval;
 
@@ -619,6 +635,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			*sval = *sval != sval[1];
 			break;
 		case '=':
+//printf("evexpr(): =\n");
 			--sattr;
 			--sval;
 
@@ -631,6 +648,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 		// All other binary operators must have two ABS items
 		// to work with.  They all produce an ABS value.
 		default:
+//printf("evexpr(): default\n");
 			// GH - Removed for v1.0.15 as part of the fix for indexed loads.
 			//if ((*sattr & (TEXT|DATA|BSS)) || (*--sattr & (TEXT|DATA|BSS)))
 			//error(seg_error);
