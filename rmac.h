@@ -182,6 +182,7 @@ extern int glob_flag;
 extern int lsym_flag;
 extern int sbra_flag;
 extern int obj_format;
+extern int legacy_flag;
 extern LONG amemtot;
 
 // Prototypes

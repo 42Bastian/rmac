@@ -29,6 +29,7 @@ int as68_flag;						// as68 kludge mode
 int glob_flag;						// Assume undefined symbols are global
 int lsym_flag;						// Include local symbols in object file
 int sbra_flag;						// Warn about possible short branches
+int legacy_flag;					// Do stuff like insert code in RISC assembler
 int obj_format;						// Object format flag
 int debug;							// [1..9] Enable debugging levels
 int err_flag;						// '-e' specified
@@ -203,6 +204,7 @@ void display_help(void)
 		"                    b: BSD (use this for Jaguar)\n"
 		"  -i[path]          Directory to search for include files\n"
 		"  -l[filename]      Create an output listing file\n"
+		"  -n                Don't do things behind your back in RISC assembler\n"
 		"  -o file           Output file name\n"
 		"  -r[size]          Pad segments to boundary size specified\n"
 		"                    w: word (2 bytes, default alignment)\n"
@@ -427,6 +429,11 @@ int process(int argc, char ** argv)
 				display_help();
 				errcnt++;
 				break;
+			case 'n':                                       // Turn off legacy mode
+			case 'N':
+				legacy_flag = 0;
+				printf("Legacy mode OFF\n");
+				break;
 			default:
 				display_version();
 				printf("Unknown switch: %s\n\n", argv[argno]);
@@ -559,6 +566,7 @@ int get_endianess(void)
 int main(int argc, char ** argv)
 {
 	perm_verb_flag = 0;				// Clobber "permanent" verbose flag
+	legacy_flag = 1;				// Default is legacy mode on (:-P)
 	cmdlnexec = argv[0];			// Obtain executable name
 
 	endian = get_endianess();		// Get processor endianess
@@ -574,3 +582,4 @@ int main(int argc, char ** argv)
 
 	return 0;
 }
+

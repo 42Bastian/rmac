@@ -26,6 +26,7 @@ unsigned altbankok = 0;		// Ok to use alternate register bank
 unsigned orgactive = 0;		// RISC org directive active
 unsigned orgaddr = 0;		// Org'd address
 unsigned orgwarning = 0;	// Has an ORG warning been issued
+int lastOpcode = -1;		// Last RISC opcode assembled
 
 char reg_err[] = "missing register R0...R31";
 
@@ -113,16 +114,8 @@ struct opcoderecord roptbl[] = {
 //
 void strtoupper(char * s)
 {
-#if 0
-	while (*s)
-	{
-		*s = (char)(toupper(*s));
-		s++;
-	}
-#else
 	while (*s)
 		*s++ &= 0xDF;
-#endif
 }
 
 
@@ -229,8 +222,8 @@ int GenerateRISCCode(int state)
 	switch (type)
 	{
 	// No operand instructions
-	// NOP
-	case RI_NONE: 
+	// NOP (57)
+	case RI_NONE:
 		BuildRISCIntructionWord(parm, 0, 0);
 		break;
 
@@ -335,6 +328,18 @@ int GenerateRISCCode(int state)
 
 		if (expr(r_expr, &eval, &eattr, &esym) != OK)
 			return MalformedOpcode(0x04);
+
+		if (lastOpcode == RI_JUMP || lastOpcode == RI_JR)
+		{
+			if (legacy_flag)
+			{
+				// User doesn't care, emit a NOP to fix
+				BuildRISCIntructionWord(57, 0, 0);
+				warn("MOVEI following JUMP, inserting NOP to fix your BROKEN CODE");
+			}
+			else
+				warn("MOVEI following JUMP");
+		}
 
 		if ((challoc - ch_size) < 4)
 			chcheck(4L);
@@ -463,7 +468,7 @@ int GenerateRISCCode(int state)
 
 					if (!(eattr & DEFINED))
 					{
-						error("constant expected");
+						error("constant expected after '+'");
 						return ERROR;
 					}
 
@@ -473,13 +478,13 @@ int GenerateRISCCode(int state)
 					{
 						reg1 = 14 + (parm - 58);
 						parm = 41;
-						warn("NULL offset removed");
+						warn("NULL offset in LOAD ignored");
 					}
 					else
 					{
 						if (reg1 < 1 || reg1 > 32)
 						{
-							error("constant out of range");
+							error("constant in LOAD out of range");
 							return ERROR;
 						}
 
@@ -601,13 +606,13 @@ int GenerateRISCCode(int state)
 						{
 							reg2 = 14 + (parm - 60);
 							parm = 47;
-							warn("NULL offset removed");
+							warn("NULL offset in STORE ignored");
 						}
 						else
 						{
 							if (reg2 < 1 || reg2 > 32)
 							{
-								error("constant out of range");
+								error("constant in STORE out of range");
 								return ERROR;
 							}
 
@@ -805,6 +810,7 @@ int GenerateRISCCode(int state)
 		return ERROR;
 	}
 
+	lastOpcode = type;
 	return 0;
 }
 
