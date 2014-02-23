@@ -12,18 +12,18 @@
 #include <time.h>
 #include "rmac.h"
 
-#define BOT_MAR         1                                   // #blank lines on bottom of page
-#define IMAGESIZ        200                                 // Max size of a line of text
-#define TITLESIZ        200                                 // Max size of a title
-#define LN_COL          0                                   // Column for line numbers
-#define LOC_COL         7                                   // Location ptr
-#define DATA_COL        17                                  // Data start (for 20 chars, usually 16)
-#define DATA_END        (DATA_COL+20)                       // End+1th data column
-#define TAG_COL         38                                  // Tag character
-#define SRC_COL         40                                  // Source start
+#define BOT_MAR         1				// #blank lines on bottom of page
+#define IMAGESIZ        200				// Max size of a line of text
+#define TITLESIZ        200				// Max size of a title
+#define LN_COL          0				// Column for line numbers
+#define LOC_COL         7				// Location ptr
+#define DATA_COL        17				// Data start (for 20 chars, usually 16)
+#define DATA_END        (DATA_COL+20)	// End+1th data column
+#define TAG_COL         38				// Tag character
+#define SRC_COL         40				// Source start
 
 // Globals, externals etc
-extern char *list_fname;
+extern char * list_fname;
 extern int listing;
 extern int pagelen;
 extern int nlines;

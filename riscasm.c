@@ -33,7 +33,7 @@ char reg_err[] = "missing register R0...R31";
 // Jaguar Jump Condition Names
 char condname[MAXINTERNCC][5] = { 
 	"NZ", "Z", "NC", "NCNZ", "NCZ", "C", "CNZ", "CZ", "NN", "NNNZ", "NNZ",
-	"N", "N_NZ", "N_Z ", "T", "A", "NE", "EQ", "CC", "HS", "HI", "CS", "LO",
+	"N", "N_NZ", "N_Z", "T", "A", "NE", "EQ", "CC", "HS", "HI", "CS", "LO",
 	"PL", "MI", "F"
 };
 
@@ -338,7 +338,7 @@ int GenerateRISCCode(int state)
 				warn("MOVEI following JUMP, inserting NOP to fix your BROKEN CODE");
 			}
 			else
-				warn("MOVEI following JUMP");
+				warn("MOVEI immediately follows JUMP");
 		}
 
 		if ((challoc - ch_size) < 4)

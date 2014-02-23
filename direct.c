@@ -118,15 +118,15 @@ int d_org(void)
 //
 int d_print(void)
 {
-	char prntstr[LNSIZ];                                     // String for PRINT directive
-	char format[LNSIZ];                                      // Format for PRINT directive
-	int formatting = 0;                                      // Formatting on/off
-	int wordlong = 0;                                        // WORD = 0, LONG = 1
-	int outtype = 0;                                         // 0:hex, 1:decimal, 2:unsigned
+	char prntstr[LNSIZ];					// String for PRINT directive
+	char format[LNSIZ];						// Format for PRINT directive
+	int formatting = 0;						// Formatting on/off
+	int wordlong = 0;						// WORD = 0, LONG = 1
+	int outtype = 0;						// 0:hex, 1:decimal, 2:unsigned
 
-	VALUE eval;                                              // Expression value
-	WORD eattr;                                              // Expression attributes
-	SYM * esym;                                              // External symbol involved in expr.
+	VALUE eval;								// Expression value
+	WORD eattr;								// Expression attributes
+	SYM * esym;								// External symbol involved in expr.
 	TOKEN r_expr[EXPRSIZE];
 
 	while (*tok != EOL)
@@ -201,7 +201,7 @@ int d_print(void)
 	}
 
 	printf("\n");
-	println("\n");
+//	println("\n");
 
 	return 0;
 

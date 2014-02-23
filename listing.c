@@ -40,10 +40,12 @@ static char timestr[20];			// Current time hh:mm:ss [am|pm]
 static char buf[IMAGESIZ];			// Buffer for numbers
 static long unused;					// For supressing 'write' warnings
 
-static char * month[16] = { "",    "Jan", "Feb", "Mar",
-                           "Apr", "May", "Jun", "Jul",
-                           "Aug", "Sep", "Oct", "Nov",
-                           "Dec", "",    "",    ""     };
+static char * month[16] = {
+	"",    "Jan", "Feb", "Mar",
+	"Apr", "May", "Jun", "Jul",
+	"Aug", "Sep", "Oct", "Nov",
+	"Dec", "",    "",    ""
+};
 
 //
 // Eject the Page (Print Empty Lines), Reset the Line Count and Bump the Page Number
@@ -134,7 +136,7 @@ void date_string(char * buf, VALUE date)
 void scopy(char *dest, char *src, int len)
 {
 	if (len < 0)
-		len = 1000;                                           // Some large number
+		len = 1000;			// Some large number [Shamus: wha...?]
 
 	while (len-- && *src)
 		*dest++ = *src++;
@@ -209,7 +211,8 @@ void println(const char * ln)
 {
 	unsigned int length;
 
-	if (list_fname != NULL)                                   //  Create listing file, if necessary
+	//  Create listing file, if necessary
+	if (list_fname != NULL)
 		list_setup();
 
 	length = strlen(ln);
@@ -449,7 +452,8 @@ int d_subttl(void)
 
 	tok += 2;
 
-	if (ejectok && (subflag || pageno > 1))                   // Always eject on pages 2+ 
+	// Always eject on pages 2+ 
+	if (ejectok && (subflag || pageno > 1))
 		eject();
 
 	subflag = 1;
