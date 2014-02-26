@@ -85,6 +85,7 @@ int (*dirtab[])() = {
 	d_cstruct,			// 53 .cstruct
 	d_jpad,				// 54 .jpad (deprecated)
 	d_nojpad,			// 55 .nojpad (deprecated)
+	d_gpumain,			// 56 .gpumain (deprecated)
 };
 
 
@@ -1574,5 +1575,11 @@ int d_nojpad(void)
 {
 	warn("NOJPAD directive is deprecated/non-functional");
 	return OK;
+}
+
+
+int d_gpumain(void)
+{
+	return error("What the hell? Do you think we adhere to the Goof standard?");
 }
 

@@ -71,5 +71,6 @@ int abs_expr(VALUE *);
 int d_cstruct(void);
 int d_jpad(void);
 int d_nojpad(void);
+int d_gpumain(void);
 
 #endif // __DIRECT_H__

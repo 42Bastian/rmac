@@ -93,6 +93,8 @@ cstruct	53
 jpad	54
 .nojpad	55
 nojpad	55
+.gpumain	56
+gpumain	56
 .if	500
 if	500
 .else	501
