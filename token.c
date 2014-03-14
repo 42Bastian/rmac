@@ -795,11 +795,17 @@ char * GetNextLine(void)
 		// Scan for next end-of-line; handle stupid text formats by treating
 		// \r\n the same as \n. (lone '\r' at end of buffer means we have to
 		// check for '\n').
+#if 0
 		i = 0;
 		j = fl->ifcnt;
 		d = &fl->ifbuf[fl->ifind];
 
 		for(p=d; i<j; i++, p++)
+#else
+		d = &fl->ifbuf[fl->ifind];
+
+		for(p=d, i=0, j=fl->ifcnt; i<j; i++, p++)
+#endif
 		{
 			if (*p == '\r' || *p == '\n')
 			{
@@ -808,15 +814,12 @@ char * GetNextLine(void)
 				if (*p == '\r')
 				{
 					if (i >= j)
-					{
-						break;				// Look for '\n' to eat 
-					}
+						break;			// Need to read more, then look for '\n' to eat 
 					else if (p[1] == '\n')
-					{
 						i++;
-					}
 				}
 
+				// Cover up the newline with end-of-string sentinel
 				*p = '\0';
 
 				fl->ifind += i;
@@ -827,11 +830,19 @@ char * GetNextLine(void)
 
 		// Handle hanging lines by ignoring them (Input file is exhausted, no
 		// \r or \n on last line)
+		// Shamus: This is retarded. Never ignore any input!
 		if (!readamt && fl->ifcnt)
 		{
+#if 0
 			fl->ifcnt = 0;
 			*p = '\0';
 			return NULL;
+#else
+			// Really should check to see if we're at the end of the buffer! :-P
+			fl->ifbuf[fl->ifind + fl->ifcnt] = '\0';
+			fl->ifcnt = 0;
+			return &fl->ifbuf[fl->ifind];
+#endif
 		}
 
 		// Truncate and return absurdly long lines.
@@ -856,7 +867,9 @@ char * GetNextLine(void)
 			fl->ifind = fl->ifcnt & 1;
 		}
 
-		if ((readamt = read(fl->ifhandle, &fl->ifbuf[fl->ifind + fl->ifcnt], QUANTUM)) < 0)
+		readamt = read(fl->ifhandle, &fl->ifbuf[fl->ifind + fl->ifcnt], QUANTUM);
+
+		if (readamt < 0)
 			return NULL;
 
 		if ((fl->ifcnt += readamt) == 0)
