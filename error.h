@@ -27,5 +27,6 @@ int warni(const char *, unsigned);
 int interror(int);
 void cantcreat(const char *);
 void err_setup(void);
+int at_eol(void);
 
 #endif // __ERROR_H__

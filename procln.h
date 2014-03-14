@@ -20,17 +20,14 @@ extern const char syntax_error[];
 extern const char extra_stuff[];
 extern int just_bss;
 extern VALUE pcloc;
-//extern IFENT * ifent;
 extern SYM * lab_sym;
 extern LONG amsktab[];
 
 // Prototypes
 void InitLineProcessor(void);
 void Assemble(void);
-int eject(void);
 int d_if(void);
 int d_else(void);
 int d_endif(void);
-int at_eol(void);
 
 #endif // __PROCLN_H__

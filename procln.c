@@ -89,6 +89,10 @@ LONG amsktab[0112] = {
 };													// 0112 length
 
 
+// Function prototypes
+int HandleLabel(char *, int);
+
+
 //
 // Initialize Line Processor
 //
@@ -123,7 +127,7 @@ void Assemble(void)
 	SYM * sy, * sy2;			// Symbol (temp usage)
 	char * opname = NULL;		// Name of dirctve/mnemonic/macro
 	int listflag;				// 0: Don't call listeol()
-	int as68mode = 0;			// 1: Handle multiple labels
+//	int as68mode = 0;			// 1: Handle multiple labels
 	WORD rmask;					// Register list, for REG
 	int registerbank;			// RISC register bank
 	int riscreg;				// RISC register
@@ -199,12 +203,18 @@ as68label:
 		// and come back at `as68label' above.
 		if (as68_flag)
 		{
-			as68mode = 0;
+//			as68mode = 0;
 
+			// Looks like another label follows the previous one, so handle
+			// the previous one
 			if (*tok == SYMBOL && tok[2] == ':')
 			{
-				as68mode = 1;
-				goto do_label;
+//				as68mode = 1;
+//				goto do_label;
+				if (HandleLabel(label, labtyp) != 0)
+					goto loop;
+
+				goto as68label;
 			}
 		}
 	}
@@ -316,6 +326,7 @@ as68label:
 		case MN_ENDM:						// .endm --- same as .exitm
 			if (!disabled)
 			{
+				// Label on a macro definition is bad mojo... Warn the user
 				if (label != NULL)
 					warn(lab_ignored);
 
@@ -326,8 +337,17 @@ as68label:
 		case MN_REPT:
 			if (!disabled)
 			{
+#if 0
 				if (label != NULL)
 					warn(lab_ignored);
+#else
+				// Handle labels on REPT directive lines...
+				if (label)
+				{
+					if (HandleLabel(label, labtyp) != 0)
+						goto loop;
+				}
+#endif
 
 				defrept();
 			}
@@ -570,6 +590,7 @@ checking to see if it's already been equated, issue a warning.
 	if (label != NULL)
 	{
 do_label:
+#if 0
 		// Check for dot in front of label; means this is a local label if present
 		j = (*label == '.' ? curenv : 0);
 		sy = lookup(label, LABEL, j);
@@ -617,10 +638,14 @@ do_label:
 
 			sy->sattr |= GLOBAL;
 		}
-
+#else
+		// Non-zero == error occurred
+		if (HandleLabel(label, labtyp) != 0)
+			goto loop;
+#endif
 		// If we're in as68 mode, and there's another label, go back and handle it
-		if (as68_flag && as68mode)
-			goto as68label;
+//		if (as68_flag && as68mode)
+//			goto as68label;
 	}
 
 	// Punt on EOL
@@ -731,6 +756,57 @@ do_label:
 
 		m = &machtab[m->mncont];
 	}
+}
+
+
+//
+// Handle the creation of labels
+//
+int HandleLabel(char * label, int labelType)
+{
+	// Check for dot in front of label; means this is a local label if present
+	int j = (*label == '.' ? curenv : 0);
+	SYM * sy = lookup(label, LABEL, j);
+
+	if (sy == NULL)
+	{
+		sy = NewSymbol(label, LABEL, j);
+		sy->sattr = 0;
+		sy->sattre = RISCSYM;
+	}
+	else if (sy->sattr & DEFINED)
+		return errors("multiply-defined label '%s'", label);
+
+	// Put symbol in "order of definition" list
+	if (!(sy->sattr & SDECLLIST))
+		sym_decl(sy);
+
+	if (orgactive)
+	{
+		sy->svalue = orgaddr;
+		sy->sattr |= ABS | DEFINED | EQUATED;
+	}
+	else
+	{
+		sy->svalue = sloc;
+		sy->sattr |= DEFINED | cursect;
+	}
+
+	lab_sym = sy;
+
+	if (!j)
+		curenv++;
+
+	// Make label global if it has a double colon
+	if (labelType == DCOLON)
+	{
+		if (j)
+			return error(locgl_error);
+
+		sy->sattr |= GLOBAL;
+	}
+
+	return 0;
 }
 
 
