@@ -115,7 +115,6 @@ int fudump(CHUNK * ch)
 			}
 			else
 			{
-//				printf("`%s' ;\n", (*p.sy)->sname);
 				printf("`%s' ;", (*p.sy)->sname);
 				p.sy++;
 			}

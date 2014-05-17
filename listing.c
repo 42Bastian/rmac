@@ -306,7 +306,7 @@ void listeol(void)
 	// deposited with dcb. The fix (kludge) is an extra variable which records
 	// the fact that a 'ds.x' directive generated all the data, and it
 	// shouldn't be listed
-	savsect();                                               // Update section variables
+	SaveSection();                                               // Update section variables
 
 	if (lcursect == cursect && (sect[lcursect].scattr & SBSS) == 0
 		&& lsloc != sloc && just_bss == 0)

@@ -307,7 +307,7 @@ int m_shi(WORD inst, WORD siz)
 	}
 	else
 	{
-		fixup(FU_QUICK, sloc, a0expr);
+		AddFixup(FU_QUICK, sloc, a0expr);
 		D_word(inst);
 	}
 
@@ -372,7 +372,7 @@ int m_dbra(WORD inst, WORD siz)
 	}
 	else
 	{
-		fixup(FU_WORD | FU_PCREL | FU_ISBRA, sloc, a1expr);
+		AddFixup(FU_WORD | FU_PCREL | FU_ISBRA, sloc, a1expr);
 		D_word(0);
 	}
 
@@ -489,7 +489,7 @@ int m_moveq(WORD inst, WORD siz)
 	// Arrange for future fixup 
 	if (!(a0exattr & DEFINED))
 	{
-		fixup(FU_BYTE | FU_SEXT, sloc + 1, a0expr);
+		AddFixup(FU_BYTE | FU_SEXT, sloc + 1, a0expr);
 		a0exval = 0; 
 	}
 	else if (a0exval + 0x100 >= 0x200)
@@ -599,7 +599,7 @@ int m_br(WORD inst, WORD siz)
 	if (siz == SIZB)
 	{
 		// .B 
-		fixup(FU_BBRA | FU_PCREL | FU_SEXT, sloc, a0expr);
+		AddFixup(FU_BBRA | FU_PCREL | FU_SEXT, sloc, a0expr);
 		D_word(inst);
 		return 0;
 	}
@@ -607,7 +607,7 @@ int m_br(WORD inst, WORD siz)
 	{
 		// .W 
 		D_word(inst);
-		fixup(FU_WORD | FU_PCREL | FU_LBRA | FU_ISBRA, sloc, a0expr);
+		AddFixup(FU_WORD | FU_PCREL | FU_LBRA | FU_ISBRA, sloc, a0expr);
 		D_word(0);
 	}
 
@@ -632,7 +632,7 @@ int m_addq(WORD inst, WORD siz)
 	}
 	else
 	{
-		fixup(FU_QUICK, sloc, a0expr);
+		AddFixup(FU_QUICK, sloc, a0expr);
 		D_word(inst);
 	}
 

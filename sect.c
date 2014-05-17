@@ -19,8 +19,8 @@
 
 
 // Function prototypes
-void mksect(int, WORD);
-void switchsect(int);
+void MakeSection(int, WORD);
+void SwitchSection(int);
 
 // Section descriptors
 SECT sect[NSECTS];				// All sections... 
@@ -77,23 +77,23 @@ void InitSection(void)
 
 	// Cleanup all sections
 	for(i=0; i<NSECTS; i++)
-		mksect(i, 0);
+		MakeSection(i, 0);
 
 	// Construct default sections, make TEXT the current section
-	mksect(ABS,   SUSED | SABS | SBSS);		// ABS
-	mksect(TEXT,  SUSED | TEXT       );		// TEXT
-	mksect(DATA,  SUSED | DATA       );		// DATA
-	mksect(BSS,   SUSED | BSS | SBSS );		// BSS
-//	mksect(M6502, SUSED | TEXT       );		// 6502 code section
+	MakeSection(ABS,   SUSED | SABS | SBSS);		// ABS
+	MakeSection(TEXT,  SUSED | TEXT       );		// TEXT
+	MakeSection(DATA,  SUSED | DATA       );		// DATA
+	MakeSection(BSS,   SUSED | BSS  | SBSS);		// BSS
+//	MakeSection(M6502, SUSED | TEXT       );		// 6502 code section
 
-	switchsect(TEXT);						// Switch to TEXT for starters
+	SwitchSection(TEXT);						// Switch to TEXT for starters
 }
 
 
 //
 // Make a New (Clean) Section
 //
-void mksect(int sno, WORD attr)
+void MakeSection(int sno, WORD attr)
 {
 	SECT * p = &sect[sno];
 	p->scattr = attr;
@@ -104,10 +104,10 @@ void mksect(int sno, WORD attr)
 
 
 //
-// Switch to Another Section (Copy Section & Chunk Descriptors to Global Vars
-// for Fast Access)
+// Switch to another section (copy section & chunk descriptors to global vars
+// for fast access)
 //
-void switchsect(int sno)
+void SwitchSection(int sno)
 {
 	CHUNK * cp;								// Chunk pointer
 	cursect = sno;
@@ -141,9 +141,9 @@ void switchsect(int sno)
 
 
 //
-// Save Current Section
+// Save current section
 //
-void savsect(void)
+void SaveSection(void)
 {
 	SECT * p = &sect[cursect];
 
@@ -263,14 +263,14 @@ int chcheck(LONG amt)
 //
 // Arrange for a fixup on a location
 //
-int fixup(WORD attr, LONG loc, TOKEN * fexpr)
+int AddFixup(WORD attr, LONG loc, TOKEN * fexpr)
 {
 	LONG i;
 	LONG len = 0;
 	CHUNK * cp;
 	SECT * p;
 	// Shamus: Expression lengths are voodoo ATM (variable "i"). Need to fix this.
-#warning "!!! fixup() is filled with VOODOO !!!"
+#warning "!!! AddFixup() is filled with VOODOO !!!"
 	DEBUG printf("FIXUP@$%X: $%X\n", loc, attr);
 
 	// Compute length of expression (could be faster); determine if it's the
@@ -280,7 +280,7 @@ int fixup(WORD attr, LONG loc, TOKEN * fexpr)
 	{
 		// Just a single symbol
 		// SCPCD : correct bit mask for attr (else other FU_xxx will match) NYAN !
-		if ((attr & 0x0F00) == FU_JR)
+		if ((attr & FUMASKRISC) == FU_JR)
 		{
 //			i = 18;
 //			i = FIXUP_BASE_SIZE + (sizeof(LONG) * 2);
@@ -358,7 +358,7 @@ int fixup(WORD attr, LONG loc, TOKEN * fexpr)
 	}
 
 	// SCPCD : correct bit mask for attr (else other FU_xxx will match) NYAN !
-	if ((attr & 0x0F00) == FU_JR)
+	if ((attr & FUMASKRISC) == FU_JR)
 	{
 		if (orgactive)
 			*fchptr.lp++ = orgaddr;
@@ -387,28 +387,6 @@ int ResolveAllFixups(void)
 	ResolveFixups(TEXT);
 	DEBUG printf("Resolving DATA sections...\n");
 	ResolveFixups(DATA);
-
-//No, no we don't.
-#if 0	
-	// We need to do a final check of forward 'jump' destination addresses that
-	// are external
-	for(i=0; i<MAXFWDJUMPS; i++)
-	{
-		if (fwdjump[i])
-		{
-			err_setup();
-			sprintf(buf, "* \'jump\' at $%08X - destination address is external to this source file and cannot have its aligment validated", fwdjump[i]);
-
-			if (listing > 0)
-				ship_ln(buf);
-
-			if (err_flag)
-				write(err_fd, buf, (LONG)strlen(buf));
-			else
-				printf("%s\n", buf);
-		}
-	}
-#endif
 
 	return 0;
 }
@@ -444,9 +422,11 @@ int ResolveFixups(int sno)
 	if (ch == NULL)
 		return 0;
 
-	CHUNK * cch = sc->sfcode;				// "cache" first chunk
+	// "Cache" first chunk
+	CHUNK * cch = sc->sfcode;
 
-	if (cch == NULL)						// Can't fixup a sect with nothing in it
+	// Can't fixup a sect with nothing in it
+	if (cch == NULL)
 		return 0;
 
 	do
@@ -481,7 +461,8 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 
 				if (cch == NULL)
 				{
-					interror(7);			// Fixup (loc) out of range 
+					// Fixup (loc) out of range 
+					interror(7);
 					// NOTREACHED
 				}
 			}
@@ -522,14 +503,20 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 
 			// If the expression is undefined and no external symbol is
 			// involved, then it's an error.
-			if (!(eattr & DEFINED) && esym == NULL)
+			if (!(eattr & DEFINED) && (esym == NULL))
 			{
 				error(undef_error);
 				continue;
 			}
 
-			if (((w & 0x0F00) == FU_MOVEI) && esym)
+// It seems that this is completely unnecessary!
+#if 0
+			if (((w & FUMASKRISC) == FU_MOVEI) && esym)
+//{
+//printf("DoFixups: Setting symbol attre to RISCSYM...\n");
 				esym->sattre |= RISCSYM;
+//}
+#endif
 
 			// Do the fixup
 			// 
@@ -625,7 +612,7 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 			// the word could be unaligned in the section buffer, so we have to
 			// be careful.
 			case FU_WORD:
-				if ((w & 0x0F00) == FU_JR)// || ((w & 0x0F00) == FU_MJR))
+				if ((w & FUMASKRISC) == FU_JR)// || ((w & 0x0F00) == FU_MJR))
 				{
 					oaddr = *fup.lp++;
 
@@ -685,7 +672,7 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 					break;
 				}
 
-				if ((w & 0x0F00) == FU_NUM15)
+				if ((w & FUMASKRISC) == FU_NUM15)
 				{
 					if (eval < -16 || eval > 15)
 					{
@@ -699,7 +686,7 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 					break;
 				}
 
-				if ((w & 0x0F00) == FU_NUM31)
+				if ((w & FUMASKRISC) == FU_NUM31)
 				{
 					if (eval < 0 || eval > 31)
 					{
@@ -713,7 +700,7 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 					break;
 				}
 
-				if ((w & 0x0F00) == FU_NUM32)
+				if ((w & FUMASKRISC) == FU_NUM32)
 				{
 					if (eval < 1 || eval > 32)
 					{
@@ -731,7 +718,7 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 					break;
 				}
 
-				if ((w & 0x0F00) == FU_REGONE)
+				if ((w & FUMASKRISC) == FU_REGONE)
 				{
 					if (eval < 0 || eval > 31)
 					{
@@ -745,7 +732,7 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 					break;
 				}
 
-				if ((w & 0x0F00) == FU_REGTWO)
+				if ((w & FUMASKRISC) == FU_REGTWO)
 				{
 					if (eval < 0 || eval > 31)
 					{
@@ -797,7 +784,7 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 			// the long could be unaligned in the section buffer, so be careful
 			// (again).
 			case FU_LONG:
-				if ((w & 0x0F00) == FU_MOVEI)
+				if ((w & FUMASKRISC) == FU_MOVEI)
 				{
 #if 0
 					address = loc + 4;
@@ -851,6 +838,7 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 					}
 #endif
 
+					// Long constant in MOVEI # is word-swapped, so fix it here
 					eval = ((eval >> 16) & 0x0000FFFF) | ((eval << 16) & 0xFFFF0000);
 					flags = (MLONG | MMOVEI);
 				}

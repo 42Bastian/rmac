@@ -54,8 +54,9 @@ int rmark(uint16_t from, uint32_t loc, uint16_t to, uint16_t size, SYM * symbol)
 {
 #ifdef DEBUG_IMAGE_MARKING
 printf("rmark: from=%i, loc=$%X, to=$%X, size=$%x, symbol=$%X\n", from, loc, to, size, symbol);
+if (symbol)
+	printf("      symbol->stype=$%02X, sattr=$%04X, sattre=$%08X, svalue=%i, sname=%s\n", symbol->stype, symbol->sattr, symbol->sattre, symbol->svalue, symbol->sname);
 #endif
-//	uint16_t w;
 
 	if ((mcalloc - mcused) < MIN_MARK_MEM)
 		amark();
@@ -212,8 +213,12 @@ printf(" validsegment: raddr = $%08X\n", raddr);
 				else
 					rflag = 0x00000040;	// Absolute fixup
 
+// This flag tells the linker to WORD swap the LONG when doing the fixup.
 				if (w & MMOVEI)
+//{
+//printf("bsdmarkimg: ORing $01 to rflag (MMOVEI) [symbol=%s]...\n", symbol->sname);
 					rflag |= 0x00000001;
+//}
 			}
 
 			// Compute mark position in relocation information;
@@ -231,8 +236,14 @@ printf(" validsegment: raddr = $%08X\n", raddr);
 					rflag |= 0x00000010;			// Set external reloc flag bit
 					rflag |= (symbol->senv << 8);	// Put symbol index in flags
 
+// Looks like this is completely unnecessary (considering it does the wrong thing!)
+#if 0
 					if (symbol->sattre & RISCSYM)
+{
+printf("bsdmarkimg: ORing $01 to rflag (RISCSYM) [symbol=%s]...\n", symbol->sname);
 						rflag |= 0x00000001;
+}
+#endif
 
 					if (validsegment)
 					{

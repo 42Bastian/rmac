@@ -13,3 +13,7 @@ bugs/
 bugs1/
 bugs2/
 bugs3/
+bugs4/
+bugs5/
+*.zip
+features/

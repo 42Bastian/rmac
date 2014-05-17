@@ -105,9 +105,9 @@ int kmatch(char * p, int * base, int * check, int * tab, int * accept)
 //
 void autoeven(int sect)
 {
-	switchsect(sect);
+	SwitchSection(sect);
 	d_even();
-	savsect();
+	SaveSection();
 }
 
 
@@ -470,11 +470,11 @@ int process(int argc, char ** argv)
 	// o  determine name of object file:
 	//    -  "foo.o" for linkable output;
 	//    -  "foo.prg" for GEMDOS executable (-p flag).
-	savsect();
+	SaveSection();
 
 	for(i=TEXT; i<=BSS; i<<=1)
 	{
-		switchsect(i);
+		SwitchSection(i);
 
 		switch(segpadsize)
 		{
@@ -485,7 +485,7 @@ int process(int argc, char ** argv)
 		case 32: d_qphrase(); break;
 		}
 
-		savsect();
+		SaveSection();
 	}
 
 	if (objfname == NULL)

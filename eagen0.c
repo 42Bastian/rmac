@@ -19,7 +19,8 @@ int eaNgen(WORD siz)
 
 	switch (amN)
 	{
-	case DREG:                                            // "Do nothing" - they're in the opword
+	// "Do nothing" - they're in the opword
+	case DREG:
 	case AREG:
 	case AIND:
 	case APOSTINC:
@@ -28,10 +29,13 @@ int eaNgen(WORD siz)
 	case AM_CCR:
 	case AM_SR:
 	case AM_NONE:
-		break;                                             // This is a performance hit, though
-	case ADISP:                                           // expr(An)
+		// This is a performance hit, though
+		break;
+	case ADISP:
+		// expr(An)
 		if (w)
-		{                                            // Just deposit it 
+		{
+			// Just deposit it 
 			if (tdb)
 				rmark(cursect, sloc, tdb, MWORD, NULL);
 
@@ -41,15 +45,17 @@ int eaNgen(WORD siz)
 			D_word(v);
 		}
 		else
-		{                                           // Arrange for fixup later on 
-			fixup(FU_WORD|FU_SEXT, sloc, aNexpr);
+		{
+			// Arrange for fixup later on 
+			AddFixup(FU_WORD|FU_SEXT, sloc, aNexpr);
 			D_word(0);
 		}
 
 		break;
 	case PCDISP:
 		if (w)
-		{                                            // Just deposit it 
+		{
+			// Just deposit it 
 			if ((aNexattr & TDB) == cursect)
 				v -= (VALUE)sloc;
 			else if ((aNexattr & TDB) != ABS)
@@ -61,19 +67,23 @@ int eaNgen(WORD siz)
 			D_word(v);
 		}
 		else
-		{                                           // Arrange for fixup later on 
-			fixup(FU_WORD|FU_SEXT|FU_PCREL, sloc, aNexpr);
+		{
+			// Arrange for fixup later on 
+			AddFixup(FU_WORD|FU_SEXT|FU_PCREL, sloc, aNexpr);
 			D_word(0);
 		}
 
 		break;
 	case AINDEXED:
-		w = (WORD)((aNixreg << 12) | aNixsiz);             // Compute ixreg and size+scale
+		// Compute ixreg and size+scale
+		w = (WORD)((aNixreg << 12) | aNixsiz);
 
 		if (aNexattr & DEFINED)
-		{                           // Deposit a byte... 
+		{
+			// Deposit a byte... 
 			if (tdb)
-				return error(abs_error);                    // Can't mark bytes 
+				// Can't mark bytes 
+				return error(abs_error);
 
 			if (v + 0x80 >= 0x180)
 				return error(range_error);
@@ -82,17 +92,20 @@ int eaNgen(WORD siz)
 			D_word(w);
 		}
 		else
-		{                                           // Fixup the byte later
-			fixup(FU_BYTE|FU_SEXT, sloc+1, aNexpr);
+		{
+			// Fixup the byte later
+			AddFixup(FU_BYTE|FU_SEXT, sloc+1, aNexpr);
 			D_word(w);
 		}
 
 		break;
 	case PCINDEXED:
-		w = (WORD)((aNixreg << 12) | aNixsiz);             // Compute ixreg and size+scale
+		// Compute ixreg and size+scale
+		w = (WORD)((aNixreg << 12) | aNixsiz);
 
 		if (aNexattr & DEFINED)
-		{                           // Deposit a byte... 
+		{
+			// Deposit a byte... 
 			if ((aNexattr & TDB) == cursect) 
 				v -= (VALUE)sloc;
 			else if ((aNexattr & TDB) != ABS)
@@ -105,8 +118,9 @@ int eaNgen(WORD siz)
 			D_word(w);
 		}
 		else
-		{                                           // Fixup the byte later 
-			fixup(FU_WBYTE|FU_SEXT|FU_PCREL, sloc, aNexpr);
+		{
+			// Fixup the byte later 
+			AddFixup(FU_WBYTE|FU_SEXT|FU_PCREL, sloc, aNexpr);
 			D_word(w);
 		}
 
@@ -127,7 +141,7 @@ int eaNgen(WORD siz)
 			}
 			else
 			{
-				fixup(FU_BYTE|FU_SEXT, sloc+1, aNexpr);
+				AddFixup(FU_BYTE|FU_SEXT, sloc+1, aNexpr);
 				D_word(0);
 			}
 
@@ -146,7 +160,7 @@ int eaNgen(WORD siz)
 			}
 			else
 			{
-				fixup(FU_WORD|FU_SEXT, sloc, aNexpr);
+				AddFixup(FU_WORD|FU_SEXT, sloc, aNexpr);
 				D_word(0);
 			}
 
@@ -161,13 +175,14 @@ int eaNgen(WORD siz)
 			}
 			else
 			{
-				fixup(FU_LONG, sloc, aNexpr);
+				AddFixup(FU_LONG, sloc, aNexpr);
 				D_long(0);
 			}
 
 			break;
 		default:
-			interror(1);                                 // IMMED size problem
+			// IMMED size problem
+			interror(1);
 		}
 
 		break;
@@ -184,7 +199,7 @@ int eaNgen(WORD siz)
 		}
 		else
 		{
-			fixup(FU_WORD|FU_SEXT, sloc, aNexpr);
+			AddFixup(FU_WORD|FU_SEXT, sloc, aNexpr);
 			D_word(0);
 		}
 
@@ -199,7 +214,7 @@ int eaNgen(WORD siz)
 		}
 		else
 		{
-			fixup(FU_LONG, sloc, aNexpr);
+			AddFixup(FU_LONG, sloc, aNexpr);
 			D_long(0);
 		}
 
@@ -212,7 +227,8 @@ int eaNgen(WORD siz)
 	case PCMPRE:
 		return error("unsupported 68020 addressing mode");
 	default:
-		interror(3);                                       // Bad addressing mode in ea gen 
+		// Bad addressing mode in ea gen 
+		interror(3);
 	}
 
 	return OK;
@@ -226,3 +242,4 @@ int eaNgen(WORD siz)
 #undef aNexpr
 #undef aNixreg
 #undef aNixsiz
+

@@ -258,10 +258,7 @@ int d_equrundef(void)
 
 	// Check that we are in a RISC section
 	if (!rgpu && !rdsp)
-	{
-		error(".equrundef/.regundef must be defined in .gpu/.dsp section");
-		return ERROR;
-	}
+		return error(".equrundef/.regundef must be defined in .gpu/.dsp section");
 
 	while (*tok != EOL)
 	{
@@ -271,14 +268,9 @@ int d_equrundef(void)
 
 		// Check we are dealing with a symbol
 		if (*tok != SYMBOL)
-		{
-//			error(syntax_error);
-			error("syntax error; expected symbol");
-			return ERROR;
-		}
+			return error("syntax error; expected symbol");
 
 		// Lookup and undef if equated register
-//		regname = lookup((char *)tok[1], LABEL, 0);
 		regname = lookup(string[tok[1]], LABEL, 0);
 
 		if (regname && (regname->sattre & EQUATEDREG))
@@ -524,7 +516,7 @@ int d_qphrase(void)
 	{
 		if ((scattr & SBSS) == 0)
 		{
-			savsect();
+			SaveSection();
 			chcheck(val);
 
 			for(i=0; i<val; i++) 
@@ -594,18 +586,14 @@ int abs_expr(VALUE * a_eval)
 //
 int symlist(int(* func)())
 {
-	char * em = "symbol list syntax";
+	const char * em = "symbol list syntax";
 
 	for(;;)
 	{
 		if (*tok != SYMBOL)
 			return error(em);
 
-#if 0
-		if ((*func)(tok[1]) != OK)
-#else
 		if ((*func)(string[tok[1]]) != OK)
-#endif
 			break;
 
 		tok += 2;
@@ -616,7 +604,7 @@ int symlist(int(* func)())
 		if (*tok != ',')
 			return error(em);
 
-		++tok;
+		tok++;
 	}
 
 	return 0;
@@ -715,7 +703,7 @@ int d_assert(void)
 //
 int globl1(char * p)
 {
-	SYM *sy;
+	SYM * sy;
 
 	if (*p == '.')
 		return error("cannot .globl local symbol");
@@ -725,6 +713,7 @@ int globl1(char * p)
 		sy = NewSymbol(p, LABEL, 0);
 		sy->svalue = 0;
 		sy->sattr = GLOBAL;
+//printf("glob1: Making global symbol: attr=%04X, eattr=%08X, %s\n", sy->sattr, sy->sattre, sy->sname);
 	}
 	else 
 		sy->sattr |= GLOBAL;
@@ -747,14 +736,14 @@ int d_abs(void)
 {
 	VALUE eval;
 
-	savsect();
+	SaveSection();
 
 	if (*tok == EOL)
 		eval = 0;
 	else if (abs_expr(&eval) != OK)
 		return 0;
 
-	switchsect(ABS);
+	SwitchSection(ABS);
 	sloc = eval;
 	return 0;
 }
@@ -771,8 +760,8 @@ int d_text(void)
 
 	if (cursect != TEXT)
 	{
-		savsect();
-		switchsect(TEXT);
+		SaveSection();
+		SwitchSection(TEXT);
 	}
 
 	return 0;
@@ -786,8 +775,8 @@ int d_data(void)
 
 	if (cursect != DATA)
 	{
-		savsect();
-		switchsect(DATA);
+		SaveSection();
+		SwitchSection(DATA);
 	}
 
 	return 0;
@@ -801,8 +790,8 @@ int d_bss(void)
 
 	if (cursect != BSS)
 	{
-		savsect();
-		switchsect(BSS);
+		SaveSection();
+		SwitchSection(BSS);
 	}
 
 	return 0;
@@ -911,7 +900,7 @@ int d_dc(WORD siz)
 		case SIZB:
 			if (!defined)
 			{
-				fixup(FU_BYTE | FU_SEXT, sloc, exprbuf);
+				AddFixup(FU_BYTE | FU_SEXT, sloc, exprbuf);
 				D_byte(0);
 			}
 			else
@@ -930,7 +919,7 @@ int d_dc(WORD siz)
 		case SIZN:
 			if (!defined)
 			{
-				fixup(FU_WORD | FU_SEXT, sloc, exprbuf);
+				AddFixup(FU_WORD | FU_SEXT, sloc, exprbuf);
 				D_word(0);
 			}
 			else
@@ -950,9 +939,9 @@ int d_dc(WORD siz)
 			if (!defined)
 			{
 				if (movei)
-					fixup(FU_LONG | FU_MOVEI, sloc, exprbuf);
+					AddFixup(FU_LONG | FU_MOVEI, sloc, exprbuf);
 				else
-					fixup(FU_LONG, sloc, exprbuf);
+					AddFixup(FU_LONG, sloc, exprbuf);
 
 				D_long(0);
 			}
@@ -1098,7 +1087,7 @@ int dep_block(VALUE count, WORD siz, VALUE eval, WORD eattr, TOKEN * exprbuf)
 		case SIZB:
 			if (!defined)
 			{
-				fixup(FU_BYTE | FU_SEXT, sloc, exprbuf);
+				AddFixup(FU_BYTE | FU_SEXT, sloc, exprbuf);
 				D_byte(0);
 			}
 			else
@@ -1117,7 +1106,7 @@ int dep_block(VALUE count, WORD siz, VALUE eval, WORD eattr, TOKEN * exprbuf)
 		case SIZN:
 			if (!defined)
 			{
-				fixup(FU_WORD | FU_SEXT, sloc, exprbuf);
+				AddFixup(FU_WORD | FU_SEXT, sloc, exprbuf);
 				D_word(0);
 			}
 			else
@@ -1136,7 +1125,7 @@ int dep_block(VALUE count, WORD siz, VALUE eval, WORD eattr, TOKEN * exprbuf)
 		case SIZL:
 			if (!defined)
 			{
-				fixup(FU_LONG, sloc, exprbuf);
+				AddFixup(FU_LONG, sloc, exprbuf);
 				D_long(0);
 			}
 			else
@@ -1229,8 +1218,8 @@ int d_68000(void)
 	// Switching from gpu/dsp sections should reset any ORG'd Address
 	orgactive = 0;                               
 	orgwarning = 0;
-	savsect();
-	switchsect(TEXT);
+	SaveSection();
+	SwitchSection(TEXT);
 	return 0;
 }
 
@@ -1348,7 +1337,7 @@ int d_cargs(void)
 
 			// Put symbol in "order of definition" list
 			if (!(symbol->sattr & SDECLLIST))
-				sym_decl(symbol);
+				AddToSymbolOrderList(symbol);
 
 			symbol->sattr |= (ABS | DEFINED | EQUATED);
 			symbol->svalue = eval;
@@ -1466,7 +1455,7 @@ int d_cstruct(void)
 
 			// Put symbol in "order of definition" list
 			if (!(symbol->sattr & SDECLLIST))
-				sym_decl(symbol);
+				AddToSymbolOrderList(symbol);
 
 			tok += 2;
 

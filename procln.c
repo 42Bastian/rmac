@@ -127,7 +127,6 @@ void Assemble(void)
 	SYM * sy, * sy2;			// Symbol (temp usage)
 	char * opname = NULL;		// Name of dirctve/mnemonic/macro
 	int listflag;				// 0: Don't call listeol()
-//	int as68mode = 0;			// 1: Handle multiple labels
 	WORD rmask;					// Register list, for REG
 	int registerbank;			// RISC register bank
 	int riscreg;				// RISC register
@@ -172,10 +171,9 @@ loop1:										// Internal line processing loop
 	if (*tok == EOL)						// Restart loop if end-of-line
 		goto loop;
 
-	// First token MUST be a symbol
+	// First token MUST be a symbol (Shamus: not sure why :-/)
 	if (*tok != SYMBOL)
 	{
-//		error(syntax_error);
 		error("syntax error; expected symbol");
 		goto loop;
 	}
@@ -194,28 +192,19 @@ loop1:										// Internal line processing loop
 	if (j == ':' || j == DCOLON)
 	{
 as68label:
-//		label = (char *)tok[1];				// Get label name
 		label = string[tok[1]];				// Get label name
 		labtyp = tok[2];					// Get label type
 		tok += 3;							// Go to next line token
 
-		// Handle multiple labels; if there's another label, go process it, 
-		// and come back at `as68label' above.
-		if (as68_flag)
+		// AS68 MODE:
+		// Looks like another label follows the previous one, so handle
+		// the previous one until there aren't any more
+		if (as68_flag && (*tok == SYMBOL && tok[2] == ':'))
 		{
-//			as68mode = 0;
+			if (HandleLabel(label, labtyp) != 0)
+				goto loop;
 
-			// Looks like another label follows the previous one, so handle
-			// the previous one
-			if (*tok == SYMBOL && tok[2] == ':')
-			{
-//				as68mode = 1;
-//				goto do_label;
-				if (HandleLabel(label, labtyp) != 0)
-					goto loop;
-
-				goto as68label;
-			}
+			goto as68label;
 		}
 	}
 
@@ -226,19 +215,11 @@ as68label:
 	// Next token MUST be a symbol
 	if (*tok++ != SYMBOL)
 	{
-//		error(syntax_error);
 		error("syntax error; expected symbol");
 		goto loop;
 	}
 
-// This is the problem here: On 64-bit platforms, this cuts the native pointer
-// in half. We need to figure out how to fix this.
-//#warning "!!! Bad pointer !!!"
-#if 0
-	opname = p = (char *)*tok++;			// Store opcode name here
-#else
 	opname = p = string[*tok++];
-#endif
 
 	// Check to see if the SYMBOL is a keyword (a mnemonic or directive).
 	// On output, `state' will have one of the values:
@@ -315,6 +296,7 @@ as68label:
 		case MN_MACRO:						// .macro --- macro definition
 			if (!disabled)
 			{
+				// Label on a macro definition is bad mojo... Warn the user
 				if (label != NULL)
 					warn(lab_ignored);
 
@@ -326,7 +308,6 @@ as68label:
 		case MN_ENDM:						// .endm --- same as .exitm
 			if (!disabled)
 			{
-				// Label on a macro definition is bad mojo... Warn the user
 				if (label != NULL)
 					warn(lab_ignored);
 
@@ -337,17 +318,12 @@ as68label:
 		case MN_REPT:
 			if (!disabled)
 			{
-#if 0
-				if (label != NULL)
-					warn(lab_ignored);
-#else
 				// Handle labels on REPT directive lines...
 				if (label)
 				{
 					if (HandleLabel(label, labtyp) != 0)
 						goto loop;
 				}
-#endif
 
 				defrept();
 			}
@@ -369,14 +345,7 @@ normal:
 	if (equate != NULL)
 	{
 		// Pick global or local symbol enviroment
-#if 0
-		j = 0;
-
-		if (*equate == '.')
-			j = curenv;
-#else
 		j = (*equate == '.' ? curenv : 0);
-#endif
 		sy = lookup(equate, LABEL, j);
 
 		if (sy == NULL)
@@ -419,7 +388,7 @@ normal:
 
 		// Put symbol in "order of definition" list
 		if (!(sy->sattr & SDECLLIST))
-			sym_decl(sy);
+			AddToSymbolOrderList(sy);
 
 		// Parse value to equate symbol to;
 		// o  .equr
@@ -445,7 +414,8 @@ checking to see if it's already been equated, issue a warning.
 			// Check for register to equate to
 			if ((*tok >= KW_R0) && (*tok <= KW_R31))
 			{
-				sy->sattre  = EQUATEDREG | RISCSYM;	// Mark as equated register
+//				sy->sattre  = EQUATEDREG | RISCSYM;	// Mark as equated register
+				sy->sattre  = EQUATEDREG;	// Mark as equated register
 				riscreg = (*tok - KW_R0);
 //is there any reason to do this, since we're putting this in svalue?
 //i'm thinking, no. Let's test that out! :-D
@@ -589,63 +559,9 @@ checking to see if it's already been equated, issue a warning.
 	// Do labels
 	if (label != NULL)
 	{
-do_label:
-#if 0
-		// Check for dot in front of label; means this is a local label if present
-		j = (*label == '.' ? curenv : 0);
-		sy = lookup(label, LABEL, j);
-
-		if (sy == NULL)
-		{
-			sy = NewSymbol(label, LABEL, j);
-			sy->sattr = 0;
-			sy->sattre = RISCSYM;
-		}
-		else if (sy->sattr & DEFINED)
-		{
-			errors("multiply-defined label '%s'", label);
-			goto loop;
-		}
-
-		// Put symbol in "order of definition" list
-		if (!(sy->sattr & SDECLLIST))
-			sym_decl(sy);
-
-		if (orgactive)
-		{
-			sy->svalue = orgaddr;
-			sy->sattr |= ABS | DEFINED | EQUATED;
-		}
-		else
-		{
-			sy->svalue = sloc;
-			sy->sattr |= DEFINED | cursect;
-		}
-
-		lab_sym = sy;
-
-		if (!j)
-			curenv++;
-
-		// Make label global
-		if (labtyp == DCOLON)
-		{
-			if (j)
-			{
-				error(locgl_error);
-				goto loop;
-			}
-
-			sy->sattr |= GLOBAL;
-		}
-#else
 		// Non-zero == error occurred
 		if (HandleLabel(label, labtyp) != 0)
 			goto loop;
-#endif
-		// If we're in as68 mode, and there's another label, go back and handle it
-//		if (as68_flag && as68mode)
-//			goto as68label;
 	}
 
 	// Punt on EOL
@@ -765,45 +681,46 @@ do_label:
 int HandleLabel(char * label, int labelType)
 {
 	// Check for dot in front of label; means this is a local label if present
-	int j = (*label == '.' ? curenv : 0);
-	SYM * sy = lookup(label, LABEL, j);
+	int environment = (*label == '.' ? curenv : 0);
+	SYM * symbol = lookup(label, LABEL, environment);
 
-	if (sy == NULL)
+	if (symbol == NULL)
 	{
-		sy = NewSymbol(label, LABEL, j);
-		sy->sattr = 0;
-		sy->sattre = RISCSYM;
+		symbol = NewSymbol(label, LABEL, environment);
+		symbol->sattr = 0;
+//		symbol->sattre = RISCSYM;
+		symbol->sattre = 0;
 	}
-	else if (sy->sattr & DEFINED)
+	else if (symbol->sattr & DEFINED)
 		return errors("multiply-defined label '%s'", label);
 
 	// Put symbol in "order of definition" list
-	if (!(sy->sattr & SDECLLIST))
-		sym_decl(sy);
+	if (!(symbol->sattr & SDECLLIST))
+		AddToSymbolOrderList(symbol);
 
 	if (orgactive)
 	{
-		sy->svalue = orgaddr;
-		sy->sattr |= ABS | DEFINED | EQUATED;
+		symbol->svalue = orgaddr;
+		symbol->sattr |= ABS | DEFINED | EQUATED;
 	}
 	else
 	{
-		sy->svalue = sloc;
-		sy->sattr |= DEFINED | cursect;
+		symbol->svalue = sloc;
+		symbol->sattr |= DEFINED | cursect;
 	}
 
-	lab_sym = sy;
+	lab_sym = symbol;
 
-	if (!j)
+	if (0 == environment)
 		curenv++;
 
 	// Make label global if it has a double colon
 	if (labelType == DCOLON)
 	{
-		if (j)
+		if (environment != 0)
 			return error(locgl_error);
 
-		sy->sattr |= GLOBAL;
+		symbol->sattr |= GLOBAL;
 	}
 
 	return 0;
@@ -883,3 +800,4 @@ int d_endif (void)
 	f_ifent = rif;
 	return 0;
 }
+

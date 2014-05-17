@@ -165,7 +165,7 @@ PTR
 #define EQUATEDCC    0x0020
 #define UNDEF_CC     0x0040
 
-#define RISCSYM      0x00010000
+//#define RISCSYM      0x00010000
 
 // Globals, externals etc
 extern int verb_flag;
@@ -183,7 +183,7 @@ extern int lsym_flag;
 extern int sbra_flag;
 extern int obj_format;
 extern int legacy_flag;
-extern LONG amemtot;
+//extern LONG amemtot;
 
 // Prototypes
 void init_sym(void);

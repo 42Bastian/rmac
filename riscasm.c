@@ -3,7 +3,7 @@
 // RISCA.C - GPU/DSP Assembler
 // Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
-// Source Utilised with the Kind Permission of Landon Dyer
+// Source utilised with the kind permission of Landon Dyer
 //
 
 #include "riscasm.h"
@@ -15,11 +15,11 @@
 #include "mark.h"
 #include "amode.h"
 
-#define DEF_MR				// Declar keyword values
-#include "risckw.h"			// Incl generated risc keywords
+#define DEF_MR				// Declare keyword values
+#include "risckw.h"			// Incl. generated risc keywords
 
 #define DEF_KW				// Declare keyword values 
-#include "kwtab.h"			// Incl generated keyword tables & defs
+#include "kwtab.h"			// Incl. generated keyword tables & defs
 
 
 unsigned altbankok = 0;		// Ok to use alternate register bank
@@ -28,22 +28,22 @@ unsigned orgaddr = 0;		// Org'd address
 unsigned orgwarning = 0;	// Has an ORG warning been issued
 int lastOpcode = -1;		// Last RISC opcode assembled
 
-char reg_err[] = "missing register R0...R31";
+const char reg_err[] = "missing register R0...R31";
 
 // Jaguar Jump Condition Names
-char condname[MAXINTERNCC][5] = { 
+const char condname[MAXINTERNCC][5] = { 
 	"NZ", "Z", "NC", "NCNZ", "NCZ", "C", "CNZ", "CZ", "NN", "NNNZ", "NNZ",
 	"N", "N_NZ", "N_Z", "T", "A", "NE", "EQ", "CC", "HS", "HI", "CS", "LO",
 	"PL", "MI", "F"
 };
 
 // Jaguar Jump Condition Numbers
-char condnumber[] = {
+const char condnumber[] = {
 	1, 2, 4, 5, 6, 8, 9, 10, 20, 21, 22, 24, 25, 26,
 	0, 0, 1, 2, 4, 4, 5,  8,  8, 20, 24, 31
 };
 
-struct opcoderecord roptbl[] = {
+const struct opcoderecord roptbl[] = {
 	{ MR_ADD,     RI_TWO,    0 },
 	{ MR_ADDC,    RI_TWO,    1 },
 	{ MR_ADDQ,    RI_NUM_32, 2 },
@@ -110,7 +110,7 @@ struct opcoderecord roptbl[] = {
 
 
 //
-// Convert a String to Uppercase
+// Convert a string to uppercase
 //
 void strtoupper(char * s)
 {
@@ -127,20 +127,20 @@ static inline int MalformedOpcode(int signal)
 {
 	char buf[16];
 	sprintf(buf, "%02X", signal);
-	errors("Malformed opcode [internal $%s]", buf);
-	return ERROR;
+	return errors("Malformed opcode [internal $%s]", buf);
 }
 
 
 //
-// Build RISC Instruction Word
+// Build RISC instruction word
 //
 void BuildRISCIntructionWord(unsigned short opcode, int reg1, int reg2)
 {
 	// Check for absolute address setting
 	if (!orgwarning && !orgactive)
 	{
-		warn("GPU/DSP code outside of absolute section");
+//		warn("GPU/DSP code outside of absolute section");
+		warn("RISC code generated with no origin defined");
 		orgwarning = 1;
 	}
 
@@ -150,7 +150,7 @@ void BuildRISCIntructionWord(unsigned short opcode, int reg1, int reg2)
 
 
 //
-// Get a RISC Register
+// Get a RISC register
 //
 int GetRegister(WORD rattr)
 {
@@ -170,7 +170,7 @@ int GetRegister(WORD rattr)
 
 	if (!(eattr & DEFINED))
 	{
-		fixup((WORD)(FU_WORD | rattr), sloc, r_expr);      
+		AddFixup((WORD)(FU_WORD | rattr), sloc, r_expr);      
 		return 0;
 	}
 
@@ -179,13 +179,12 @@ int GetRegister(WORD rattr)
 		return eval;
 
 	// Otherwise, it's out of range & we flag an error
-	error(reg_err);
-	return ERROR;
+	return error(reg_err);
 }
 
 
 //
-// Do RISC Code Generation
+// Do RISC code generation
 //
 int GenerateRISCCode(int state)
 {
@@ -213,10 +212,7 @@ int GenerateRISCCode(int state)
 	// specific to only one of the RISC processors and ensure it is legal in
 	// the current code section. If not then show error and return.
 	if (((parm & GPUONLY) && rdsp) || ((parm & DSPONLY) && rgpu))
-	{
-		error("Opcode is not valid in this code section");
-		return ERROR;
-	}
+		return error("Opcode is not valid in this code section");
 
 	// Process RISC opcode
 	switch (type)
@@ -294,16 +290,13 @@ int GenerateRISCCode(int state)
 
 		if (!(eattr & DEFINED))
 		{
-			fixup((WORD)(FU_WORD | attrflg), sloc, r_expr);
+			AddFixup((WORD)(FU_WORD | attrflg), sloc, r_expr);
 			reg1 = 0;
 		}
 		else
 		{
 			if ((int)eval < reg1 || (int)eval > reg2)
-			{
-				error("constant out of range");
-				return ERROR;
-			}
+				return error("constant out of range");
 
 			if (parm & SUB32) 
 				reg1 = 32 - eval; 
@@ -346,7 +339,7 @@ int GenerateRISCCode(int state)
 
 		if (!(eattr & DEFINED))
 		{
-			fixup(FU_LONG | FU_MOVEI, sloc + 2, r_expr);
+			AddFixup(FU_LONG | FU_MOVEI, sloc + 2, r_expr);
 			eval = 0;
 		}
 		else
@@ -467,10 +460,7 @@ int GenerateRISCCode(int state)
 						chcheck(4L);
 
 					if (!(eattr & DEFINED))
-					{
-						error("constant expected after '+'");
-						return ERROR;
-					}
+						return error("constant expected after '+'");
 
 					reg1 = eval;
 
@@ -483,10 +473,7 @@ int GenerateRISCCode(int state)
 					else
 					{
 						if (reg1 < 1 || reg1 > 32)
-						{
-							error("constant in LOAD out of range");
-							return ERROR;
-						}
+							return error("constant in LOAD out of range");
 
 						if (reg1 == 32)
 							reg1 = 0;
@@ -528,7 +515,6 @@ int GenerateRISCCode(int state)
 
 		if (*tok == SYMBOL)
 		{
-//			sy = lookup((char *)tok[1], LABEL, 0);
 			sy = lookup(string[tok[1]], LABEL, 0);
 
 			if (!sy)
@@ -568,7 +554,6 @@ int GenerateRISCCode(int state)
 
 				if (*tok == SYMBOL)
 				{
-//					sy = lookup((char *)tok[1], LABEL, 0);
 					sy = lookup(string[tok[1]], LABEL, 0);
 
 					if (!sy)
@@ -595,7 +580,7 @@ int GenerateRISCCode(int state)
 
 					if (!(eattr & DEFINED))
 					{
-						fixup(FU_WORD | FU_REGTWO, sloc, r_expr);
+						AddFixup(FU_WORD | FU_REGTWO, sloc, r_expr);
 						reg2 = 0;
 					}
 					else
@@ -611,10 +596,7 @@ int GenerateRISCCode(int state)
 						else
 						{
 							if (reg2 < 1 || reg2 > 32)
-							{
-								error("constant in STORE out of range");
-								return ERROR;
-							}
+								return error("constant in STORE out of range");
 
 							if (reg2 == 32)
 								reg2 = 0;
@@ -731,10 +713,7 @@ int GenerateRISCCode(int state)
 						val = ccsym->svalue;
 					}
 					else
-					{
-						error("unknown condition code");
-						return ERROR;
-					}
+						return error("unknown condition code");
 				}
 
 				tok += 2;
@@ -753,10 +732,7 @@ int GenerateRISCCode(int state)
 		}
 
 		if (val < 0 || val > 31)
-		{
-			error("condition constant out of range");
-			return ERROR;
-		}
+			return error("condition constant out of range");
 
 		// Store condition code
 		reg1 = val;
@@ -772,7 +748,7 @@ int GenerateRISCCode(int state)
 
 			if (!(eattr & DEFINED))
 			{
-				fixup(FU_WORD | FU_JR, sloc, r_expr);
+				AddFixup(FU_WORD | FU_JR, sloc, r_expr);
 				reg2 = 0;
 			}
 			else
@@ -806,8 +782,7 @@ int GenerateRISCCode(int state)
 
 	// Should never get here :-D
 	default:
-		error("Unknown risc opcode type");
-		return ERROR;
+		return error("Unknown RISC opcode type");
 	}
 
 	lastOpcode = type;

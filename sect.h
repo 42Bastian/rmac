@@ -64,14 +64,15 @@
 #define FU_PCREL     020			// Subtract PC first
 #define FU_EXPR      040			// Expression (not symbol) follows
 
+#define FUMASKRISC	0x0F00			// Mask for RISC fixup cases
 #define FU_MOVEI     0x0100
 #define FU_JR        0x0200
-//#define FU_MJR       0x0300
 #define FU_REGONE    0x0400
 #define FU_NUM15     0x0500
 #define FU_NUM31     0x0600
 #define FU_NUM32     0x0700
 #define FU_REGTWO    0x0800
+
 #define FU_SUB32     0x1000
 #define FU_ISBRA     0x2000			// Word forward fixup is a BRA or DBRA
 #define FU_LBRA      0x4000			// Long branch, for short branch detect
@@ -120,10 +121,6 @@ MCHUNK {
 #define MCHEND       0x2000			// Indicates end of mark chunk
 #define MPCREL       0x1000			// Mark is PC-relative
 
-//#define MAXFWDJUMPS  1024			// Maximum forward jumps to check
-//extern unsigned fwdjump[MAXFWDJUMPS];
-//extern unsigned fwindex;
-
 // Globals, external etc
 extern LONG sloc;
 extern WORD scattr;
@@ -136,11 +133,11 @@ extern CHUNK * scode;
 
 // Prototypes
 void InitSection(void);
-void switchsect(int);
-void savsect(void);
+void SwitchSection(int);
+void SaveSection(void);
 int fixtest(int, LONG);
 int chcheck(LONG);
-int fixup(WORD, LONG, TOKEN *);
+int AddFixup(WORD, LONG, TOKEN *);
 int ResolveAllFixups(void);
 
 #endif // __SECT_H__

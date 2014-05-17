@@ -44,7 +44,7 @@ extern char subttl[];
 SYM * lookup(char *, int, int);
 void InitSymbolTable(void);
 SYM * NewSymbol(char *, int, int);
-void sym_decl(SYM *);
+void AddToSymbolOrderList(SYM *);
 int syg_fix(void);
 int symtable(void);
 int sy_assign(char *, char *(*)());

@@ -224,21 +224,25 @@
 			return ERROR;
 
 		if (*tok == DOTW)
-		{                                    // expr.W 
+		{
+			// expr.W 
 			tok++;
 			AMn = ABSW;
 			goto AnOK;
 		}
 		else if (*tok != '(')
-		{                              // expr[.L]
+		{
+			// expr[.L]
 			AMn = ABSL;
-			// Defined, absolute values from $FFFF8000..$00007FFF get optimized to absolute short
 
+			// Defined, absolute values from $FFFF8000..$00007FFF get optimized
+			// to absolute short
 			if ((AnEXATTR & (TDB|DEFINED)) == DEFINED && (AnEXVAL + 0x8000) < 0x10000)
 				AMn = ABSW;
 
+			// Is .L forced here?
 			if (*tok == DOTL)
-			{                                 // force .L 
+			{
 				tok++;
 				AMn = ABSL;
 			}

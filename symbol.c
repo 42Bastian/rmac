@@ -91,7 +91,12 @@ SYM * NewSymbol(char * name, int type, int envno)
 	symbol->stype  = (BYTE)type;
 	symbol->senv   = (WORD)envno;
 	symbol->sattr  = 0;
-	symbol->sattre = (rgpu || rdsp ? RISCSYM : 0);
+//we don't do this, it could be a forward reference!
+//	symbol->sattr  = DEFINED;		// We just defined it...
+	// This is a bad assumption. Not every symbol 1st seen in a RISC section is
+	// a RISC symbol!
+//	symbol->sattre = (rgpu || rdsp ? RISCSYM : 0);
+	symbol->sattre = 0;
 	symbol->svalue = 0;
 	symbol->sorder = NULL;
 	symbol->uid    = currentUID++;
@@ -165,7 +170,8 @@ SYM * lookup(char * name, int type, int envno)
 //
 // Put symbol on "order-of-declaration" list of symbols
 //
-void sym_decl(SYM * symbol)
+//void sym_decl(SYM * symbol)
+void AddToSymbolOrderList(SYM * symbol)
 {
 	if (symbol->sattr & SDECLLIST)
 		return;								// Already on list
