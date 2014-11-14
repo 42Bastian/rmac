@@ -20,6 +20,9 @@ OBJS = amode.o debug.o direct.o eagen.o error.o expr.o listing.o mach.o macro.o 
 #
 
 all : mntab.h 68ktab.h kwtab.h risckw.h rmac
+	@echo
+	@echo "Don't forget to bump the version number before commiting!"
+	@echo
 
 #
 # Generated Sources for State Machines and Keyword, Directive and Mnemonic Definitions

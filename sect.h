@@ -25,6 +25,9 @@
 //#define D_rlong(lw)	{*chptr++=(char)(lw>>16);*chptr++=(char)(lw>>24);\
 //						*chptr++=(char)lw;*chptr++=(char)(lw>>8); \
 //						sloc+=4; ch_size += 4;if(orgactive) orgaddr += 4;}
+// Fill n bytes with zeroes
+#define D_ZEROFILL(n)	{memset(chptr, 0, n); chptr+=n; sloc+=n; ch_size+=n;\
+						if (orgactive) orgaddr+=n;}
 
 #define NSECTS       16				// Max. number of sections
 

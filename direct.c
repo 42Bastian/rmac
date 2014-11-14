@@ -108,7 +108,8 @@ int d_org(void)
 	}
 
 	orgaddr = address;
-	orgactive = 1;  
+	orgactive = 1;
+//printf("ORG: address = $%08X...\n", orgaddr);
 
 	return 0;
 }
@@ -312,7 +313,6 @@ int d_incbin(void)
 
 	if (*tok != STRING)
 	{
-//		error(syntax_error);
 		error("syntax error; string missing");
 		return ERROR;
 	}
@@ -339,7 +339,6 @@ int d_incbin(void)
 		return ERROR;
 	}
 
-//#define D_byte(b)    {*chptr++=(char)b; ++sloc; ++ch_size; if(orgactive) ++orgaddr;}
 	memcpy(chptr, fileBuffer, size);
 	chptr += size;
 	sloc += size;
@@ -374,11 +373,37 @@ int d_regbank1(void)
 
 
 //
+// Helper function, to cut down on mistakes & typing
+//
+static inline void SkipBytes(unsigned bytesToSkip)
+{
+	if (!bytesToSkip)
+		return;
+
+	if ((scattr & SBSS) == 0)
+	{
+		chcheck(bytesToSkip);
+		D_ZEROFILL(bytesToSkip);
+	}
+	else
+	{
+		sloc += bytesToSkip;
+
+		if (orgactive)
+			orgaddr += bytesToSkip;
+	}
+}
+
+
+//
 // Adjust Location to an EVEN Value
 //
 int d_even(void)
 {
-	if (sloc & 1)
+	unsigned skip = (rgpu || rdsp ? orgaddr : sloc) & 0x01;
+	
+//	if (sloc & 1)
+	if (skip)
 	{
 		if ((scattr & SBSS) == 0)
 		{
@@ -387,7 +412,10 @@ int d_even(void)
 		}
 		else
 		{
-			++sloc;
+			sloc++;
+
+			if (orgactive)
+				orgaddr++;
 		}
 	}
 
@@ -400,30 +428,9 @@ int d_even(void)
 //
 int d_long(void)
 {
-	unsigned i;
-	unsigned val = 4;
-			
-	i = sloc & ~(val - 1);
-
-	if (i != sloc)
-		val = val - (sloc - i); 
-	else
-		val = 0;
-
-	if (val)
-	{
-		if ((scattr & SBSS) == 0)
-		{
-			chcheck(val);
-
-			for(i=0; i<val; i++) 
-				D_byte(0);
-		}
-		else
-		{
-			sloc += val;
-		}
-	}
+	unsigned lower2Bits = (rgpu || rdsp ? orgaddr : sloc) & 0x03;
+	unsigned bytesToSkip = (0x04 - lower2Bits) & 0x03;
+	SkipBytes(bytesToSkip);
 
 	return 0;
 }
@@ -432,32 +439,20 @@ int d_long(void)
 //
 // Adjust Location to an PHRASE Value
 //
+// N.B.: We have to handle the GPU/DSP cases separately because you can embed
+//       RISC code in the middle of a regular 68K section. Also note that all
+//       of the alignment pseudo-ops will have to be fixed this way.
+//
+// This *must* behave differently when in a RISC section, as following sloc
+// (instead of orgaddr) will fuck things up royally. Note that we do it this
+// way because you can embed RISC code in a 68K section, and have the origin
+// pointing to a different alignment in the RISC section than the 68K section.
+//
 int d_phrase(void)
 {
-	unsigned i;
-	unsigned val = 8;
-			
-	i = sloc & ~(val - 1);
-
-	if (i != sloc)
-		val = val - (sloc - i); 
-	else
-		val = 0;
-
-	if (val)
-	{
-		if ((scattr & SBSS) == 0)
-		{
-			chcheck(val);
-
-			for(i=0; i<val; i++) 
-				D_byte(0);
-		}
-		else
-		{
-			sloc += val;
-		}
-	}
+	unsigned lower3Bits = (rgpu || rdsp ? orgaddr : sloc) & 0x07;
+	unsigned bytesToSkip = (0x08 - lower3Bits) & 0x07;
+	SkipBytes(bytesToSkip);
 
 	return 0;
 }
@@ -468,30 +463,9 @@ int d_phrase(void)
 //
 int d_dphrase(void)
 {
-	unsigned i;
-	unsigned val = 16;
-			
-	i = sloc & ~(val - 1);
-
-	if (i != sloc)
-		val = val - (sloc - i); 
-	else
-		val = 0;
-
-	if (val)
-	{
-		if ((scattr & SBSS) == 0)
-		{
-			chcheck(val);
-
-			for(i=0; i<val; i++) 
-				D_byte(0);
-		}
-		else
-		{
-			sloc += val;
-		}
-	}
+	unsigned lower4Bits = (rgpu || rdsp ? orgaddr : sloc) & 0x0F;
+	unsigned bytesToSkip = (0x10 - lower4Bits) & 0x0F;
+	SkipBytes(bytesToSkip);
 
 	return 0;
 }
@@ -502,31 +476,9 @@ int d_dphrase(void)
 //
 int d_qphrase(void)
 {
-	unsigned i;
-	unsigned val = 32;
-			
-	i = sloc & ~(val - 1);
-
-	if (i != sloc)
-		val = val - (sloc - i); 
-	else
-		val = 0;
-
-	if (val)
-	{
-		if ((scattr & SBSS) == 0)
-		{
-			SaveSection();
-			chcheck(val);
-
-			for(i=0; i<val; i++) 
-				D_byte(0);
-		}
-		else
-		{
-			sloc += val;
-		}
-	}
+	unsigned lower5Bits = (rgpu || rdsp ? orgaddr : sloc) & 0x1F;
+	unsigned bytesToSkip = (0x20 - lower5Bits) & 0x1F;
+	SkipBytes(bytesToSkip);
 
 	return 0;
 }
@@ -540,14 +492,16 @@ int d_qphrase(void)
 // which is OK since multiple labels are only allowed in AS68 kludge mode, and
 // the C compiler is VERY paranoid and uses ".even" whenever it can
 //
+// N.B.: This probably needs the same fixes as above...
+//
 void auto_even(void)
 {
 	if (scattr & SBSS)
-		++sloc;                                               // Bump BSS section
+		sloc++;                           // Bump BSS section
 	else
-		D_byte(0)                                             // Deposit 0.b in non-BSS
+		D_byte(0);                        // Deposit 0.b in non-BSS
 
-	if (lab_sym != NULL)                                      // Bump label if we have to
+	if (lab_sym != NULL)                  // Bump label if we have to
 		++lab_sym->svalue;
 }
 
@@ -1238,9 +1192,11 @@ int d_gpu(void)
 	// If previous section was dsp or 68000 then we need to reset ORG'd Addresses
 	if (!rgpu)
 	{
+//printf("Resetting ORG...\n");
 		orgactive = 0;
 		orgwarning = 0;
 	}
+//else printf("NOT resetting ORG!\n");
 
 	rgpu = 1;			// Set GPU assembly
 	rdsp = 0;			// Unset DSP assembly
