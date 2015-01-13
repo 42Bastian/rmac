@@ -17,45 +17,48 @@
 #include "symbol.h"
 #include "token.h"
 
-#define DEF_KW							// Declare keyword values 
-#include "kwtab.h"						// Incl generated keyword tables & defs
+#define DEF_KW						// Declare keyword values 
+#include "kwtab.h"					// Incl generated keyword tables & defs
 
-static char tokenClass[128];			// Generated table of token classes
-static VALUE evstk[EVSTACKSIZE];		// Evaluator value stack
-static WORD evattr[EVSTACKSIZE];		// Evaluator attribute stack
+// N.B.: The size of tokenClass should be identical to the largest value of
+//       a token; we're assuming 256 but not 100% sure!
+static char tokenClass[256];		// Generated table of token classes
+static VALUE evstk[EVSTACKSIZE];	// Evaluator value stack
+static WORD evattr[EVSTACKSIZE];	// Evaluator attribute stack
 
 // Token-class initialization list
 char itokcl[] = {
-	0,									// END
-	CONST, SYMBOL, 0,					// ID 
-	'(', '[', '{', 0,					// OPAR
-	')', ']', '}', 0,					// CPAR 
-	CR_DEFINED, CR_REFERENCED,			// SUNARY (special unary)
+	0,								// END
+	CONST, SYMBOL, 0,				// ID 
+	'(', '[', '{', 0,				// OPAR
+	')', ']', '}', 0,				// CPAR 
+	CR_DEFINED, CR_REFERENCED,		// SUNARY (special unary)
 	CR_STREQ, CR_MACDEF,
 	CR_DATE, CR_TIME, 0,
-	'!', '~', UNMINUS, 0,				// UNARY
-	'*', '/', '%', 0,					// MULT 
-	'+', '-', 0,						// ADD 
-	SHL, SHR, 0,						// SHIFT 
-	LE, GE, '<', '>', NE, '=', 0,		// REL 
-	'&', 0,								// AND 
-	'^', 0,								// XOR 
-	'|', 0,								// OR 
-	1									// (the end) 
+	'!', '~', UNMINUS, 0,			// UNARY
+	'*', '/', '%', 0,				// MULT 
+	'+', '-', 0,					// ADD 
+	SHL, SHR, 0,					// SHIFT 
+	LE, GE, '<', '>', NE, '=', 0,	// REL 
+	'&', 0,							// AND 
+	'^', 0,							// XOR 
+	'|', 0,							// OR 
+	1								// (the end) 
 };
 
 const char missym_error[] = "missing symbol";
 const char str_error[] = "missing symbol or string";
 
 // Convert expression to postfix
-static TOKEN * evalTokenBuffer;			// Deposit tokens here (this is really a
-										// pointer to exprbuf from direct.c)
-										// (Can also be from others, like riscasm.c)
-static symbolNum;						// Pointer to the entry in symbolPtr[]
+static TOKEN * evalTokenBuffer;		// Deposit tokens here (this is really a
+									// pointer to exprbuf from direct.c)
+									// (Can also be from others, like
+									// riscasm.c)
+static symbolNum;					// Pointer to the entry in symbolPtr[]
 
 
 //
-// Obtain a String Value
+// Obtain a string value
 //
 static VALUE str_value(char * p)
 {
@@ -69,15 +72,15 @@ static VALUE str_value(char * p)
 
 
 //
-// Initialize Expression Analyzer
+// Initialize expression analyzer
 //
 void InitExpression(void)
 {
-	int i;									// Iterator
-	char * p;								// Token pointer
+	int i;
+	char * p;
 
 	// Initialize token-class table (all set to END)
-	for(i=0; i<128; i++)
+	for(i=0; i<256; i++)
 		tokenClass[i] = END;
 
 	for(i=0, p=itokcl; *p!=1; p++)
@@ -273,16 +276,8 @@ int expr2(void)
 	case '*':
 		*evalTokenBuffer++ = ACONST;				// Attributed const
 
-#if 0
-		if (orgactive)
-			*evalTokenBuffer++ = orgaddr;
-		else
-			*evalTokenBuffer++ = pcloc;				// Location at start of line
-#else
 		// pcloc == location at start of line
 		*evalTokenBuffer++ = (orgactive ? orgaddr : pcloc);
-#endif
-
 		*evalTokenBuffer++ = ABS | DEFINED;			// Store attribs
 		break;
 	default:
@@ -731,3 +726,4 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 
 	return OK;
 }
+

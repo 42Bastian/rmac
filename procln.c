@@ -450,9 +450,9 @@ checking to see if it's already been equated, issue a warning.
 // What needs to happen here is to prime registerbank with regbank, then use
 // registerbank down below for the bank marking.
 #warning "!!! regbank <-> registerbank confusion here !!!"
-// The question here is why, if we're allowed to override the ".regbankN" rules above,
-// then why is it using the one set by the directive in the extended attributes and
-// not in what ends up in symbol->svalue?
+// The question here is why, if we're allowed to override the ".regbankN" rules
+// above, then why is it using the one set by the directive in the extended
+// attributes and not in what ends up in symbol->svalue?
 // ".regbankN" is not an original Madmac directive, so it's suspect
 				sy->sattre |= regbank;		// Store register bank
 #endif
@@ -546,13 +546,13 @@ checking to see if it's already been equated, issue a warning.
 			goto loop;
 		}
 
-		sy->sattr |= eattr | EQUATED;		// Symbol inherits value and attributes
+		sy->sattr |= eattr | EQUATED;	// Symbol inherits value and attributes
 		sy->svalue = eval;
 
-		if (list_flag)						// Put value in listing
+		if (list_flag)					// Put value in listing
 			listvalue(eval);
 
-		at_eol();							// Must be at EOL now
+		at_eol();						// Must be at EOL now
 		goto loop;
 	}
 

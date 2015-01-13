@@ -161,8 +161,6 @@ int GetRegister(WORD rattr)
 
 	// Evaluate what's in the global "tok" buffer
 	if (expr(r_expr, &eval, &eattr, &esym) != OK)
-		// Hmm, the evaluator should report the error to us...
-//		return MalformedOpcode(0x00);
 		return ERROR;
 
 	if ((challoc - ch_size) < 4)

@@ -13,10 +13,10 @@
 #include "error.h"
 #include "riscasm.h"
 
-LONG symsize = 0;							// Size of BSD symbol table
-LONG strindx = 0x00000004;					// BSD string table index
-char * strtable;							// Pointer to the symbol string table
-char * objimage;							// Global object image pointer
+LONG symsize = 0;			// Size of BSD symbol table
+LONG strindx = 0x00000004;	// BSD string table index
+char * strtable;			// Pointer to the symbol string table
+char * objimage;			// Global object image pointer
 
 
 //
@@ -24,20 +24,16 @@ char * objimage;							// Global object image pointer
 //
 char * constr_bsdsymtab(char * buf, SYM * sym, int globflag)
 {
-	LONG z;									// Scratch long
-	WORD w1;								// Scratch word
-	int w2;									// Scratch long
+	chptr = buf;						// Point to buffer for deposit longs
+	D_long(strindx);					// Deposit the symbol string index
 
-	chptr = buf;							// Point to buffer for deposit longs
-	D_long(strindx);						// Deposit the symbol string index
-
-	w1 = sym->sattr;						// Obtain symbol attribute
-	w2 = sym->sattre;
-	z = 0;									// Initialise resulting symbol flags
+	WORD w1 = sym->sattr;				// Obtain symbol attribute
+	int w2 = sym->sattre;
+	LONG z = 0;							// Initialise resulting symbol flags
 
 	if (w1 & EQUATED)
 	{                                       
-		z = 0x02000000;						// Set equated flag
+		z = 0x02000000;					// Set equated flag
 	}
 	else
 	{
@@ -50,26 +46,26 @@ char * constr_bsdsymtab(char * buf, SYM * sym, int globflag)
 	}
 
 	if (globflag)
-		z |= 0x01000000;					// Set global flag if requested
+		z |= 0x01000000;				// Set global flag if requested
 
-	D_long(z);								// Deposit symbol attribute
+	D_long(z);							// Deposit symbol attribute
 
-	z = sym->svalue;						// Obtain symbol value
-	w1 &= DATA | BSS;						// Determine DATA or BSS flag
+	z = sym->svalue;					// Obtain symbol value
+	w1 &= DATA | BSS;					// Determine DATA or BSS flag
 
 	if (w1)                                                   
-		z += sect[TEXT].sloc;				// If DATA or BSS add TEXT segment size
+		z += sect[TEXT].sloc;			// If DATA or BSS add TEXT segment size
 
 	if (w1 & BSS) 
-		z += sect[DATA].sloc;				// If BSS add DATA segment size
+		z += sect[DATA].sloc;			// If BSS add DATA segment size
 
-	D_long(z);								// Deposit symbol value
+	D_long(z);							// Deposit symbol value
 
 	strcpy(strtable + strindx, sym->sname);
 
-	strindx += strlen(sym->sname) + 1;		// Incr string index incl null terminate
-	buf += 12;								// Increment buffer to next record
-	symsize += 12;							// Increment symbol table size
+	strindx += strlen(sym->sname) + 1;	// Incr string index incl null terminate
+	buf += 12;							// Increment buffer to next record
+	symsize += 12;						// Increment symbol table size
 
 	return buf;
 }
@@ -140,36 +136,36 @@ int object(WORD fd)
 		}
 
 		// Do relocation tables (and make changes to segment data)
-		p = buf + (BSDHDRSIZE + tds);				// Move obj image ptr to reloc info
+		p = buf + (BSDHDRSIZE + tds);	// Move obj image ptr to reloc info
 		trsize = bsdmarkimg(p, tds, sect[TEXT].sloc, TEXT);// Do TEXT relocation table
-		chptr = buf + 24;							// Point to relocation hdr entry
-		D_long(trsize);								// Write the relocation table size
-		p = buf + (BSDHDRSIZE + tds + trsize);		// Move obj image ptr to reloc info
+		chptr = buf + 24;				// Point to relocation hdr entry
+		D_long(trsize);					// Write the relocation table size
+		p = buf + (BSDHDRSIZE + tds + trsize);	// Move obj image ptr to reloc info
 		drsize = bsdmarkimg(p, tds, sect[TEXT].sloc, DATA);// Do DATA relocation table
-		chptr = buf + 28;							// Point to relocation hdr entry
-		D_long(drsize);								// Write the relocation table size
+		chptr = buf + 28;				// Point to relocation hdr entry
+		D_long(drsize);					// Write the relocation table size
 
 		p = buf + (BSDHDRSIZE + tds + trsize + drsize);// Point to start of symbol table
-		sy_assign(p, constr_bsdsymtab);				// Build symbol and string tables
-		chptr = buf + 16;							// Point to sym table size hdr entry
-		D_long(symsize);							// Write the symbol table size
+		sy_assign(p, constr_bsdsymtab);	// Build symbol and string tables
+		chptr = buf + 16;				// Point to sym table size hdr entry
+		D_long(symsize);				// Write the symbol table size
 
 		// Point to string table
 		p = buf + (BSDHDRSIZE + tds + trsize + drsize + symsize);    
 
-		memcpy(p, strtable, strindx);				// Copy string table to object image
+		memcpy(p, strtable, strindx);	// Copy string table to object image
 
 		if (buf)
-			free(strtable);							// Free allocated memory
+			free(strtable);				// Free allocated memory
 
-		chptr = p;									// Point to string table size long
-		D_long(strindx);							// Write string table size
+		chptr = p;						// Point to string table size long
+		D_long(strindx);				// Write string table size
 
 		// Write the BSD object file from the object image buffer
 		unused = write(fd, buf, BSDHDRSIZE + tds + trsize + drsize + symsize + strindx + 4);
 
 		if (buf)
-			free(buf);								// Free allocated memory
+			free(buf);					// Free allocated memory
 
 		break;
 	}

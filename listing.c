@@ -47,8 +47,9 @@ static char * month[16] = {
 	"Dec", "",    "",    ""
 };
 
+
 //
-// Eject the Page (Print Empty Lines), Reset the Line Count and Bump the Page Number
+// Eject the page, reset the line count and bump the page number
 //
 int eject(void)
 {
@@ -63,7 +64,7 @@ int eject(void)
 
 
 //
-// Return GEMDOS Format Date
+// Return GEMDOS format date
 //
 VALUE dos_date(void)
 {
@@ -73,14 +74,14 @@ VALUE dos_date(void)
 
 	time(&tloc);
 	tm = localtime(&tloc);
-	v = ((tm->tm_year - 80) << 9) | ((tm->tm_mon+1) << 5) | tm->tm_mday;
+	v = ((tm->tm_year - 80) << 9) | ((tm->tm_mon + 1) << 5) | tm->tm_mday;
 
 	return v;
 }
 
 
 // 
-// Return GEMDOS Format Time
+// Return GEMDOS format time
 //
 VALUE dos_time(void)
 {
@@ -97,12 +98,12 @@ VALUE dos_time(void)
 
 
 //
-// Generate a Time String
+// Generate a time string
 //
 void time_string(char * buf, VALUE time)
 {
 	int hour;
-	char *ampm;
+	char * ampm;
 
 	hour = (time >> 11);
 
@@ -120,26 +121,12 @@ void time_string(char * buf, VALUE time)
 
 
 //
-// Generate a Date String
+// Generate a date string
 //
 void date_string(char * buf, VALUE date)
 {
 	sprintf(buf, "%d-%s-%d",
 		(int)(date & 0x1F), month[(date >> 5) & 0xF], (int)((date >> 9) + 1980));
-}
-
-
-//
-// Copy `n' Characters from `src' to `dest' (also stops on EOS in src).
-// Does not null-terminate dest.
-//
-void scopy(char *dest, char *src, int len)
-{
-	if (len < 0)
-		len = 1000;			// Some large number [Shamus: wha...?]
-
-	while (len-- && *src)
-		*dest++ = *src++;
 }
 
 
@@ -162,7 +149,7 @@ void uc_ln(char * ln)
 
 
 //
-// Fill Region `dest' with `len' Characters `c' and Null Terminate the Region
+// Fill region 'dest' with 'len' characters 'c' and null terminate the region
 //
 void lnfill(char * dest, int len, char chr)
 {
@@ -174,7 +161,7 @@ void lnfill(char * dest, int len, char chr)
 
 
 // 
-// Create Listing File with the Appropriate Name
+// Create listing file with the appropriate name
 //
 void list_setup(void)
 {
@@ -196,16 +183,16 @@ void list_setup(void)
 
 
 //
-// Tag Listing with a Character, Typically for Errors or Warnings
+// Tag listing with a character, typically for errors or warnings
 //
 void taglist(char chr)
 {
-	lnimage[TAG_COL+1] = chr;
+	lnimage[TAG_COL + 1] = chr;
 }
 
 
 //
-// Print a Line to the Listing File
+// Print a line to the listing file
 //
 void println(const char * ln)
 {
@@ -222,7 +209,7 @@ void println(const char * ln)
 
 
 //
-// Ship Line `ln' Out; Do Page Breaks and Title Stuff
+// Ship line 'ln' out; do page breaks and title stuff
 //
 void ship_ln(const char * ln)
 {
@@ -237,13 +224,14 @@ void ship_ln(const char * ln)
 	// Print title, boilerplate, and subtitle at top of page
 	if (nlines == 0)
 	{
-		++pageno;
+		pageno++;
 		println("");
 		date_string(datestr, dos_date());
 		time_string(timestr, dos_time());
 		sprintf(buf,
 			"%-40s%-20s Page %-4d    %s %s        RMAC %01i.%01i.%02i (%s)",
-			title, curfname, pageno, timestr, datestr, MAJOR, MINOR, PATCH, PLATFORM);
+			title, curfname, pageno, timestr, datestr, MAJOR, MINOR, PATCH,
+			PLATFORM);
 		println(buf);
 		sprintf(buf, "%s", subttl);
 		println(buf);
@@ -252,12 +240,12 @@ void ship_ln(const char * ln)
 	}
 
 	println(ln);
-	++nlines;
+	nlines++;
 }
 
 
 //
-// Initialize Listing Generator
+// Initialize listing generator
 //
 void InitListing(void)
 {
@@ -286,18 +274,18 @@ void listeol(void)
 	LONG count;
 	int fixcount;
 
-	DEBUG printf("~list: lsloc=$%ux sloc=$%ux\n", lsloc, sloc);
+	DEBUG printf("~list: lsloc=$%X sloc=$%X\n", lsloc, sloc);
 
 	if (lsloc != sloc)
 	{
-		sprintf(buf, "%08ux", lsloc);
-		scopy(lnimage+LOC_COL, buf, 8);
+		sprintf(buf, "%08X", lsloc);
+		strncpy(lnimage + LOC_COL, buf, 8);
 	}
 
 	if (llineno != curlineno)
 	{
 		sprintf(buf, "%5d", llineno);
-		scopy(lnimage+LN_COL, buf, 5);
+		strncpy(lnimage + LN_COL, buf, 5);
 	}
 
 	// List bytes only when section stayed the same and the section is not a
@@ -306,7 +294,7 @@ void listeol(void)
 	// deposited with dcb. The fix (kludge) is an extra variable which records
 	// the fact that a 'ds.x' directive generated all the data, and it
 	// shouldn't be listed
-	SaveSection();                                               // Update section variables
+	SaveSection();		// Update section variables
 
 	if (lcursect == cursect && (sect[lcursect].scattr & SBSS) == 0
 		&& lsloc != sloc && just_bss == 0)
@@ -323,7 +311,7 @@ void listeol(void)
 		if (ch == NULL)
 		{
 nochunk:
-			interror(6);                                       // Can't find generated code in section
+			interror(6);	// Can't find generated code in section
 		}
 
 		p =  ch->chptr + (lsloc - ch->chloc);
@@ -333,13 +321,14 @@ nochunk:
 		for(count=sloc-lsloc; count--; col+=2, ++lsloc)
 		{
 			if (col >= DATA_END)
-			{                              // Ship the line
+			{
+				// Ship the line
 				col = DATA_COL;
 				uc_ln(lnimage);
 				ship_ln(lnimage);
-				lnfill(lnimage, SRC_COL, SPACE);                // Fill with spaces
-				sprintf(buf, "%08ux", lsloc);
-				scopy(lnimage+LOC_COL, buf, 8);
+				lnfill(lnimage, SRC_COL, SPACE);	// Fill with spaces
+				sprintf(buf, "%08X", lsloc);
+				strncpy(lnimage + LOC_COL, buf, 8);
 			}
 
 			if (lsloc >= (ch->chloc + ch->ch_size))
@@ -355,14 +344,14 @@ nochunk:
 
 			if (fixcount)
 			{
-				--fixcount;
+				fixcount--;
 				strcpy(buf, "xx");
-				++p;                                            // Advance anyway
+				p++;		// Advance anyway
 			}
 			else 
 				sprintf(buf, "%02x", *p++ & 0xff);
 
-			scopy(lnimage+col, buf, 2);
+			strncpy(lnimage + col, buf, 2);
 		}
 
 		// Flush partial line 
@@ -381,7 +370,7 @@ nochunk:
 
 
 //
-// Copy Current (Saved) Line to Output Buffer and Tag it with a Character
+// Copy current (saved) line to output buffer and tag it with a character
 //
 void lstout(char tag)
 {
@@ -392,7 +381,7 @@ void lstout(char tag)
 	lcursect = cursect;
 	llineno = curlineno;
 
-	lnfill(lnimage, SRC_COL, SPACE);                         // Fill with spaces
+	lnfill(lnimage, SRC_COL, SPACE);	// Fill with spaces
 	lnimage[TAG_COL] = tag;
 
 	// Copy line image and handle control characters
@@ -414,12 +403,12 @@ void lstout(char tag)
 
 
 //
-// Output a Value to Listing
+// Output a value to listing
 //
 int listvalue(VALUE v)
 {
-	sprintf(buf, "=%08ux", v);
-	scopy(lnimage + DATA_COL - 1, buf, 9);
+	sprintf(buf, "=%08X", v);
+	strncpy(lnimage + DATA_COL - 1, buf, 9);
 	return 0;
 }
 
@@ -463,7 +452,8 @@ int d_subttl(void)
 
 
 //
-// Set title on titles not on the first page, do an eject and clobber the subtitle
+// Set title on titles not on the first page, do an eject and clobber the
+// subtitle
 //
 int d_title(void)
 {
@@ -482,3 +472,4 @@ int d_title(void)
 
 	return 0;
 }
+

@@ -1008,12 +1008,12 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 
 		if (c & STSYM)
 		{
-			if (stuffnull)					// Terminate old symbol from previous pass
+			if (stuffnull)			// Terminate old symbol from previous pass
 				*nullspot = EOS;
 
-			v = 0;							// Assume no DOT attrib follows symbol
+			v = 0;					// Assume no DOT attrib follows symbol
 			stuffnull = 1;
-			p = nullspot = ln++;			// Nullspot -> start of this symbol
+			p = nullspot = ln++;	// Nullspot -> start of this symbol
 
 			// Find end of symbol (and compute its length)
 			for(j=1; (int)chrtab[*ln]&CTSYM; j++)
@@ -1023,8 +1023,8 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 			// symbol or keyword:
 			if (*ln == '.')
 			{
-				*ln++ = EOS;				// Terminate symbol
-				stuffnull = 0;				// And never try it again 
+				*ln++ = EOS;		// Terminate symbol
+				stuffnull = 0;		// And never try it again 
 
 				// Character following the `.' must have a DOT attribute, and
 				// the chararacter after THAT one must not have a start-symbol
@@ -1085,7 +1085,6 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 			case 120:   // time
 			case 121:   // date
 				j = -1;
-//				break;
 			}
 
 			// If not tokenized keyword OR token was not found
@@ -1093,8 +1092,8 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 			{
 				*tk++ = SYMBOL;
 //#warning
-//problem here: nullspot is a char * but TOKEN is a uint32_t. On a 64-bit system,
-//this will cause all kinds of mischief.
+//problem here: nullspot is a char * but TOKEN is a uint32_t. On a 64-bit
+//system, this will cause all kinds of mischief.
 #if 0
 				*tk++ = (TOKEN)nullspot;
 #else
@@ -1493,11 +1492,8 @@ goteol:
 //int d_goto(void)
 int d_goto(WORD unused)
 {
-//	char * sym;                                               // Label to search for 
-//	LONG * defln;                                             // Macro definition strings 
-	char * s1;                                                // Temps for string comparison 
+	char * s1;	// Temps for string comparison 
 	char * s2;
-//	IMACRO * imacro;                                          // Macro invocation block
 
 	// Setup for the search
 	if (*tok != SYMBOL)
