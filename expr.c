@@ -370,8 +370,11 @@ if (symbol)
 
 			symbol->sattr |= REFERENCED;
 
-			// Check for undefined register equates
-			if (symbol->sattre & UNDEF_EQUR)
+			// Check for undefined register equates, but only if it's not part
+			// of a #<SYMBOL> construct, as it could be that the label that's
+			// been undefined may later be used as an address label--which
+			// means it will be fixed up later, and thus, not an error.
+			if ((symbol->sattre & UNDEF_EQUR) && !riscImmTokenSeen)
 			{
 				errors("undefined register equate '%s'", symbol->sname);
 //if we return right away, it returns some spurious errors...
@@ -423,7 +426,7 @@ thrown away right here. What the hell is it for?
 		}
 		else
 		{
-			// Unknown type here... Alert the user!
+			// Unknown type here... Alert the user!,
 			error("undefined RISC register in expression");
 			// Prevent spurious error reporting...
 			tok++;

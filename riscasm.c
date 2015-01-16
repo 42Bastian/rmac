@@ -27,6 +27,7 @@ unsigned orgactive = 0;		// RISC org directive active
 unsigned orgaddr = 0;		// Org'd address
 unsigned orgwarning = 0;	// Has an ORG warning been issued
 int lastOpcode = -1;		// Last RISC opcode assembled
+uint8_t riscImmTokenSeen;	// The '#' (immediate) token was seen
 
 const char reg_err[] = "missing register R0...R31";
 
@@ -205,6 +206,7 @@ int GenerateRISCCode(int state)
 	// Get opcode parameter and type
 	unsigned short parm = (WORD)(roptbl[state - 3000].parm);
 	unsigned type = roptbl[state - 3000].typ;
+	riscImmTokenSeen = 0;		// Set to "token not seen yet"
 
 	// Detect whether the opcode parmeter passed determines that the opcode is
 	// specific to only one of the RISC processors and ensure it is legal in
@@ -279,6 +281,7 @@ int GenerateRISCCode(int state)
 			return MalformedOpcode(0x01);
 
 		tok++;
+		riscImmTokenSeen = 1;
 
 		if (expr(r_expr, &eval, &eattr, &esym) != OK)
 			return MalformedOpcode(0x02);
@@ -316,6 +319,7 @@ int GenerateRISCCode(int state)
 			return MalformedOpcode(0x03);
 
 		tok++;
+		riscImmTokenSeen = 1;
 
 		if (expr(r_expr, &eval, &eattr, &esym) != OK)
 			return MalformedOpcode(0x04);

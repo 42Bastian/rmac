@@ -49,6 +49,7 @@ extern unsigned orgactive;
 extern unsigned orgaddr;
 extern unsigned orgwarning;
 extern unsigned altbankok;
+extern uint8_t riscImmTokenSeen;
 
 // Prototypes
 int GenerateRISCCode(int);

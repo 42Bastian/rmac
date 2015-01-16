@@ -116,19 +116,19 @@ int d_org(void)
 
 
 //
-// Print Directive
+// Print directive
 //
 int d_print(void)
 {
-	char prntstr[LNSIZ];					// String for PRINT directive
-	char format[LNSIZ];						// Format for PRINT directive
-	int formatting = 0;						// Formatting on/off
-	int wordlong = 0;						// WORD = 0, LONG = 1
-	int outtype = 0;						// 0:hex, 1:decimal, 2:unsigned
+	char prntstr[LNSIZ];		// String for PRINT directive
+	char format[LNSIZ];			// Format for PRINT directive
+	int formatting = 0;			// Formatting on/off
+	int wordlong = 0;			// WORD = 0, LONG = 1
+	int outtype = 0;			// 0:hex, 1:decimal, 2:unsigned
 
-	VALUE eval;								// Expression value
-	WORD eattr;								// Expression attributes
-	SYM * esym;								// External symbol involved in expr.
+	VALUE eval;					// Expression value
+	WORD eattr;					// Expression attributes
+	SYM * esym;					// External symbol involved in expr.
 	TOKEN r_expr[EXPRSIZE];
 
 	while (*tok != EOL)
@@ -214,7 +214,7 @@ token_err:
 
 
 //
-// Undefine an Equated Condition Code
+// Undefine an equated condition code
 //
 int d_ccundef(void)
 {
@@ -251,7 +251,7 @@ int d_ccundef(void)
 
 
 //
-// Undefine an Equated Register
+// Undefine an equated register
 //
 int d_equrundef(void)
 {
@@ -275,7 +275,12 @@ int d_equrundef(void)
 		regname = lookup(string[tok[1]], LABEL, 0);
 
 		if (regname && (regname->sattre & EQUATEDREG))
+		{
+			// Reset the attributes of this symbol...
+			regname->sattr = 0;
+			regname->sattre &= ~(EQUATEDREG | BANK_0 | BANK_1);
 			regname->sattre |= UNDEF_EQUR;
+		}
 
 		// Skip over symbol token and address
 		tok += 2;
@@ -286,7 +291,7 @@ int d_equrundef(void)
 
 
 //
-// Do Not Allow the Use of the CLR.L Opcode
+// Do not allow use of the CLR.L opcode
 //
 int d_noclear(void)
 {
@@ -295,7 +300,7 @@ int d_noclear(void)
 
 
 // 
-// Include Binary File
+// Include binary file
 //
 int d_incbin(void)
 {
@@ -354,7 +359,7 @@ int d_incbin(void)
 
 
 // 
-// Set RISC Register Banks
+// Set RISC register banks
 //
 int d_regbank0(void)
 {
@@ -396,7 +401,7 @@ static inline void SkipBytes(unsigned bytesToSkip)
 
 
 //
-// Adjust Location to an EVEN Value
+// Adjust location to an EVEN value
 //
 int d_even(void)
 {
@@ -424,7 +429,7 @@ int d_even(void)
 
 
 //
-// Adjust Location to an LONG Value
+// Adjust location to a LONG value
 //
 int d_long(void)
 {
@@ -437,7 +442,7 @@ int d_long(void)
 
 
 //
-// Adjust Location to an PHRASE Value
+// Adjust location to a PHRASE value
 //
 // N.B.: We have to handle the GPU/DSP cases separately because you can embed
 //       RISC code in the middle of a regular 68K section. Also note that all
@@ -459,7 +464,7 @@ int d_phrase(void)
 
 
 //
-// Adjust Location to an DPHRASE Value
+// Adjust location to a DPHRASE value
 //
 int d_dphrase(void)
 {
@@ -472,7 +477,7 @@ int d_dphrase(void)
 
 
 //
-// Adjust Location to an QPHRASE Value
+// Adjust location to a QPHRASE value
 //
 int d_qphrase(void)
 {
@@ -497,17 +502,17 @@ int d_qphrase(void)
 void auto_even(void)
 {
 	if (scattr & SBSS)
-		sloc++;                           // Bump BSS section
+		sloc++;				// Bump BSS section
 	else
-		D_byte(0);                        // Deposit 0.b in non-BSS
+		D_byte(0);			// Deposit 0.b in non-BSS
 
-	if (lab_sym != NULL)                  // Bump label if we have to
-		++lab_sym->svalue;
+	if (lab_sym != NULL)	// Bump label if we have to
+		lab_sym->svalue++;
 }
 
 
 //
-// Unimplemened Directive Error
+// Unimplemened directive error
 //
 int d_unimpl(void)
 {
@@ -704,9 +709,8 @@ int d_abs(void)
 
 
 //
-// Switch Segments
+// Switch segments
 //
-
 int d_text(void)
 {
 	if (rgpu || rdsp)
@@ -1179,7 +1183,7 @@ int d_68000(void)
 
 
 //
-// .gpu - Switch to GPU Assembler
+// .gpu - Switch to GPU assembler
 //
 int d_gpu(void)
 {
@@ -1206,7 +1210,7 @@ int d_gpu(void)
 
 
 //
-// .dsp - Switch to DSP Assembler
+// .dsp - Switch to DSP assembler
 //
 int d_dsp(void)
 {
