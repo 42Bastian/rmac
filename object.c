@@ -16,7 +16,7 @@
 LONG symsize = 0;			// Size of BSD symbol table
 LONG strindx = 0x00000004;	// BSD string table index
 char * strtable;			// Pointer to the symbol string table
-char * objimage;			// Global object image pointer
+char * objImage;			// Global object image pointer
 
 
 //
@@ -72,9 +72,10 @@ char * constr_bsdsymtab(char * buf, SYM * sym, int globflag)
 
 
 //
-// Generate object file
+// Write an object file to the passed in file descriptor
+// N.B.: Return value is ignored...
 //
-int object(WORD fd)
+int WriteObject(int fd)
 {
 	LONG t;					// Scratch long
 	LONG tds;				// TEXT & DATA segment size
@@ -100,9 +101,9 @@ int object(WORD fd)
 			return ERROR;
 		}
 
-		memset(buf, 0, 0x600000);					// Reset allocated memory
-		objimage = buf;								// Set global object image pointer
-		strtable = malloc(0x200000);				// Allocate 2mb scratch buffer 
+		memset(buf, 0, 0x600000);		// Reset allocated memory
+		objImage = buf;					// Set global object image pointer
+		strtable = malloc(0x200000);	// Allocate 2mb scratch buffer 
 
 		if (strtable == NULL)
 		{
@@ -110,18 +111,18 @@ int object(WORD fd)
 			return ERROR;
 		}
 
-		memset(strtable, 0, 0x200000);				// Reset allocated memory
+		memset(strtable, 0, 0x200000);	// Reset allocated memory
 
 		// Build object file header
-		chptr = buf;								// Base of header
-		D_long(0x00000107);							// Magic number
-		D_long(sect[TEXT].sloc);					// TEXT size 
-		D_long(sect[DATA].sloc);					// DATA size 
-		D_long(sect[BSS].sloc);						// BSS size 
-		D_long(0x00000000);							// Symbol size
-		D_long(0x00000000);							// First entry (0L)
-		D_long(0x00000000);							// TEXT relocation size
-		D_long(0x00000000);							// BSD relocation size
+		chptr = buf;					// Base of header
+		D_long(0x00000107);				// Magic number
+		D_long(sect[TEXT].sloc);		// TEXT size 
+		D_long(sect[DATA].sloc);		// DATA size 
+		D_long(sect[BSS].sloc);			// BSS size 
+		D_long(0x00000000);				// Symbol size
+		D_long(0x00000000);				// First entry (0L)
+		D_long(0x00000000);				// TEXT relocation size
+		D_long(0x00000000);				// BSD relocation size
 
 		// Construct TEXT and DATA segments (without relocation changes)
 		p = buf + BSDHDRSIZE;
@@ -130,7 +131,7 @@ int object(WORD fd)
 		{
 			for(cp=sect[i].sfcode; cp!=NULL; cp=cp->chnext)
 			{
-				copy(p, cp->chptr, cp->ch_size);
+				memcpy(p, cp->chptr, cp->ch_size);
 				p += cp->ch_size;
 			}
 		}
@@ -172,3 +173,4 @@ int object(WORD fd)
 
 	return 0;
 }
+

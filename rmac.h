@@ -13,7 +13,8 @@
 // TARGET SPECIFIC BUILD SETTINGS
 //
 #ifdef WIN32
-	#define PLATFORM        "Win32"			// Release platform - windows
+	// Release platform - windows
+	#define PLATFORM        "Win32"
 	#define _OPEN_FLAGS     _O_TRUNC|_O_CREAT|_O_BINARY|_O_RDWR
 	#define _OPEN_INC       _O_RDONLY|_O_BINARY
 	#define _PERM_MODE      _S_IREAD|_S_IWRITE 
@@ -32,7 +33,8 @@
 	#include <sys/stat.h>
 #else 
 	#ifdef __GCCUNIX__
-	#define PLATFORM        "OSX/Linux"		// Release platform - mac OS-X or linux
+	// Release platform - mac OS-X or linux
+	#define PLATFORM        "OSX/Linux"
 	#define _OPEN_FLAGS     O_TRUNC|O_CREAT|O_RDWR
 	#define _OPEN_INC       O_RDONLY
 	#define _PERM_MODE      S_IREAD|S_IWRITE 
@@ -45,7 +47,8 @@
 	#include <sys/stat.h>
 	#include <unistd.h>
 #else
-	#define PLATFORM        "Unknown"		// Release platform - not specified 
+	// Release platform - not specified 
+	#define PLATFORM        "Unknown"
 	#define _OPEN_FLAGS     O_TRUNC|O_CREAT|O_RDWR
 	#define _OPEN_INC       O_RDONLY
 	#define _PERM_MODE      S_IREAD|S_IWRITE 
@@ -72,7 +75,7 @@
 
 #define ERROR        (-1)			// Generic error return
 #define EOS          '\0'			// End of string
-#define SPACE        ' '			// Ascii space 
+#define SPACE        ' '			// ASCII space 
 #define SLASHCHAR    '/'
 #define SLASHSTRING  "/"
 #define VALUE        LONG			// Assembler value
@@ -167,7 +170,7 @@ PTR
 
 //#define RISCSYM      0x00010000
 
-// Globals, externals etc
+// Globals, externals, etc.
 extern int verb_flag;
 extern int debug;
 extern int rgpu, rdsp;
@@ -183,16 +186,10 @@ extern int lsym_flag;
 extern int sbra_flag;
 extern int obj_format;
 extern int legacy_flag;
-//extern LONG amemtot;
 
-// Prototypes
-void init_sym(void);
-SYM * newsym(char *, int, int);
+// Exported functions
 char * fext(char *, char *, int);
-int kmatch(char *, int *, int *, int *, int *);
-void autoeven(int);
 int nthpath(char *, int, char *);
-void clear(char *, LONG);
-char * copy(char *, char *, LONG);
 
 #endif // __RMAC_H__
+

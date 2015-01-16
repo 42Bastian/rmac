@@ -9,14 +9,14 @@
 #ifndef __OBJECT_H__
 #define __OBJECT_H__
 
-#include "rmac.h"
+// Size of BSD header
+#define BSDHDRSIZE   0x20
 
-#define BSDHDRSIZE   0x20                                   // Size of BSD header
+// Globals, externals, etc.
+extern char * objImage;
 
-// Globals, externals etc
-extern char * objimage;
-
-// Prototypes
-int object(WORD);
+// Exported functions
+int WriteObject(int);
 
 #endif // __OBJECT_H__
+

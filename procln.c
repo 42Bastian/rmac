@@ -94,7 +94,7 @@ int HandleLabel(char *, int);
 
 
 //
-// Initialize Line Processor
+// Initialize line processor
 //
 void InitLineProcessor(void)
 {
@@ -106,7 +106,7 @@ void InitLineProcessor(void)
 
 
 //
-// Line Processor
+// Line processor
 //
 void Assemble(void)
 {
@@ -728,7 +728,7 @@ int HandleLabel(char * label, int labelType)
 
 
 // 
-// .if, Start Conditional Assembly
+// .if, Start conditional assembly
 //
 int d_if(void)
 {
@@ -763,7 +763,7 @@ int d_if(void)
 
 
 // 
-// .else, Do Alternate Case For .if
+// .else, Do alternate case for .if
 //
 int d_else(void)
 {

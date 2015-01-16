@@ -26,7 +26,6 @@ int at_eol(void)
 
 	if (*tok != EOL)
 	{
-//		error("syntax error");
 		sprintf(msg, "syntax error. expected EOL, found $%X ('%c')", *tok, *tok);
 		error(msg);
 	}
@@ -36,7 +35,7 @@ int at_eol(void)
 
 
 //
-// Cannot Create a File
+// Cannot create a file
 //
 void cantcreat(const char * fn)
 {
@@ -46,7 +45,7 @@ void cantcreat(const char * fn)
 
 
 //
-// Setup for Error Message
+// Setup for error message
 // o  Create error listing file (if necessary)
 // o  Set current filename
 //
@@ -76,7 +75,7 @@ void err_setup(void)
 
 
 //
-// Display Error Message
+// Display error message
 //
 int error(const char * s)
 {

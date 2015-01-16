@@ -17,14 +17,14 @@ MCHUNK * curmch;		// Current mark chunk
 PTR markptr;			// Deposit point in current mark chunk
 LONG mcalloc;			// #bytes alloc'd to current mark chunk
 LONG mcused;			// #bytes used in current mark chunk
-uint16_t curfrom;			// Current "from" section
+uint16_t curfrom;		// Current "from" section
 
 
 //#define DEBUG_IMAGE_MARKING
 
 
 //
-// Initialize Marker
+// Initialize marker
 //
 void InitMark(void)
 {
@@ -37,7 +37,7 @@ void InitMark(void)
 //
 // Wrap up marker (called after final mark is made)
 //
-void stopmark(void)
+void StopMark(void)
 {
 	if (curmch)
 	{
@@ -286,7 +286,7 @@ printf("  validsegment(3): rflag = $%08X\n", rflag);
 					{
 						if (w & (DATA|BSS))
 						{
-							dp = objimage + BSDHDRSIZE + loc;
+							dp = objImage + BSDHDRSIZE + loc;
 							diff = ((LONG)(*dp++ & 0xFF)) << 24;
 							diff |= ((LONG)(*dp++ & 0xFF)) << 16;
 							diff |= ((LONG)(*dp++ & 0xFF)) << 8;
@@ -307,7 +307,7 @@ printf("  validsegment(4): diff = $%08X --> ", diff);
 							if (rflag & 0x01)
 								diff = ((diff >> 16) & 0x0000FFFF) | ((diff << 16) & 0xFFFF0000);
 
-							dp = objimage + BSDHDRSIZE + loc;
+							dp = objImage + BSDHDRSIZE + loc;
 							*dp++ = (char)(diff >> 24);
 							*dp++ = (char)(diff >> 16);
 							*dp++ = (char)(diff >> 8);

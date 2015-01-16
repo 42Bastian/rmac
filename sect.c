@@ -23,24 +23,24 @@ void MakeSection(int, WORD);
 void SwitchSection(int);
 
 // Section descriptors
-SECT sect[NSECTS];				// All sections... 
-int cursect;					// Current section number
+SECT sect[NSECTS];		// All sections... 
+int cursect;			// Current section number
 
 // These are copied from the section descriptor, the current code chunk
 // descriptor and the current fixup chunk descriptor when a switch is made into
 // a section.  They are copied back to the descriptors when the section is left.
-WORD scattr;					// Section attributes 
-LONG sloc;						// Current loc in section 
+WORD scattr;			// Section attributes 
+LONG sloc;				// Current loc in section 
 
-CHUNK * scode;					// Current (last) code chunk 
-LONG challoc;					// # bytes alloc'd to code chunk 
-LONG ch_size;					// # bytes used in code chunk 
-char * chptr;					// Deposit point in code chunk buffer 
+CHUNK * scode;			// Current (last) code chunk 
+LONG challoc;			// # bytes alloc'd to code chunk 
+LONG ch_size;			// # bytes used in code chunk 
+char * chptr;			// Deposit point in code chunk buffer 
 
-CHUNK * sfix;					// Current (last) fixup chunk
-LONG fchalloc;					// # bytes alloc'd to fixup chunk
-LONG fchsize;					// # bytes used in fixup chunk
-PTR fchptr;						// Deposit point in fixup chunk buffer
+CHUNK * sfix;			// Current (last) fixup chunk
+LONG fchalloc;			// # bytes alloc'd to fixup chunk
+LONG fchsize;			// # bytes used in fixup chunk
+PTR fchptr;				// Deposit point in fixup chunk buffer
 
 // Return a size (SIZB, SIZW, SIZL) or 0, depending on what kind of fixup is
 // associated with a location.
@@ -69,7 +69,7 @@ static char fusizoffs[] = {
 
 
 //
-// Initialize Sections; Setup initial ABS, TEXT, DATA and BSS sections
+// Initialize sections; setup initial ABS, TEXT, DATA and BSS sections
 //
 void InitSection(void)
 {
@@ -86,12 +86,13 @@ void InitSection(void)
 	MakeSection(BSS,   SUSED | BSS  | SBSS);		// BSS
 //	MakeSection(M6502, SUSED | TEXT       );		// 6502 code section
 
-	SwitchSection(TEXT);						// Switch to TEXT for starters
+	// Switch to TEXT for starters
+	SwitchSection(TEXT);
 }
 
 
 //
-// Make a New (Clean) Section
+// Make a new (clean) section
 //
 void MakeSection(int sno, WORD attr)
 {
@@ -109,11 +110,12 @@ void MakeSection(int sno, WORD attr)
 //
 void SwitchSection(int sno)
 {
-	CHUNK * cp;								// Chunk pointer
+	CHUNK * cp;
 	cursect = sno;
 	SECT * p = &sect[sno];
 
-	scattr = p->scattr;						// Copy section vars
+	// Copy section vars
+	scattr = p->scattr;
 	sloc = p->sloc;
 	scode = p->scode;
 	sfix = p->sfix;
@@ -170,11 +172,12 @@ int fixtest(int sno, LONG loc)
 	WORD w;
 	LONG xloc;
 
-	stopmark();								// Force update to sect[] variables
+	// Force update to sect[] variables
+	StopMark();
 
-	// Hairy, ugly linear search for a mark on our location;
-	// the speed doesn't matter, since this is only done when generating a
-	// listing, which is SLOW.
+	// Hairy, ugly linear search for a mark on our location; the speed doesn't
+	// matter, since this is only done when generating a listing, which is
+	// SLOW.
 	for(ch=sect[sno].sffix; ch!=NULL; ch=ch->chnext)
 	{
 		fup.cp = (char *)ch->chptr;
@@ -195,7 +198,7 @@ int fixtest(int sno, LONG loc)
 				fup.lp += w;
 			}
 			else
-				++fup.lp;
+				fup.lp++;
 		}
 	}
 
@@ -204,11 +207,11 @@ int fixtest(int sno, LONG loc)
 
 
 // 
-// Check that there are at least `amt' bytes left in the current chunk. If
-// there are not, allocate another chunk of at least `amt' bytes (and probably
+// Check that there are at least 'amt' bytes left in the current chunk. If
+// there are not, allocate another chunk of at least 'amt' bytes (and probably
 // more).
 // 
-// If `amt' is zero, ensure there are at least CH_THRESHOLD bytes, likewise.
+// If 'amt' is zero, ensure there are at least CH_THRESHOLD bytes, likewise.
 //
 int chcheck(LONG amt)
 {
@@ -257,8 +260,8 @@ int chcheck(LONG amt)
 }
 
 
-// This is really wrong. We need to make some proper structures here so we don't
-// have to count sizes of objects, that's what the compiler's for! :-P
+// This is really wrong. We need to make some proper structures here so we
+// don't have to count sizes of objects, that's what the compiler's for! :-P
 #define FIXUP_BASE_SIZE (sizeof(WORD) + sizeof(LONG) + sizeof(WORD) + sizeof(WORD))
 //
 // Arrange for a fixup on a location
@@ -269,7 +272,8 @@ int AddFixup(WORD attr, LONG loc, TOKEN * fexpr)
 	LONG len = 0;
 	CHUNK * cp;
 	SECT * p;
-	// Shamus: Expression lengths are voodoo ATM (variable "i"). Need to fix this.
+	// Shamus: Expression lengths are voodoo ATM (variable "i"). Need to fix
+	//         this.
 #warning "!!! AddFixup() is filled with VOODOO !!!"
 	DEBUG printf("FIXUP@$%X: $%X\n", loc, attr);
 
@@ -279,7 +283,8 @@ int AddFixup(WORD attr, LONG loc, TOKEN * fexpr)
 	if (*fexpr == SYMBOL && fexpr[2] == ENDEXPR)
 	{
 		// Just a single symbol
-		// SCPCD : correct bit mask for attr (else other FU_xxx will match) NYAN !
+		// SCPCD : correct bit mask for attr (else other FU_xxx will match) 
+		// NYAN !
 		if ((attr & FUMASKRISC) == FU_JR)
 		{
 //			i = 18;
@@ -372,7 +377,7 @@ int AddFixup(WORD attr, LONG loc, TOKEN * fexpr)
 
 
 //
-// Resolve all Fixups
+// Resolve all fixups
 //
 int ResolveAllFixups(void)
 {
@@ -381,7 +386,7 @@ int ResolveAllFixups(void)
 
 	// Make undefined symbols GLOBL
 	if (glob_flag)
-		syg_fix();
+		ForceUndefinedSymbolsGlobal();
 
 	DEBUG printf("Resolving TEXT sections...\n");
 	ResolveFixups(TEXT);
@@ -393,7 +398,7 @@ int ResolveAllFixups(void)
 
 
 //
-// Resolve Fixups in a Section
+// Resolve fixups in a section
 //
 int ResolveFixups(int sno)
 {
@@ -425,7 +430,7 @@ int ResolveFixups(int sno)
 	// "Cache" first chunk
 	CHUNK * cch = sc->sfcode;
 
-	// Can't fixup a sect with nothing in it
+	// Can't fixup a section with nothing in it
 	if (cch == NULL)
 		return 0;
 

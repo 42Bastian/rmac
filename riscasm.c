@@ -31,14 +31,14 @@ uint8_t riscImmTokenSeen;	// The '#' (immediate) token was seen
 
 const char reg_err[] = "missing register R0...R31";
 
-// Jaguar Jump Condition Names
+// Jaguar jump condition names
 const char condname[MAXINTERNCC][5] = { 
 	"NZ", "Z", "NC", "NCNZ", "NCZ", "C", "CNZ", "CZ", "NN", "NNNZ", "NNZ",
 	"N", "N_NZ", "N_Z", "T", "A", "NE", "EQ", "CC", "HS", "HI", "CS", "LO",
 	"PL", "MI", "F"
 };
 
-// Jaguar Jump Condition Numbers
+// Jaguar jump condition numbers
 const char condnumber[] = {
 	1, 2, 4, 5, 6, 8, 9, 10, 20, 21, 22, 24, 25, 26,
 	0, 0, 1, 2, 4, 4, 5,  8,  8, 20, 24, 31

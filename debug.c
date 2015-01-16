@@ -18,7 +18,7 @@ static int siztab[4] = { 3, 5, 9, 9 };
 
 
 //
-// Print 'c' Visibly
+// Print 'c' visibly
 //
 int visprt(char c)
 {
@@ -187,12 +187,14 @@ int mudump(void)
 
 
 //
-// Dump memory from 'start' for 'count' bytes; `flg' is the following ORed together:
+// Dump memory from 'start' for 'count' bytes; `flg' is the following ORed
+// together:
 // 0 - bytes
 // 1 - words
 // 2 - longwords
 // 
-// if `base' is not -1, then print it at the start of each line, incremented accordingly.
+// if `base' is not -1, then print it at the start of each line, incremented
+// accordingly.
 //
 int mdump(char * start, LONG count, int flg, LONG base)
 {
@@ -242,8 +244,8 @@ int mdump(char * start, LONG count, int flg, LONG base)
 			base += 1 << (flg & 3);
 	}
 
-	// Print remaining bit of ascii; the hairy expression computes the number of
-	// spaces to print to make the ascii line up nicely.
+	// Print remaining bit of ASCII; the hairy expression computes the number
+	// of spaces to print to make the ASCII line up nicely.
 	if (j != i)
 	{
 		k = ((16 - (i - j)) / (1 << (flg & 3))) * siztab[flg & 3];
@@ -332,7 +334,7 @@ int dumptok(TOKEN * tk)
 
 
 //
-// Dump Everything
+// Dump everything
 //
 int dump_everything(void)
 {

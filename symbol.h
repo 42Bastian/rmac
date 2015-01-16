@@ -36,18 +36,19 @@ SYM
 	uint32_t uid;					// Symbol's unique ID
 };
 
-// Globals, externals etc
+// Globals, externals, etc.
 extern int curenv;
 extern char subttl[];
 
-// Prototypes
+// Exported functions
 SYM * lookup(char *, int, int);
 void InitSymbolTable(void);
 SYM * NewSymbol(char *, int, int);
 void AddToSymbolOrderList(SYM *);
-int syg_fix(void);
+void ForceUndefinedSymbolsGlobal(void);
 int symtable(void);
 int sy_assign(char *, char *(*)());
 char * GetSymbolNameByUID(uint32_t);
 
 #endif // __SYMBOL_H__
+

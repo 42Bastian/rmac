@@ -118,7 +118,7 @@ static char * riscregname[] = {
 
 
 //
-// Initialize Tokenizer
+// Initialize tokenizer
 //
 void InitTokenizer(void)
 {
@@ -613,7 +613,7 @@ overflow:
 
 
 //
-// Get Next Line of Text from a Macro
+// Get next line of text from a macro
 //
 char * GetNextMacroLine(void)
 {
@@ -636,7 +636,7 @@ char * GetNextMacroLine(void)
 
 
 //
-// Get Next Line of Text from a Repeat Block
+// Get next line of text from a repeat block
 //
 char * GetNextRepeatLine(void)
 {
@@ -668,7 +668,7 @@ char * GetNextRepeatLine(void)
 
 
 //
-// Include a Source File used at the Root, and for ".include" Files
+// Include a source file used at the root, and for ".include" files
 //
 int include(int handle, char * fname)
 {
@@ -714,7 +714,7 @@ int include(int handle, char * fname)
 
 
 //
-// Pop the Current Input Level
+// Pop the current input level
 //
 int fpop(void)
 {
@@ -795,17 +795,9 @@ char * GetNextLine(void)
 		// Scan for next end-of-line; handle stupid text formats by treating
 		// \r\n the same as \n. (lone '\r' at end of buffer means we have to
 		// check for '\n').
-#if 0
-		i = 0;
-		j = fl->ifcnt;
-		d = &fl->ifbuf[fl->ifind];
-
-		for(p=d; i<j; i++, p++)
-#else
 		d = &fl->ifbuf[fl->ifind];
 
 		for(p=d, i=0, j=fl->ifcnt; i<j; i++, p++)
-#endif
 		{
 			if (*p == '\r' || *p == '\n')
 			{
@@ -814,7 +806,7 @@ char * GetNextLine(void)
 				if (*p == '\r')
 				{
 					if (i >= j)
-						break;			// Need to read more, then look for '\n' to eat 
+						break;	// Need to read more, then look for '\n' to eat 
 					else if (p[1] == '\n')
 						i++;
 				}
@@ -838,7 +830,8 @@ char * GetNextLine(void)
 			*p = '\0';
 			return NULL;
 #else
-			// Really should check to see if we're at the end of the buffer! :-P
+			// Really should check to see if we're at the end of the buffer!
+			// :-P
 			fl->ifbuf[fl->ifind + fl->ifcnt] = '\0';
 			fl->ifcnt = 0;
 			return &fl->ifbuf[fl->ifind];
@@ -879,29 +872,29 @@ char * GetNextLine(void)
 
 
 //
-// Tokenize a Line
+// Tokenize a line
 //
 int TokenizeLine(void)
 {
-	char * ln = NULL;				// Ptr to current position in line
-	char * p;						// Random character ptr
-	TOKEN * tk;						// Token-deposit ptr
-	int state = 0;					// State for keyword detector
-	int j = 0;						// Var for keyword detector
-	char c;							// Random char
-	VALUE v;						// Random value
-	char * nullspot = NULL;			// Spot to clobber for SYMBOL terminatn
-	int stuffnull;					// 1:terminate SYMBOL '\0' at *nullspot
+	char * ln = NULL;			// Ptr to current position in line
+	char * p;					// Random character ptr
+	TOKEN * tk;					// Token-deposit ptr
+	int state = 0;				// State for keyword detector
+	int j = 0;					// Var for keyword detector
+	char c;						// Random char
+	VALUE v;					// Random value
+	char * nullspot = NULL;		// Spot to clobber for SYMBOL termination
+	int stuffnull;				// 1:terminate SYMBOL '\0' at *nullspot
 	char c1;
-	int stringNum = 0;				// Pointer to string locations in tokenized line
+	int stringNum = 0;			// Pointer to string locations in tokenized line
 
 retry:
 
 	if (cur_inobj == NULL)					// Return EOF if input stack is empty
 		return TKEOF;
 
-	// Get another line of input from the current input source: a file,
-	// a macro, or a repeat-block
+	// Get another line of input from the current input source: a file, a
+	// macro, or a repeat-block
 	switch (cur_inobj->in_type)
 	{
 	// Include-file:
@@ -975,10 +968,10 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 		strcpy(lnbuf, ln);
 
 	// General house-keeping
-	tok = tokeol;							// Set "tok" to EOL in case of error
-	tk = etok;								// Reset token ptr
-	stuffnull = 0;							// Don't stuff nulls
-	totlines++;								// Bump total #lines assembled
+	tok = tokeol;			// Set "tok" to EOL in case of error
+	tk = etok;				// Reset token ptr
+	stuffnull = 0;			// Don't stuff nulls
+	totlines++;				// Bump total #lines assembled
 
 	// See if the entire line is a comment. This is a win if the programmer
 	// puts in lots of comments
@@ -1074,8 +1067,8 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 				j = -1;
 			}
 
-			//make j = -1 if time, date etc with no preceeding ^^
-			//defined, referenced, streq, macdef, date and time
+			// Make j = -1 if time, date etc with no preceeding ^^
+			// defined, referenced, streq, macdef, date and time
 			switch ((TOKEN)j)
 			{
 			case 112:   // defined
@@ -1129,7 +1122,7 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 		{
 			switch (*ln++)
 			{
-			case '!':                                       // ! or != 
+			case '!':		// ! or != 
 				if (*ln == '=')
 				{
 					*tk++ = NE;
@@ -1139,8 +1132,8 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 					*tk++ = '!';
 
 				continue;
-			case '\'':                                      // 'string' 
-			case '\"':                                      // "string" 
+			case '\'':		// 'string' 
+			case '\"':		// "string" 
 				c1 = ln[-1];
 				*tk++ = STRING;
 //#warning
@@ -1206,7 +1199,7 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 
 				*p++ = EOS;
 				continue;
-			case '$':                                       // $, hex constant
+			case '$':		// $, hex constant
 				if ((int)chrtab[*ln] & HDIGIT)
 				{
 					v = 0;
@@ -1241,7 +1234,7 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 					*tk++ = '$';
 
 				continue;
-			case '<':                                       // < or << or <> or <= 
+			case '<':		// < or << or <> or <= 
 				switch (*ln)
 				{
 				case '<':
@@ -1260,7 +1253,7 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 					*tk++ = '<';
 					continue;
 				}
-			case ':':                                       // : or ::
+			case ':':		// : or ::
 				if (*ln == ':')
 				{
 					*tk++ = DCOLON;
@@ -1270,7 +1263,7 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 					*tk++ = ':';
 
 				continue;
-			case '=':                                       // = or == 
+			case '=':		// = or == 
 				if (*ln == '=')
 				{
 					*tk++ = DEQUALS;
@@ -1280,7 +1273,7 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 					*tk++ = '=';
 
 				continue;
-			case '>':                                       // > or >> or >= 
+			case '>':		// > or >> or >= 
 				switch (*ln)
 				{
 				case '>':
@@ -1295,7 +1288,7 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 					*tk++ = '>';
 					continue;
 				}
-			case '%':                                       // % or binary constant 
+			case '%':		// % or binary constant 
 				if (*ln < '0' || *ln > '1')
 				{
 					*tk++ = '%';
@@ -1330,7 +1323,7 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 				*tk++ = CONST;
 				*tk++ = v;
 				continue;
-			case '@':                                       // @ or octal constant 
+			case '@':		// @ or octal constant 
 				if (*ln < '0' || *ln > '7')
 				{
 					*tk++ = '@';
@@ -1365,7 +1358,7 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 				*tk++ = CONST;
 				*tk++ = v;
 				continue;
-			case '^':                                       // ^ or ^^ <operator-name>
+			case '^':		// ^ or ^^ <operator-name>
 				if (*ln != '^')
 				{
 					*tk++ = '^';
@@ -1417,7 +1410,7 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 				*tk++ = (TOKEN)j;
 				continue;
 			default:
-				interror(2);                                 // Bad MULTX entry in chrtab
+				interror(2);	// Bad MULTX entry in chrtab
 				continue;
 			}
 		}
@@ -1492,8 +1485,7 @@ goteol:
 //int d_goto(void)
 int d_goto(WORD unused)
 {
-	char * s1;	// Temps for string comparison 
-	char * s2;
+	char * s1, * s2;
 
 	// Setup for the search
 	if (*tok != SYMBOL)
@@ -1566,7 +1558,6 @@ void DumpTokenBuffer(void)
 		else if (*t == ACONST)
 			printf("[ACONST]");
 		else if (*t == STRING)
-//			printf("[STRING]");
 		{
 			t++;
 			printf("[STRING:\"%s\"]", string[*t]);
@@ -1632,7 +1623,6 @@ void DumpTokenBuffer(void)
 			printf("[A%u]", ((uint32_t)*t) - 0x88);
 		else
 			printf("[%X:%c]", (uint32_t)*t, (char)*t);
-//			printf("[%X]", (uint32_t)*t);
 	}
 
 	printf("[EOL]\n");

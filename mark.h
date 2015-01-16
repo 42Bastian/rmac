@@ -15,15 +15,15 @@
 #define MARK_ALLOC_INCR 1024		// # bytes to alloc for more mark space 
 #define MIN_MARK_MEM    (3 * sizeof(WORD) + 2 * sizeof(LONG))
 
-// Globals, Externals etc
+// Globals, externals, etc.
 extern MCHUNK * firstmch;
 
-// Prototypes
+// Exported functions
 void InitMark(void);
-void stopmark(void);
-//int rmark(int, LONG, int, int, SYM *);
+void StopMark(void);
 int rmark(uint16_t, uint32_t, uint16_t, uint16_t, SYM *);
 int amark(void);
 LONG bsdmarkimg(char *, LONG, LONG, int);
 
 #endif // __MARK_H__
+

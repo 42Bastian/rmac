@@ -34,7 +34,7 @@ static int rptlevel;						// .rept nesting level
 
 
 //
-// Initialize Macro Processor
+// Initialize macro processor
 //
 void InitMacro(void)
 {
@@ -46,7 +46,7 @@ void InitMacro(void)
 
 
 //
-// Exit from a Macro;
+// Exit from a macro;
 // -- pop any intervening include files and repeat blocks;
 // -- restore argument stack;
 // -- pop the macro.
@@ -86,7 +86,7 @@ of another (nested macros). Need to fix that somehow.
 
 
 //
-// Add a Formal Argument to a Macro Definition
+// Add a formal argument to a macro definition
 //
 int defmac2(char * argname)
 {
@@ -552,12 +552,13 @@ int InvokeMacro(SYM * mac, WORD siz)
 Shamus:
 This construct is meant to deal with nested macros, so the simple minded way
 we deal with them now won't work. :-/ Have to think about how to fix.
-What we could do is simply move the argp with each call, and move it back by the
-number of arguments in the macro that's ending. That would solve the problem nicely.
+What we could do is simply move the argp with each call, and move it back by
+the number of arguments in the macro that's ending. That would solve the
+problem nicely.
 [Which we do now. But that uncovered another problem: the token strings are all
-stale by the time a nested macro gets to the end. But they're supposed to be symbols,
-which means if we put symbol references into the argument token streams, we can
-alleviate this problem.]
+stale by the time a nested macro gets to the end. But they're supposed to be
+symbols, which means if we put symbol references into the argument token
+streams, we can alleviate this problem.]
 */
 #if 0
 			argptr = (TOKEN **)malloc((nargs + 1) * sizeof(LONG));

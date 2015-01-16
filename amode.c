@@ -18,34 +18,34 @@
 #include "mntab.h"
 
 // Address-mode information
-int nmodes;                                                 // Number of addr'ing modes found
-int am0;                                                    // Addressing mode
-int a0reg;                                                  // Register
-TOKEN a0expr[EXPRSIZE];                                     // Expression
-VALUE a0exval;                                              // Expression's value
-WORD a0exattr;                                              // Expression's attribute
-int a0ixreg;                                                // Index register
-int a0ixsiz;                                                // Index register size (and scale)
-TOKEN a0oexpr[EXPRSIZE];                                    // Outer displacement expression
-VALUE a0oexval;                                             // Outer displacement value
-WORD a0oexattr;                                             // Outer displacement attribute
-SYM * a0esym;                                               // External symbol involved in expr
+int nmodes;					// Number of addr'ing modes found
+int am0;					// Addressing mode
+int a0reg;					// Register
+TOKEN a0expr[EXPRSIZE];		// Expression
+VALUE a0exval;				// Expression's value
+WORD a0exattr;				// Expression's attribute
+int a0ixreg;				// Index register
+int a0ixsiz;				// Index register size (and scale)
+TOKEN a0oexpr[EXPRSIZE];	// Outer displacement expression
+VALUE a0oexval;				// Outer displacement value
+WORD a0oexattr;				// Outer displacement attribute
+SYM * a0esym;				// External symbol involved in expr
 
-int am1;                                                    // Addressing mode
-int a1reg;                                                  // Register
-TOKEN a1expr[EXPRSIZE];                                     // Expression
-VALUE a1exval;                                              // Expression's value
-WORD a1exattr;                                              // Expression's attribute
-int a1ixreg;                                                // Index register
-int a1ixsiz;                                                // Index register size (and scale)
-TOKEN a1oexpr[EXPRSIZE];                                    // Outer displacement expression
-VALUE a1oexval;                                             // Outer displacement value
-WORD a1oexattr;                                             // Outer displacement attribute
-SYM * a1esym;                                               // External symbol involved in expr
+int am1;					// Addressing mode
+int a1reg;					// Register
+TOKEN a1expr[EXPRSIZE];		// Expression
+VALUE a1exval;				// Expression's value
+WORD a1exattr;				// Expression's attribute
+int a1ixreg;				// Index register
+int a1ixsiz;				// Index register size (and scale)
+TOKEN a1oexpr[EXPRSIZE];	// Outer displacement expression
+VALUE a1oexval;				// Outer displacement value
+WORD a1oexattr;				// Outer displacement attribute
+SYM * a1esym;				// External symbol involved in expr
 
 
 //
-// Parse Addressing Mode
+// Parse addressing mode
 //
 int amode(int acount)
 {
@@ -117,7 +117,7 @@ int amode(int acount)
 
 
 //
-// Parse Register List
+// Parse register list
 //
 int reglist(WORD * a_rmask)
 {

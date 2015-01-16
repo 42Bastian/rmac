@@ -22,145 +22,69 @@
 #include "symbol.h"
 #include "object.h"
 
-int perm_verb_flag;					// Permanently verbose, interactive mode
-int list_flag;						// "-l" Listing flag on command line
-int verb_flag;						// Be verbose about what's going on
-int as68_flag;						// as68 kludge mode
-int glob_flag;						// Assume undefined symbols are global
-int lsym_flag;						// Include local symbols in object file
-int sbra_flag;						// Warn about possible short branches
-int legacy_flag;					// Do stuff like insert code in RISC assembler
-int obj_format;						// Object format flag
-int debug;							// [1..9] Enable debugging levels
-int err_flag;						// '-e' specified
-int err_fd;							// File to write error messages to 
-int rgpu, rdsp;						// Assembling Jaguar GPU or DSP code
-int list_fd;						// File to write listing to
-int regbank;						// RISC register bank
-int segpadsize;						// Segment padding size
-int endian;							// Host processor endianess
-char * objfname;					// Object filename pointer
-char * firstfname;					// First source filename
-char * cmdlnexec;					// Executable name, pointer to ARGV[0]
-char * searchpath;					// Search path for include files 
-char defname[] = "noname.o";		// Default output filename
-
-
-//
-// Copy stuff around, return pointer to dest+count+1 (doesn't handle overlap)
-//
-char * copy(char * dest, char * src, LONG count)
-{
-	while (count--)
-		*dest++ = *src++;
-
-	return dest;
-}
-
-
-//
-// Clear a region of memory
-//
-void clear(char * dest, LONG count)
-{
-	while(count--)
-		*dest++ = 0;
-}
-
-
-//
-// Check to see if the string is a keyword. Returns -1, or a value from the
-// 'accept[]' table
-//
-int kmatch(char * p, int * base, int * check, int * tab, int * accept)
-{
-	int state;
-	int j;
-
-	for(state=0; state>=0;)
-	{
-		j = base[state] + (int)tolowertab[*p];
-
-		if (check[j] != state)
-		{                               // Reject, character doesn't match
-			state = -1;                                        // No match 
-			break;
-		}
-
-		if (!*++p)
-		{                                           // Must accept or reject at EOS
-			state = accept[j];                                 // (-1 on no terminal match) 
-			break;
-		}
-
-		state = tab[j];
-	}
-
-	return state;
-}
-
-
-//
-// Auto-even a section
-//
-void autoeven(int sect)
-{
-	SwitchSection(sect);
-	d_even();
-	SaveSection();
-}
+int perm_verb_flag;				// Permanently verbose, interactive mode
+int list_flag;					// "-l" listing flag on command line
+int verb_flag;					// Be verbose about what's going on
+int as68_flag;					// as68 kludge mode
+int glob_flag;					// Assume undefined symbols are global
+int lsym_flag;					// Include local symbols in object file
+int sbra_flag;					// Warn about possible short branches
+int legacy_flag;				// Do stuff like insert code in RISC assembler
+int obj_format;					// Object format flag
+int debug;						// [1..9] Enable debugging levels
+int err_flag;					// '-e' specified
+int err_fd;						// File to write error messages to 
+int rgpu, rdsp;					// Assembling Jaguar GPU or DSP code
+int list_fd;					// File to write listing to
+int regbank;					// RISC register bank
+int segpadsize;					// Segment padding size
+int endian;						// Host processor endianess
+char * objfname;				// Object filename pointer
+char * firstfname;				// First source filename
+char * cmdlnexec;				// Executable name, pointer to ARGV[0]
+char * searchpath;				// Search path for include files 
+char defname[] = "noname.o";	// Default output filename
 
 
 //
 // Manipulate file extension.
-// `name' must be large enough to hold any possible filename.
-// If `stripp' is nonzero, any old extension is removed.
-// Then, if the file does not already have an extension,
-// `extension' is appended to the filename.
+//
+// 'name' must be large enough to hold any possible filename. If 'stripp' is
+// nonzero, any old extension is removed. If the file does not already have an
+// extension, 'extension' is appended to the filename.
 //
 char * fext(char * name, char * extension, int stripp)
 {
-	char * s, * beg;                                           // String pointers
+	char * s;
 
-	// Find beginning of "real" name
-	beg = name + strlen(name) - 1;
+	// Find beginning of "real" name (strip off path)
+	char * beg = strrchr(name, SLASHCHAR);
 
-	for(; beg>name; --beg)
-	{
-		if (*beg == SLASHCHAR)
-		{
-			++beg;
-			break;
-		}
-	}
+	if (beg == NULL)
+		beg = name;
 
+	// Clobber any old extension, if requested
 	if (stripp)
-	{                                             // Clobber any old extension
+	{
 		for(s=beg; *s && *s!='.'; ++s) 
 			;
 
 		*s = '\0';
 	}
 
-	for(s=beg; *s!='.'; ++s)
-	{
-		if (!*s)
-		{                                             // Append the new extension
-			strcat(beg, extension);
-			break;
-		}
-	}
+	if (strrchr(beg, '.') == NULL)
+		strcat(beg, extension);
 
 	return name;
 }
 
 
 //
-// Return `item'nth element of semicolon-seperated pathnames specified in the
-// enviroment string `s'. Copy the pathname to `buf'.  Return 0 if the `item'
+// Return 'item'nth element of semicolon-seperated pathnames specified in the
+// enviroment string 's'. Copy the pathname to 'buf'.  Return 0 if the 'item'
 // nth path doesn't exist.
 // 
-// [`item' ranges from 0 to N-1, where N = #elements in search path]
+// ['item' ranges from 0 to N-1, where N = #elements in search path]
 //
 int nthpath(char * env_var, int itemno, char * buf)
 {
@@ -189,9 +113,9 @@ int nthpath(char * env_var, int itemno, char * buf)
 
 
 //
-// Display Command Line Help
+// Display command line help
 //
-void display_help(void)
+void DisplayHelp(void)
 {
 	printf("Usage:\n"
 		"    %s [options] srcfile\n"
@@ -221,9 +145,9 @@ void display_help(void)
 
 
 //
-// Display Version Information
+// Display version information
 //
-void display_version(void)
+void DisplayVersion(void)
 {
 	printf("\nReboot's Macro Assembler for Atari Jaguar\n"
 		"Copyright (C) 199x Landon Dyer, 2011 Reboot\n"
@@ -232,9 +156,9 @@ void display_version(void)
 
 
 // 
-// Process Command Line Arguments and do an Assembly
+// Process command line arguments and do an assembly
 //
-int process(int argc, char ** argv)
+int Process(int argc, char ** argv)
 {
 	int argno;						// Argument number
 	SYM * sy;						// Pointer to a symbol record
@@ -284,7 +208,7 @@ int process(int argc, char ** argv)
 		{
 			switch (argv[argno][1])
 			{
-			case 'd':                                       // Define symbol
+			case 'd':				// Define symbol
 			case 'D':
 				for(s=argv[argno]+2; *s!=EOS;)
 				{
@@ -311,25 +235,18 @@ int process(int argc, char ** argv)
 				}
 
 				sy->sattr = DEFINED | EQUATED | ABS;
-#if 0
-				if (*s)
-					sy->svalue = (VALUE)atoi(s);
-				else
-					sy->svalue = 0;
-#else
 				sy->svalue = (*s ? (VALUE)atoi(s) : 0);
-#endif
 				break;
-			case 'e':                                       // Redirect error message output
+			case 'e':				// Redirect error message output
 			case 'E':
 				err_fname = argv[argno] + 2;
 				break;
-			case 'f':                                       // -f<format>
+			case 'f':				// -f<format>
 			case 'F':
 				switch (argv[argno][2])
 				{
 				case EOS:
-				case 'b':                                 // -fb = BSD (Jaguar Recommended)
+				case 'b':			// -fb = BSD (Jaguar Recommended)
 				case 'B':
 					obj_format = BSD;
 					break;
@@ -339,22 +256,22 @@ int process(int argc, char ** argv)
 					return errcnt;
 				}
 				break;
-			case 'g':                                       // Debugging flag
+			case 'g':				// Debugging flag
 			case 'G':
 				printf("Debugging flag (-g) not yet implemented\n");
 				break;
-			case 'i':                                       // Set directory search path
+			case 'i':				// Set directory search path
 			case 'I':
 				searchpath = argv[argno] + 2;
 				break;
-			case 'l':                                       // Produce listing file
+			case 'l':				// Produce listing file
 			case 'L':
 				list_fname = argv[argno] + 2;
 				listing = 1;
 				list_flag = 1;
 				lnsave++;
 				break;
-			case 'o':                                       // Direct object file output
+			case 'o':				// Direct object file output
 			case 'O':
 				if (argv[argno][2] != EOS)
 					objfname = argv[argno] + 2;
@@ -370,7 +287,7 @@ int process(int argc, char ** argv)
 				}
 
 				break;
-			case 'r':                                       // Pad seg to requested boundary size
+			case 'r':				// Pad seg to requested boundary size
 			case 'R':
 				switch(argv[argno][2])
 				{
@@ -379,31 +296,31 @@ int process(int argc, char ** argv)
 				case 'p': case 'P': segpadsize = 8;  break;
 				case 'd': case 'D': segpadsize = 16; break;
 				case 'q': case 'Q': segpadsize = 32; break;
-				default: segpadsize = 2; break;           // Effective autoeven();
+				default: segpadsize = 2; break;	// Effective autoeven();
 				}
 				break;
-			case 's':                                       // Warn about possible short branches
+			case 's':				// Warn about possible short branches
 			case 'S':
 				sbra_flag = 1;
 				break;
-			case 'u':                                       // Make undefined symbols .globl
+			case 'u':				// Make undefined symbols .globl
 			case 'U':
 				glob_flag = 1;
 				break;
-			case 'v':                                       // Verbose flag
+			case 'v':				// Verbose flag
 			case 'V':
 				verb_flag++;
 
 				if (verb_flag > 1)
-					display_version();
+					DisplayVersion();
 
 				break;
-			case 'x':                                       // Turn on debugging
+			case 'x':				// Turn on debugging
 			case 'X':
 				debug = 1;
 				printf("~ Debugging ON\n");
 				break;
-			case 'y':                                       // -y<pagelen>
+			case 'y':				// -y<pagelen>
 			case 'Y':
 				pagelen = atoi(argv[argno] + 2);
 
@@ -415,29 +332,29 @@ int process(int argc, char ** argv)
 				}
 
 				break;
-			case EOS:                                       // Input is stdin
-				if (firstfname == NULL)                       // Kludge first filename
+			case EOS:				// Input is stdin
+				if (firstfname == NULL)	// Kludge first filename
 					firstfname = defname;
 
 				include(0, "(stdin)");
 				Assemble();
 				break;
-			case 'h':                                       // Display command line usage
+			case 'h':				// Display command line usage
 			case 'H':
 			case '?':
-				display_version();
-				display_help();
+				DisplayVersion();
+				DisplayHelp();
 				errcnt++;
 				break;
-			case 'n':                                       // Turn off legacy mode
+			case 'n':				// Turn off legacy mode
 			case 'N':
 				legacy_flag = 0;
 				printf("Legacy mode OFF\n");
 				break;
 			default:
-				display_version();
+				DisplayVersion();
 				printf("Unknown switch: %s\n\n", argv[argno]);
-				display_help();
+				DisplayHelp();
 				errcnt++;
 				break;
 			}
@@ -466,7 +383,8 @@ int process(int argc, char ** argv)
 
 	// Wind-up processing;
 	// o  save current section (no more code generation)
-	// o  do auto-even of all sections (or boundary alignment as requested through '-r')
+	// o  do auto-even of all sections (or boundary alignment as requested
+	//    through '-r')
 	// o  determine name of object file:
 	//    -  "foo.o" for linkable output;
 	//    -  "foo.prg" for GEMDOS executable (-p flag).
@@ -506,7 +424,7 @@ int process(int argc, char ** argv)
 	// (2)   generate the output file image and symbol table;
 	// (3)   generate relocation information from left-over fixups.
 	ResolveAllFixups();						// Do all fixups
-	stopmark();								// Stop mark tape-recorder
+	StopMark();								// Stop mark tape-recorder
 
 	if (errcnt == 0)
 	{
@@ -519,7 +437,7 @@ int process(int argc, char ** argv)
 			printf("[Writing %s file: %s]\n", s, objfname);
 		}
 
-		object((WORD)fd);
+		WriteObject(fd);
 		close(fd);
 
 		if (errcnt != 0)
@@ -546,9 +464,9 @@ int process(int argc, char ** argv)
 
 
 //
-// Determine Processor Endianess
+// Determine processor endianess
 //
-int get_endianess(void)
+int GetEndianess(void)
 {
 	int i = 1;
 	char * p = (char *)&i;
@@ -561,7 +479,7 @@ int get_endianess(void)
 
 
 //
-// Application Entry Point; Handle the Command Line
+// Application entry point
 //
 int main(int argc, char ** argv)
 {
@@ -569,16 +487,14 @@ int main(int argc, char ** argv)
 	legacy_flag = 1;				// Default is legacy mode on (:-P)
 	cmdlnexec = argv[0];			// Obtain executable name
 
-	endian = get_endianess();		// Get processor endianess
+	endian = GetEndianess();		// Get processor endianess
 
 	// If commands were passed in, process them
 	if (argc > 1)
-	{
-		return process(argc - 1, argv + 1);              
-	}
+		return Process(argc - 1, argv + 1);              
 
-	display_version();
-	display_help();
+	DisplayVersion();
+	DisplayHelp();
 
 	return 0;
 }

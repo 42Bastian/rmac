@@ -35,7 +35,7 @@ static char tdb_text[8] = {
 
 
 //
-// Initialize Symbol Table
+// Initialize symbol table
 //
 void InitSymbolTable(void)
 {
@@ -54,7 +54,7 @@ void InitSymbolTable(void)
 
 
 //
-// Hash the Print Name and Enviroment Number
+// Hash the print name and enviroment number
 //
 int HashSymbol(char * name, int envno)
 {
@@ -91,7 +91,7 @@ SYM * NewSymbol(char * name, int type, int envno)
 	symbol->stype  = (BYTE)type;
 	symbol->senv   = (WORD)envno;
 	symbol->sattr  = 0;
-//we don't do this, it could be a forward reference!
+	// Don't do this, it could be a forward reference!
 //	symbol->sattr  = DEFINED;		// We just defined it...
 	// This is a bad assumption. Not every symbol 1st seen in a RISC section is
 	// a RISC symbol!
@@ -191,11 +191,11 @@ void AddToSymbolOrderList(SYM * symbol)
 //
 // Make all referenced, undefined symbols global
 //
-int syg_fix(void)
+void ForceUndefinedSymbolsGlobal(void)
 {
 	SYM * sy;
 
-	DEBUG printf("~syg_fix()\n");
+	DEBUG printf("~ForceUndefinedSymbolsGlobal()\n");
 
 	// Scan through all symbols;
 	// If a symbol is REFERENCED but not DEFINED, then make it global.
@@ -205,8 +205,6 @@ int syg_fix(void)
 			&& ((sy->sattr & (REFERENCED | DEFINED)) == REFERENCED))
 			sy->sattr |= GLOBAL;
 	}
-
-	return 0;
 }
 
 
@@ -233,10 +231,7 @@ int uc_string(char * s)
 int sy_assign(char * buf, char *(* constr)())
 {
 	SYM * sy;
-	int scount;
-	//int i;
-
-	scount = 0;
+	int scount = 0;
 
 	if (buf == NULL)
 	{
@@ -246,16 +241,16 @@ int sy_assign(char * buf, char *(* constr)())
 		{
 			// Essentially the same as 'sym_decl()' above:
 			if (sy->sattr & SDECLLIST)
-				continue;                // Already on list 
+				continue;				// Already on list 
 
-			sy->sattr |= SDECLLIST;                            // Mark "on the list"
+			sy->sattr |= SDECLLIST;		// Mark "on the list"
 
 			if (sdecl == NULL)
-				sdecl = sy;                      // First on decl-list 
+				sdecl = sy;				// First on decl-list 
 			else
-				sdecltail->sdecl = sy;                        // Add to end of list
+				sdecltail->sdecl = sy;	// Add to end of list
 
-			sy->sdecl = NULL;                                  // Fix up list's tail
+			sy->sdecl = NULL;			// Fix up list's tail
 			sdecltail = sy;
 		}
 	}
@@ -322,7 +317,6 @@ int symtable(void)
 
 	// Allocate storage for list headers and partition all labels.  
 	// Throw away macros and macro arguments.
-//	sy = (SYM **)amem((LONG)(128 * sizeof(LONG)));
 	sy = (SYM **)malloc(128 * sizeof(LONG));
 
 	for(i=0; i<128; ++i)
@@ -336,27 +330,27 @@ int symtable(void)
 			j = *p->sname;
 			r = NULL;
 
-			if (p->stype != LABEL)
-				continue;                   // Ignore non-labels
-
-			if (p->sattre & UNDEF_EQUR)
+			// Ignore non-labels
+			if ((p->stype != LABEL) || (p->sattre & UNDEF_EQUR))
 				continue;
 
 			for(q=sy[j]; q!=NULL; q=q->snext)
 			{
 				if (strcmp(p->sname, q->sname) < 0)
 					break;
-				else
-					r = q;
+
+				r = q;
 			}
 
 			if (r == NULL)
-			{                               // Insert at front of list
+			{
+				// Insert at front of list
 				p->snext = sy[j];
 				sy[j] = p;
 			}
 			else
-			{                               // Insert in middle or append to list
+			{
+				// Insert in middle or append to list
 				p->snext = r->snext;
 				r->snext = p;
 			}
@@ -453,3 +447,4 @@ int symtable(void)
 
 	return 0;
 }
+
