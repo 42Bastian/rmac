@@ -136,7 +136,6 @@ int d_print(void)
 		switch(*tok)
 		{
 		case STRING:
-//			sprintf(prntstr, "%s", (char *)tok[1]);
 			sprintf(prntstr, "%s", string[tok[1]]);
 			printf("%s", prntstr);
 
@@ -203,7 +202,6 @@ int d_print(void)
 	}
 
 	printf("\n");
-//	println("\n");
 
 	return 0;
 
@@ -229,12 +227,10 @@ int d_ccundef(void)
 
 	if (*tok != SYMBOL)
 	{
-//		error(syntax_error);
 		error("syntax error; expected symbol");
 		return ERROR;
 	}
 
-//	ccname = lookup((char *)tok[1], LABEL, 0);
 	ccname = lookup(string[tok[1]], LABEL, 0);
 
 	// Make sure symbol is a valid ccdef
@@ -407,7 +403,6 @@ int d_even(void)
 {
 	unsigned skip = (rgpu || rdsp ? orgaddr : sloc) & 0x01;
 	
-//	if (sloc & 1)
 	if (skip)
 	{
 		if ((scattr & SBSS) == 0)
@@ -581,23 +576,15 @@ int d_include(void)
 	char buf[128];
 	char buf1[128];
 
-	if (*tok == STRING)							// Leave strings ALONE 
-#if 0
-		fn = (char *)*++tok;
-#else
+	if (*tok == STRING)			// Leave strings ALONE 
 		fn = string[*++tok];
-#endif
-	else if (*tok == SYMBOL)					// Try to append ".s" to symbols
+	else if (*tok == SYMBOL)	// Try to append ".s" to symbols
 	{
-#if 0
-		strcpy(buf, (char *)*++tok);
-#else
 		strcpy(buf, string[*++tok]);
-#endif
 		fext(buf, ".s", 0);
 		fn = &buf[0];
 	}
-	else										// Punt if no STRING or SYMBOL 
+	else						// Punt if no STRING or SYMBOL 
 		return error("missing filename");
 
 	// Make sure the user didn't try anything like:
@@ -1114,7 +1101,6 @@ int d_comm(void)
 	if (*tok != SYMBOL)
 		return error("missing symbol");
 
-//	p = (char *)tok[1];
 	p = string[tok[1]];
 	tok += 2;
 
@@ -1273,18 +1259,10 @@ int d_cargs(void)
 	{
 		if (*tok == SYMBOL)
 		{
-//			p = (char *)tok[1];
 			p = string[tok[1]];
 
-#if 0
-			if (*p == '.')
-				env = curenv;			// Label is local
-			else
-				env = 0;				// Label is global
-#else
 			// Set env to either local (dot prefixed) or global scope
 			env = (*p == '.' ? curenv : 0);
-#endif
 			symbol = lookup(p, LABEL, env);
 
 			if (symbol == NULL)
@@ -1296,8 +1274,7 @@ int d_cargs(void)
 				return errors("multiply-defined label '%s'", p);
 
 			// Put symbol in "order of definition" list
-			if (!(symbol->sattr & SDECLLIST))
-				AddToSymbolOrderList(symbol);
+			AddToSymbolDeclarationList(symbol);
 
 			symbol->sattr |= (ABS | DEFINED | EQUATED);
 			symbol->svalue = eval;
@@ -1322,7 +1299,6 @@ int d_cargs(void)
 			if (reglist(&rlist) < 0)
 				return 0;
 
-//			for(i=0; i++<16; rlist>>=1)
 			for(i=0; i<16; i++, rlist>>=1)
 			{
 				if (rlist & 1)
@@ -1414,8 +1390,7 @@ int d_cstruct(void)
 				return errors("multiply-defined label '%s'", symbolName);
 
 			// Put symbol in "order of definition" list
-			if (!(symbol->sattr & SDECLLIST))
-				AddToSymbolOrderList(symbol);
+			AddToSymbolDeclarationList(symbol);
 
 			tok += 2;
 

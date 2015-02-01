@@ -150,7 +150,7 @@ void DisplayHelp(void)
 void DisplayVersion(void)
 {
 	printf("\nReboot's Macro Assembler for Atari Jaguar\n"
-		"Copyright (C) 199x Landon Dyer, 2011 Reboot\n"
+		"Copyright (C) 199x Landon Dyer, 2011-2015 Reboot\n"
 		"V%01i.%01i.%01i %s (%s)\n\n", MAJOR, MINOR, PATCH, __DATE__, PLATFORM);
 }
 

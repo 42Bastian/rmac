@@ -371,7 +371,7 @@ normal:
 			{
 //REALLY?				sy->sattre |= ~UNDEF_EQUR; 
 				sy->sattre &= ~UNDEF_EQUR; 
-				sy->svalue  = 0;
+				sy->svalue = 0;
 			}
 			else if ((equtyp == CCDEF) && (sy->sattre & UNDEF_CC))
 			{
@@ -386,9 +386,8 @@ normal:
 			}
 		}
 
-		// Put symbol in "order of definition" list
-		if (!(sy->sattr & SDECLLIST))
-			AddToSymbolOrderList(sy);
+		// Put symbol in "order of definition" list if it's not already there
+		AddToSymbolDeclarationList(sy);
 
 		// Parse value to equate symbol to;
 		// o  .equr
@@ -694,9 +693,8 @@ int HandleLabel(char * label, int labelType)
 	else if (symbol->sattr & DEFINED)
 		return errors("multiply-defined label '%s'", label);
 
-	// Put symbol in "order of definition" list
-	if (!(symbol->sattr & SDECLLIST))
-		AddToSymbolOrderList(symbol);
+	// Put symbol in "order of definition" list if it's not already in it
+	AddToSymbolDeclarationList(symbol);
 
 	if (orgactive)
 	{

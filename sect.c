@@ -80,10 +80,10 @@ void InitSection(void)
 		MakeSection(i, 0);
 
 	// Construct default sections, make TEXT the current section
-	MakeSection(ABS,   SUSED | SABS | SBSS);		// ABS
-	MakeSection(TEXT,  SUSED | TEXT       );		// TEXT
-	MakeSection(DATA,  SUSED | DATA       );		// DATA
-	MakeSection(BSS,   SUSED | BSS  | SBSS);		// BSS
+	MakeSection(ABS,  SUSED | SABS | SBSS);		// ABS
+	MakeSection(TEXT, SUSED | TEXT       );		// TEXT
+	MakeSection(DATA, SUSED | DATA       );		// DATA
+	MakeSection(BSS,  SUSED | BSS  | SBSS);		// BSS
 //	MakeSection(M6502, SUSED | TEXT       );		// 6502 code section
 
 	// Switch to TEXT for starters
@@ -287,18 +287,21 @@ int AddFixup(WORD attr, LONG loc, TOKEN * fexpr)
 		// NYAN !
 		if ((attr & FUMASKRISC) == FU_JR)
 		{
+//printf("AddFixup: ((attr & FUMASKRISC) == FU_JR)\n");
 //			i = 18;
 //			i = FIXUP_BASE_SIZE + (sizeof(LONG) * 2);
 			i = FIXUP_BASE_SIZE + sizeof(SYM *) + sizeof(LONG);
 		}
 		else
 		{
+//printf("AddFixup: ((attr & FUMASKRISC) == FU_JR) ELSE\n");
 //			i = 14;
 			i = FIXUP_BASE_SIZE + sizeof(SYM *);
 		}
 	}
 	else
 	{
+//printf("AddFixup: !SYMBOL\n");
 		attr |= FU_EXPR;
 
 		for(len=0; fexpr[len]!=ENDEXPR; len++)
@@ -312,7 +315,7 @@ int AddFixup(WORD attr, LONG loc, TOKEN * fexpr)
 		i = FIXUP_BASE_SIZE + sizeof(WORD) + (len * sizeof(TOKEN));
 	}
 
-	// Maybe alloc another fixup chunk for this one to fit in
+	// Alloc another fixup chunk for this one to fit in if necessary
 	if ((fchalloc - fchsize) < i)
 	{
 		p = &sect[cursect];
@@ -360,6 +363,7 @@ int AddFixup(WORD attr, LONG loc, TOKEN * fexpr)
 	{
 //		*fchptr.lp++ = (LONG)fexpr[1];
 		*fchptr.sy++ = symbolPtr[fexpr[1]];
+//printf("AddFixup: adding symbol (%s) [%08X]\n", symbolPtr[fexpr[1]]->sname, symbolPtr[fexpr[1]]->sattr);
 	}
 
 	// SCPCD : correct bit mask for attr (else other FU_xxx will match) NYAN !
@@ -402,17 +406,17 @@ int ResolveAllFixups(void)
 //
 int ResolveFixups(int sno)
 {
-	PTR fup;					// Current fixup
-	WORD * fuend;				// End of last fixup (in this chunk)
-	WORD w;						// Fixup word (type+modes+flags)
-	char * locp;				// Location to fix (in cached chunk) 
-	LONG loc;					// Location to fixup
-	VALUE eval;					// Expression value 
-	WORD eattr;					// Expression attrib
-	SYM * esym;					// External symbol involved in expr
-	SYM * sy;					// (Temp) pointer to a symbol
-	WORD i;						// (Temp) word
-	WORD tdb;					// eattr & TDB
+	PTR fup;				// Current fixup
+	WORD * fuend;			// End of last fixup (in this chunk)
+	WORD w;					// Fixup word (type+modes+flags)
+	char * locp;			// Location to fix (in cached chunk) 
+	LONG loc;				// Location to fixup
+	VALUE eval;				// Expression value 
+	WORD eattr;				// Expression attrib
+	SYM * esym;				// External symbol involved in expr
+	SYM * sy;				// (Temp) pointer to a symbol
+	WORD i;					// (Temp) word
+	WORD tdb;				// eattr & TDB
 	LONG oaddr;
 	int reg2;
 	WORD flags;
@@ -502,6 +506,7 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 
 				if ((eattr & (GLOBAL | DEFINED)) == GLOBAL)
 					esym = sy;
+printf("DoFixups: found symbol (%s) [%08X]\n", sy->sname, sy->sattr);
 			}
 
 			tdb = (WORD)(eattr & TDB);
@@ -895,7 +900,8 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 				break;
 
 			default:
-				interror(4);                                 // Bad fixup type
+				// Bad fixup type--this should *never* happen!
+				interror(4);
 				// NOTREACHED
 			}
 			continue;

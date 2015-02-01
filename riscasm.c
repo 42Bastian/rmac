@@ -224,7 +224,8 @@ int GenerateRISCCode(int state)
 		break;
 
 	// Single operand instructions (Rd)
-	// ABS, MIRROR, NEG, NOT, PACK, RESMAC, SAT8, SAT16, SAT16S, SAT24, SAT32S, UNPACK
+	// ABS, MIRROR, NEG, NOT, PACK, RESMAC, SAT8, SAT16, SAT16S, SAT24, SAT32S,
+	// UNPACK
 	case RI_ONE:
 		reg2 = GetRegister(FU_REGTWO);
 		at_eol();
@@ -232,8 +233,8 @@ int GenerateRISCCode(int state)
 		break;   
 
 	// Two operand instructions (Rs,Rd)
-	// ADD, ADDC, AND, CMP, DIV, IMACN, IMULT, IMULTN, MOVEFA, MOVETA, MULT, MMULT, 
-	// MTOI, NORMI, OR, ROR, SH, SHA, SUB, SUBC, XOR
+	// ADD, ADDC, AND, CMP, DIV, IMACN, IMULT, IMULTN, MOVEFA, MOVETA, MULT,
+	// MMULT, MTOI, NORMI, OR, ROR, SH, SHA, SUB, SUBC, XOR
 	case RI_TWO:                      
 		if (parm == 37)
 			altbankok = 1;                      // MOVEFA
@@ -258,7 +259,8 @@ int GenerateRISCCode(int state)
 	case RI_NUM_31:
 
 	// Numeric operand (n,Rd) where n = 1..32
-	// ADDQ, ADDQMOD, ADDQT, SHARQ, SHLQ, SHRQ, SUBQ, SUBQMOD, SUBQT, ROLQ, RORQ
+	// ADDQ, ADDQMOD, ADDQT, SHARQ, SHLQ, SHRQ, SUBQ, SUBQMOD, SUBQT, ROLQ,
+	// RORQ
 	case RI_NUM_32:
 		switch (type)
 		{
@@ -348,7 +350,7 @@ int GenerateRISCCode(int state)
 		{
 			if (eattr & TDB)
 //{
-//printf("risca: Doing rmark for RI_MOVEI (tdb=$%X)...\n", eattr & TDB);
+//printf("RISCASM: Doing rmark for RI_MOVEI (tdb=$%X)...\n", eattr & TDB);
 				rmark(cursect, sloc + 2, (eattr & TDB), (MLONG | MMOVEI), NULL);
 //}
 		}

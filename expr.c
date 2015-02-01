@@ -360,7 +360,7 @@ int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			j = (*p == '.' ? curenv : 0);
 			symbol = lookup(p, LABEL, j);
 #if 0
-printf("eval: Looking up symbol [=%08X]\n", symbol);
+printf("eval: Looking up symbol (%s) [=%08X]\n", p, symbol);
 if (symbol)
 	printf("      attr=%04X, attre=%08X, val=%i, name=%s\n", symbol->sattr, symbol->sattre, symbol->svalue, symbol->sname);
 #endif
@@ -416,7 +416,6 @@ thrown away right here. What the hell is it for?
 */
 			if (symbol->sattre & EQUATEDREG) 
 				*a_value &= 0x1F;
-
 			*a_attr = (WORD)(symbol->sattr & ~GLOBAL);
 
 			if ((symbol->sattr & (GLOBAL | DEFINED)) == GLOBAL && a_esym != NULL)

@@ -170,20 +170,23 @@ SYM * lookup(char * name, int type, int envno)
 //
 // Put symbol on "order-of-declaration" list of symbols
 //
-//void sym_decl(SYM * symbol)
-void AddToSymbolOrderList(SYM * symbol)
+void AddToSymbolDeclarationList(SYM * symbol)
 {
-	if (symbol->sattr & SDECLLIST)
-		return;								// Already on list
+	// Don't add if already on list, or it's an equated register/CC
+	if ((symbol->sattr & SDECLLIST)
+		|| (symbol->sattre & (EQUATEDREG | UNDEF_EQUR | EQUATEDCC | UNDEF_CC)))
+		return;
 
-	symbol->sattr |= SDECLLIST;				// Mark "already on list"
+	// Mark as "on .sdecl list"
+	symbol->sattr |= SDECLLIST;
 
 	if (sdecl == NULL)
-		sdecl = symbol;						// First on decl-list
+		sdecl = symbol;				// First on decl-list
 	else 
-		sdecltail->sdecl = symbol;			// Add to end of list
+		sdecltail->sdecl = symbol;	// Add to end of list
 
-	symbol->sdecl = NULL;					// Fix up list's tail
+	// Fix up list's tail
+	symbol->sdecl = NULL;
 	sdecltail = symbol;
 }
 
@@ -238,33 +241,18 @@ int sy_assign(char * buf, char *(* constr)())
 		// Append all symbols not appearing on the .sdecl list to the end of
 		// the .sdecl list
 		for(sy=sorder; sy!=NULL; sy=sy->sorder)
-		{
-			// Essentially the same as 'sym_decl()' above:
-			if (sy->sattr & SDECLLIST)
-				continue;				// Already on list 
-
-			sy->sattr |= SDECLLIST;		// Mark "on the list"
-
-			if (sdecl == NULL)
-				sdecl = sy;				// First on decl-list 
-			else
-				sdecltail->sdecl = sy;	// Add to end of list
-
-			sy->sdecl = NULL;			// Fix up list's tail
-			sdecltail = sy;
-		}
+			AddToSymbolDeclarationList(sy);
 	}
 
 	// Run through all symbols (now on the .sdecl list) and assign numbers to
 	// them. We also pick which symbols should be global or not here.
 	for(sy=sdecl; sy!=NULL; sy=sy->sdecl)
 	{
-		if (sy->sattre & UNDEF_EQUR)
-			continue;                 // Don't want undefined on our list
+		// Don't want register/CC or undefined on our list
+//these should already be rejected above...
+//		if (sy->sattre & (EQUATEDREG | UNDEF_EQUR | EQUATEDCC | UNDEF_CC)))
+//			continue;
 
-		if (sy->sattre & UNDEF_CC)
-			continue;                   
-		
 		// Export or import external references, and export COMMON blocks.
 		if ((sy->stype == LABEL)
 			&& ((sy->sattr & (GLOBAL | DEFINED)) == (GLOBAL | DEFINED)
@@ -283,7 +271,9 @@ int sy_assign(char * buf, char *(* constr)())
 			&& (!as68_flag || *sy->sname != 'L'))
 		{
 			sy->senv = (WORD)scount++;
-			if (buf != NULL) buf = (*constr)(buf, sy, 0);
+
+			if (buf != NULL)
+				buf = (*constr)(buf, sy, 0);
 		}
 	}
 
