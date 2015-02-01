@@ -506,7 +506,6 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 
 				if ((eattr & (GLOBAL | DEFINED)) == GLOBAL)
 					esym = sy;
-printf("DoFixups: found symbol (%s) [%08X]\n", sy->sname, sy->sattr);
 			}
 
 			tdb = (WORD)(eattr & TDB);
