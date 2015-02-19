@@ -3,7 +3,7 @@
 // MACH.H - Code Generation
 // Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
-// Source Utilised with the Kind Permission of Landon Dyer
+// Source utilised with the kind permission of Landon Dyer
 //
 
 #ifndef __MACH_H__

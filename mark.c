@@ -3,7 +3,7 @@
 // MARK.C - A record of things that are defined relative to any of the sections
 // Copyright (C) 199x Landon Dyer, 2011-2012 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
-// Source Utilised with the Kind Permission of Landon Dyer
+// Source utilised with the kind permission of Landon Dyer
 //
 
 #include "mark.h"

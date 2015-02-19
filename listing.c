@@ -3,7 +3,7 @@
 // LISTING.C - Listing Output
 // Copyright (C) 199x Landon Dyer, 2011-2012 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
-// Source Utilised with the Kind Permission of Landon Dyer
+// Source utilised with the kind permission of Landon Dyer
 //
 // --------------------------------------------------------------------------
 // 0    0    1    1    2    2    3    3    4    4    5    5    6    6    7    7

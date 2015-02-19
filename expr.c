@@ -3,7 +3,7 @@
 // EXPR.C - Expression Analyzer
 // Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
-// Source Utilised with the Kind Permission of Landon Dyer
+// Source utilised with the kind permission of Landon Dyer
 //
 
 #include "expr.h"
@@ -278,7 +278,8 @@ int expr2(void)
 
 		// pcloc == location at start of line
 		*evalTokenBuffer++ = (orgactive ? orgaddr : pcloc);
-		*evalTokenBuffer++ = ABS | DEFINED;			// Store attribs
+		// '*' takes attributes of current section, not ABS!
+		*evalTokenBuffer++ = cursect | DEFINED;
 		break;
 	default:
 		return error("bad expression");
@@ -347,7 +348,8 @@ int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			else
 				*evalTokenBuffer++ = *a_value = pcloc;
 
-			*a_attr = ABS | DEFINED;
+			// '*' takes attributes of current section, not ABS!
+			*a_attr = cursect | DEFINED;
 
 			if (a_esym != NULL)
 				*a_esym = NULL;
@@ -416,9 +418,11 @@ thrown away right here. What the hell is it for?
 */
 			if (symbol->sattre & EQUATEDREG) 
 				*a_value &= 0x1F;
+
 			*a_attr = (WORD)(symbol->sattr & ~GLOBAL);
 
-			if ((symbol->sattr & (GLOBAL | DEFINED)) == GLOBAL && a_esym != NULL)
+			if ((symbol->sattr & (GLOBAL | DEFINED)) == GLOBAL
+				&& a_esym != NULL)
 				*a_esym = symbol;
 
 			tok += 2;
@@ -499,7 +503,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			}
 
 			*++sattr = (WORD)(sy->sattr & ~GLOBAL);	// Push attribs
-			sym_seg = (WORD)(sy->sattr & (TEXT | DATA | BSS));
+			sym_seg = (WORD)(sy->sattr & TDB);
 			break;
 		case CONST:
 //printf("evexpr(): CONST = %i\n", *tk);
@@ -529,9 +533,9 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			--sattr;						// Pop attrib 
 			*sval += sval[1];				// Compute value
 
-			if (!(*sattr & (TEXT | DATA | BSS)))
+			if (!(*sattr & TDB))
 				*sattr = sattr[1];
-			else if (sattr[1] & (TEXT | DATA | BSS))
+			else if (sattr[1] & TDB)
 				return error(seg_error);
 
 			break;
@@ -541,23 +545,22 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			--sattr;						// Pop attrib 
 			*sval -= sval[1];				// Compute value
 
-			attr = (WORD)(*sattr & (TEXT | DATA | BSS));
-
+			attr = (WORD)(*sattr & TDB);
+#if 0
+printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
+#endif
+			// If symbol1 is ABS, take attributes from symbol2
 			if (!attr)
 				*sattr = sattr[1];
-			else if (sattr[1] & (TEXT | DATA | BSS))
-			{
-				if (!(attr & sattr[1]))
-					return error(seg_error);
-				else
-					*sattr &= ~(TEXT | DATA | BSS);
-			}
+			// Otherwise, they're both TDB and so attributes cancel out
+			else if (sattr[1] & TDB)
+				*sattr &= ~TDB;
 
 			break;
 		// Unary operators only work on ABS items
 		case UNMINUS:
 //printf("evexpr(): UNMINUS\n");
-			if (*sattr & (TEXT | DATA | BSS))
+			if (*sattr & TDB)
 				error(seg_error);
 
 			*sval = -(int)*sval;
@@ -565,7 +568,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			break;
 		case '!':
 //printf("evexpr(): !\n");
-			if (*sattr & (TEXT | DATA | BSS))
+			if (*sattr & TDB)
 				error(seg_error);
 
 			*sval = !*sval;
@@ -573,7 +576,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			break;
 		case '~':
 //printf("evexpr(): ~\n");
-			if (*sattr & (TEXT | DATA | BSS))
+			if (*sattr & TDB)
 				error(seg_error);
 
 			*sval = ~*sval;

@@ -3,7 +3,7 @@
 // PROCLN.C - Line Processing
 // Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
-// Source Utilised with the Kind Permission of Landon Dyer
+// Source utilised with the kind permission of Landon Dyer
 //
 
 #include "procln.h"
@@ -629,10 +629,10 @@ checking to see if it's already been equated, issue a warning.
 		goto loop;
 	}
 
-	if (sloc & 1)							// Automatic .even
+	if (sloc & 1)					// Automatic .even
 		auto_even();
 
-	if (challoc - ch_size < 18)				// Make sure have space in current chunk
+	if (challoc - ch_size < 18)		// Make sure have space in current chunk
 		chcheck(0);
 
 	m = &machtab[state - 1000];
@@ -644,7 +644,7 @@ checking to see if it's already been equated, issue a warning.
 		goto loop;
 	}
 
-	if (amode(1) < 0)						// Parse 0, 1 or 2 addr modes
+	if (amode(1) < 0)				// Parse 0, 1 or 2 addr modes
 		goto loop;
 
 	if (*tok != EOL)

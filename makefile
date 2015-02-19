@@ -1,8 +1,7 @@
 #
 # RMAC - Reboot's Macro Assembler for the Atari Jaguar
 # Copyright (C) 199x Landon Dyer, 2011 Reboot & Friends
-# MAKEFILE for Non-Windows Compilation
-# Currently tested against Cygwin under Windows XP Pro
+# MAKEFILE for *nix
 #
 
 rm = /bin/rm -f 
@@ -25,7 +24,8 @@ all : mntab.h 68ktab.h kwtab.h risckw.h rmac
 	@echo
 
 #
-# Generated Sources for State Machines and Keyword, Directive and Mnemonic Definitions
+# Generated sources for state machines and keyword, directive and mnemonic
+# definitions
 #
 
 mntab.h : mntab 68kmn kwgen
@@ -41,7 +41,7 @@ risckw.h : kwtab kwgen
 	./kwgen mr <risctab >risckw.h
 
 #
-# Build Tools
+# Build tools
 #
 
 kwgen.o : kwgen.c
@@ -57,7 +57,7 @@ kwgen : kwgen.o
 	$(HOSTCC) $(CFLAGS) -o 68kgen 68kgen.o
 
 #
-# Build RMAC Executable
+# Build RMAC executable
 #
 
 amode.o : amode.c
@@ -115,7 +115,7 @@ rmac : $(OBJS)
 	$(CC) $(CFLAGS) -o rmac $(OBJS)
 
 #
-# Clean Build Environment
+# Clean build environment
 #
 
 clean: 
