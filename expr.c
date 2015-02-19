@@ -531,7 +531,9 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 //printf("evexpr(): +\n");
 			--sval;							// Pop value
 			--sattr;						// Pop attrib 
+//printf("--> N+N: %i + %i = ", *sval, sval[1]);
 			*sval += sval[1];				// Compute value
+//printf("%i\n", *sval);
 
 			if (!(*sattr & TDB))
 				*sattr = sattr[1];
@@ -543,7 +545,9 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 //printf("evexpr(): -\n");
 			--sval;							// Pop value
 			--sattr;						// Pop attrib 
+//printf("--> N-N: %i - %i = ", *sval, sval[1]);
 			*sval -= sval[1];				// Compute value
+//printf("%i\n", *sval);
 
 			attr = (WORD)(*sattr & TDB);
 #if 0
@@ -664,7 +668,9 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			case '*':
 				--sval;
 				--sattr;					// Pop attrib 
+//printf("--> NxN: %i x %i = ", *sval, sval[1]);
 				*sval *= sval[1];
+//printf("%i\n", *sval);
 				break;
 			case '/':
 				--sval;
@@ -673,7 +679,13 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 				if (sval[1] == 0)
 					return error("divide by zero");
 
-				*sval /= sval[1];
+//printf("--> N/N: %i / %i = ", sval[0], sval[1]);
+				// Compiler is picky here: Without casting these, it discards
+				// the sign if dividing a negative # by a positive one,
+				// creating a bad result. :-/
+				// Probably a side effect of using VALUE intead of ints.
+				*sval = (int)sval[0] / (int)sval[1];
+//printf("%i\n", *sval);
 				break;
 			case '%':
 				--sval;

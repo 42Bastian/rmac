@@ -25,6 +25,7 @@
 TOKEN exprbuf[128];			// Expression buffer 
 SYM * symbolPtr[1000000];	// Symbol pointers table
 static long unused;			// For supressing 'write' warnings
+char buffer[256];			// Scratch buffer for messages
 
 
 // Directive handler table
@@ -810,7 +811,6 @@ int d_dc(WORD siz)
 		// dc.b 'string' [,] ...
 		if (siz == SIZB && *tok == STRING && (tok[2] == ',' || tok[2] == EOL))
 		{
-//			i = strlen((const char*)tok[1]);
 			i = strlen(string[tok[1]]);
 
 			if ((challoc - ch_size) < i) 
@@ -854,7 +854,11 @@ int d_dc(WORD siz)
 					return error("non-absolute byte value");
 
 				if (eval + 0x100 >= 0x200)
-					return error(range_error);
+				{
+					sprintf(buffer, "%s (value = $%X)", range_error, eval);
+//					return error(range_error);
+					return error(buffer);
+				}
 
 				D_byte(eval);
 			}
