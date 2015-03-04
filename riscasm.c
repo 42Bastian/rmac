@@ -101,8 +101,8 @@ const struct opcoderecord roptbl[] = {
 	{ MR_NORMI,   RI_TWO,    56 },
 	{ MR_NOP,     RI_NONE,   57 },
 	{ MR_SAT24,   RI_ONE,    62 },
-	{ MR_UNPACK,  RI_ONE,    63 + GPUONLY },
-	{ MR_PACK,    RI_ONE,    63 + GPUONLY },
+	{ MR_UNPACK,  RI_ONE,    63 + GPUONLY | (0 << 6) },
+	{ MR_PACK,    RI_ONE,    63 + GPUONLY | (1 << 6) },
 	{ MR_ADDQMOD, RI_NUM_32, 63 + DSPONLY },
 	{ MR_MOVE,    RI_MOVE,   0 },
 	{ MR_LOAD,    RI_LOAD,   0 },
@@ -140,13 +140,13 @@ void BuildRISCIntructionWord(unsigned short opcode, int reg1, int reg2)
 	// Check for absolute address setting
 	if (!orgwarning && !orgactive)
 	{
-//		warn("GPU/DSP code outside of absolute section");
 		warn("RISC code generated with no origin defined");
 		orgwarning = 1;
 	}
 
 	int value = ((opcode & 0x3F) << 10) + ((reg1 & 0x1F) << 5) + (reg2 & 0x1F);
 	D_word(value);
+//printf("BuildRISC: opcode=$%X, reg1=$%X, reg2=$%X, final=$%04X\n", opcode, reg1, reg2, value);
 }
 
 
