@@ -274,7 +274,11 @@ int AddFixup(WORD attr, LONG loc, TOKEN * fexpr)
 	SECT * p;
 	// Shamus: Expression lengths are voodoo ATM (variable "i"). Need to fix
 	//         this.
-#warning "!!! AddFixup() is filled with VOODOO !!!"
+#ifndef _MSC_VER
+#pragma warning "!!! AddFixup() is filled with VOODOO !!!"
+#else
+#pragma WARNING(!!! AddFixup() is filled with VOODOO !!!)
+#endif
 	DEBUG printf("FIXUP@$%X: $%X\n", loc, attr);
 
 	// Compute length of expression (could be faster); determine if it's the
@@ -381,27 +385,6 @@ int AddFixup(WORD attr, LONG loc, TOKEN * fexpr)
 
 
 //
-// Resolve all fixups
-//
-int ResolveAllFixups(void)
-{
-	unsigned i;
-	char buf[EBUFSIZ];
-
-	// Make undefined symbols GLOBL
-	if (glob_flag)
-		ForceUndefinedSymbolsGlobal();
-
-	DEBUG printf("Resolving TEXT sections...\n");
-	ResolveFixups(TEXT);
-	DEBUG printf("Resolving DATA sections...\n");
-	ResolveFixups(DATA);
-
-	return 0;
-}
-
-
-//
 // Resolve fixups in a section
 //
 int ResolveFixups(int sno)
@@ -422,8 +405,8 @@ int ResolveFixups(int sno)
 	WORD flags;
 	unsigned page_jump = 0;
 	unsigned address = 0;
-	unsigned j;
-	char buf[EBUFSIZ];
+	//unsigned j;
+	//char buf[EBUFSIZ];
 	
 	SECT * sc = &sect[sno];
 	CHUNK * ch = sc->sffix;
@@ -914,4 +897,25 @@ range:
 
 	return 0;
 }
+
+//
+// Resolve all fixups
+//
+int ResolveAllFixups(void)
+{
+	//unsigned i;
+	//char buf[EBUFSIZ];
+
+	// Make undefined symbols GLOBL
+	if (glob_flag)
+		ForceUndefinedSymbolsGlobal();
+
+	DEBUG printf("Resolving TEXT sections...\n");
+	ResolveFixups(TEXT);
+	DEBUG printf("Resolving DATA sections...\n");
+	ResolveFixups(DATA);
+
+	return 0;
+}
+
 

@@ -12,7 +12,7 @@
 //
 // TARGET SPECIFIC BUILD SETTINGS
 //
-#ifdef WIN32
+#if defined(WIN32) || defined (WIN64)
 	// Release platform - windows
 	#define PLATFORM        "Win32"
 	#define _OPEN_FLAGS     _O_TRUNC|_O_CREAT|_O_BINARY|_O_RDWR
@@ -22,6 +22,15 @@
 		#if _MSC_VER > 1000
 			#pragma warning(disable:4996)
 		#endif
+
+	//Makes warnings double clickable on visual studio
+	#define STRINGIZE_HELPER(x) #x
+	#define STRINGIZE(x) STRINGIZE_HELPER(x)
+	#define WARNING(desc) message(__FILE__ "(" STRINGIZE(__LINE__) ") : Warning: " #desc)
+
+	// usage:
+	//#pragma WARNING(FIXME: Code removed because...)
+
 	#endif
 	#include <io.h>
 	#include <fcntl.h>
@@ -31,6 +40,7 @@
 	#include <ctype.h>
 	#include <sys/types.h>
 	#include <sys/stat.h>
+
 #else 
 	#ifdef __GCCUNIX__
 	// Release platform - mac OS-X or linux

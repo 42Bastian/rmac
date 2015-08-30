@@ -617,7 +617,7 @@ overflow:
 //
 char * GetNextMacroLine(void)
 {
-	unsigned source_addr;
+//	unsigned source_addr;
 
 	IMACRO * imacro = cur_inobj->inobj.imacro;
 //	LONG * strp = imacro->im_nextln;
@@ -1547,7 +1547,11 @@ int d_goto(WORD unused)
 			// Compare names (sleazo string compare)
 			// This string compare is not right. Doesn't check for lengths.
 			// (actually it does, but in a crappy, unclear way.)
-#warning "!!! Bad string comparison !!!"
+#ifndef _MSC_VER
+			#warning "!!! Bad string comparison !!!"
+#else
+			#pragma WARNING(!!!! Bad string comparison !!!)
+#endif
 			s1 = sym;
 //			s2 = (char *)(defln + 1) + 1;
 			s2 = defln->line;

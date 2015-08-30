@@ -187,7 +187,7 @@ char * constr_symtab(register char * buf, SYM * sym, int globflag)
 //
 int WriteObject(int fd)
 {
-	LONG t;					// Scratch long
+//	LONG t;					// Scratch long
 	LONG tds;				// TEXT & DATA segment size
 	int i;					// Temporary int
 	CHUNK * cp;				// Chunk (for gather)

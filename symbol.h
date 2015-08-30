@@ -39,6 +39,7 @@ SYM
 // Globals, externals, etc.
 extern int curenv;
 extern char subttl[];
+extern int eject(void);
 
 // Exported functions
 SYM * lookup(char *, int, int);

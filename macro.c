@@ -53,7 +53,12 @@ void InitMacro(void)
 //
 int ExitMacro(void)
 {
-#warning !!! Bad macro exiting !!!
+#ifndef _MSC_VER
+#pragma message !!! Bad macro exiting !!!
+#else
+#pragma WARNING(!!! Bad macro exiting !!!)
+#endif
+
 /*
 This is a problem. Currently, the argument logic just keeps the current
 arguments and doesn't save anything if a new macro is called in the middle
@@ -110,8 +115,8 @@ int defmac2(char * argname)
 //
 int defmac1(char * ln, int notEndFlag)
 {
-	PTR p;
-	LONG len;
+//	PTR p;
+//	LONG len;
 
 	if (list_flag)
 	{
@@ -248,7 +253,11 @@ int defr1(char * ln, int kwno)
 		rptlevel++;
 	default:
 //MORE stupidity here...
-#warning "!!! Casting (char *) as LONG !!!"
+#ifndef _MSC_VER
+#pragma warning "!!! Casting (char *) as LONG !!!"
+#else
+#pragma WARNING(!!! Casting (char *) as LONG !!!)
+#endif
 	addln:
 		// Allocate length of line + 1('\0') + LONG
 		len = strlen(ln) + 1 + sizeof(LONG);
@@ -448,7 +457,7 @@ int InvokeMacro(SYM * mac, WORD siz)
 	TOKEN * dest;
 	int stringNum = 0;
 	int argumentNum = 0;
-	int i;
+//	int i;
 
 	for(dry_run=1; ; dry_run--)
 	{
