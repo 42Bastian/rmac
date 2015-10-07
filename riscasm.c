@@ -328,7 +328,7 @@ int GenerateRISCCode(int state)
 		{
 			sy = lookup(string[tok[1]], LABEL, 0);
 
-			if (sy->sattre & EQUATEDREG)
+			if (sy && (sy->sattre & EQUATEDREG))
 				return error("equated register in 1st operand of MOVEI instruction");
 		}
 
