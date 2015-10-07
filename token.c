@@ -1204,26 +1204,61 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 				{
 					v = 0;
 
+					// Parse the hex value
 					while ((int)hextab[*ln] >= 0)
 						v = (v << 4) + (int)hextab[*ln++];
 
+					// ggn: Okay, some comments here are in order I think....
+					// The original madmac sources didn't parse the size at
+					// this point (i.e. .b/.w/.l). It was probably done at
+					// another point, although it's unclear to me exactly
+					// where. So why change this? My understanding (at least
+					// from what SCPCD said on IRC) is that .w addressing
+					// formats produce wrong code on jaguar (or doesn't execute
+					// properly? something like that). So the code was changed
+					// to mask off the upper bits depending on length (note: I
+					// don't think .b is valid at all! I only know of .w/.l, so
+					// this should probably be wiped). Then the code that
+					// parses the constant and checks to see if it's between
+					// $ffff0000 and $8000 never got triggered, so yay job
+					// done! ...now say we want to assemble a st .prg. One of
+					// the most widely spread optimisations is move.X expr.w,Y
+					// (or vice versa, or both, anyway...) to access hardware
+					// registers (which are mapped to $fxxxxx). This botchy
+					// thing would create "hilarious" code while trying to
+					// access hardware registers. So I made a condition to see
+					// if st mode or jaguar is active and apply the both or
+					// not. One last note: this is hardcoded to get optimised
+					// for now on ST mode, i.e. it can't generate code like
+					// move.w $00001234,d0 - it'll always get optimised to
+					// move.w $1234.w,d0. It's probably ok, but maybe a warning
+					// should be emitted? Or maybe finding a way to make it not
+					// auto-optimise? I think it's ok for now...
 					if (*ln == '.')
 					{
-						if ((*(ln + 1) == 'b') || (*(ln + 1) == 'B'))
+						if (obj_format == ALCYON)
 						{
-							v &= 0x000000FF;
-							ln += 2;
+							if ((*(ln + 1) == 'b') || (*(ln + 1) == 'B') || (*(ln + 1) == 'w') || (*(ln + 1) == 'W') || (*(ln + 1) == 'l') || (*(ln + 1) == 'L'))
+							{
+								ln += 2;
+							}
 						}
-
-						if ((*(ln + 1) == 'w') || (*(ln + 1) == 'W'))
+						else
 						{
-							v &= 0x0000FFFF;
-							ln += 2;
-						}
-
-						if ((*(ln + 1) == 'l') || (*(ln + 1) == 'L'))
-						{
-							ln += 2;
+							if ((*(ln + 1) & 0xDF) == 'B')
+							{
+								v &= 0x000000FF;
+								ln += 2;
+							}
+							else if ((*(ln + 1) & 0xDF) == 'W')
+							{
+								v &= 0x0000FFFF;
+								ln += 2;
+							}
+							else if ((*(ln + 1) & 0xDF) == 'L')
+							{
+								ln += 2;
+							}
 						}
 					}
 

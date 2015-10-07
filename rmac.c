@@ -29,6 +29,7 @@ int as68_flag;					// as68 kludge mode
 int glob_flag;					// Assume undefined symbols are global
 int lsym_flag;					// Include local symbols in object file
 int sbra_flag;					// Warn about possible short branches
+int prg_flag;					// !=0, produce .PRG executable (2=symbols)
 int legacy_flag;				// Do stuff like insert code in RISC assembler
 int obj_format;					// Object format flag
 int debug;						// [1..9] Enable debugging levels
@@ -125,6 +126,7 @@ void DisplayHelp(void)
 		"  -dsymbol[=value]  Define symbol\n"
 		"  -e[errorfile]     Send error messages to file, not stdout\n"
 		"  -f[format]        Output object file format\n"
+		"                    a: ALCYON (use this for ST)\n"
 		"                    b: BSD (use this for Jaguar)\n"
 		"  -i[path]          Directory to search for include files\n"
 		"  -l[filename]      Create an output listing file\n"
@@ -246,6 +248,10 @@ int Process(int argc, char ** argv)
 				switch (argv[argno][2])
 				{
 				case EOS:
+				case 'a':			// -fa = Alcyon [the default]
+				case 'A':
+					obj_format = ALCYON;
+					break;
 				case 'b':			// -fb = BSD (Jaguar Recommended)
 				case 'B':
 					obj_format = BSD;
@@ -283,9 +289,33 @@ int Process(int argc, char ** argv)
 						errcnt++;
 						return errcnt;
 					}
+
 					objfname = argv[argno];
 				}
 
+				break;
+			case 'p':		/* -p: generate ".PRG" executable output */
+			case 'P':
+				/*
+				 * -p		.PRG generation w/o symbols
+				 * -ps	.PRG generation with symbols
+				 */
+				switch (argv[argno][2])
+				{
+					case EOS:
+						prg_flag = 1;
+						break;
+
+					case 's':
+					case 'S':
+						prg_flag = 2;
+						break;
+
+					default:
+						printf("-p: syntax error\n");
+						++errcnt;
+						return errcnt;
+				}
 				break;
 			case 'r':				// Pad seg to requested boundary size
 			case 'R':
@@ -412,7 +442,7 @@ int Process(int argc, char ** argv)
 			firstfname = defname;
 
 		strcpy(fnbuf, firstfname);
-		//fext(fnbuf, prg_flag ? ".prg" : ".o", 1);
+		fext(fnbuf, (prg_flag ? ".prg" : ".o"), 1);
 		fext(fnbuf, ".o", 1);
 		objfname = fnbuf;
 	}
@@ -433,7 +463,7 @@ int Process(int argc, char ** argv)
 
 		if (verb_flag)
 		{
-			s = "object";
+			s = (prg_flag ? "executable" : "object");
 			printf("[Writing %s file: %s]\n", s, objfname);
 		}
 

@@ -19,6 +19,10 @@ LONG mcalloc;			// #bytes alloc'd to current mark chunk
 LONG mcused;			// #bytes used in current mark chunk
 uint16_t curfrom;		// Current "from" section
 
+//
+//  Imports
+//
+extern int prg_flag;	// 1, write ".PRG" relocatable executable
 
 //#define DEBUG_IMAGE_MARKING
 
@@ -68,6 +72,21 @@ if (symbol)
 
 	if (symbol != NULL)
 		flags |= MSYMBOL;
+
+	//
+	//  Complain about some things are not allowed in `-p' mode:
+	//    o marks that aren't to LONGs;
+	//    o external references.
+	//
+	if (prg_flag)
+	{
+		if ((flags & MLONG) == 0)
+			error("illegal word relocatable (in .PRG mode)");
+
+		if (symbol != NULL)
+			errors("illegal external reference (in .PRG mode) to '%s'",
+				   symbol->sname);
+	}
 
 	mcused += sizeof(WORD) + sizeof(LONG);
 	*markptr.wp++ = flags;
@@ -123,6 +142,201 @@ int amark(void)
 	mcused = 0;
 
 	return 0;
+}
+
+
+/*
+ *  Table to convert from TDB to fixup triad
+ *
+ */
+static char mark_tr[] = {
+	0,				/* (n/a) */
+	2,				/* TEXT relocatable */
+	1, 0,				/* DATA relocatable */
+	3				/* BSS relocatable */
+};
+
+
+/*
+ *  Make mark image for Alcyon .o file
+ *  okflag	--  1, ok to deposit reloc information
+ */
+LONG markimg(register char * mp, LONG siz, LONG tsize, int okflag)
+{
+	MCHUNK * mch;		/* -> mark chunk */
+	register PTR p;		/* source point from within mark chunk */
+	WORD from;			/* section fixups are currently FROM */
+	register WORD w;	/* a word (temp) */
+	LONG loc;			/* location (temp) */
+	LONG lastloc;		/* last location fixed up (RELMOD) */
+	SYM * symbol;		/* -> symbols (temp) */
+	char * wp;			/* pointer into raw relocation information */
+	register char * dp;	/* deposit point for RELMOD information */
+	int firstp;			/* 1, first relocation (RELMOD) */
+	LONG diff;			/* difference to relocate (RELMOD) */
+
+	if (okflag)
+		//clear(mp, siz);		/* zero relocation buffer */
+		memset(mp, 0, siz);		/* zero relocation buffer */
+
+	from = 0;
+
+	for(mch=firstmch; mch!=NULL; mch=mch->mcnext)
+	{
+		for(p=mch->mcptr;;)
+		{
+			w = *p.wp++;		/* w = next mark entry */
+
+			if (w & MCHEND)		/* (end of mark chunk) */
+				break;
+
+			/*
+			 *  Get mark record
+			 */
+			symbol = NULL;
+			loc = *p.lp++;		/* mark location */
+
+			if (w & MCHFROM)	/* maybe change "from" section */
+				from = *p.wp++;
+
+			if (w & MSYMBOL)	/* maybe includes a symbol */
+				symbol = *p.sy++;
+
+			/*
+			 *  Compute mark position in relocation information;
+			 *  in RELMOD mode, get address of data to fix up.
+			 */
+			if (from == DATA)
+				loc += tsize;
+
+			wp = (char *)(mp + loc);
+
+			if (okflag && (w & MLONG)) /* indicate first word of long */
+			{
+				wp[1] = 5;
+				wp += 2;
+			}
+
+			if (symbol)
+			{
+				/*
+				 *  Deposit external reference
+				 */
+				if (okflag)
+				{
+					if (w & MPCREL)
+						w = 6;		/* pc-relative fixup */
+					else
+						w = 4;		/* absolute fixup */
+
+					w |= symbol->senv << 3;
+					*wp++ = w >> 8;
+					*wp = w;
+				}
+			}
+			else
+			{
+				/*
+				 *  Deposit section-relative mark;
+				 *  in RELMOD mode, fix it up in the chunk,
+				 *  kind of like a sleazoid linker.
+				 *
+				 *  In RELMOD mode, marks to words (MWORDs) "cannot happen,"
+				 *  checks are made when mark() is called, so we don't have
+				 *  to check again here.
+				 */
+				w &= TDB;
+
+				if (okflag)
+					wp[1] = mark_tr[w];
+				else if (prg_flag && (w & (DATA | BSS)))
+				{
+					dp = wp;
+					diff = ((LONG)(*dp++ & 0xff)) << 24;
+					diff |= ((LONG)(*dp++ & 0xff)) << 16;
+					diff |= ((LONG)(*dp++ & 0xff)) << 8;
+					diff |= (LONG)(*dp & 0xff);
+
+#ifdef DO_DEBUG
+					DEBUG printf("diff=%lx ==> ", diff);
+#endif
+					diff += sect[TEXT].sloc;
+
+					if (w == BSS)
+						diff += sect[DATA].sloc;
+
+					dp = wp;
+					*dp++ = (char)(diff >> 24);
+					*dp++ = (char)(diff >> 16);
+					*dp++ = (char)(diff >> 8);
+					*dp = (char)diff;
+#ifdef DO_DEBUG
+					DEBUG printf("%lx\n", diff);
+#endif
+				}
+			}
+		}
+	}
+
+	/*
+	 *  Generate ".PRG" relocation information in place in
+	 *  the relocation words (the ``RELMOD'' operation).
+	 */
+	if (okflag && prg_flag)
+	{
+		firstp = 1;
+		wp = mp;
+		dp = mp;
+
+		for(loc=0; loc<siz;)
+		{
+			if ((wp[1] & 7) == 5)
+			{
+				if (firstp)
+				{
+					*dp++ = (char)(loc >> 24);
+					*dp++ = (char)(loc >> 16);
+					*dp++ = (char)(loc >> 8);
+					*dp++ = (char)loc;
+					firstp = 0;
+				}
+				else
+				{
+					for(diff=loc-lastloc; diff>254; diff-= 254)
+						*dp++ = 1;
+
+					*dp++ = (char)diff;
+				}
+
+				wp += 4;
+				lastloc = loc;
+				loc += 4;
+			}
+			else 
+			{
+				loc += 2;
+				wp += 2;
+			}
+		}
+
+		/*
+		 *  Terminate relocation list with 0L (if there was no
+		 *  relocation) or 0.B (if relocation information was
+		 *  written).
+		 */
+		if (!firstp)
+			*dp++ = 0;
+		else for (firstp = 0; firstp < 4; ++firstp)
+			*dp++ = 0;
+
+		/*
+		 *  Return size of relocation information
+		 */
+		loc = dp - mp;
+		return loc;
+	}
+
+	return siz;
 }
 
 
@@ -336,3 +550,4 @@ printf("  rsize = $%X\n", rsize);
 
 	return siz;
 }
+
