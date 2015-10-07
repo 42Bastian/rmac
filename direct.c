@@ -292,6 +292,7 @@ int d_equrundef(void)
 //
 int d_noclear(void)
 {
+	warn("CLR.L opcode ignored...");
 	return 0;
 }
 
@@ -803,8 +804,16 @@ int d_dc(WORD siz)
 	if ((scattr & SBSS) != 0)
 		return error("illegal initialization of section");
 
+	// Do an auto_even if it's not BYTE sized (hmm, should we be doing this???)
 	if ((siz != SIZB) && (sloc & 1))
 		auto_even();
+
+	// Check to see if we're trying to set LONGS on a non 32-bit aligned
+	// address in a GPU or DSP section, in their local RAM
+	if ((siz == SIZL) && (orgaddr & 0x03)
+		&& ((rgpu && (orgaddr >= 0xF03000) && (orgaddr <= 0xF03FFFF))
+		|| (rdsp && (orgaddr >= 0xF1B000) && (orgaddr <= 0xF1CFFFF))))
+		warn("depositing LONGs on a non-long address in local RAM");
 
 	for(;; ++tok)
 	{
@@ -856,7 +865,6 @@ int d_dc(WORD siz)
 				if (eval + 0x100 >= 0x200)
 				{
 					sprintf(buffer, "%s (value = $%X)", range_error, eval);
-//					return error(range_error);
 					return error(buffer);
 				}
 

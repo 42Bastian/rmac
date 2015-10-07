@@ -395,13 +395,13 @@ normal:
 		// o  everything else
 		if (equtyp == EQUREG)
 		{
-//Linko's request to issue a warning on labels that equated to the same register
-//would go here. Not sure how to implement it though. :-/
+//Linko's request to issue a warning on labels that equated to the same
+//register would go here. Not sure how to implement it though. :-/
 /*
 Maybe like this way:
 have an array of bools with 64 entries. Whenever a register is equated, set the
-corresponding register bool to true. Whenever it's undef'ed, set it to false. When
-checking to see if it's already been equated, issue a warning.
+corresponding register bool to true. Whenever it's undef'ed, set it to false.
+When checking to see if it's already been equated, issue a warning.
 */
 			// Check that we are in a RISC section
 			if (!rgpu && !rdsp)
