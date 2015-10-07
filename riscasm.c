@@ -323,6 +323,15 @@ int GenerateRISCCode(int state)
 		tok++;
 		riscImmTokenSeen = 1;
 
+		// Check for equated register after # and return error if so
+		if (*tok == SYMBOL)
+		{
+			sy = lookup(string[tok[1]], LABEL, 0);
+
+			if (sy->sattre & EQUATEDREG)
+				return error("equated register in 1st operand of MOVEI instruction");
+		}
+
 		if (expr(r_expr, &eval, &eattr, &esym) != OK)
 			return MalformedOpcode(0x04);
 
