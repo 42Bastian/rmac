@@ -23,13 +23,13 @@
 			#pragma warning(disable:4996)
 		#endif
 
-	//Makes warnings double clickable on visual studio
+	// Makes warnings double clickable on visual studio (ggn)
 	#define STRINGIZE_HELPER(x) #x
 	#define STRINGIZE(x) STRINGIZE_HELPER(x)
-	#define WARNING(desc) message(__FILE__ "(" STRINGIZE(__LINE__) ") : Warning: " #desc)
+	#define WARNING(desc) __pragma(message(__FILE__ "(" STRINGIZE(__LINE__) ") : Warning: " #desc))
 
 	// usage:
-	//#pragma WARNING(FIXME: Code removed because...)
+	// WARNING(FIXME: Code removed because...)
 
 	#endif
 	#include <io.h>
@@ -48,6 +48,9 @@
 	#define _OPEN_FLAGS     O_TRUNC|O_CREAT|O_RDWR
 	#define _OPEN_INC       O_RDONLY
 	#define _PERM_MODE      S_IREAD|S_IWRITE 
+	// WARNING WARNING WARNING
+	#define DO_PRAGMA(x) _Pragma (#x)
+	#define WARNING(desc) DO_PRAGMA(message (#desc))
 	#include <sys/fcntl.h>
 	#include <stdio.h>
 	#include <stdlib.h>
@@ -62,6 +65,9 @@
 	#define _OPEN_FLAGS     O_TRUNC|O_CREAT|O_RDWR
 	#define _OPEN_INC       O_RDONLY
 	#define _PERM_MODE      S_IREAD|S_IWRITE 
+	// Defined here, even though the platfrom may not support it...
+	#define DO_PRAGMA(x) _Pragma (#x)
+	#define WARNING(desc) DO_PRAGMA(message (#desc))
 	#include <sys/fcntl.h>
 	#include <stdio.h>
 	#include <stdlib.h>

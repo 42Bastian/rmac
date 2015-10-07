@@ -132,6 +132,7 @@ void DisplayHelp(void)
 		"  -l[filename]      Create an output listing file\n"
 		"  -n                Don't do things behind your back in RISC assembler\n"
 		"  -o file           Output file name\n"
+		"  -p[n]             Create an ST .prg (1=normal, 2=w/symbols)\n"
 		"  -r[size]          Pad segments to boundary size specified\n"
 		"                    w: word (2 bytes, default alignment)\n"
 		"                    l: long (4 bytes)\n"

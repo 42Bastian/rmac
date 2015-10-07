@@ -40,7 +40,6 @@ void InitMacro(void)
 {
 	macuniq = 0;
 	macnum = 1;
-//	argp = NULL;
 	argp = 0;
 }
 
@@ -53,11 +52,7 @@ void InitMacro(void)
 //
 int ExitMacro(void)
 {
-#ifndef _MSC_VER
-#pragma message !!! Bad macro exiting !!!
-#else
-#pragma WARNING(!!! Bad macro exiting !!!)
-#endif
+WARNING(!!! Bad macro exiting !!!)
 
 /*
 This is a problem. Currently, the argument logic just keeps the current
@@ -253,11 +248,7 @@ int defr1(char * ln, int kwno)
 		rptlevel++;
 	default:
 //MORE stupidity here...
-#ifndef _MSC_VER
-#pragma warning "!!! Casting (char *) as LONG !!!"
-#else
-#pragma WARNING(!!! Casting (char *) as LONG !!!)
-#endif
+WARNING(!!! Casting (char *) as LONG !!!)
 	addln:
 		// Allocate length of line + 1('\0') + LONG
 		len = strlen(ln) + 1 + sizeof(LONG);

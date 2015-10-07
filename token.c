@@ -1547,11 +1547,7 @@ int d_goto(WORD unused)
 			// Compare names (sleazo string compare)
 			// This string compare is not right. Doesn't check for lengths.
 			// (actually it does, but in a crappy, unclear way.)
-#ifndef _MSC_VER
-			#warning "!!! Bad string comparison !!!"
-#else
-			#pragma WARNING(!!!! Bad string comparison !!!)
-#endif
+WARNING(!!!! Bad string comparison !!!)
 			s1 = sym;
 //			s2 = (char *)(defln + 1) + 1;
 			s2 = defln->line;

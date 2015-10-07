@@ -274,11 +274,7 @@ int AddFixup(WORD attr, LONG loc, TOKEN * fexpr)
 	SECT * p;
 	// Shamus: Expression lengths are voodoo ATM (variable "i"). Need to fix
 	//         this.
-#ifndef _MSC_VER
-#pragma warning "!!! AddFixup() is filled with VOODOO !!!"
-#else
-#pragma WARNING(!!! AddFixup() is filled with VOODOO !!!)
-#endif
+WARNING(!!! AddFixup() is filled with VOODOO !!!)
 	DEBUG printf("FIXUP@$%X: $%X\n", loc, attr);
 
 	// Compute length of expression (could be faster); determine if it's the
@@ -613,45 +609,6 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 					else
 						reg2 = (signed)((eval - (loc + 2)) / 2);// & 0x1F;
 
-#if 0
-					if ((w & 0x0F00) == FU_MJR)
-					{
-						// Main code destination alignment checking here for
-						// forward declared labels
-						address = (oaddr) ? oaddr : loc;
-
-						if (((address >= 0xF03000) && (address < 0xF04000)
-							&& (eval < 0xF03000)) || ((eval >= 0xF03000)
-							&& (eval < 0xF04000) && (address < 0xF03000)))
-						{
-							warni("* \'jr\' at $%08X - cannot jump relative between "
-								"main memory and local gpu ram", address);
-						}
-						else
-						{
-							page_jump = (address & 0xFFFFFF00) - (eval & 0xFFFFFF00);
-
-							if (page_jump)
-							{
-								// This jump is to a page outside of the
-								// current 256 byte page
-								if (eval % 4)
-								{
-									warni("* \'jr\' at $%08X - destination address not aligned for long page jump, insert a \'nop\' before the destination address", address);
-								}
-							}
-							else
-							{
-								// This jump is in the current 256 byte page
-								if ((eval - 2) % 4)
-								{
-									warni("* \'jr\' at $%08X - destination address not aligned for short page jump, insert a \'nop\' before the destination address", address);
-								}
-							}
-						}
-					}
-#endif
-
 					if ((reg2 < -16) || (reg2 > 15))
 					{
 						error("relative jump out of range");
@@ -778,58 +735,6 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 			case FU_LONG:
 				if ((w & FUMASKRISC) == FU_MOVEI)
 				{
-#if 0
-					address = loc + 4;
-
-					if (eattr & DEFINED)
-					{
-						for(j=0; j<fwindex; j++)
-						{
-							if (fwdjump[j] == address)
-							{
-								page_jump = (address & 0xFFFFFF00) - (eval & 0xFFFFFF00);
-
-								if (page_jump)
-								{
-									if (eval % 4)
-									{
-										err_setup();
-										sprintf(buf, "* \'jump\' at $%08X - destination address not aligned for long page jump, insert a \'nop\' before the destination address", address);
-
-										if (listing > 0)
-											ship_ln(buf);
-
-										if (err_flag)
-											write(err_fd, buf, (LONG)strlen(buf));
-										else
-											printf("%s\n", buf);
-									}          
-								}
-								else
-								{
-									if (!(eval & 0x0000000F) || ((eval - 2) % 4))
-									{
-										err_setup();
-										sprintf(buf, "* \'jump\' at $%08X - destination address not aligned for short page jump, insert a \'nop\' before the destination address", address);
-
-										if (listing > 0)
-											ship_ln(buf);
-
-										if (err_flag)
-											write(err_fd, buf, (LONG)strlen(buf));
-										else
-											printf("%s\n", buf);
-									}          
-								}
-
-								// Clear this jump as it has been checked
-								fwdjump[j] = 0;
-								j = fwindex;
-							}
-						}
-					}
-#endif
-
 					// Long constant in MOVEI # is word-swapped, so fix it here
 					eval = ((eval >> 16) & 0x0000FFFF) | ((eval << 16) & 0xFFFF0000);
 					flags = (MLONG | MMOVEI);
