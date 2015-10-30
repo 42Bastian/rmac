@@ -80,8 +80,7 @@ of another (nested macros). Need to fix that somehow.
 	argp -= imacro->im_nargs;
 	DEBUG printf("%d (nargs = %d)\n", argp, imacro->im_nargs);
 
-	fpop();
-	return 0;
+	return fpop();
 }
 
 

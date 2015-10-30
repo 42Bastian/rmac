@@ -728,7 +728,10 @@ int fpop(void)
 		// Pop IFENT levels until we reach the conditional assembly context we
 		// were at when the input object was entered.
 		while (ifent != inobj->in_ifent)
-			d_endif();
+		{
+			if (d_endif() != 0)				// Something bad happened during endif parsing?
+				return -1;					// If yes, bail instead of getting stuck in a loop
+		}
 
 		tok = inobj->in_otok;				// Restore tok and otok
 		etok = inobj->in_etok;
@@ -940,8 +943,10 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n");
 	case SRC_IMACRO:
 		if ((ln = GetNextMacroLine()) == NULL)
 		{
-			ExitMacro();					// Exit macro (pop args, do fpop(), etc)
-			goto retry;						// Try for more lines...
+			if (ExitMacro() == 0)			// Exit macro (pop args, do fpop(), etc)
+				goto retry;					// Try for more lines...
+			else
+				return TKEOF;				// Oops, we got a non zero return code, signal EOF
 		}
 
 		lntag = '@';
