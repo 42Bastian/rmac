@@ -133,6 +133,7 @@ void DisplayHelp(void)
 		"  -n                Don't do things behind your back in RISC assembler\n"
 		"  -o file           Output file name\n"
 		"  -p[n]             Create an ST .prg (1=normal, 2=w/symbols)\n"
+		"                    Forces -fa\n"
 		"  -r[size]          Pad segments to boundary size specified\n"
 		"                    w: word (2 bytes, default alignment)\n"
 		"                    l: long (4 bytes)\n"
@@ -317,6 +318,9 @@ int Process(int argc, char ** argv)
 						++errcnt;
 						return errcnt;
 				}
+				// Enforce Alcyon object format - kind of silly
+				// to ask for .prg output without it!
+				obj_format = ALCYON;
 				break;
 			case 'r':				// Pad seg to requested boundary size
 			case 'R':
