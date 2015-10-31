@@ -157,7 +157,7 @@ char * constr_symtab(register char * buf, SYM * sym, int globflag)
 	else w |= AL_EXTERN;		/* imported symbol */
 
 	*buf++ = w >> 8;
-	*buf++ = w;
+	*buf++ = (char)w;
 
 	z = sym->svalue;
 
