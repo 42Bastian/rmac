@@ -35,19 +35,19 @@ int (*dirtab[])() = {
 	d_unimpl,			// 2 .6502
 	d_68000,			// 3 .68000
 	d_bss,				// 4 bss
-	d_data,				7// 5 data
+	d_data,				// 5 data
 	d_text,				// 6 text
 	d_abs,				// 7 abs
 	d_comm,				// 8 comm
-	(void *)d_init,			// 9 init
+	(void *)d_init,		// 9 init
 	d_cargs,			// 10 cargs
-	(void *)d_goto,			// 11 goto
-	(void *)d_dc,			// 12 dc
-	(void *)d_ds,			// 13 ds
+	(void *)d_goto,		// 11 goto
+	(void *)d_dc,		// 12 dc
+	(void *)d_ds,		// 13 ds
 	d_undmac,			// 14 undefmac
 	d_gpu,				// 15 .gpu
 	d_dsp,				// 16 .dsp
-	(void *)d_dcb,			// 17 dcb
+	(void *)d_dcb,		// 17 dcb
 	d_unimpl,			// 18* set
 	d_unimpl,			// 19* reg
 	d_unimpl,			// 20 dump

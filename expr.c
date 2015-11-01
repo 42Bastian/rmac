@@ -194,7 +194,7 @@ getsym:
 			if (*tok != SYMBOL && *tok != STRING)
 				return error(str_error);
 
-			p = string[tok[1]];
+			p2 = string[tok[1]];
 			tok += 2;
 
 			w = (WORD)(!strcmp(p, p2));
