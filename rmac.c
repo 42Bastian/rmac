@@ -318,6 +318,7 @@ int Process(int argc, char ** argv)
 						++errcnt;
 						return errcnt;
 				}
+
 				// Enforce Alcyon object format - kind of silly
 				// to ask for .prg output without it!
 				obj_format = ALCYON;
