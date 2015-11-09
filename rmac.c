@@ -449,7 +449,6 @@ int Process(int argc, char ** argv)
 
 		strcpy(fnbuf, firstfname);
 		fext(fnbuf, (prg_flag ? ".prg" : ".o"), 1);
-		fext(fnbuf, ".o", 1);
 		objfname = fnbuf;
 	}
 
