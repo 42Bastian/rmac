@@ -111,8 +111,8 @@ IFILE {
 
 #define TOKENSTREAM struct _tokenstream
 TOKENSTREAM {
-	TOKEN token[10];		// 10 ought to be enough for anybody
-	char * string[10];		// same for attached strings
+	TOKEN token[32];		// 32 ought to be enough for anybody (including XiA!)
+	char * string[32];		// same for attached strings
 };
 
 // Information about a macro invocation
