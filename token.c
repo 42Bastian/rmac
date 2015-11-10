@@ -554,6 +554,9 @@ DEBUG printf("ExM: SYMBOL=\"%s\"", d);
 							case DOTL:
 								d = ".l";
 								break;
+							case CR_ABSCOUNT:
+								d = "^^abscount";
+								break;
 							case CR_DATE:
 								d = "^^date";
 								break;
@@ -1641,6 +1644,8 @@ void DumpTokenBuffer(void)
 			printf("[DOTI]");
 		else if (*t == ENDEXPR)
 			printf("[ENDEXPR]");
+		else if (*t == CR_ABSCOUNT)
+			printf("[CR_ABSCOUNT]");
 		else if (*t == CR_DEFINED)
 			printf("[CR_DEFINED]");
 		else if (*t == CR_REFERENCED)

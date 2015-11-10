@@ -34,7 +34,8 @@ char itokcl[] = {
 	')', ']', '}', 0,				// CPAR 
 	CR_DEFINED, CR_REFERENCED,		// SUNARY (special unary)
 	CR_STREQ, CR_MACDEF,
-	CR_DATE, CR_TIME, 0,
+	CR_DATE, CR_TIME, 
+	CR_ABSCOUNT, 0,
 	'!', '~', UNMINUS, 0,			// UNARY
 	'*', '/', '%', 0,				// MULT 
 	'+', '-', 0,					// ADD 
@@ -149,6 +150,10 @@ int expr1(void)
 	{
 		switch ((int)*tok++)
 		{
+		case CR_ABSCOUNT:
+			*evalTokenBuffer++ = CONST;
+			*evalTokenBuffer++ = (LONG)sect[ABS].sloc;
+			break;
 		case CR_TIME:
 			*evalTokenBuffer++ = CONST;
 			*evalTokenBuffer++ = dos_time();

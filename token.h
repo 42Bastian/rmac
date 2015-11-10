@@ -62,6 +62,7 @@
 #define CR_MACDEF       'w'					// ^^macdef - is macro defined?
 #define CR_TIME         'x'					// ^^time - DOS format time
 #define CR_DATE         'y'					// ^^date - DOS format date
+#define CR_ABSCOUNT     'z'					// ^^abscount - count the number of bytes defined in curent .abs section
 
 // Character Attributes
 #define ILLEG           0					// Illegal character (unused)
