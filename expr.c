@@ -311,8 +311,9 @@ int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 	//         followed by the value 101, it will trigger a bad evaluation here.
 	//         This is probably a really bad assumption to be making here...!
 	//         (assuming tok[1] == EOL is a single token that is)
+	//         Seems that even other tokens (SUNARY type) can fuck this up too.
 //	if ((tok[1] == EOL)
-	if ((tok[1] == EOL && tok[0] != CONST)
+	if ((tok[1] == EOL && (tok[0] != CONST && tokenClass[tok[0]] != SUNARY))
 		|| (((*tok == CONST || *tok == SYMBOL) || (*tok >= KW_R0 && *tok <= KW_R31))
 		&& (tokenClass[tok[2]] < UNARY)))
 	{
