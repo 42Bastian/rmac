@@ -31,6 +31,11 @@
 
 		AMn = IMMED;
 	}
+
+	// Small problem with this is that the opening parentheses might be an
+	// expression that's part of a displacement; this code will falsely flag
+	// that as an error.
+
 	// (An)
 	// (An)+
 	// (An,Xn[.siz][*scale])
@@ -145,6 +150,15 @@
 			if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
 				return ERROR;
 
+			// It could be that this is really just an expression prefixing a
+			// register as a displacement...
+			if (*tok == ')')
+			{
+				tok++;
+				goto CHK_FOR_DISPn;
+			}
+
+			// Otherwise, check for PC & etc displacements...
 			if (*tok++ != ',')
 				goto badmode;
 
@@ -223,6 +237,7 @@
 		if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
 			return ERROR;
 
+CHK_FOR_DISPn:
 		if (*tok == DOTW)
 		{
 			// expr.W 
@@ -287,7 +302,7 @@
 	;
 }
 
-// Cleanup dirty little macros
+// Clean up dirty little macros
 #undef AnOK
 #undef AMn
 #undef AnREG
@@ -302,3 +317,4 @@
 #undef AnESYM
 #undef AMn_IX0
 #undef AMn_IXN
+#undef CHK_FOR_DISPn

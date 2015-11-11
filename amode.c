@@ -75,6 +75,7 @@ int amode(int acount)
 	#define AnESYM    a0esym
 	#define AMn_IX0   am0_ix0
 	#define AMn_IXN   am0_ixn
+	#define CHK_FOR_DISPn CheckForDisp0
 	#include "parmode.h"
 
 	// If caller wants only one mode, return just one (ignore comma); 
@@ -102,6 +103,7 @@ int amode(int acount)
 	#define AnESYM    a1esym
 	#define AMn_IX0   am1_ix0
 	#define AMn_IXN   am1_ixn
+	#define CHK_FOR_DISPn CheckForDisp1
 	#include "parmode.h"
 
 	nmodes = 2;
