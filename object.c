@@ -299,7 +299,7 @@ int WriteObject(int fd)
 		if (t < ssize)
 			t = ssize;
 
-		buf = malloc((t + HDRSIZE) + HDRSIZE);
+		buf = malloc(t + HDRSIZE) + HDRSIZE;
 
 		/*
 		 *  Build object file header
