@@ -122,6 +122,9 @@ int expr0(void)
 
 //
 // Unary operators (detect unary '-')
+// ggn: If expression starts with a plus then also eat it up.
+//      For some reason the parser gets confused when this happens and
+//      emits a "bad expression".
 //
 int expr1(void)
 {
@@ -134,7 +137,7 @@ int expr1(void)
 
 	class = tokenClass[*tok];
 
-	if (*tok == '-' || class == UNARY)
+	if (*tok == '-' || *tok == '+' || class == UNARY)
 	{
 		t = *tok++;
 
