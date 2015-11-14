@@ -132,7 +132,8 @@ void DisplayHelp(void)
 		"  -l[filename]      Create an output listing file\n"
 		"  -n                Don't do things behind your back in RISC assembler\n"
 		"  -o file           Output file name\n"
-		"  -p[n]             Create an ST .prg (1=normal, 2=w/symbols)\n"
+		"  -p                Create an ST .prg (without symbols)\n"
+		"  -ps               Create an ST .prg (with symbols)\n"
 		"                    Forces -fa\n"
 		"  -r[size]          Pad segments to boundary size specified\n"
 		"                    w: word (2 bytes, default alignment)\n"
@@ -153,7 +154,7 @@ void DisplayHelp(void)
 //
 void DisplayVersion(void)
 {
-	printf("\nReboot's Macro Assembler for Atari Jaguar\n"
+	printf("\nReboot's Macro Assembler\n"
 		"Copyright (C) 199x Landon Dyer, 2011-2015 Reboot\n"
 		"V%01i.%01i.%01i %s (%s)\n\n", MAJOR, MINOR, PATCH, __DATE__, PLATFORM);
 }

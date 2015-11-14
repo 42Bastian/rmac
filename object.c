@@ -12,6 +12,7 @@
 #include "mark.h"
 #include "error.h"
 #include "riscasm.h"
+#include "mark.h"
 
 /*
  *  Imports
@@ -90,6 +91,28 @@ char * constr_bsdsymtab(char * buf, SYM * sym, int globflag)
 #define	AL_BSS		0x0100
 #define	AL_FILE		0x0080
 
+LONG PRGFLAGS;		/* PRGFLAGS as defined in Atari Compendium Chapter 2 */
+					/* Definition	Bit(s) 	Meaning */
+					/* PF_FASTLOAD	0 		If set, clear only the BSS area on program load,              */
+					/* 						otherwise clear the entire heap.                              */
+					/* PF_TTRAMLOAD	1 		If set, the program may be loaded into alternative RAM,       */
+					/* 						otherwise it must be loaded into standard RAM.                */
+					/* PF_TTRAMMEM	2 		If set, the program's Malloc() requests may be satisfied      */
+					/* 						from alternative RAM, otherwise they must be satisfied        */
+					/* 						from standard RAM.                                            */
+					/* -			3 		Currently unused.                                             */
+					/* See left.	4 & 5 	If these bits are set to 0 (PF_PRIVATE), the processes'       */
+					/* 						entire memory space will be considered private                */
+					/* 						(when memory protection is enabled).If these bits are         */
+					/* 						set to 1 (PF_GLOBAL), the processes' entire memory space      */
+					/* 						will be readable and writable by any process (i.e. global).   */
+					/* 						If these bits are set to 2 (PF_SUPERVISOR), the processes'    */
+					/* 						entire memory space will only be readable and writable by     */
+					/* 						itself and any other process in supervisor mode.If these      */
+					/* 						bits are set to 3 (PF_READABLE), the processes' entire memory */
+					/* 						space will be readable by any application but only            */
+					/* 						writable by itself.                                           */
+					/* -			6-15 	Currently unused.                                             */
 
 static WORD tdb_tab[] = {
 	0,				/* absolute */

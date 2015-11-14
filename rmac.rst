@@ -1,108 +1,25 @@
-ATARI
------
-MADMAC
-======
+RMAC
+----
 68000 Macro Assembler
 =====================
 Reference Manual
 ================
-version 1.00
-============
-
-::
-
- MADMAC Version 1.07 release notes, January, 1990.
-
-
- Using .cargs used to cause subsequent global symbols to disappear from
- the symbol table. Now it doesn't.
-
-
- A movem instruction with no register list (i.e. "movem.l (sp)+,")
- assembled without error; it now reports "missing regsiter list."
-
-
-
-
-
-
-
-
-
-
-
-::
-
- MADMAC Version 1.05 release notes, August, 1988.
-
-
- This version of MadMac replaces version 1.00 and fixes some small bugs:
-
-
- Symbols beginning with a capital L were not included in the
- object file output. They should have been (and now are) excluded only
- in AS68 compatibility mode, to avoid cluttering the output with
- compiler-generated symbols.
-
-
- Forward branches declared "short" (such as bras, dbra.s, bsr.$)
- but whose targets were too far away did not cause an assembly-time
- error; incorrect machine code was silently generated. They now cause
- assembly-time errors.
-
-
- Symbols appeared in the object file symbol table in the order •
- they were referenced in the source, not the order they were declared.
- Now the order more nearly matches the order of declaration (but not
- perfectly).
-
-
- The disp(And(n.$) addressing mode produced correct machine code,
- but incorrect output in the listing file. Now the output is correct.
+version 1.4.2
+=============
 
 
 *NOTE: Every effort has been made to ensure the accuracy and robustness of this
-manual and the associated software. However, because Atari Corporation is con-
-stantly improving and updating its computer software, it is unable to guarantee
+manual and the associated software. However, because Reboot is constantly improving
+and updating its computer software, it is unable to guarantee
 the accuracy of printed or duplicated material after the date of publication and
 disclaims liability for changes, errors or omissions.*
 
 
-
-
-
-
-
-
-
-
-
-
-ATARI, the Atari logo, MEGA, and ST are trademarks or registered trademarks of
-Atari Corporation.
-Mark Williams is a trademark of Mark Williams Company.
-Motorola is a trademark of Motorola Inc.
-
-
-
-
-
-
-
-
-
-
-
-*Copyright � 1986, 1987, Atari Corporation*
+*Copyright © 2011-2015, Reboot*
 
 *All rights reserved.*
 
-*Reproduction of this document or the associated software is not allowed without
-the specific written consent of Atari Corporation.*
-
-*Printed in USA.*
-
-*Atari Document number C300341-001 Rev. A.*
+*Reboot Document number F00000K-001 Rev. A.*
 
 Contents
 ========
@@ -114,19 +31,22 @@ Introduction
 
 Introduction
 ''''''''''''
-This document describes MADMAC, a fast macro assembler for the 68000. MADMAC currently
-runs on the Atari ST and under 4.2 BSD VAX UNIX. It was written
+This document describes RMAC, a fast macro assembler for the 68000. RMAC currently
+runs on the any POSIX compatible platform and the Atari ST. It was initially written
 at Atari Corporation by programmers who needed a high performance assembler
-for their work.
+for their work. Then, more than 20 years later, because there was still a need for
+such an assembler and what was available wasn't up to expectations, Subqmod
+and eventually Reboot continued work on the freely released source, adding Jaguar extensions
+and fixing bugs.
 
-MADMAC is intended to be used by programmers who write mostly in assembly language.
+RMAC is intended to be used by programmers who write mostly in assembly language.
 It was not originally a back-end to a C compiler, therefore it
 has creature comfort that are usually neglected in such back-end assemblers. It
 supports include files, macros, symbols with limited scope, some limited control
-structures, and other features. MADMAC is also blindingly fast, another feature
+structures, and other features. RMAC is also blindingly fast, another feature
 often sadly and obviously missing in today's assemblers.[1]_
 
-MADMAC is not entirely compatible with the AS68 assembler provided with
+RMAC is not entirely compatible with the AS68 assembler provided with
 the original Atari ST Developer's Kit, but most changes are minor and a few minutes
 with an editor should allow you to assemble your current source files. If you are an
 AS68 user, before you leap into the unknown please read the section on Notes for
@@ -135,6 +55,8 @@ AS68 Users.
 This manual was typeset with TEX and the Computer Modern fonts, and it
 was printed on the Atari SLM-804 laser printer with a MEGA ST. Except for 200
 lines of assembly language, the assembler is written entirely in C.
+
+.. [1] It processes 30,000 lines a minute on a lightly loaded VAX 11/780; maybe 40,000 on a 520-ST with an SH-204 hard disk. Yet it could be sped up even more with some effort and without resorting to assembly language; C doesn't have to be slow!
 
 `Getting Started`_
 ''''''''''''''''''
@@ -158,20 +80,18 @@ lines of assembly language, the assembler is written entirely in C.
   contains lots of definitions for the Atari ST, including BIOS variables, most
   BIOS, XBIOS and GEMDOS traps, and line-A equates. We (or you) could
   split the file up into pieces (a file for line-A equates, a file for hardware and
-  BIOS variables and so on), but MADMAC is so fast that it doesn't matter
+  BIOS variables and so on), but RMAC is so fast that it doesn't matter
   much.
 
-* Read the rest of the manual, especially the first two chapters on The Com-
-  mand Line and Using MADMAC. The distribution disk contains example
+* Read the rest of the manual, especially the first two chapters on The Command Line and Using RMAC.
+  Also, `Notes for migrating from other 68000 assemblers`_ will save a lot of time and frustration in the long run.
+  The distribution disk contains example
   programs that you can look at, assemble and modify.
-
-.. [1] It processes 30,000 lines a minute on a lightly loaded VAX 11/780; maybe 40,000 on a 520-ST with an SH-204 hard disk. Yet it could be sped up even more with some effort and without resorting to assembly language; C doesn't have to be slow!
-
 
 `The Command Line`_
 '''''''''''''''''''
 
-The assembler is called "**mac.prg**". The command line takes the form:
+The assembler is called "**rmac**" or "**rmac.prg**". The command line takes the form:
 
                           **mac** [*switches*] [*files* ...]
 
@@ -185,10 +105,10 @@ Switch order is important. Command lines are processed from left to right in
 one pass, and switches usually take effect when they are encountered. In general it
 is best to specify all switches before the names of any input files.
 
-If the command line is entirely empty then MADMAC prints a copyright message
+If the command line is entirely empty then RMAC prints a copyright message
 and enters an "interactive" mode, prompting for successive command lines
 with a star (\*). An empty command line will exit (See the examples in the chapter
-on `Using MADMAC`_). After each assembly in interactive mode, the assembler
+on `Using RMAC`_). After each assembly in interactive mode, the assembler
 will print a summary of the amount of memory used, the amount of memory left,
 the number of lines processed, and the number of seconds the assembly took.
 
@@ -196,7 +116,7 @@ Input files are assumed to have the extension "**.s**"; if a filename has no ext
 (i.e. no dot) then "**.s**" will be appended to it. More than one source filename may be
 specified: the files are assembled into one object file, as if they were concatenated.
 
-MADMAC normally produces object code in "**file.o**" if "**file.s**" is the first
+RMAC normally produces object code in "**file.o**" if "**file.s**" is the first
 input filename. If the first input file is a special character device, the output name
 is noname.o. The **-o** switch (see below) can be used change the output file name.
 
@@ -206,14 +126,27 @@ Switch               Description
 ===================  ===========
 -dname\ *[=value]*   Define symbol, with optional value.
 -e\ *[file[.err]]*   Direct error messages to the specified file.
--fm                  Produce Mark Williams format object file.
--fmu                 Like "**-fm**" , but move underscores to end of symbol names.
+-fa                  TODO: add me
+-fb                  BSD COFF
 -i\ *path*           Set include-file directory search path.
 -l\ *[file[prn]]*    Construct and direct assembly listing to the specified file.
 -o\ *file[.o]*       Direct object code output to the specified file.
 -p                   Produce an executable (**.prg**) output file.
 -ps                  Produce an executable (**.prg**) output file with symbols.
--q                   Make MADMAC resident in memory (Atari ST only).
+-q                   Make RMAC resident in memory (Atari ST only).
+-r *size*            automatically pad the size of each
+                     segment in the output file until the size is an integral multiple of the
+                     specified boundary. Size is a letter that specifies the desired boundary.
+					 
+                      `-rw Word (2 bytes, default alignment)`
+
+                      `-rl Long (4 bytes)`
+
+                      `-rp Phrase (8 bytes)`
+                      
+                      `-rd Double Phrase (16 bytes)`
+                      
+                      `-rq Quad Phrase (32 bytes)`
 -s                   Warn about unoptimized long branches.
 -u                   Assume that all undefined symbols are external.
 -v                   Verbose mode (print running dialogue).
@@ -239,7 +172,7 @@ the table.
       -dDEBUG -dLoopCount=999 -dDebugLevel=55
 
 **-e**
- The -e switch causes MADMAC to send error messages to a file, instead of the
+ The -e switch causes RMAC to send error messages to a file, instead of the
  console. If a filename immediately follows the switch character, error messages
  are written to the specified file. If no filename is specified, a file is created with
  the default extension "**.err**" and with the root name taken from the first input
@@ -248,15 +181,6 @@ the table.
  file is created. Beware! If an assembly produces no errors, any error file from
  a previous assembly is not removed.
 
-**-fm**
-
-**-fmu**
- The **-fm** and **-fmu** switches cause MADMAC to generate Mark Williams style
- object files instead of Alcyon object files. These files may be linked with the
- Mark Williams linker. The **-fmu** switch causes underscores on the first char-
- acter of a global symbol name to be moved to the end of the name, as per the
- Mark Williams C compiler naming convention. That is, "**_main**" will become
- "**main\_**" and "**__main**" will become "**_main_**".
 **-i**
  The **-i** switch allows automatic directory searching for include files. A list of
  semi-colon seperated directory search paths may be mentioned immediately
@@ -276,32 +200,33 @@ the table.
 
       setenv MACPATH="m:;c:include;c:include\sys"
 **-l**
- The -l switch causes MADMAC to generate an assembly listing file. If a file-
+ The -l switch causes RMAC to generate an assembly listing file. If a file-
  name immediately follows the switch character, the listing is written to the
  specified file. If no filename is specified, then a listing file is created with the
  default extension "**.prn**" and with the root name taken from the first input file
  name (e.g. the listing is written to "**file.prn**" if "**file**" or "**file.s**" is the first
  input file name).
 **-o**
- The -o switch causes MADMAC to write object code on the specified file. No
+ The -o switch causes RMAC to write object code on the specified file. No
  default extension is applied to the filename. For historical reasons the filename
  can also be seperated from the switch with a space (e.g. "**-o file**").
 
 **-p**
 
 **-ps**
- The **-p** and **-ps** switches cause MADMAC to produce an Atari ST executable
+ The **-p** and **-ps** switches cause RMAC to produce an Atari ST executable
  file with the default extension of "**.prg**". If there are any external references
  at the end of the assembly, an error message is emitted and no executable file
  is generated. The **-p** switch does not write symbols to the executable file. The
  **-ps** switch includes symbols (Alcyon format) in the executable file.
 **-q**
   The **-q** switch is aimed primarily at users of floppy-disk-only systems. It causes
-  MADMAC to install itself in memory, like a RAMdisk. Then the program
+  RMAC to install itself in memory, like a RAMdisk. Then the program
   **m.prg** (which is very short - less than a sector) can be used instead of
-  **mac.prg**, which can take ten or twelve seconds to load.
+  **mac.prg**, which can take ten or twelve seconds to load. (**NOTE** not available
+  for now, might be re-implemented in the future).
 **-s**
-  The **-s** switch causes MADMAC to generate a list of unoptimized forward
+  The **-s** switch causes RMAC to generate a list of unoptimized forward
   branches as warning messages. This is used to point out branches that could
   have been short (e.g. "bra" could be "bra.s").
 **-u**
@@ -310,25 +235,16 @@ the table.
   with a **.extern** or **.globl** directive. This can be used if you have a lot of
   external symbols, and you don't feel like declaring them all external.
 **-v**
-  The **-v** switch turns on a "verbose" mode in which MADMAC prints out (for
+  The **-v** switch turns on a "verbose" mode in which RMAC prints out (for
   example) the names of the files it is currently processing. Verbose mode is
-  automatically entered when MADMAC prompts for input with a star.
+  automatically entered when RMAC prompts for input with a star.
 **-y**
   The **-y** switch, followed immediately by a decimal number (with no intervening
-  space), sets the number of lines in a page. MADMAC will produce *N* lines
+  space), sets the number of lines in a page. RMAC will produce *N* lines
   before emitting a form-feed. If *N* is missing or less than 10 an error message is
   generated.
-**-6**
-  The **-6** switch takes effect when it is mentioned. It allows MADMAC to be
-  used as a back end to the Alcyon C compiler.\ [2]_ **Note:** the assembler will
-  produce code that is typically ten percent larger and ten percent slower than
-  the output of the Alcyon assembler, therefore use of this switch for production
-  code is discouraged.
 
-.. [2] The -6 switch is not a compatibility mode for AS68 - it has been carefully tailored to accept the output of the Alcyon C compiler.
-
-
-`Using MADMAC`_
+`Using RMAC`_
 ===============
 
 Let's assemble and link some example programs. These programs are included
@@ -337,7 +253,7 @@ your work area before continuing. In the following examples we adopt the conven-
 tions that the shell prompt is a percent sign (%) and that your input (the stuff you
 type) is presented in **bold face**.
 
-If you have been reading carefully, you know that MADMAC can generate
+If you have been reading carefully, you know that RMAC can generate
 an executable file without linking. This is useful for making small, stand alone
 programs that don't require externals or library routines. For example, the following
 two commands:
@@ -351,7 +267,7 @@ could be replaced by the single command:
 
  ::
 
-      % mac -ps example.s
+      % rmac -ps example.s
 
 since you don't need the linker for stand-alone object files.
 
@@ -361,7 +277,7 @@ one big file:
 
  ::
 
-      % mac -p bugs shift images
+      % rmac -p bugs shift images
 
 Of course you can get the same effect by using the **.include** directive, but sometimes
 it is convenient to do the concatenation from the command line.
@@ -370,7 +286,7 @@ it is convenient to do the concatenation from the command line.
 
     ::
 
-      % mac -lzorf -y95 -o tmp -ehack -Ddebug=123 -ps example
+      % rmac -lzorf -y95 -o tmp -ehack -Ddebug=123 -ps example
 
 This produces a listing on the file called "**zorf.prn**" with 95 lines per page, writes
 the executable code (with symbols) to a file called "**tmp.prg**", writes an error listing
@@ -378,13 +294,13 @@ to the file "**hack.err**", specifies an include-file path that includes the cur
 directory on the drive "**M:**," defines the symbol "**debug**" to have the value 123, and
 assembles the file "**example.s**". (Take a deep breath - you got all that?)
 
-One last thing. If there are any assembly errors, MADMAC will terminate
+One last thing. If there are any assembly errors, RMAC will terminate
 with an exit code of 1. If the assembly succeeds (no errors, although there may be
 warnings) the exit code will be 0. This is primarily for use with "make" utilities.
 
 `Interactive Mode`_
 '''''''''''''''''''
-If you invoke MADMAC with an empty command line it will print a copyright
+If you invoke RMAC with an empty command line it will print a copyright
 message and prompt you for more commands with a star (*****). This is useful if you
 are used to working directly from the desktop, or if you want to assemble several files
 in succession without having to reload the assembler from disk for each assembly.
@@ -394,7 +310,7 @@ specified **-v** on each command line):
 
  ::
 
-     %. mac
+     %. rmac
 
      MADMAC Atari Macro Assembler
      Copyright 1987 Atari Corporation
@@ -420,7 +336,7 @@ by typing control-C or an empty line.
 
 Things You Should Be Aware Of
 '''''''''''''''''''''''''''''
-MADMAC is a one pass assembler. This means that it gets all of its work done by
+RMAC is a one pass assembler. This means that it gets all of its work done by
 reading each source file exactly once and then "back-patching" to fix up forward
 references. This one-pass nature is usually transparent to the programmer, with
 the following important exceptions:
@@ -446,7 +362,7 @@ the following important exceptions:
 
 Forward Branches
 ''''''''''''''''
-MADMAC does not optimize forward branches for you, but it will tell you about
+RMAC does not optimize forward branches for you, but it will tell you about
 them if you use the -s (short branch) option:
 
  ::
@@ -457,100 +373,92 @@ them if you use the -s (short branch) option:
 With the -e option you can redirect the error output to a file, and determine by
 hand (or editor macros) which forward branches are safe to explicitly declare short.
 
-Notes for AS68 Users
-''''''''''''''''''''
-MADMAC is not entirely compatible with the Alcyon assembler, AS68. This section
+`Notes for migrating from other 68000 assemblers`_
+''''''''''''''''''''''''''''''''''''''''''''''''''
+RMAC is not entirely compatible with the other popular assemblers
+like Devpac or vasm. This section
 outlines the major differences. In practice, we have found that very few changes are
-necessary to make AS68 source code assemble.
+necessary to make other assemblers' source code assemble.
 
-  o A semicolon (;) must be used to introduce a comment, except that a star (*)
-    may be used in the first column. AS68 treated anything following the operand
-    field, preceeded by whitespace, as a comment. (MADMAC treats a star that
-    is not in column 1 as a multiplication operator).
+o A semicolon (;) must be used to introduce a comment, except that a star (*)
+  may be used in the first column. AS68 treated anything following the operand
+  field, preceeded by whitespace, as a comment. (RMAC treats a star that
+  is not in column 1 as a multiplication operator).
 
-  o Labels require colons (even labels that begin in column 1).
+o Labels require colons (even labels that begin in column 1).
 
-  o Conditional assembly directives are called **if**, **else** and **endif**. AS68 called these
-    **ifne**, **ifeq** (etc.), and **endc**.
-  o The tilde (~) character is an operator, and back-quote (`) is an illegal character.
-    AS68 permitted the tilde and back-quote characters in symbols.
-  o There are no equivalents to AS68's org or section directives. AS68's page
-    directive has become eject. The AS68 **.xdef** and **.xref** directives are not implemented,
-    but **.globl** makes these unnecessary anyway. The directives **.comline**,
-    **mask2**, **idnt** and **opt**, which were unimplemented and ignored in AS68, are
-    not legal in MADMAC.
+o Conditional assembly directives are called **if**, **else** and **endif**. Devpac and vasm called these
+  **ifne**, **ifeq** (etc.), and **endc**.
+o The tilde (~) character is an operator, and back-quote (`) is an illegal character.
+  AS68 permitted the tilde and back-quote characters in symbols.
+o There are no equivalents to org or section directives.
+  The **.xdef** and **.xref** directives are not implemented,
+  but **.globl** makes these unnecessary anyway.
 
   o The location counter cannot be manipulated with a statement of the form:
 
-    ::
+  ::
 
-                                  * = expression
+                                * = expression
 
-  o The **ds** directive is not permitted in the text or data segments (except in **-6**
-    mode); an error message is issued. Use **dcb** instead to reserve large blocks of
-    initialized storage.
+o The **ds** directive is not permitted in the text or data segments;
+  an error message is issued. Use **dcb** instead to reserve large blocks of
+  initialized storage.
+o Back-slashes in strings are "electric" characters that are used to escape C-like
+  character codes. Watch out for GEMDOS path names in ASCII constants -
+  you will have to convert them to double-backslashes.
+o Expression evaluation is done left-to-right without operator precedence. Use parentheses to
+  force the expression evaluation as you wish.
 
-  o Back-slashes in strings are "electric" characters that are used to escape C-like
-    character codes. Watch out for GEMDOS path names in ASCII constants -
-    you will have to convert them to double-backslashes.
+o Mark your segments across files. Branching to a code segment that could be identified as BSS will cause a "Error: cannot initialize non-storage (BSS) section"
+o rs.b/rs.w/rs.l/rscount/rsreset can be simulated in rmac using abs. For example the following source:
 
-Notes for Mark Williams C Users
-'''''''''''''''''''''''''''''''
-MADMAC will generate object code that the Mark Williams C linker, **ld**, will
-accept. This has been tested only with version 2.0 of the Mark Williams package.
-Some notable differences between MADMAC and the Mark Williams assembler, as,
-are:
+  ::
 
-  o MWC permits 16-character symbol names in the object file, and MADMAC
-    supports this;
-  o MWC object files can contain more code and data sections than the MADMAC
-    (Alcyon) object code format. MADMAC maps its code sections as follows:
+   rsreset
+   label1: rs.w 1
+   label2: rs.w 10
+   label3: rs.l 5
+   label4: rs.b 2
+   
+   size_so_far equ rscount
 
-================================ ==================
-MWC Space                        MADMAC Space
-================================ ==================
-shui (shared instruction)        text
-prvi (private instruction)       unsupported
-bssi (uninitialized instruction) unsupported
-shrd (shared data)               data
-prvd (private data)              unsupported
-bssd (uninitialized data)        bss
-debug information                unsupported
-symbols                          symbols
-absolute                         abs, equates, etc.
-================================ ==================
+  can be converted to:
 
-    It is not possible for MADMAC to generate code in the Mark Williams private
-    instruction, private data or uninitialized instruction spaces.
+  ::
 
-  o None of the Mark Williams assembler directives (e.g. "**.long**" and "**.odd**") are
-    supported. None of the MWC non-standard addressing modes are supported.
-  o The Mark Williams debugger, **db**, does not support the Alcyon-format symbols
-    produced with the **-ps** switch; it complains about the format of the executable
-    file and aborts.
-  o MADMAC does not support the method by which the Mark Williams shell
-    passes long command lines to programs. Command lines are truncated to 127
-    characters.
+   abs
+   label1: ds.w 1
+   label2: ds.w 10
+   label3: ds.l 5
+   label4: ds.b 2
+   
+   size_so_far equ ^^abscount
 
-Using MADMAC as a Back-End to the Alcyon C Compiler
-'''''''''''''''''''''''''''''''''''''''''''''''''''
-MADMAC can be used in place of the AS68 assembler as a back-end for the Alcyon
-version 4.14 C compiler. The "**-6**" switch turns on a mode that warps and perverts
-MADMAC's ordinary syntax into accepting what the Alcyon compiler dishes out.
-This can be used in a batch file (for instance) with a line that looks like:
+o A rare case: if your macro contains something like:
 
-    ::
+  ::
 
-      mac -6 -o %1.o m:%1
+   macro test
+   move.l #$\1,d0
+   endm
 
-(Assuming that device "**M:**" is where the source was put by compiler phase **c168**).
-You should be aware that AS68 generally produces better and faster code than
-MADMAC, although it is slower to assemble.
+   test 10
+
+  then by the assembler's design this will fail as the parameters are automatically converted to hex. Changing the code like his works:
+
+  ::
+
+   macro test
+   move.l #\1,d0
+   endm
+
+   test $10
 
 `Text File Format`_
 '''''''''''''''''''
 For those using editors other than the "Emacs" style ones (Micro-Emacs, Mince,
-etc.) this section documents the source file format that MADMAC expects.
+etc.) this section documents the source file format that RMAC expects.
 
  o Files must contain characters with ASCII values less than 128; it is not per-
    missable to have characters with their high bits set unless those characters are
@@ -731,7 +639,7 @@ Negative numbers Are specified with a unary minus (**-**). For example:
 ''''''''''
 Strings are contained between double (") or single ( ') quote marks. Strings may
 contain non-printable characters by specifying "backslash" escapes, similar to the
-ones used in the C programming language. MADMAC will generate a warning if a
+ones used in the C programming language. RMAC will generate a warning if a
 backslash is followed by a character not appearing below:
 
     ::
@@ -751,8 +659,8 @@ bits set (i.e. character codes 128...255).
 
 You should be aware that backslash characters are popular in GEMDOS path
 names, and that you may have to escape backslash characters in your existing source
-code. For example, to get the file "'c:\auto\andi.s'" you would specify the string
-"`c:\\auto\\andi.s`".
+code. For example, to get the file "'c:\auto\ahdi.s'" you would specify the string
+"`c:\\auto\\ahdi.s`".
 
 `Register Lists`_
 '''''''''''''''''
@@ -768,7 +676,7 @@ and Rn,m<n, seperated by a dash. For example:
        -------------           -----
        40-d7/a0-a7             $FFFF
        d2-d7/a0/a3-a6          $39FC
-       dO/d1/a0-a3/d7/a6-a7    $CF83
+       d0/d1/a0-a3/d7/a6-a7    $CF83
        d0                      $0001
        r0-r16                  $FFFF
 
@@ -856,9 +764,9 @@ pointers to the label "zip":
 `Unary Operators`_
 ''''''''''''''''''
 
-================================    ====================================
+================================    ========================================
 Operator                            Description
-================================    ====================================
+================================    ========================================
 **-**                               Unary minus (2's complement).
 **!**                               Logical (boolean) NOT.
 **~**                               Tilde: bitwise not (l's complement).
@@ -866,7 +774,8 @@ Operator                            Description
 **^^referenced** *symbol*           True if symbol has been referenced.
 **^^streq** *stringl*,*string2*     True if the strings are equal.
 **^^macdef** *macroName*            True if the macro is defined.
-================================    ====================================
+**^^abscount**                      Returns the size of current .abs section
+================================    ========================================
 
    o The boolean operators generate the value 1 if the expression is true, and 0 if
      it is not.
@@ -881,17 +790,17 @@ Operator                            Description
 `Binary Operators`_
 '''''''''''''''''''
 
------------  ----------------------------------------------
+===========  ==============================================
 Operator     Description
------------  ----------------------------------------------
-+ -  * /     The usual arithmetic operators.
+===========  ==============================================
+\ + - * /    The usual arithmetic operators.
 %            Modulo.
 & | ^        Bit-wise **AND**, **OR** and **Exclusive-OR**.
 << >>        Bit-wise shift left and shift right.
 < <=  >=  >  Boolean magnitude comparisons.
 =            Boolean equality.
 <>  !=       Boolean inequality.
------------  ----------------------------------------------
+===========  ==============================================
 
    o All binary operators have the same precedence: expressions are evaluated
      strictly left to right.
@@ -991,6 +900,30 @@ described in the chapter on `6502 Support`_.
 **.even**
    If the location counter for the current section is odd, make it even by adding
    one to it. In text and data sections a zero byte is deposited if necessary.
+**.long**
+   Align the program counter to the next integral long boundary (4 bytes).
+   Note that GPU/DSP code sections are not contained in their own
+   segments and are actually part of the TEXT or DATA segments.
+   Therefore, to align GPU/DSP code, align the current section before and
+   after the GPU/DSP code.
+**.phrase**
+   Align the program counter to the next integral phrase boundary (8 bytes).
+   Note that GPU/DSP code sections are not contained in their own
+   segments and are actually part of the TEXT or DATA segments.
+   Therefore, to align GPU/DSP code, align the current section before and
+   after the GPU/DSP code.
+**.dphrase**
+   Align the program counter to the next integral double phrase boundary (16
+   bytes). Note that GPU/DSP code sections are not contained in their own
+   segments and are actually part of the TEXT or DATA segments.
+   Therefore, to align GPU/DSP code, align the current section before and
+   after the GPU/DSP code.
+**.qphrase**
+   Align the program counter to the next integral quad phrase boundary (32
+   bytes). Note that GPU/DSP code sections are not contained in their own
+   segments and are actually part of the TEXT or DATA segments.
+   Therefore, to align GPU/DSP code, align the current section before and
+   after the GPU/DSP code.
 **.assert** *expression* [,\ *expression*...]
    Assert that the conditions are true (non-zero). If any of the comma-seperated
    expressions evaluates to zero an assembler warning is issued. For example:
@@ -1036,63 +969,79 @@ described in the chapter on `6502 Support`_.
            PTSIN:  ds.l     1
 
 **.comm** *symbol*, *expression*
-  Specifies a label and the size of a common region. The label is made global,
-  thus confined symbols cannot be made common. The linker groups all com-
-  mon regions of the same name; the largest size determines the real size of the
-  common region when the file is linked.
+   Specifies a label and the size of a common region. The label is made global,
+   thus confined symbols cannot be made common. The linker groups all common
+   regions of the same name; the largest size determines the real size of the
+   common region when the file is linked.
+**.ccdef** *expression*
+   Allows you to define names for the condition codes used by the JUMP
+   and JR instructions for GPU and DSP code. For example:
 
+    ::
+   
+     Always .ccdef 0
+     . . .
+          jump Always,(r3) ; ‘Always’ is actually 0
+
+**.ccundef** *regname*
+   Undefines a register name (regname) previously assigned using the
+   .CCDEF directive. This is only implemented in GPU and DSP code
+   sections.     
+**.dc.i** *expression*
+   This directive generates long data values and is similar to the DC.L
+   directive, except the high and low words are swapped. This is provided
+   for use with the GPU/DSP MOVEI instruction.
 **.dc**\ [.\ *size*] *expression* [, *expression*...]
-  Deposit initialized storage in the current section. If the specified size is word
-  or long, the assembler will execute a .even before depositing data. If the size
-  is .b, then strings that are not part of arithmetic expressions are deposited
-  byte-by-byte. If no size is specified, the default is .w. This directive cannot be
-  used in the BSS section.
-
+   Deposit initialized storage in the current section. If the specified size is word
+   or long, the assembler will execute a .even before depositing data. If the size
+   is .b, then strings that are not part of arithmetic expressions are deposited
+   byte-by-byte. If no size is specified, the default is .w. This directive cannot be
+   used in the BSS section.
 **.dcb**\ [.\ *size*] *expression1*, *expression2*
-  Generate an initialized block of *expression1* bytes, words or longwords of the
-  value *expression2*. If the specified size is word or long, the assembler will
-  execute .even before generating data. If no size is specified, the default is **.w**.
-  This directive cannot be used in the BSS section.
-
+   Generate an initialized block of *expression1* bytes, words or longwords of the
+   value *expression2*. If the specified size is word or long, the assembler will
+   execute .even before generating data. If no size is specified, the default is **.w**.
+   This directive cannot be used in the BSS section.
 **.ds**\ [.\ *size*] *expression*
-  Reserve space in the current segment for the appropriate number of bytes,
-  words or longwords. If no size is specified, the default size is .w. If the size
-  is word or long, the assembler will execute .even before reserving space. This
-  directive can only be used in the BSS or ABS sections (in text or data, use
-  .dcb to reserve large chunks of initialized storage.)
-
+   Reserve space in the current segment for the appropriate number of bytes,
+   words or longwords. If no size is specified, the default size is .w. If the size
+   is word or long, the assembler will execute .even before reserving space. This
+   directive can only be used in the BSS or ABS sections (in text or data, use
+   .dcb to reserve large chunks of initialized storage.)
+**.dsp**
+   Switch to Jaguar DSP assembly mode. This directive must be used
+   within the TEXT or DATA segments.
 **.init**\ [.\ *size*] [#\ *expression*,]\ *expression*\ [.\ *size*] [,...]
-  Generalized initialization directive. The size specified on the directive becomes
-  the default size for the rest of the line. (The "default" default size is **.w**.) A
-  comma-seperated list of expressions follows the directive; an expression may be
-  followed by a size to override the default size. An expression may be preceeded
-  by a sharp sign, an expression and a comma, which specifies a repeat count to
-  be applied to the next expression. For example:
+   Generalized initialization directive. The size specified on the directive becomes
+   the default size for the rest of the line. (The "default" default size is **.w**.) A
+   comma-seperated list of expressions follows the directive; an expression may be
+   followed by a size to override the default size. An expression may be preceeded
+   by a sharp sign, an expression and a comma, which specifies a repeat count to
+   be applied to the next expression. For example:
 
       ::
 
        .init.l -1, 0.w, #16,'z'.b, #3,0, 11.b
 
-  will deposit a longword of -1, a word of zero, sixteen bytes of lower-case 'z',
-  three longwords of zero, and a byte of 11.
+   will deposit a longword of -1, a word of zero, sixteen bytes of lower-case 'z',
+   three longwords of zero, and a byte of 11.
 
-  No auto-alignment is performed within the line, but a **.even** is done once
-  (before the first value is deposited) if the default size is word or long.
-
+   No auto-alignment is performed within the line, but a **.even** is done once
+   (before the first value is deposited) if the default size is word or long.
 **.cargs** [#\ *expression*,] *symbol*\ [.\ *size*] [, *symbol*\ [.\ *size*].. .]
-  Compute stack offsets to C (and other language) arguments. Each symbol is
-  assigned an absolute value (like equ) which starts at expression and increases
-  by the size of each symbol, for each symbol. If the expression is not supplied,
-  the default starting value is 4. For example:
+   Compute stack offsets to C (and other language) arguments. Each symbol is
+   assigned an absolute value (like equ) which starts at expression and increases
+   by the size of each symbol, for each symbol. If the expression is not supplied,
+   the default starting value is 4. For example:
 
     ::
 
      .cargs #8, .fileliams.1, .openMode, .butPointer.l
 
-  could be used to declare offsets from A6 to a pointer to a filename, a word
-  containing an open mode, and a pointer to a buffer. (Note that the symbols
-  used here are confined). Another example, a C-style "string-length" function,
-  could be written as:
+   could be used to declare offsets from A6 to a pointer to a filename, a word
+   containing an open mode, and a pointer to a buffer. (Note that the symbols
+   used here are confined). Another example, a C-style "string-length" function,
+   could be written as:
 
         ::
 
@@ -1109,6 +1058,15 @@ described in the chapter on `6502 Support`_.
    the superior file. This statement is not required, nor are warning messages
    generated if it is missing at the end of a file. This directive may be used inside
    conditional assembly, macros or **.rept** blocks.
+**.equr** *expression*
+   Allows you to name a register. This is only implemented for GPU/DSP
+   code sections. For example:
+
+    ::
+
+     Clipw .equr r19
+     . . .
+          add ClipW,r0 ; ClipW actually is r19
 
 **.if** *expression*
 
@@ -1169,63 +1127,90 @@ described in the chapter on `6502 Support`_.
    linker. The **.extern** directive is merely a synonym for **.globl**.
 
 **.include** "*file*"
-      Include a file. If the filename is not enclosed in quotes, then a default extension
-      of "**.s**" is applied to it. If the filename is quoted, then the name is not changed
-      in any way.
+   Include a file. If the filename is not enclosed in quotes, then a default extension
+   of "**.s**" is applied to it. If the filename is quoted, then the name is not changed
+   in any way.
 
-  Note: If the filename is not a valid symbol, then the assembler will generate an
+   Note: If the filename is not a valid symbol, then the assembler will generate an
              error message. You should enclose filenames such as "**atari.s**" in quotes,
              because such names are not symbols.
 
-      If the include file cannot be found in the current directory, then the direc-
-      tory search path, as specified by -i on the commandline, or' by the 'MACPATH'
-      enviroment string, is traversed.
+   If the include file cannot be found in the current directory, then the directory
+   search path, as specified by -i on the commandline, or' by the 'MACPATH'
+   enviroment string, is traversed.
 
 **.eject**
-      Issue a page eject in the listing file.
+   Issue a page eject in the listing file.
 
 **.title** "*string*"
 
 **.subttl** [-] "*string*"
-      Set the title or subtitle on the listing page. The title should be specified on
-      the the first line of the source program in order to take effect on the first page.
-      The second and subsequent uses of **.title** will cause page ejects. The second
-      and subsequent uses of .subttl will cause page ejects unless the subtitle string
-      is preceeded by a dash (-).
+   Set the title or subtitle on the listing page. The title should be specified on
+   the the first line of the source program in order to take effect on the first page.
+   The second and subsequent uses of **.title** will cause page ejects. The second
+   and subsequent uses of .subttl will cause page ejects unless the subtitle string
+   is preceeded by a dash (-).
 
 **.list**
 
 **.nlist**
-      Enable or disable source code listing. These directives increment and decrement
-      an internal counter, so they may be appropriately nested. They have no effect
-      if the **-l** switch is not specified on the commandline.
+   Enable or disable source code listing. These directives increment and decrement
+   an internal counter, so they may be appropriately nested. They have no effect
+   if the **-l** switch is not specified on the commandline.
 
 **.goto** *label*
-      This directive provides unstructured flow of control within a macro definition.
-      It will transfer control to the line of the macro containing the specified goto
-      label. A goto label is a symbol preceeded by a colon that appears in the first
-      column of a source line within a macro definition:
+   This directive provides unstructured flow of control within a macro definition.
+   It will transfer control to the line of the macro containing the specified goto
+   label. A goto label is a symbol preceeded by a colon that appears in the first
+   column of a source line within a macro definition:
 
-                    :  *label*
+                 :  *label*
 
-      where the label itself can be any valid symbol name, followed immediately by
-      whitespace and a valid source line (or end of line). The colon **must** appear in
-      the first column.
+   where the label itself can be any valid symbol name, followed immediately by
+   whitespace and a valid source line (or end of line). The colon **must** appear in
+   the first column.
 
-      The goto-label is removed from the source line prior to macro expansion -
-      to all intents and purposes the label is invisible except to the .goto directive
-      Macro expansion does not take place within the label.
+   The goto-label is removed from the source line prior to macro expansion -
+   to all intents and purposes the label is invisible except to the .goto directive
+   Macro expansion does not take place within the label.
 
-      For example, here is a silly way to count from 1 to 10 without using **.rept**:
+   For example, here is a silly way to count from 1 to 10 without using **.rept**:
 
-                 ::
+              ::
 
-                                  .macro Count
-                    count         set     1
-                    :loop         dc.w    count
-                    count         set     count + 1
-                                  iif count <= 10, goto loop
-                                  .endm
+                               .macro Count
+                 count         set     1
+                 :loop         dc.w    count
+                 count         set     count + 1
+                               iif count <= 10, goto loop
+                               .endm
+
+**.gpu**
+   Switch to Jaguar GPU assembly mode. This directive must be used
+   within the TEXT or DATA segments.
+**.gpumain**
+   No. Just... no. Don't ask about it. Ever.
+**.prgflags** *value*
+   Sets ST executable .PRG field *PRGFLAGS* to *value*. *PRGFLAGS* is a bit field defined as follows:
+
+============ ======  =======
+Definition   Bit(s)  Meaning
+============ ======  =======
+PF_FASTLOAD  0 	     If set, clear only the BSS area on program load, otherwise clear the entire heap. 
+PF_TTRAMLOAD 1       If set, the program may be loaded into alternative RAM, otherwise it must be loaded into standard RAM. 
+PF_TTRAMMEM  2       If set, the program's Malloc() requests may be satisfied from alternative RAM, otherwise they must be satisfied from standard RAM. 
+--           3       Currently unused.
+See left.    4 & 5   If these bits are set to 0 (PF_PRIVATE), the processes' entire memory space will be considered private (when memory protection is enabled).If these bits are set to 1 (PF_GLOBAL), the processes' entire memory space will be readable and writable by any process (i.e. global).If these bits are set to 2 (PF_SUPERVISOR), the processes' entire memory space will only be readable and writable by itself and any other process in supervisor mode.If these bits are set to 3 (PF_READABLE), the processes' entire memory space will be readable by any application but only writable by itself. 
+--           6-15    Currently unused.
+============ ======  =======
+
+**.regequ** *expression*
+   Essentially the same as **.EQUR.** Included for compatibility with the GASM
+   assembler.
+**.regundef**
+   Essentially the same as **.EQURUNDEF.** Included for compatibility with
+   the GASM assembler.
+
 
 `68000 Mnemonics`_
 ==================
@@ -1267,7 +1252,7 @@ Assembler Syntax                         Description
 
 `Branches`_
 '''''''''''
-Since MADMAC is a one pass assembler, forward branches cannot be automatically
+Since RMAC is a one pass assembler, forward branches cannot be automatically
 optimized to their short form. Instead, unsized forward branches are assumed to
 be long. Backward branches are always optimized to the short form if possible.
 
@@ -1312,7 +1297,7 @@ The assembler provides "creature comforts" when it processes 68000 mnemonics:
  o **ADD**, **SUB** and **CMP** with an address register will really generate **ADDA**,
  **SUBA** and **CMPA**.
 
- o The **ADD**, **AND**, **CMP**, **EOR**, **OR and **SUB** mnemonics with immediate
+ o The **ADD**, **AND**, **CMP**, **EOR**, **OR** and **SUB** mnemonics with immediate
  first operands will generate the "I" forms of their instructions (**ADDI**, etc.) if
  the second operand is not register direct.
 
@@ -1321,6 +1306,13 @@ The assembler provides "creature comforts" when it processes 68000 mnemonics:
  o **MOVE.L** is optimized to **MOVEQ** if the immediate operand is defined and
  in the range -128...127. However, **ADD** and **SUB** are never translated to
  their quick forms; **ADDQ** and **SUBQ** must be explicit.
+
+ o In GPU/DSP code sections, you can use JUMP (Rx) in place of JUMP T, (Rx) and JR
+  (Rx) in place of JR T,(Rx).
+ o RMAC tests all GPU/DSP restrictions and corrects them wherever possible (such as
+  inserting a NOP instruction when needed).
+ o The “(Rx+N)” addressing mode for GPU/DSP instructions is optimized to “(Rx)”
+  when “N” is zero.
 
 `Macros`_
 =========
@@ -1552,13 +1544,37 @@ common in bitmap-graphics routines). For example:
                    clr.w (a0)+                     ;   starting at AO
                    .endr                           ;
 
+`Jaguar GPU/DSP Mode`_
+======================
+
+RMAC will generate code for the Atari jaguar GPU and DSP custom RISC (Reduced
+Instruction Set Computer) processors. See the Atari Jaguar Software reference Manual – Tom
+& Jerry for a complete listing of Jaguar GPU and DSP assembler mnemonics and addressing
+modes.
+
+`Condition Codes`_
+''''''''''''''''''
+The following condition codes for the GPU/DSP JUMP and JR instructions are built-in:
+ 
+  ::
+
+   CC (Carry Clear) = %00100
+   CS (Carry Set)   = %01000
+   EQ (Equal)       = %00010
+   MI (Minus)       = %11000
+   NE (Not Equal)   = %00001
+   PL (Plus)        = %10100
+   HI (Higher)      = %00101
+   T (True)         = %00000
+
+                   
 `6502 Support`_
 ===============
-MADMAC will generate code for the Motorola 6502 microprocessor. This chapter
+RMAC will generate code for the Motorola 6502 microprocessor. This chapter
 describes extra addressing modes and directives used to support the 6502.
 
 As the 6502 object code is not linkable (currently there is no linker) external
-references may not be made. (Nevertheless, MADMAC may reasonably be used for
+references may not be made. (Nevertheless, RMAC may reasonably be used for
 large assemblies because of its blinding speed.)
 
 `6502 Addressing Modes`_
@@ -1580,11 +1596,11 @@ the Atari Coinop assembler.
 @\ *expr*\ (x) indirect X
 @\ *expr*\ (y) indirect Y
 @expr          indirect
-x,*expr*       indexed X
-y,*expr*       indexed Y
+x,\ *expr*     indexed X
+y,\ *expr*     indexed Y
 ============== ========================================
 
-While MADMAC lacks "high" and "low" operators, high bytes of words may
+While RMAC lacks "high" and "low" operators, high bytes of words may
 be extracted with the shift (``>>``) or divide (``/``) operators, and low bytes may be
 extracted with the bitwise AND (``&``) operator.
 
@@ -1622,7 +1638,7 @@ extracted with the bitwise AND (``&``) operator.
       nop
 
    the third NOP in this example, at location $10000, may cause the assembler
-   to crash or exhibit spectacular schizophrenia. In any case, MADMAC will give
+   to crash or exhibit spectacular schizophrenia. In any case, RMAC will give
    no warning before flaking out.
 
 `6502 Object Code Format`_
@@ -1670,13 +1686,13 @@ symbols will be absolute (not in text, data or bss).
 
 `When Things Go Wrong`_
 '''''''''''''''''''''''
-Most of MADMAC's error messages are self-explanatory. They fall into four classes:
+Most of RMAC's error messages are self-explanatory. They fall into four classes:
 warnings about situations that you (or the assembler) may not be happy about,
 errors that cause the assembler to not generate object files, fatal errors that cause
 the assembler to abort immediately, and internal errors that should never happen.\ [3]_
 
 You can write editor macros (or sed or awk scripts) to parse the error messages
-MADMAC generates. When a message is printed, it is of the form:
+RMAC generates. When a message is printed, it is of the form:
 
          "*filename*" , ``line`` *line-number*: *message*
 
@@ -1688,11 +1704,13 @@ indicates that the assembler could not determine which file had the problem.
 The following sections list warnings, errors and fatal errors in alphabetical
 order, along with a short description of what may have caused the problem.
 
+.. [3] If you come across an internal error, we would appreciate it if you would contact Atari Technical Support and let us know about the problem.
+
 `Warnings`_
 '''''''''''
 **bad backslash code in string**
   You tried to follow a backslash in a string with a character that the assembler
-  didn't recognize. Remember that MADMAC uses a C-style escape system in
+  didn't recognize. Remember that RMAC uses a C-style escape system in
   strings.
 **label ignored**
   You specified a label before a macro, **rept** or **endm** directive. The assembler
@@ -1710,10 +1728,8 @@ order, along with a short description of what may have caused the problem.
   assembly is aborted.
 **line too long as a result of macro expansion**
   When a source line within a macro was expanded, the resultant line was too
-  long for MADMAC (longer than 200 characters or so).
+  long for RMAC (longer than 200 characters or so).
 
-
-.. [3] If you come across an internal error, we would appreciate it if you would contact Atari Technical Support and let us know about the problem.
 
 **memory exhausted**
     The assembler ran out of memory. You should (1) split up your source files
@@ -1778,7 +1794,7 @@ order, along with a short description of what may have caused the problem.
   You tried to use a 68000-oriented directive in the 6502 section.
 **divide by zero**
   The expression you typed involves a division by zero.
-expression out of range
+**expression out of range**
   The expression you typed is out of range for its application.
 **external byte reference**
   You tried to make a byte-sized reference to an external symbol, which the
@@ -1787,12 +1803,12 @@ expression out of range
   You tried to make a short branch to an external symbol, which the linker cannot
   handle.
 **extra (unexpected) text found after addressing mode**
-  MADMAC thought it was done processing a line, but it ran up against "extra"
+  RMAC thought it was done processing a line, but it ran up against "extra"
   stuff. Be sure that any comment on the line begins with a semicolon, and check
   for dangling commas, etc.
 **forward or undefined .assert**
   The expression you typed after a **.assert** directive had an undefined value.
-  Remember that MADMAC is one-pass.
+  Remember that RMAC is one-pass.
 **hit EOF without finding matching .endif**
   The assembler fell off the end of last input file without finding a **.endif** to
   match an . it. You probably forgot a **.endif** somewhere.
@@ -1809,7 +1825,7 @@ expression out of range
   tried to use a byte-sized relocatable expression in an immediate addressing
   mode.
 **illegal character**
- Your source file contains a character that MADMAC doesn't allow. (most
+ Your source file contains a character that RMAC doesn't allow. (most
  control characters fall into this category).
 **illegal initialization of section**
  You tried to use .dc or .dcb in the BSS or ABS sections.
@@ -1891,7 +1907,7 @@ expression out of range
   undefined or external symbol.
 **unimplemented addressing mode**
   You tried to use 68020 "square-bracket" notation for a 68020 addressing mode.
-  MADMAC does not support 68020 addressing modes.
+  RMAC does not support 68020 addressing modes.
 **unimplemented directive**
   You have found a directive that didn't appear in the documentation. It doesn't
   work.
@@ -1901,7 +1917,7 @@ expression out of range
   You followed a ^^ with something other than one of the names defined, ref-
   erenced or streq.
 **unsupported 68020 addressing mode**
-  The assembler saw a 68020-type addressing mode. MADMAC does not assem-
+  The assembler saw a 68020-type addressing mode. RMAC does not assem-
   ble code for the 68020 or 68010.
 **unterminated string**
   You specified a string starting with a single or double quote, but forgot to type

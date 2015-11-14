@@ -97,6 +97,8 @@ jpad	54
 nojpad	55
 .gpumain	56
 gpumain	56
+.prgflags	57
+prgflags	57
 .if	500
 if	500
 .else	501

@@ -87,6 +87,7 @@ int (*dirtab[])() = {
 	d_jpad,				// 54 .jpad (deprecated)
 	d_nojpad,			// 55 .nojpad (deprecated)
 	d_gpumain,			// 56 .gpumain (deprecated)
+	d_prgflags,			// 57 .prgflags
 };
 
 
@@ -674,6 +675,27 @@ int d_globl(void)
 {
 	symlist(globl1);
 	return 0;
+}
+
+
+//
+// .prgflags expression
+//
+int d_prgflags(void)
+{
+	VALUE eval;
+
+	if (*tok == EOL)
+		return error("PRGFLAGS requires value");
+	else if (abs_expr(&eval) == OK)
+	{
+		PRGFLAGS=eval;
+		return 0;
+	}
+	else
+	{
+		return error("PRGFLAGS requires value");
+	}
 }
 
 
