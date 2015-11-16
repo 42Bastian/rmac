@@ -912,8 +912,13 @@ retry:
 		if ((ln = GetNextLine()) == NULL)
 		{
 if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n");
-			fpop();							// Pop input level
-			goto retry;						// Try for more lines 
+			if (fpop() == 0)				// Pop input level
+				goto retry;					// Try for more lines 
+			else
+			{
+				ifent->if_prev = (IFENT *) - 1;	//Signal Assemble() that we have reached EOF with unbalanced if/endifs
+				return TKEOF;
+			}
 		}
 
 		curlineno++;						// Bump line number
