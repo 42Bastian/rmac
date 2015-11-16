@@ -45,7 +45,7 @@ char * firstfname;				// First source filename
 char * cmdlnexec;				// Executable name, pointer to ARGV[0]
 char * searchpath;				// Search path for include files 
 char defname[] = "noname.o";	// Default output filename
-
+int optim_flag;					// Optimise all the things!
 
 //
 // Manipulate file extension.
@@ -142,7 +142,9 @@ void DisplayHelp(void)
 		"                    d: double phrase (16 bytes)\n"
 		"                    q: quad phrase (32 bytes)\n"
 		"  -s                Warn about possible short branches\n"
+		"                    and applied optimisations\n"
 		"  -u                Force referenced and undefined symbols global\n"
+		"  -w                Turn off optimisations done automatically\n"
 		"  -v                Set verbose mode\n"
 		"  -y[pagelen]       Set page line length (default: 61)\n"
 		"\n", cmdlnexec);
@@ -200,6 +202,7 @@ int Process(int argc, char ** argv)
 	orgactive = 0;					// Not in RISC org section
 	orgwarning = 0;					// No ORG warning issued
 	segpadsize = 2;					// Initialise segment padding size
+	optim_flag = 1;					// Automatically optimise
 
 	// Initialise modules
 	InitSymbolTable();				// Symbol table
@@ -356,6 +359,10 @@ int Process(int argc, char ** argv)
 				if (verb_flag > 1)
 					DisplayVersion();
 
+				break;
+			case 'w':
+			case 'W':
+				optim_flag=0;
 				break;
 			case 'x':				// Turn on debugging
 			case 'X':

@@ -13,6 +13,7 @@
 #include "token.h"
 #include "procln.h"
 #include "riscasm.h"
+#include "rmac.h"
 
 #define DEF_KW
 #include "kwtab.h"
@@ -439,10 +440,12 @@ int m_move(WORD inst, WORD size)
 	int siz = (int)size;
 
 	// Try to optimize to MOVEQ
-	if (siz == SIZL && am0 == IMMED && am1 == DREG
+	if (optim_flag && siz == SIZL && am0 == IMMED && am1 == DREG
 		&& (a0exattr & (TDB|DEFINED)) == DEFINED && a0exval + 0x80 < 0x100)
 	{
 		m_moveq((WORD)0x7000, (WORD)0);
+		if (sbra_flag)
+			warn("move.l #size,dx converted to moveq");
 	}
 	else
 	{
@@ -555,11 +558,13 @@ int m_br(WORD inst, WORD siz)
 		// Optimize branch instr. size
 		if (siz == SIZN)
 		{
-			if (v != 0 && v + 0x80 < 0x100)
+			if (optim_flag && v != 0 && v + 0x80 < 0x100)
 			{
 				// Fits in .B 
 				inst |= v & 0xFF;
 				D_word(inst);
+				if (sbra_flag)
+					warn("Bcc.w/BSR.w converted to .s");
 				return 0;
 			}
 			else

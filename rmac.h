@@ -211,6 +211,7 @@ extern int sbra_flag;
 extern int obj_format;
 extern int legacy_flag;
 extern LONG PRGFLAGS;
+extern int optim_flag;
 
 // Exported functions
 char * fext(char *, char *, int);

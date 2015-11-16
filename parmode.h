@@ -252,8 +252,12 @@ CHK_FOR_DISPn:
 
 			// Defined, absolute values from $FFFF8000..$00007FFF get optimized
 			// to absolute short
-			if ((AnEXATTR & (TDB|DEFINED)) == DEFINED && (AnEXVAL + 0x8000) < 0x10000)
+			if (optim_flag && (AnEXATTR & (TDB|DEFINED)) == DEFINED && (AnEXVAL + 0x8000) < 0x10000)
+			{
 				AMn = ABSW;
+				if (sbra_flag)
+					warn("absolute value from $FFFF8000..$00007FFF optimised to absolute short");
+			}
 
 			// Is .L forced here?
 			if (*tok == DOTL)
