@@ -220,6 +220,13 @@ int WriteObject(int fd)
 	LONG trsize, drsize;	// Size of relocations
 	long unused;			// For supressing 'write' warnings
 
+	if (verb_flag)
+	{
+		printf("TEXT segment: %d bytes\n", sect[TEXT].sloc);
+		printf("DATA segment: %d bytes\n", sect[DATA].sloc);
+		printf("BSS  segment: %d bytes\n", sect[BSS].sloc);
+	}
+
 	// Write requested object file...
 	switch (obj_format)
 	{
