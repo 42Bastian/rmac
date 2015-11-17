@@ -231,6 +231,10 @@ int WriteObject(int fd)
 	switch (obj_format)
 	{
 	case BSD:
+		if (verb_flag)
+		{
+			printf("Total       : %d bytes\n", sect[TEXT].sloc + sect[DATA].sloc + sect[BSS].sloc);
+		}
 		ssize = ((LONG)sy_assign(NULL, NULL));		// Assign index numbers to the symbols
 		tds = sect[TEXT].sloc + sect[DATA].sloc;	// Get size of TEXT and DATA segment
 		buf = malloc(0x600000);						// Allocate 6mb object file image memory
@@ -311,6 +315,18 @@ int WriteObject(int fd)
 		break;
 
 	case ALCYON:
+		if (verb_flag)
+		{
+			if (prg_flag)
+			{
+				printf("TOS header  : 28 bytes\n");
+				printf("Total       : %d bytes\n", 28 + sect[TEXT].sloc + sect[DATA].sloc + sect[BSS].sloc);
+			}
+			else
+			{
+				printf("Total       : %d bytes\n", sect[TEXT].sloc + sect[DATA].sloc + sect[BSS].sloc);
+			}
+		}
 		/*
 		 *  Compute size of symbol table;
 		 *   assign numbers to the symbols...
@@ -329,24 +345,24 @@ int WriteObject(int fd)
 		if (t < ssize)
 			t = ssize;
 
-		buf = malloc(t + HDRSIZE) + HDRSIZE;
+		buf = (char *)((int)malloc(t + HDRSIZE) + HDRSIZE);
 
 		/*
 		 *  Build object file header
 		 *   just before the text+data image
 		 */
 		chptr = buf - HDRSIZE;	/* -> base of header */
-		D_word(0x601a);			/* magic number */
-		t = sect[TEXT].sloc;	/* TEXT size */
+		D_word(0x601a);			/* 00 - magic number */
+		t = sect[TEXT].sloc;	/* 02 - TEXT size */
 		D_long(t);
-		t = sect[DATA].sloc;	/* DATA size */
+		t = sect[DATA].sloc;	/* 06 - DATA size */
 		D_long(t);
-		t = sect[BSS].sloc;		/* BSS size */
+		t = sect[BSS].sloc;		/* 0a - BSS size */
 		D_long(t);
-		D_long(ssize);			/* symbol table size */
-		D_long(0);				/* stack size (unused) */
-		D_long(0);				/* entry point (unused) */
-		D_word(0);				/* relocation information exists */
+		D_long(ssize);			/* 0e - symbol table size */
+		D_long(0);				/* 12 - stack size (unused) */
+		D_long(PRGFLAGS);		/* 16 - PRGFLAGS */
+		D_word(0);				/* 1a - relocation information exists */
 
 		/*
 		 *  Construct text and data segments;
