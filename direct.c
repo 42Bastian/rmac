@@ -77,8 +77,8 @@ int (*dirtab[])() = {
 	d_title,			// 44 title
 	d_subttl,			// 45 subttl
 	eject,				// 46 eject
-	d_unimpl,			// 47 error
-	d_unimpl,			// 48 warn
+	d_error,			// 47 error 
+	d_warn,				// 48 warn 
 	d_noclear,			// 49 .noclear
 	d_equrundef,		// 50 .equrundef/.regundef
 	d_ccundef,			// 51 .ccundef
@@ -89,6 +89,48 @@ int (*dirtab[])() = {
 	d_gpumain,			// 56 .gpumain (deprecated)
 	d_prgflags,			// 57 .prgflags
 };
+
+
+//
+// .error - Abort compilation, printing an error message
+//
+int d_error(char *str)
+{
+	if (*tok == EOL)
+		return error("error directive encountered - aborting assembling");
+	else
+	{
+		switch(*tok)
+		{
+		case STRING:
+			return error(string[tok[1]]);
+			break;
+		default:
+			return error("error directive encountered - aborting assembling");
+		}
+	}
+}
+
+
+//
+// .warn - Just display a warning on screen
+//
+int d_warn(char *str)
+{
+	if (*tok == EOL)
+		return warn("WARNING WARNING WARNING");
+	else
+	{
+		switch(*tok)
+		{
+		case STRING:
+			return warn(string[tok[1]]);
+			break;
+		default:
+			return warn("WARNING WARNING WARNING");
+		}
+	}
+}
 
 
 //
