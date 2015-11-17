@@ -772,7 +772,7 @@ int d_bss(void)
 //
 int d_ds(WORD siz)
 {
-if (verb_flag)
+if (debug)
 	printf("Directive: .ds.[size] = %u, sloc = $%X\n", siz, sloc);
 
 	VALUE eval;

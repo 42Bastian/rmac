@@ -137,7 +137,7 @@ loop:							// Line processing loop label
 	// Get another line of tokens
 	if (TokenizeLine() == TKEOF)
 	{
-if (verb_flag) printf("Assemble: Found TKEOF flag...\n");
+if (debug) printf("Assemble: Found TKEOF flag...\n");
 		if (list_flag && listflag)			// Flush last line of source
 			listeol();
 

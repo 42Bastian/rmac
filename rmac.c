@@ -146,6 +146,7 @@ void DisplayHelp(void)
 		"  -u                Force referenced and undefined symbols global\n"
 		"  -w                Turn off optimisations done automatically\n"
 		"  -v                Set verbose mode\n"
+		"  -x                Turn on debugging mode\n"
 		"  -y[pagelen]       Set page line length (default: 61)\n"
 		"\n", cmdlnexec);
 }

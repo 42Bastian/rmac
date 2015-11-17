@@ -679,8 +679,8 @@ int include(int handle, char * fname)
 	INOBJ * inobj;
 	FILEREC * fr;
 
-	// Verbose mode
-	if (verb_flag)
+	// Debug mode
+	if (debug)
 		printf("[include: %s, cfileno=%u]\n", fname, cfileno);
 
 	// Alloc and initialize include-descriptors
@@ -742,21 +742,21 @@ int fpop(void)
 		switch (inobj->in_type)
 		{
 		case SRC_IFILE:						// Pop and release an IFILE
-			if (verb_flag)
+			if (debug)
 				printf("[Leaving: %s]\n", curfname);
 
 			ifile = inobj->inobj.ifile;
 			ifile->if_link = f_ifile;
 			f_ifile = ifile;
 			close(ifile->ifhandle);			// Close source file
-if (verb_flag) printf("[fpop (pre):  curfname=%s]\n", curfname);
+if (debug)	printf("[fpop (pre):  curfname=%s]\n", curfname);
 			curfname = ifile->ifoldfname;	// Set current filename
-if (verb_flag) printf("[fpop (post): curfname=%s]\n", curfname);
-if (verb_flag) printf("[fpop: (pre)  cfileno=%d ifile->ifno=%d]\n", (int)cfileno, (int)ifile->ifno);
+if (debug)	printf("[fpop (post): curfname=%s]\n", curfname);
+if (debug)	printf("[fpop: (pre)  cfileno=%d ifile->ifno=%d]\n", (int)cfileno, (int)ifile->ifno);
 			curlineno = ifile->ifoldlineno;	// Set current line# 
 			DEBUG printf("cfileno=%d ifile->ifno=%d\n", (int)cfileno, (int)ifile->ifno);
 			cfileno = ifile->ifno;			// Restore current file number
-if (verb_flag) printf("[fpop: (post) cfileno=%d ifile->ifno=%d]\n", (int)cfileno, (int)ifile->ifno);
+if (debug)	printf("[fpop: (post) cfileno=%d ifile->ifno=%d]\n", (int)cfileno, (int)ifile->ifno);
 			break;
 		case SRC_IMACRO:					// Pop and release an IMACRO
 			imacro = inobj->inobj.imacro;
@@ -911,8 +911,8 @@ retry:
 	case SRC_IFILE:
 		if ((ln = GetNextLine()) == NULL)
 		{
-if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n");
-			if (fpop() == 0)				// Pop input level
+if (debug) printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n");
+			if (fpop()==0)					// Pop input level
 				goto retry;					// Try for more lines 
 			else
 			{
@@ -965,7 +965,7 @@ if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n");
 	case SRC_IREPT:
 		if ((ln = GetNextRepeatLine()) == NULL)
 		{
-if (verb_flag) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
+if (debug) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 			fpop();
 			goto retry;
 		}
