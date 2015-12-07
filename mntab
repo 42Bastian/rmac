@@ -12,7 +12,6 @@ text	6
 .offset  7
 offset   7
 .abs	7
-abs	7
 .comm	8
 comm	8
 .init	9

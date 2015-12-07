@@ -997,6 +997,7 @@ int d_dcb(WORD siz)
 	VALUE evalc, eval;
 	WORD eattr;
 
+printf("dcb: section is %s%s%s (scattr=$%X)\n", (cursect & TEXT ? "TEXT" : ""), (cursect & DATA ? " DATA" : ""), (cursect & BSS ? "BSS" : ""), scattr);
 	if ((scattr & SBSS) != 0)
 		return error("illegal initialization of section");
 
