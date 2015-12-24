@@ -1213,12 +1213,12 @@ if (debug) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 				*p++ = EOS;
 				continue;
 			case '$':		// $, hex constant
-				if ((int)chrtab[*ln] & HDIGIT)
+				if (chrtab[*ln] & HDIGIT)
 				{
 					v = 0;
 
 					// Parse the hex value
-					while ((int)hextab[*ln] >= 0)
+					while (hextab[*ln] >= 0)
 						v = (v << 4) + (int)hextab[*ln++];
 
 					// ggn: Okay, some comments here are in order I think....
