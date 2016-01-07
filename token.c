@@ -24,7 +24,7 @@ int mjump_align = 0;		// mjump alignment flag
 char lntag;					// Line tag
 char * curfname;			// Current filename
 char tolowertab[128];		// Uppercase ==> lowercase 
-char hextab[128];			// Table of hex values
+int8_t hextab[128];			// Table of hex values
 char dotxtab[128];			// Table for ".b", ".s", etc.
 char irbuf[LNSIZ];			// Text for .rept block line
 char lnbuf[LNSIZ];			// Text of current line
