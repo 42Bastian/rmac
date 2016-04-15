@@ -814,8 +814,7 @@ int d_bss(void)
 //
 int d_ds(WORD siz)
 {
-if (debug)
-	printf("Directive: .ds.[size] = %u, sloc = $%X\n", siz, sloc);
+	DEBUG { printf("Directive: .ds.[size] = %u, sloc = $%X\n", siz, sloc); }
 
 	VALUE eval;
 
@@ -997,7 +996,8 @@ int d_dcb(WORD siz)
 	VALUE evalc, eval;
 	WORD eattr;
 
-printf("dcb: section is %s%s%s (scattr=$%X)\n", (cursect & TEXT ? "TEXT" : ""), (cursect & DATA ? " DATA" : ""), (cursect & BSS ? "BSS" : ""), scattr);
+	DEBUG { printf("dcb: section is %s%s%s (scattr=$%X)\n", (cursect & TEXT ? "TEXT" : ""), (cursect & DATA ? " DATA" : ""), (cursect & BSS ? "BSS" : ""), scattr); }
+
 	if ((scattr & SBSS) != 0)
 		return error("illegal initialization of section");
 
