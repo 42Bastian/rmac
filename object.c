@@ -228,9 +228,8 @@ int WriteObject(int fd)
 	}
 
 	// Write requested object file...
-	switch (obj_format)
-	{
-	case BSD:
+	if (obj_format==BSD || (obj_format==ALCYON && prg_flag==0))
+    {
 		if (verb_flag)
 		{
 			printf("Total       : %d bytes\n", sect[TEXT].sloc + sect[DATA].sloc + sect[BSS].sloc);
@@ -312,9 +311,9 @@ int WriteObject(int fd)
 		if (buf)
 			free(buf);					// Free allocated memory
 
-		break;
-
-	case ALCYON:
+    }
+    else if (obj_format==ALCYON)
+    {
 		if (verb_flag)
 		{
 			if (prg_flag)
@@ -400,7 +399,6 @@ int WriteObject(int fd)
 		 */
 		tds = markimg(buf, tds, sect[TEXT].sloc, 1);
 		write(fd, buf, tds);
-		break;
 	}
 
 	return 0;
