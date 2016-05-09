@@ -730,18 +730,26 @@ int fpop(void)
 	{
 		// Pop IFENT levels until we reach the conditional assembly context we
 		// were at when the input object was entered.
+		int numUnmatched = 0;
+
 		while (ifent != inobj->in_ifent)
 		{
-			if (d_endif() != 0)				// Something bad happened during endif parsing?
-				return -1;					// If yes, bail instead of getting stuck in a loop
+			if (d_endif() != 0)		// Something bad happened during endif parsing?
+				return -1;			// If yes, bail instead of getting stuck in a loop
+
+			numUnmatched++;
 		}
 
-		tok = inobj->in_otok;				// Restore tok and otok
+		// Give a warning to the user that we had to wipe their bum for them
+		if (numUnmatched > 0)
+			warni("missing %d .endif(s)", numUnmatched);
+
+		tok = inobj->in_otok;		// Restore tok and otok
 		etok = inobj->in_etok;
 
 		switch (inobj->in_type)
 		{
-		case SRC_IFILE:						// Pop and release an IFILE
+		case SRC_IFILE:				// Pop and release an IFILE
 			if (debug)
 				printf("[Leaving: %s]\n", curfname);
 
@@ -912,7 +920,7 @@ retry:
 		if ((ln = GetNextLine()) == NULL)
 		{
 if (debug) printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n");
-			if (fpop()==0)					// Pop input level
+			if (fpop() == 0)				// Pop input level
 				goto retry;					// Try for more lines 
 			else
 			{

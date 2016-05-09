@@ -36,7 +36,6 @@ static IFENT * f_ifent;			// Freelist of ifents
 static int disabled;			// Assembly conditionally disabled
 int just_bss;					// 1, ds.b in microprocessor mode 
 VALUE pcloc;					// Value of "PC" at beginning of line 
-IFENT * ifent;					// Current ifent
 SYM * lab_sym;					// Label on line (or NULL)
 
 const char extra_stuff[] = "extra (unexpected) text found after addressing mode";
@@ -265,13 +264,13 @@ as68label:
 		switch (state)
 		{
 		case MN_IF:
-			d_if ();
+			d_if();
 		goto loop;
 		case MN_ELSE:
 			d_else();
 			goto loop;
 		case MN_ENDIF:
-			d_endif ();
+			d_endif();
 			goto loop;
 		case MN_IIF:						// .iif --- immediate if
 			if (disabled || expr(exprbuf, &eval, &eattr, &esym) != OK)
