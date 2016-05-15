@@ -62,40 +62,39 @@ MNTAB machtab[] = {
 //   { (WORD)-1, (unsigned long)-1L, (unsigned long)-1L, 0x0000, 0, m_badmode }, // 0 
    { 0xFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0x0000, 0, m_badmode }, // 0 
    #include "68ktab.h"
-   {  0,  0L,  0L, 0x0000, 0, m_unimp   }                   // Last entry
+   {  0,  0L,  0L, 0x0000, 0, m_unimp   }            // Last entry
 };
 
 // Register number << 9
 WORD reg_9[8] = {
-      0, 1<<9, 2<<9, 3<<9,
-   4<<9, 5<<9, 6<<9, 7<<9
+	0, 1 << 9, 2 << 9, 3 << 9, 4 << 9, 5 << 9, 6 << 9, 7 << 9
 };
 
 // SIZB==>00, SIZW==>01, SIZL==>10, SIZN==>01 << 6
 WORD siz_6[] = {
-   (WORD)-1,                                                // n/a 
-   0,                                                       // SIZB
-   1<<6, (WORD)-1,                                          // SIZW, n/a 
-   2<<6, (WORD)-1, (WORD)-1, (WORD)-1,                      // SIZL, n/a, n/a, n/a 
-   1<<6                                                     // SIZN 
+	(WORD)-1,                                        // n/a 
+	0,                                               // SIZB
+	1<<6, (WORD)-1,                                  // SIZW, n/a 
+	2<<6, (WORD)-1, (WORD)-1, (WORD)-1,              // SIZL, n/a, n/a, n/a 
+	1<<6                                             // SIZN 
 };
 
 // Byte/word/long size for MOVE instrs
 WORD siz_12[] = {
    (WORD)-1,
-   0x1000,                                                  // Byte 
-   0x3000, (WORD)-1,                                        // Word 
-   0x2000, (WORD)-1, (WORD)-1, (WORD)-1,                    // Long
-   0x3000                                                   // Word (SIZN)
+   0x1000,                                           // Byte 
+   0x3000, (WORD)-1,                                 // Word 
+   0x2000, (WORD)-1, (WORD)-1, (WORD)-1,             // Long
+   0x3000                                            // Word (SIZN)
 };
 
 // Word/long size (0=.w, 1=.l) in bit 8
 WORD lwsiz_8[] = {
-   (WORD)-1,                                                // n/a
-   (WORD)-1,                                                // SIZB
-   0, (WORD)-1,                                             // SIZW, n/a
-   1<<8, (WORD)-1, (WORD)-1, (WORD)-1,                      // SIZL, n/a, n/a, n/a
-   0                                                        // SIZN
+   (WORD)-1,                                         // n/a
+   (WORD)-1,                                         // SIZB
+   0, (WORD)-1,                                      // SIZW, n/a
+   1<<8, (WORD)-1, (WORD)-1, (WORD)-1,               // SIZL, n/a, n/a, n/a
+   0                                                 // SIZN
 };
 
 // Addressing mode in bits 6..11 (register/mode fields are reversed)
@@ -162,13 +161,9 @@ int m_ea(WORD inst, WORD siz)
 	{
 		// OR-in register number 
 		if (flg & 8)
-		{
 			inst |= reg_9[a1reg];		// ea1reg in bits 9..11 
-		}
 		else
-		{
 			inst |= reg_9[a0reg];		// ea0reg in bits 9..11 
-		}
 	}
 
 	if (flg & 1)
@@ -433,7 +428,6 @@ int m_link(WORD inst, WORD siz)
 // 
 // Optimize MOVE.L #<smalldata>,D0 to a MOVEQ
 //
-//int m_move(WORD inst, int siz)
 int m_move(WORD inst, WORD size)
 {
 	// Cast the passed in value to an int
@@ -444,6 +438,7 @@ int m_move(WORD inst, WORD size)
 		&& (a0exattr & (TDB|DEFINED)) == DEFINED && a0exval + 0x80 < 0x100)
 	{
 		m_moveq((WORD)0x7000, (WORD)0);
+
 		if (sbra_flag)
 			warn("move.l #size,dx converted to moveq");
 	}

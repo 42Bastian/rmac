@@ -1027,6 +1027,27 @@ if (debug) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 
 			v = 0;					// Assume no DOT attrib follows symbol
 			stuffnull = 1;
+
+			// In some cases, we need to check for a DOTx at the *beginning*
+			// of a symbol, as the "start" of the line we're currently looking
+			// at could be somewhere in the middle of that line!
+			if (*ln == '.')
+			{
+				// Make sure that it's *only* a .[bwsl] following, and not the
+				// start of a local symbol:
+				if ((chrtab[*(ln + 1)] & DOT)
+					&& (dotxtab[*(ln + 1)] != 0)
+					&& !(chrtab[*(ln + 2)] & CTSYM))
+				{
+					// We found a legitimate DOTx construct, so add it to the
+					// token stream:
+					ln++;
+					stuffnull = 0;
+					*tk++ = (TOKEN)dotxtab[*ln++];
+					continue;
+				}
+			}
+
 			p = nullspot = ln++;	// Nullspot -> start of this symbol
 
 			// Find end of symbol (and compute its length)
@@ -1044,13 +1065,13 @@ if (debug) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 				// the chararacter after THAT one must not have a start-symbol
 				// attribute (to prevent symbols that look like, for example,
 				// "zingo.barf", which might be a good idea anyway....)
-				if ((((int)chrtab[*ln] & DOT) == 0) || ((int)dotxtab[*ln] <= 0))
-					return error("[bwsl] must follow `.' in symbol");
+				if (((chrtab[*ln] & DOT) == 0) || (dotxtab[*ln] == 0))
+					return error("[bwsl] must follow '.' in symbol");
 
 				v = (VALUE)dotxtab[*ln++];
 
-				if ((int)chrtab[*ln] & CTSYM)
-					return error("misuse of `.', not allowed in symbols");
+				if (chrtab[*ln] & CTSYM)
+					return error("misuse of '.', not allowed in symbols");
 			}
 
 			// If the symbol is small, check to see if it's really the name of
@@ -1102,7 +1123,7 @@ if (debug) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 			}
 
 			// If not tokenized keyword OR token was not found
-			if (j < 0 || state < 0)
+			if ((j < 0) || (state < 0))
 			{
 				*tk++ = SYMBOL;
 //#warning
