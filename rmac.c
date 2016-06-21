@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // RMAC.C - Main Application Code
-// Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011 - 2016 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -34,7 +34,7 @@ int legacy_flag;				// Do stuff like insert code in RISC assembler
 int obj_format;					// Object format flag
 int debug;						// [1..9] Enable debugging levels
 int err_flag;					// '-e' specified
-int err_fd;						// File to write error messages to 
+int err_fd;						// File to write error messages to
 int rgpu, rdsp;					// Assembling Jaguar GPU or DSP code
 int list_fd;					// File to write listing to
 int regbank;					// RISC register bank
@@ -67,7 +67,7 @@ char * fext(char * name, char * extension, int stripp)
 	// Clobber any old extension, if requested
 	if (stripp)
 	{
-		for(s=beg; *s && *s!='.'; ++s) 
+		for(s=beg; *s && *s!='.'; ++s)
 			;
 
 		*s = '\0';
@@ -84,7 +84,7 @@ char * fext(char * name, char * extension, int stripp)
 // Return 'item'nth element of semicolon-seperated pathnames specified in the
 // enviroment string 's'. Copy the pathname to 'buf'.  Return 0 if the 'item'
 // nth path doesn't exist.
-// 
+//
 // ['item' ranges from 0 to N-1, where N = #elements in search path]
 //
 int nthpath(char * env_var, int itemno, char * buf)
@@ -166,7 +166,7 @@ void DisplayVersion(void)
 		"| |  | | | | | | (_| | (__ \n"
 		"|_|  |_| |_| |_|\\__,_|\\___|\n"
 		"\nReboot's Macro Assembler\n"
-		"Copyright (C) 199x Landon Dyer, 2011-2015 Reboot\n"
+		"Copyright (C) 199x Landon Dyer, 2011-2017 Reboot\n"
 		"V%01i.%01i.%01i %s (%s)\n\n", MAJOR, MINOR, PATCH, __DATE__, PLATFORM);
 }
 
@@ -218,7 +218,7 @@ int Process(int argc, char ** argv)
 	SYM * sy;						// Pointer to a symbol record
 	char * s;						// String pointer
 	int fd;							// File descriptor
-	char fnbuf[FNSIZ];				// Filename buffer 
+	char fnbuf[FNSIZ];				// Filename buffer
 	int i;							// Iterator
 
 	errcnt = 0;						// Initialise error count
@@ -377,7 +377,7 @@ int Process(int argc, char ** argv)
 			case 'R':
 				switch(argv[argno][2])
 				{
-				case 'w': case 'W': segpadsize = 2;  break;  
+				case 'w': case 'W': segpadsize = 2;  break;
 				case 'l': case 'L': segpadsize = 4;  break;
 				case 'p': case 'P': segpadsize = 8;  break;
 				case 'd': case 'D': segpadsize = 16; break;
@@ -595,7 +595,7 @@ int main(int argc, char ** argv)
 
 	// If commands were passed in, process them
 	if (argc > 1)
-		return Process(argc - 1, argv + 1);              
+		return Process(argc - 1, argv + 1);
 
 	DisplayVersion();
 	DisplayHelp();

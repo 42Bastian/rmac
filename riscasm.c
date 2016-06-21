@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // RISCA.C - GPU/DSP Assembler
-// Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011 - 2017 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -18,7 +18,7 @@
 #define DEF_MR				// Declare keyword values
 #include "risckw.h"			// Incl. generated risc keywords
 
-#define DEF_KW				// Declare keyword values 
+#define DEF_KW				// Declare keyword values
 #include "kwtab.h"			// Incl. generated keyword tables & defs
 
 
@@ -32,7 +32,7 @@ uint8_t riscImmTokenSeen;	// The '#' (immediate) token was seen
 const char reg_err[] = "missing register R0...R31";
 
 // Jaguar jump condition names
-const char condname[MAXINTERNCC][5] = { 
+const char condname[MAXINTERNCC][5] = {
 	"NZ", "Z", "NC", "NCNZ", "NCZ", "C", "CNZ", "CZ", "NN", "NNNZ", "NNZ",
 	"N", "N_NZ", "N_Z", "T", "A", "NE", "EQ", "CC", "HS", "HI", "CS", "LO",
 	"PL", "MI", "F"
@@ -131,6 +131,32 @@ static inline int MalformedOpcode(int signal)
 	return errors("Malformed opcode [internal $%s]", buf);
 }
 
+//
+// Function to return "Illegal Indexed Register" error
+// Anyone trying to index something other than R14 or R15
+//
+static inline int IllegalIndexedRegister(int reg)
+{
+    char buf[16];
+    sprintf(buf, "%d", reg - KW_R0);
+    return errors("Attempted index reference with non-indexable register (r%s)", buf);
+}
+
+//
+// Function to return "Illegal Indexed Register" error for EQUR scenarios
+// Trying to use register value within EQUR that isn't 14 or 15
+//
+static inline int IllegalIndexedRegisterEqur(SYM *sy)
+{
+    //char buf[160];
+    char *buf = NULL;
+    buf = (char *)malloc((strlen(sy->sname) + 7) * sizeof(char));
+    if (NULL != buf) {
+        sprintf(buf, "%s = r%d",sy->sname, sy->svalue);
+        return errors("Attempted index reference with non-indexable register within EQUR (%s)", buf);
+    }
+    return errors("Unable to allocate memory! (IllegalIndexRegisterEqur)", "OOPS");
+}
 
 //
 // Build RISC instruction word
@@ -169,7 +195,7 @@ int GetRegister(WORD rattr)
 
 	if (!(eattr & DEFINED))
 	{
-		AddFixup((WORD)(FU_WORD | rattr), sloc, r_expr);      
+		AddFixup((WORD)(FU_WORD | rattr), sloc, r_expr);
 		return 0;
 	}
 
@@ -230,17 +256,17 @@ int GenerateRISCCode(int state)
 		reg2 = GetRegister(FU_REGTWO);
 		at_eol();
 		BuildRISCIntructionWord(parm, parm >> 6, reg2);
-		break;   
+		break;
 
 	// Two operand instructions (Rs,Rd)
 	// ADD, ADDC, AND, CMP, DIV, IMACN, IMULT, IMULTN, MOVEFA, MOVETA, MULT,
 	// MMULT, MTOI, NORMI, OR, ROR, SH, SHA, SUB, SUBC, XOR
-	case RI_TWO:                      
+	case RI_TWO:
 		if (parm == 37)
 			altbankok = 1;                      // MOVEFA
 
 		reg1 = GetRegister(FU_REGONE);
-		CHECK_COMMA;         
+		CHECK_COMMA;
 
 		if (parm == 36)
 			altbankok = 1;                      // MOVETA
@@ -301,8 +327,8 @@ int GenerateRISCCode(int state)
 			if ((int)eval < reg1 || (int)eval > reg2)
 				return error("constant out of range");
 
-			if (parm & SUB32) 
-				reg1 = 32 - eval; 
+			if (parm & SUB32)
+				reg1 = 32 - eval;
 			else if (type == RI_NUM_32)
 				reg1 = (reg1 == 32 ? 0 : eval);
 			else
@@ -393,7 +419,7 @@ int GenerateRISCCode(int state)
 		break;
 
 	// (Rn),Rn = 41 / (R14/R15+n),Rn = 43/44 / (R14/R15+Rn),Rn = 58/59
-	case RI_LOAD:          
+	case RI_LOAD:
 		indexed = 0;
 		parm = 41;
 
@@ -402,8 +428,14 @@ int GenerateRISCCode(int state)
 
 		tok++;
 
-		if ((*tok == KW_R14 || *tok == KW_R15) && (*(tok + 1) != ')')) 
-			indexed = (*tok - KW_R0);
+        if ((*(tok + 1) == '+') || (*(tok + 1) == '-')) {
+            // Trying to make indexed call
+            if ((*tok == KW_R14 || *tok == KW_R15)) {
+                indexed = (*tok - KW_R0);
+            } else {
+                return IllegalIndexedRegister(*tok);
+            }
+        }
 
 		if (*tok == SYMBOL)
 		{
@@ -418,11 +450,13 @@ int GenerateRISCCode(int state)
 
 			if (sy->sattre & EQUATEDREG)
 			{
-				if (((sy->svalue & 0x1F) == 14 || (sy->svalue & 0x1F) == 15)
-					&& (*(tok + 2) != ')'))
-				{
-					indexed = (sy->svalue & 0x1F);
-					tok++;
+				if ((*(tok + 2) == '+') || (*(tok + 2) == '-')) {
+				    if ((sy->svalue & 0x1F) == 14 || (sy->svalue & 0x1F) == 15) {
+				        indexed = (sy->svalue & 0x1F);
+                        tok++;
+				    } else {
+				        return IllegalIndexedRegisterEqur(sy);
+				    }
 				}
 			}
 		}
@@ -512,7 +546,7 @@ int GenerateRISCCode(int state)
 		break;
 
 	// Rn,(Rn) = 47 / Rn,(R14/R15+n) = 49/50 / Rn,(R14/R15+Rn) = 60/61
-	case RI_STORE:    
+	case RI_STORE:
 		parm = 47;
 		reg1 = GetRegister(FU_REGONE);
 		CHECK_COMMA;
@@ -523,7 +557,7 @@ int GenerateRISCCode(int state)
 		tok++;
 		indexed = 0;
 
-		if ((*tok == KW_R14 || *tok == KW_R15) && (*(tok + 1) != ')')) 
+		if ((*tok == KW_R14 || *tok == KW_R15) && (*(tok + 1) != ')'))
 			indexed = (*tok - KW_R0);
 
 		if (*tok == SYMBOL)
@@ -536,7 +570,7 @@ int GenerateRISCCode(int state)
 				return ERROR;
 			}
 
-			if (sy->sattre & EQUATEDREG) 
+			if (sy->sattre & EQUATEDREG)
 			{
 				if (((sy->svalue & 0x1F) == 14 || (sy->svalue & 0x1F) == 15)
 					&& (*(tok + 2) != ')'))
@@ -634,7 +668,7 @@ int GenerateRISCCode(int state)
 		break;
 
 	// LOADB/LOADP/LOADW (Rn),Rn
-	case RI_LOADN:                    
+	case RI_LOADN:
 		if (*tok != '(')
 			return MalformedOpcode(0x0B);
 
@@ -652,7 +686,7 @@ int GenerateRISCCode(int state)
 		break;
 
 	// STOREB/STOREP/STOREW Rn,(Rn)
-	case RI_STOREN:                   
+	case RI_STOREN:
 		reg1 = GetRegister(FU_REGONE);
 		CHECK_COMMA;
 
