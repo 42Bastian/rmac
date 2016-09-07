@@ -257,7 +257,7 @@ CHK_FOR_DISPn:
 
 			// Defined, absolute values from $FFFF8000..$00007FFF get optimized
 			// to absolute short
-			if (optim_flag && (AnEXATTR & (TDB|DEFINED)) == DEFINED && (AnEXVAL + 0x8000) < 0x10000)
+			if (optim_flags[OPT_ABS_SHORT] && (AnEXATTR & (TDB|DEFINED)) == DEFINED && (AnEXVAL + 0x8000) < 0x10000)
 			{
 				AMn = ABSW;
 

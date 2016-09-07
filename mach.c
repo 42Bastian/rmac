@@ -434,7 +434,7 @@ int m_move(WORD inst, WORD size)
 	int siz = (int)size;
 
 	// Try to optimize to MOVEQ
-	if (optim_flag && siz == SIZL && am0 == IMMED && am1 == DREG
+	if (optim_flags[OPT_MOVEL_MOVEQ] && siz == SIZL && am0 == IMMED && am1 == DREG
 		&& (a0exattr & (TDB|DEFINED)) == DEFINED && a0exval + 0x80 < 0x100)
 	{
 		m_moveq((WORD)0x7000, (WORD)0);
@@ -553,7 +553,7 @@ int m_br(WORD inst, WORD siz)
 		// Optimize branch instr. size
 		if (siz == SIZN)
 		{
-			if (optim_flag && v != 0 && v + 0x80 < 0x100)
+			if (optim_flags[OPT_BSR_BCC_S] && v != 0 && v + 0x80 < 0x100)
 			{
 				// Fits in .B 
 				inst |= v & 0xFF;

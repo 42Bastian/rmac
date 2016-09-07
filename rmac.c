@@ -45,7 +45,7 @@ char * firstfname;				// First source filename
 char * cmdlnexec;				// Executable name, pointer to ARGV[0]
 char * searchpath;				// Search path for include files 
 char defname[] = "noname.o";	// Default output filename
-int optim_flag;					// Optimise all the things!
+int optim_flags[OPT_COUNT];	// Specific optimisations on/off matrix
 
 //
 // Manipulate file extension.
@@ -132,6 +132,10 @@ void DisplayHelp(void)
 		"  -l[filename]      Create an output listing file\n"
 		"  -n                Don't do things behind your back in RISC assembler\n"
 		"  -o file           Output file name\n"
+		"  +o[value]         Turn a specific optimisation on\n"
+		"  ~o[value]         Turn a specific optimisation off\n"
+		"  +oall             Turn all optimisations on\n"
+		"  ~oall             Turn all optimisations off\n"
 		"  -p                Create an ST .prg (without symbols)\n"
 		"  -ps               Create an ST .prg (with symbols)\n"
 		"                    Forces -fa\n"
@@ -144,7 +148,6 @@ void DisplayHelp(void)
 		"  -s                Warn about possible short branches\n"
 		"                    and applied optimisations\n"
 		"  -u                Force referenced and undefined symbols global\n"
-		"  -w                Turn off optimisations done automatically\n"
 		"  -v                Set verbose mode\n"
 		"  -x                Turn on debugging mode\n"
 		"  -y[pagelen]       Set page line length (default: 61)\n"
@@ -203,7 +206,6 @@ int Process(int argc, char ** argv)
 	orgactive = 0;					// Not in RISC org section
 	orgwarning = 0;					// No ORG warning issued
 	segpadsize = 2;					// Initialise segment padding size
-	optim_flag = 1;					// Automatically optimise
 
 	// Initialise modules
 	InitSymbolTable();				// Symbol table
@@ -361,10 +363,6 @@ int Process(int argc, char ** argv)
 					DisplayVersion();
 
 				break;
-			case 'w':
-			case 'W':
-				optim_flag=0;
-				break;
 			case 'x':				// Turn on debugging
 			case 'X':
 				debug = 1;
@@ -402,6 +400,38 @@ int Process(int argc, char ** argv)
 				printf("Legacy mode OFF\n");
 				break;
 			default:
+				DisplayVersion();
+				printf("Unknown switch: %s\n\n", argv[argno]);
+				DisplayHelp();
+				errcnt++;
+				break;
+			}
+		}
+		else if (*argv[argno] == '+' || *argv[argno] == '~')
+		{
+			int onoff = 0;
+			if (*argv[argno] == '+')
+				onoff = 1;
+			if ((argv[argno][2] == 'a' || argv[argno][2] == 'A') &&
+				(argv[argno][3] == 'l' || argv[argno][3] == 'L') &&
+				(argv[argno][4] == 'l' || argv[argno][4] == 'L'))
+				memset(optim_flags, onoff, OPT_COUNT * sizeof(int));
+			else if (argv[argno][1] == 'o' || argv[argno][1] == 'O') // Turn on specific optimisation
+			{
+				int opt_no = atoi(&argv[argno][2]);
+				if (opt_no>=0 && opt_no<OPT_COUNT)
+					optim_flags[opt_no]=onoff;
+				else
+				{
+				    DisplayVersion();
+					printf("Unknown switch: %s\n\n", argv[argno]);
+					DisplayHelp();
+					errcnt++;
+					break;
+				}
+			}
+			else
+			{
 				DisplayVersion();
 				printf("Unknown switch: %s\n\n", argv[argno]);
 				DisplayHelp();
@@ -534,6 +564,14 @@ int main(int argc, char ** argv)
 {
 	perm_verb_flag = 0;				// Clobber "permanent" verbose flag
 	legacy_flag = 1;				// Default is legacy mode on (:-P)
+
+	// Set legacy optimisation flags to on
+	// and everything else to off
+	memset(optim_flags, 0, OPT_COUNT * sizeof(int));
+	optim_flags[OPT_ABS_SHORT] = 
+		optim_flags[OPT_MOVEL_MOVEQ] =
+		optim_flags[OPT_BSR_BCC_S] = 1;  
+
 	cmdlnexec = argv[0];			// Obtain executable name
 
 	endian = GetEndianess();		// Get processor endianess

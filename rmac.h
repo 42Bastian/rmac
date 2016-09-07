@@ -184,6 +184,16 @@ PTR
 
 //#define RISCSYM      0x00010000
 
+// Optimisation defines
+enum
+{
+	OPT_ABS_SHORT       = 0,
+	OPT_MOVEL_MOVEQ     = 1,
+	OPT_BSR_BCC_S       = 2,
+	OPT_INDIRECT_DISP   = 3,
+	OPT_COUNT   // Dummy, used to count number of optimisation switches
+};
+
 // Globals, externals, etc.
 extern int verb_flag;
 extern int debug;
@@ -201,7 +211,7 @@ extern int sbra_flag;
 extern int obj_format;
 extern int legacy_flag;
 extern LONG PRGFLAGS;
-extern int optim_flag;
+extern int optim_flags[OPT_COUNT];
 
 // Exported functions
 char * fext(char *, char *, int);

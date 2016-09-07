@@ -39,7 +39,7 @@ int eaNgen(WORD siz)
 			if (tdb)
 				rmark(cursect, sloc, tdb, MWORD, NULL);
 
-			if ((v == 0) && optim_flag)
+			if ((v == 0) && optim_flags[OPT_INDIRECT_DISP])
 			{
 				// If expr is 0, size optimise the opcode.
 				// Generally the lower 6 bits of the opcode
