@@ -88,6 +88,7 @@ int (*dirtab[])() = {
 	d_nojpad,			// 55 .nojpad (deprecated)
 	d_gpumain,			// 56 .gpumain (deprecated)
 	d_prgflags,			// 57 .prgflags
+	d_opt,				// 58 .opt
 };
 
 
@@ -1589,3 +1590,28 @@ int d_gpumain(void)
 	return error("What the hell? Do you think we adhere to the Goof standard?");
 }
 
+//
+// .opt - turn a specific (or all) optimisation on or off
+//
+int d_opt(void)
+{
+	char * tmpstr;
+
+	while (*tok != EOL)
+	{
+		if (*tok == STRING)
+		{
+			tok++;
+			tmpstr = string[*tok++];
+
+			if (ParseOptimization(tmpstr) != OK)
+			{
+				char temperr[256];
+				sprintf(temperr, "unknown optimisation flag '%s'.", tmpstr);
+				return error(temperr);
+			}
+		}
+		else
+			return error(".opt directive needs every switch enclosed inside quotation marks.");
+	}
+}

@@ -98,6 +98,8 @@ nojpad	55
 gpumain	56
 .prgflags	57
 prgflags	57
+opt     58
+.opt    58
 .if	500
 if	500
 .else	501

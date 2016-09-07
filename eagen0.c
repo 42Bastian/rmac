@@ -65,6 +65,10 @@ int eaNgen(WORD siz)
 					chptr_opcode[0] |= ((0x0080 >> 8) & 255); // slap in 010 bits
 					chptr_opcode[1] |= 0x0080 & 255;          // slap in 010 bits
 				}
+
+				if (sbra_flag)
+					warn("0(An) converted to (An)");
+
 				return OK;
 			}
 

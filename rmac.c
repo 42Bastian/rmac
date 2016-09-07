@@ -171,6 +171,42 @@ void DisplayVersion(void)
 }
 
 
+//
+// Parse optimisation options
+//
+int ParseOptimization(char * optstring)
+{
+    int onoff = 0;
+
+    if (*optstring == '+')
+        onoff = 1;
+    else if (*optstring != '~')
+        return ERROR;
+
+    if ((optstring[2] == 'a' || optstring[2] == 'A') &&
+        (optstring[3] == 'l' || optstring[3] == 'L') &&
+        (optstring[4] == 'l' || optstring[4] == 'L'))
+    {
+        memset(optim_flags, onoff, OPT_COUNT * sizeof(int));
+        return OK;
+    }
+    else if (optstring[1] == 'o' || optstring[1] == 'O') //Turn on specific optimisation
+	{
+        int opt_no = atoi(&optstring[2]);
+        if ((opt_no >= 0) && (opt_no < OPT_COUNT))
+            optim_flags[opt_no] = onoff;
+        else
+        {
+            return ERROR;
+        }
+    }
+    else
+    {
+        return ERROR;
+    }
+}
+
+
 // 
 // Process command line arguments and do an assembly
 //
@@ -409,31 +445,7 @@ int Process(int argc, char ** argv)
 		}
 		else if (*argv[argno] == '+' || *argv[argno] == '~')
 		{
-			int onoff = 0;
-
-			if (*argv[argno] == '+')
-				onoff = 1;
-
-			if ((argv[argno][2] == 'a' || argv[argno][2] == 'A')
-				&& (argv[argno][3] == 'l' || argv[argno][3] == 'L')
-				&& (argv[argno][4] == 'l' || argv[argno][4] == 'L'))
-				memset(optim_flags, onoff, OPT_COUNT * sizeof(int));
-			else if (argv[argno][1] == 'o' || argv[argno][1] == 'O') // Turn on specific optimisation
-			{
-				int opt_no = atoi(&argv[argno][2]);
-
-				if ((opt_no >= 0) && (opt_no < OPT_COUNT))
-					optim_flags[opt_no] = onoff;
-				else
-				{
-				    DisplayVersion();
-					printf("Unknown switch: %s\n\n", argv[argno]);
-					DisplayHelp();
-					errcnt++;
-					break;
-				}
-			}
-			else
+			if (ParseOptimization(argv[argno]) != OK)
 			{
 				DisplayVersion();
 				printf("Unknown switch: %s\n\n", argv[argno]);

@@ -69,9 +69,7 @@ int d_fail(void);
 int symlist(int(*)());
 int abs_expr(VALUE *);
 int d_cstruct(void);
-int d_jpad(void);
-int d_nojpad(void);
-int d_gpumain(void);
 int d_prgflags(void);
+int d_opt(void);
 
 #endif // __DIRECT_H__

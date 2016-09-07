@@ -216,6 +216,7 @@ extern int optim_flags[OPT_COUNT];
 // Exported functions
 char * fext(char *, char *, int);
 int nthpath(char *, int, char *);
+int ParseOptimization(char * optstring);
 
 #endif // __RMAC_H__
 
