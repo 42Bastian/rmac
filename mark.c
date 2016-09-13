@@ -18,6 +18,7 @@ PTR markptr;			// Deposit point in current mark chunk
 LONG mcalloc;			// #bytes alloc'd to current mark chunk
 LONG mcused;			// #bytes used in current mark chunk
 uint16_t curfrom;		// Current "from" section
+LONG markimg(register char * mp, LONG siz, LONG tsize, int okflag);
 
 //
 //  Imports

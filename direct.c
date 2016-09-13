@@ -350,6 +350,8 @@ int d_incbin(void)
 	int bytes = 0;
 	long pos, size, bytesRead;
 	char msg[256];
+	char buf1[256];
+	int i;
 
 	// Check to see if we're in BSS, and, if so, throw an error
 	if (scattr & SBSS)
@@ -364,11 +366,29 @@ int d_incbin(void)
 		return ERROR;
 	}
 
-	if ((fd = open(string[tok[1]],  _OPEN_INC)) < 0)
+	// Attempt to open the include file in the current directory, then (if that
+	// failed) try list of include files passed in the enviroment string or by
+	// the "-d" option.
+	if ((fd = open(string[tok[1]], _OPEN_INC)) < 0)
 	{
-		errors("cannot open include binary file (%s)", string[tok[1]]);
-		return ERROR;
+		for (i = 0; nthpath("RMACPATH", i, buf1) != 0; i++)
+		{
+			fd = strlen(buf1);
+
+			if (fd > 0 && buf1[fd - 1] != SLASHCHAR)	// Append path char if necessary
+				strcat(buf1, SLASHSTRING);
+
+			strcat(buf1, string[tok[1]]);
+
+			if ((fd = open(buf1, _OPEN_INC)) >= 0)
+				goto allright;
+		}
+
+		return errors("cannot open: \"%s\"", string[tok[1]]);
 	}
+
+allright:
+
 
 	size = lseek(fd, 0L, SEEK_END);
 	pos = lseek(fd, 0L, SEEK_SET);
