@@ -176,34 +176,33 @@ void DisplayVersion(void)
 //
 int ParseOptimization(char * optstring)
 {
-    int onoff = 0;
+	int onoff = 0;
 
-    if (*optstring == '+')
-        onoff = 1;
-    else if (*optstring != '~')
-        return ERROR;
+	if (*optstring == '+')
+		onoff = 1;
+	else if (*optstring != '~')
+		return ERROR;
 
-    if ((optstring[2] == 'a' || optstring[2] == 'A') &&
-        (optstring[3] == 'l' || optstring[3] == 'L') &&
-        (optstring[4] == 'l' || optstring[4] == 'L'))
-    {
-        memset(optim_flags, onoff, OPT_COUNT * sizeof(int));
-        return OK;
-    }
-    else if (optstring[1] == 'o' || optstring[1] == 'O') //Turn on specific optimisation
+	if ((optstring[2] == 'a' || optstring[2] == 'A')
+		&& (optstring[3] == 'l' || optstring[3] == 'L')
+		&& (optstring[4] == 'l' || optstring[4] == 'L'))
 	{
-        int opt_no = atoi(&optstring[2]);
-        if ((opt_no >= 0) && (opt_no < OPT_COUNT))
-            optim_flags[opt_no] = onoff;
-        else
-        {
-            return ERROR;
-        }
-    }
-    else
-    {
-        return ERROR;
-    }
+		memset(optim_flags, onoff, OPT_COUNT * sizeof(int));
+		return OK;
+	}
+	else if (optstring[1] == 'o' || optstring[1] == 'O') // Turn on specific optimisation
+	{
+		int opt_no = atoi(&optstring[2]);
+
+		if ((opt_no >= 0) && (opt_no < OPT_COUNT))
+			optim_flags[opt_no] = onoff;
+		else
+			return ERROR;
+	}
+	else
+	{
+		return ERROR;
+	}
 }
 
 

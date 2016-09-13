@@ -41,10 +41,11 @@
 	// WARNING(FIXME: Code removed because...)
 
 	#else
-	//If we're not compiling for Visual Studio let's assume that we're using
-	//some flavour of gcc instead. So let's use the gcc compliant macro instead.
-	//If some weirdo uses something else (I dunno, Intel compiler or something?)
-	//this is probably going to explode spectacularly. Let's wait for the fireworks!
+	// If we're not compiling for Visual Studio let's assume that we're using
+	// some flavour of gcc instead. So let's use the gcc compliant macro
+	// instead. If some weirdo uses something else (I dunno, Intel compiler or
+	// something?) this is probably going to explode spectacularly. Let's wait
+	// for the fireworks!
 	#define DO_PRAGMA(x) _Pragma (#x)
 	#define WARNING(desc) DO_PRAGMA(message (#desc))
 	#define inline __inline

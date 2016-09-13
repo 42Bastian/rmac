@@ -1590,28 +1590,28 @@ int d_gpumain(void)
 	return error("What the hell? Do you think we adhere to the Goof standard?");
 }
 
+
 //
 // .opt - turn a specific (or all) optimisation on or off
 //
 int d_opt(void)
 {
-	char * tmpstr;
-
 	while (*tok != EOL)
 	{
 		if (*tok == STRING)
 		{
 			tok++;
-			tmpstr = string[*tok++];
+			char * tmpstr = string[*tok++];
 
 			if (ParseOptimization(tmpstr) != OK)
 			{
 				char temperr[256];
-				sprintf(temperr, "unknown optimisation flag '%s'.", tmpstr);
+				sprintf(temperr, "unknown optimisation flag '%s'", tmpstr);
 				return error(temperr);
 			}
 		}
 		else
-			return error(".opt directive needs every switch enclosed inside quotation marks.");
+			return error(".opt directive needs every switch enclosed inside quotation marks");
 	}
 }
+

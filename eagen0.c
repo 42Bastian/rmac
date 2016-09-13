@@ -72,7 +72,7 @@ int eaNgen(WORD siz)
 				return OK;
 			}
 
-			if (v + 0x8000 >= 0x18000)
+			if ((v + 0x8000) >= 0x18000)
 				return error(range_error);
 
 			D_word(v);
