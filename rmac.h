@@ -9,10 +9,19 @@
 #ifndef __RMAC_H__
 #define __RMAC_H__
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
 //
 // TARGET SPECIFIC BUILD SETTINGS
 //
 #if defined(WIN32) || defined (WIN64)
+	#include <io.h>
+	#include <fcntl.h>
 	// Release platform - windows
 	#define PLATFORM        "Win32"
 	#define _OPEN_FLAGS     _O_TRUNC|_O_CREAT|_O_BINARY|_O_RDWR
@@ -40,49 +49,29 @@
 	#define WARNING(desc) DO_PRAGMA(message (#desc))
 
 	#endif
-	#include <io.h>
-	#include <fcntl.h>
-	#include <stdio.h>
-	#include <stdlib.h>
-	#include <string.h>
-	#include <ctype.h>
-	#include <sys/types.h>
-	#include <sys/stat.h>
 
 #else 
 	#ifdef __GCCUNIX__
+	#include <sys/fcntl.h>
+	#include <unistd.h>
 	// Release platform - mac OS-X or linux
 	#define PLATFORM        "OSX/Linux"
 	#define _OPEN_FLAGS     O_TRUNC|O_CREAT|O_RDWR
 	#define _OPEN_INC       O_RDONLY
-	#define _PERM_MODE      S_IREAD|S_IWRITE 
+	#define _PERM_MODE      S_IRUSR|S_IWUSR
 	// WARNING WARNING WARNING
 	#define DO_PRAGMA(x) _Pragma (#x)
 	#define WARNING(desc) DO_PRAGMA(message (#desc))
-	#include <sys/fcntl.h>
-	#include <stdio.h>
-	#include <stdlib.h>
-	#include <string.h>
-	#include <ctype.h>
-	#include <sys/types.h>
-	#include <sys/stat.h>
-	#include <unistd.h>
 #else
 	// Release platform - not specified 
+	#include <sys/fcntl.h>
 	#define PLATFORM        "Unknown"
 	#define _OPEN_FLAGS     O_TRUNC|O_CREAT|O_RDWR
 	#define _OPEN_INC       O_RDONLY
-	#define _PERM_MODE      S_IREAD|S_IWRITE 
-	// Defined here, even though the platfrom may not support it...
+	#define _PERM_MODE      S_IREAD|S_IWRITE
+	// Defined here, even though the platform may not support it...
 	#define DO_PRAGMA(x) _Pragma (#x)
 	#define WARNING(desc) DO_PRAGMA(message (#desc))
-	#include <sys/fcntl.h>
-	#include <stdio.h>
-	#include <stdlib.h>
-	#include <string.h>
-	#include <ctype.h>
-	#include <sys/types.h>
-	#include <sys/stat.h>
 	#endif
 #endif
 
