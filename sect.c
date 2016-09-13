@@ -36,6 +36,7 @@ CHUNK * scode;			// Current (last) code chunk
 LONG challoc;			// # bytes alloc'd to code chunk 
 LONG ch_size;			// # bytes used in code chunk 
 char * chptr;			// Deposit point in code chunk buffer 
+char * chptr_opcode;	// Backup of chptr, updated before entering code generators
 
 CHUNK * sfix;			// Current (last) fixup chunk
 LONG fchalloc;			// # bytes alloc'd to fixup chunk

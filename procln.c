@@ -660,6 +660,9 @@ When checking to see if it's already been equated, issue a warning.
 		goto loop;
 	}
 
+	// Keep a backup of chptr (used for optimisations during codegen)
+	chptr_opcode = chptr;
+
 	for(;;)
 	{
 		if ((m->mnattr & siz) && (amsk0 & m->mn0) != 0 && (amsk1 & m->mn1) != 0)

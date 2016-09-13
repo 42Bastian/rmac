@@ -228,12 +228,16 @@ int WriteObject(int fd)
 	}
 
 	// Write requested object file...
-	if (obj_format==BSD || (obj_format==ALCYON && prg_flag==0))
+	if ((obj_format == BSD) || ((obj_format == ALCYON) && (prg_flag == 0)))
     {
+		// Force BSD format from here onwards
+		obj_format = BSD;
+
 		if (verb_flag)
 		{
 			printf("Total       : %d bytes\n", sect[TEXT].sloc + sect[DATA].sloc + sect[BSS].sloc);
 		}
+
 		ssize = ((LONG)sy_assign(NULL, NULL));		// Assign index numbers to the symbols
 		tds = sect[TEXT].sloc + sect[DATA].sloc;	// Get size of TEXT and DATA segment
 		buf = malloc(0x600000);						// Allocate 6mb object file image memory

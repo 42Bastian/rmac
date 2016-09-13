@@ -1278,14 +1278,7 @@ if (debug) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 					// auto-optimise? I think it's ok for now...
 					if (*ln == '.')
 					{
-						if (obj_format == ALCYON)
-						{
-							if ((*(ln + 1) == 'b') || (*(ln + 1) == 'B') || (*(ln + 1) == 'w') || (*(ln + 1) == 'W') || (*(ln + 1) == 'l') || (*(ln + 1) == 'L'))
-							{
-								ln += 2;
-							}
-						}
-						else
+						if (obj_format == BSD)
 						{
 							if ((*(ln + 1) & 0xDF) == 'B')
 							{
@@ -1306,6 +1299,20 @@ if (debug) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 
 					*tk++ = CONST;
 					*tk++ = v;
+
+					if (obj_format == ALCYON)
+					{
+						if ((*(ln + 1) == 'w') || (*(ln + 1) == 'W'))
+						{
+							*tk++ = DOTW;
+							ln += 2;
+						}
+						else if ((*(ln + 1) == 'l') || (*(ln + 1) == 'L'))
+						{
+							*tk++ = DOTL;
+							ln += 2;
+						}
+					}
 				}
 				else
 					*tk++ = '$';

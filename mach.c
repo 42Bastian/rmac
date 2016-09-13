@@ -452,7 +452,7 @@ int m_move(WORD inst, WORD size)
 			ea0gen((WORD)siz);
 
 		if (am1 >= ADISP)
-			ea1gen((WORD)siz);
+			ea1gen((WORD)siz | 0x8000);   // Tell ea1gen we're move ea,ea
 	}
 
 	return 0;

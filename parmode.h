@@ -72,21 +72,22 @@
 			}
 
 			AMn = AINDEXED;
-			goto AMn_IX0;                                      // Handle ",Xn[.siz][*scale])"
+			goto AMn_IX0;            // Handle ",Xn[.siz][*scale])"
 		}
 		else if (*tok == KW_PC)
 		{                            // (PC,Xn[.siz][*scale]) 
 			tok++;
 			AMn = PCINDEXED;
 
-			// Common index handler; enter here with `tok' pointing at the comma.
+			// Common index handler; enter here with 'tok' pointing at the
+			// comma.
 
-			AMn_IX0:                                           // Handle indexed with missing expr
+			AMn_IX0:                 // Handle indexed with missing expr
 
 			AnEXVAL = 0;
 			AnEXATTR = ABS | DEFINED;
 
-			AMn_IXN:                                           // Handle any indexed (tok -> a comma)
+			AMn_IXN:                 // Handle any indexed (tok -> a comma)
 
 			if (*tok++ != ',')
 				goto badmode;
@@ -97,7 +98,7 @@
 			AnIXREG = *tok++ & 15;
 
 			switch ((int)*tok)
-			{                                // Index reg size: <empty> | .W | .L 
+			{                        // Index reg size: <empty> | .W | .L 
 			case DOTW:
 				tok++;
 			default:
@@ -107,12 +108,12 @@
 				AnIXSIZ = 0x0800;
 				tok++;
 				break;
-			case DOTB:                                      // .B not allowed here...
+			case DOTB:               // .B not allowed here...
 				goto badmode;
 			}
 
 			if (*tok == '*')
-			{                                  // scale: *1, *2, *4, *8 
+			{                        // scale: *1, *2, *4, *8 
 				tok++;
 
 				if (*tok++ != CONST || *tok > 8)
@@ -136,7 +137,7 @@
 				}
 			}
 
-			if (*tok++ != ')')                                  // final ")" 
+			if (*tok++ != ')')         // final ")" 
 				goto badmode;
 
 			goto AnOK;
@@ -146,7 +147,7 @@
 			goto unmode;
 		}
 		else
-		{                                              // (expr... 
+		{                              // (expr... 
 			if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
 				return ERROR;
 
@@ -190,7 +191,7 @@
 				}
 				else if (*tok == ')')
 				{
-					AMn = PCDISP;                                // expr(PC) 
+					AMn = PCDISP;             // expr(PC) 
 					tok++;
 					goto AnOK;
 				}
@@ -201,7 +202,7 @@
 				goto badmode;
 		}
 	}
-	else if (*tok=='-' && tok[1]=='(' && ((tok[2]>=KW_A0) && (tok[2]<=KW_A7)) && tok[3]==')')
+	else if (*tok == '-' && tok[1] == '(' && ((tok[2] >= KW_A0) && (tok[2] <= KW_A7)) && tok[3] == ')')
 	{
 		AMn = APREDEC;
 		AnREG = tok[2] & 7;
@@ -243,6 +244,10 @@ CHK_FOR_DISPn:
 			// expr.W 
 			tok++;
 			AMn = ABSW;
+
+			if ((AnEXATTR & (TDB|DEFINED)) == DEFINED && (AnEXVAL < 0x10000))
+				AnEXVAL = (int32_t)(int16_t)AnEXVAL;  // Sign extend value
+
 			goto AnOK;
 		}
 		else if (*tok != '(')
@@ -255,6 +260,7 @@ CHK_FOR_DISPn:
 			if (optim_flag && (AnEXATTR & (TDB|DEFINED)) == DEFINED && (AnEXVAL + 0x8000) < 0x10000)
 			{
 				AMn = ABSW;
+
 				if (sbra_flag)
 					warn("absolute value from $FFFF8000..$00007FFF optimised to absolute short");
 			}

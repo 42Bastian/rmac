@@ -47,6 +47,7 @@
 	//this is probably going to explode spectacularly. Let's wait for the fireworks!
 	#define DO_PRAGMA(x) _Pragma (#x)
 	#define WARNING(desc) DO_PRAGMA(message (#desc))
+	#define inline __inline
 
 	#endif
 

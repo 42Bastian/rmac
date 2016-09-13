@@ -128,6 +128,7 @@ MCHUNK {
 extern LONG sloc;
 extern WORD scattr;
 extern char * chptr;
+extern char * chptr_opcode;
 extern LONG ch_size;
 extern int cursect;
 extern SECT sect[];

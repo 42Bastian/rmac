@@ -39,6 +39,35 @@ int eaNgen(WORD siz)
 			if (tdb)
 				rmark(cursect, sloc, tdb, MWORD, NULL);
 
+			if ((v == 0) && optim_flag)
+			{
+				// If expr is 0, size optimise the opcode.
+				// Generally the lower 6 bits of the opcode
+				// for expr(ax) are 101rrr where rrr=the
+				// number of the register, then followed by
+				// a word containing 'expr'. We need to change
+				// that to 010rrr.
+				if ((siz & 0x8000) == 0)
+				{
+					chptr_opcode[0] &= ((0xFFC7 >> 8) & 255); // mask off bits
+					chptr_opcode[1] &= 0xFFC7 & 255;          // mask off bits
+					chptr_opcode[0] |= ((0x0010 >> 8) & 255); // slap in 010 bits
+					chptr_opcode[1] |= 0x0010 & 255;          // slap in 010 bits
+				}
+				else
+				{
+					// Special case for move ea,ea:
+					// there are two ea fields there and
+					// we get a signal if it's the second ea field
+					// from m_ea - siz's 16th bit is set
+					chptr_opcode[0] &= ((0xFE3F >> 8) & 255); // mask off bits
+					chptr_opcode[1] &= 0xFE3F & 255;          // mask off bits
+					chptr_opcode[0] |= ((0x0080 >> 8) & 255); // slap in 010 bits
+					chptr_opcode[1] |= 0x0080 & 255;          // slap in 010 bits
+				}
+				return OK;
+			}
+
 			if (v + 0x8000 >= 0x18000)
 				return error(range_error);
 
@@ -114,7 +143,7 @@ int eaNgen(WORD siz)
 			if (v + 0x80 >= 0x100)
 				return error(range_error);
 
-			w |= v & 0xff;
+			w |= v & 0xFF;
 			D_word(w);
 		}
 		else
