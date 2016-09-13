@@ -831,9 +831,14 @@ int d_ds(WORD siz)
 	if (abs_expr(&eval) != OK)
 		return 0;
 
+	// Check to see if the value being passed in is negative (who the hell does
+	// that?--nobody does; it's the code gremlins, or rum, that does it)
+	if (eval < 0)
+		return error("negative sizes not allowed");
+
 	// In non-TDB section (BSS, ABS and M6502) just advance the location
 	// counter appropriately. In TDB sections, deposit (possibly large) chunks
-	//of zeroed memory....
+	// of zeroed memory....
 	if (scattr & SBSS)
 	{
 		listvalue(eval);
