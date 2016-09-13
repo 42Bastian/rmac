@@ -410,17 +410,20 @@ int Process(int argc, char ** argv)
 		else if (*argv[argno] == '+' || *argv[argno] == '~')
 		{
 			int onoff = 0;
+
 			if (*argv[argno] == '+')
 				onoff = 1;
-			if ((argv[argno][2] == 'a' || argv[argno][2] == 'A') &&
-				(argv[argno][3] == 'l' || argv[argno][3] == 'L') &&
-				(argv[argno][4] == 'l' || argv[argno][4] == 'L'))
+
+			if ((argv[argno][2] == 'a' || argv[argno][2] == 'A')
+				&& (argv[argno][3] == 'l' || argv[argno][3] == 'L')
+				&& (argv[argno][4] == 'l' || argv[argno][4] == 'L'))
 				memset(optim_flags, onoff, OPT_COUNT * sizeof(int));
 			else if (argv[argno][1] == 'o' || argv[argno][1] == 'O') // Turn on specific optimisation
 			{
 				int opt_no = atoi(&argv[argno][2]);
-				if (opt_no>=0 && opt_no<OPT_COUNT)
-					optim_flags[opt_no]=onoff;
+
+				if ((opt_no >= 0) && (opt_no < OPT_COUNT))
+					optim_flags[opt_no] = onoff;
 				else
 				{
 				    DisplayVersion();
