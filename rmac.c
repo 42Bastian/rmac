@@ -195,7 +195,10 @@ int ParseOptimization(char * optstring)
 		int opt_no = atoi(&optstring[2]);
 
 		if ((opt_no >= 0) && (opt_no < OPT_COUNT))
+		{
 			optim_flags[opt_no] = onoff;
+			return OK;
+		}
 		else
 			return ERROR;
 	}

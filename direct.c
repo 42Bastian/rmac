@@ -1613,5 +1613,7 @@ int d_opt(void)
 		else
 			return error(".opt directive needs every switch enclosed inside quotation marks");
 	}
+
+	return OK;
 }
 
