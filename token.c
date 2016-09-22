@@ -314,10 +314,10 @@ int ExpandMacro(char * src, char * dest, int destsiz)
 			if (dst >= edst)
 				goto overflow;
 
-            // Skip comments in case a loose @ or \ is in there
-            // In that case the tokeniser was trying to expand it.
-            if (*s == '*' || *s == ';' || ((*s == '/') && (*(s + 1) == '/')))
-                goto skipcomments;
+			// Skip comments in case a loose @ or \ is in there
+			// In that case the tokeniser was trying to expand it.
+			if (*s == '*' || *s == ';' || ((*s == '/') && (*(s + 1) == '/')))
+				goto skipcomments;
 
 			*dst++ = *s++;
 		}
