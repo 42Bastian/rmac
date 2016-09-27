@@ -371,11 +371,12 @@ int d_incbin(void)
 	// the "-d" option.
 	if ((fd = open(string[tok[1]], _OPEN_INC)) < 0)
 	{
-		for (i = 0; nthpath("RMACPATH", i, buf1) != 0; i++)
+		for(i=0; nthpath("RMACPATH", i, buf1)!=0; i++)
 		{
 			fd = strlen(buf1);
 
-			if (fd > 0 && buf1[fd - 1] != SLASHCHAR)	// Append path char if necessary
+			// Append path char if necessary
+			if (fd > 0 && buf1[fd - 1] != SLASHCHAR)
 				strcat(buf1, SLASHSTRING);
 
 			strcat(buf1, string[tok[1]]);
@@ -388,7 +389,6 @@ int d_incbin(void)
 	}
 
 allright:
-
 
 	size = lseek(fd, 0L, SEEK_END);
 	pos = lseek(fd, 0L, SEEK_SET);
