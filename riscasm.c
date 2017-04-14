@@ -385,12 +385,13 @@ int GenerateRISCCode(int state)
 		{
 			if (eattr & TDB)
 //{
-//printf("RISCASM: Doing rmark for RI_MOVEI (tdb=$%X)...\n", eattr & TDB);
-				rmark(cursect, sloc + 2, (eattr & TDB), (MLONG | MMOVEI), NULL);
+//printf("RISCASM: Doing MarkRelocatable for RI_MOVEI (tdb=$%X)...\n", eattr & TDB);
+				MarkRelocatable(cursect, sloc + 2, (eattr & TDB), (MLONG | MMOVEI), NULL);
 //}
 		}
 
-		val = ((eval >> 16) & 0x0000FFFF) | ((eval << 16) & 0xFFFF0000);
+//		val = ((eval >> 16) & 0x0000FFFF) | ((eval << 16) & 0xFFFF0000);
+		val = WORDSWAP32(eval);
 		CHECK_COMMA;
 		reg2 = GetRegister(FU_REGTWO);
 		at_eol();

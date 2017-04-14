@@ -39,11 +39,11 @@ int rgpu, rdsp;					// Assembling Jaguar GPU or DSP code
 int list_fd;					// File to write listing to
 int regbank;					// RISC register bank
 int segpadsize;					// Segment padding size
-int endian;						// Host processor endianess
+int endian;						// Host processor endianess (0 = LE, 1 = BE)
 char * objfname;				// Object filename pointer
 char * firstfname;				// First source filename
 char * cmdlnexec;				// Executable name, pointer to ARGV[0]
-char * searchpath;				// Search path for include files 
+char * searchpath;				// Search path for include files
 char defname[] = "noname.o";	// Default output filename
 int optim_flags[OPT_COUNT];	// Specific optimisations on/off matrix
 
@@ -128,6 +128,7 @@ void DisplayHelp(void)
 		"  -f[format]        Output object file format\n"
 		"                    a: ALCYON (use this for ST)\n"
 		"                    b: BSD (use this for Jaguar)\n"
+		"                    e: ELF\n"
 		"  -i[path]          Directory to search for include files\n"
 		"  -l[filename]      Create an output listing file\n"
 		"  -n                Don't do things behind your back in RISC assembler\n"
@@ -209,7 +210,7 @@ int ParseOptimization(char * optstring)
 }
 
 
-// 
+//
 // Process command line arguments and do an assembly
 //
 int Process(int argc, char ** argv)
@@ -304,9 +305,13 @@ int Process(int argc, char ** argv)
 				case 'A':
 					obj_format = ALCYON;
 					break;
-				case 'b':			// -fb = BSD (Jaguar Recommended)
+				case 'b':			// -fb = BSD (Jaguar Recommended: 3 out 4 jaguars recommend it!)
 				case 'B':
 					obj_format = BSD;
+					break;
+				case 'e':			// -fe = ELF
+				case 'E':
+					obj_format = ELF;
 					break;
 				default:
 					printf("-f: unknown object format specified\n");
@@ -585,9 +590,9 @@ int main(int argc, char ** argv)
 	// Set legacy optimisation flags to on
 	// and everything else to off
 	memset(optim_flags, 0, OPT_COUNT * sizeof(int));
-	optim_flags[OPT_ABS_SHORT] = 
+	optim_flags[OPT_ABS_SHORT] =
 		optim_flags[OPT_MOVEL_MOVEQ] =
-		optim_flags[OPT_BSR_BCC_S] = 1;  
+		optim_flags[OPT_BSR_BCC_S] = 1;
 
 	cmdlnexec = argv[0];			// Obtain executable name
 

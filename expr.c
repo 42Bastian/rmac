@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // EXPR.C - Expression Analyzer
-// Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2017 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -17,7 +17,7 @@
 #include "symbol.h"
 #include "token.h"
 
-#define DEF_KW						// Declare keyword values 
+#define DEF_KW						// Declare keyword values
 #include "kwtab.h"					// Incl generated keyword tables & defs
 
 // N.B.: The size of tokenClass should be identical to the largest value of
@@ -29,22 +29,22 @@ static WORD evattr[EVSTACKSIZE];	// Evaluator attribute stack
 // Token-class initialization list
 char itokcl[] = {
 	0,								// END
-	CONST, SYMBOL, 0,				// ID 
+	CONST, SYMBOL, 0,				// ID
 	'(', '[', '{', 0,				// OPAR
-	')', ']', '}', 0,				// CPAR 
+	')', ']', '}', 0,				// CPAR
 	CR_DEFINED, CR_REFERENCED,		// SUNARY (special unary)
 	CR_STREQ, CR_MACDEF,
-	CR_DATE, CR_TIME, 
+	CR_DATE, CR_TIME,
 	CR_ABSCOUNT, 0,
 	'!', '~', UNMINUS, 0,			// UNARY
-	'*', '/', '%', 0,				// MULT 
-	'+', '-', 0,					// ADD 
-	SHL, SHR, 0,					// SHIFT 
-	LE, GE, '<', '>', NE, '=', 0,	// REL 
-	'&', 0,							// AND 
-	'^', 0,							// XOR 
-	'|', 0,							// OR 
-	1								// (the end) 
+	'*', '/', '%', 0,				// MULT
+	'+', '-', 0,					// ADD
+	SHL, SHR, 0,					// SHIFT
+	LE, GE, '<', '>', NE, '=', 0,	// REL
+	'&', 0,							// AND
+	'^', 0,							// XOR
+	'|', 0,							// OR
+	1								// (the end)
 };
 
 const char missym_error[] = "missing symbol";
@@ -55,7 +55,7 @@ static TOKEN * evalTokenBuffer;		// Deposit tokens here (this is really a
 									// pointer to exprbuf from direct.c)
 									// (Can also be from others, like
 									// riscasm.c)
-static symbolNum;					// Pointer to the entry in symbolPtr[]
+static int symbolNum;				// Pointer to the entry in symbolPtr[]
 
 
 //
@@ -88,7 +88,7 @@ void InitExpression(void)
 	{
 		if (*p == 0)
 			i++;
-		else 
+		else
 			tokenClass[(int)(*p)] = (char)i;
 	}
 
@@ -105,7 +105,7 @@ int expr0(void)
 
 	if (expr1() != OK)
 		return ERROR;
-	
+
 	while (tokenClass[*tok] >= MULT)
 	{
 		t = *tok++;
@@ -211,7 +211,7 @@ getsym:
 			break;
 		}
 	}
-	else 
+	else
 		return expr2();
 
 	return OK;
@@ -244,7 +244,7 @@ int expr2(void)
 		// Check register bank usage
 		if (sy->sattre & EQUATEDREG)
 		{
-			if ((regbank == BANK_0) && (sy->sattre & BANK_1) && !altbankok)   
+			if ((regbank == BANK_0) && (sy->sattre & BANK_1) && !altbankok)
 				warns("equated symbol \'%s\' cannot be used in register bank 0", sy->sname);
 
 			if ((regbank == BANK_1) && (sy->sattre & BANK_0) && !altbankok)
@@ -395,7 +395,7 @@ if (symbol)
 			// Check register bank usage
 			if (symbol->sattre & EQUATEDREG)
 			{
-				if ((regbank == BANK_0) && (symbol->sattre & BANK_1) && !altbankok)   
+				if ((regbank == BANK_0) && (symbol->sattre & BANK_1) && !altbankok)
 					warns("equated symbol '%s' cannot be used in register bank 0", symbol->sname);
 
 				if ((regbank == BANK_1) && (symbol->sattre & BANK_0) && !altbankok)
@@ -425,7 +425,7 @@ be converted from a linked list into an array).
 All that extra crap that was put into the svalue when doing the equr stuff is
 thrown away right here. What the hell is it for?
 */
-			if (symbol->sattre & EQUATEDREG) 
+			if (symbol->sattre & EQUATEDREG)
 				*a_value &= 0x1F;
 
 			*a_attr = (WORD)(symbol->sattr & ~GLOBAL);
@@ -484,7 +484,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 		case SYMBOL:
 //printf("evexpr(): SYMBOL\n");
 			sy = symbolPtr[*tk++];
-			sy->sattr |= REFERENCED;		// Set "referenced" bit 
+			sy->sattr |= REFERENCED;		// Set "referenced" bit
 
 			if (!(sy->sattr & DEFINED))
 			{
@@ -508,7 +508,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			}
 			else
 			{
-				*++sval = 0;				// 0 for undefined symbols 
+				*++sval = 0;				// 0 for undefined symbols
 			}
 
 			*++sattr = (WORD)(sy->sattr & ~GLOBAL);	// Push attribs
@@ -526,20 +526,20 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 			break;
 
 			// Binary "+" and "-" matrix:
-			// 
+			//
 			// 	          ABS	 Sect	  Other
 			//     ----------------------------
 			//   ABS     |	ABS   |  Sect  |  Other |
 			//   Sect    |	Sect  |  [1]   |  Error |
 			//   Other   |	Other |  Error |  [1]   |
 			//      ----------------------------
-			// 
+			//
 			//   [1] + : Error
 			//       - : ABS
 		case '+':
 //printf("evexpr(): +\n");
 			--sval;							// Pop value
-			--sattr;						// Pop attrib 
+			--sattr;						// Pop attrib
 //printf("--> N+N: %i + %i = ", *sval, sval[1]);
 			*sval += sval[1];				// Compute value
 //printf("%i\n", *sval);
@@ -553,7 +553,7 @@ int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 		case '-':
 //printf("evexpr(): -\n");
 			--sval;							// Pop value
-			--sattr;						// Pop attrib 
+			--sattr;						// Pop attrib
 //printf("--> N-N: %i - %i = ", *sval, sval[1]);
 			*sval -= sval[1];				// Compute value
 //printf("%i\n", *sval);
@@ -599,8 +599,8 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 		// are in the same segment, but that's the only requirement.
 		case LE:
 //printf("evexpr(): LE\n");
-			--sattr;
-			--sval;
+			sattr--;
+			sval--;
 
 			if ((*sattr & TDB) != (sattr[1] & TDB))
 				error(seg_error);
@@ -610,8 +610,8 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			break;
 		case GE:
 //printf("evexpr(): GE\n");
-			--sattr;
-			--sval;
+			sattr--;
+			sval--;
 
 			if ((*sattr & TDB) != (sattr[1] & TDB))
 				error(seg_error);
@@ -621,8 +621,8 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			break;
 		case '>':
 //printf("evexpr(): >\n");
-			--sattr;
-			--sval;
+			sattr--;
+			sval--;
 
 			if ((*sattr & TDB) != (sattr[1] & TDB))
 				error(seg_error);
@@ -632,8 +632,8 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			break;
 		case '<':
 //printf("evexpr(): <\n");
-			--sattr;
-			--sval;
+			sattr--;
+			sval--;
 
 			if ((*sattr & TDB) != (sattr[1] & TDB))
 				error(seg_error);
@@ -643,8 +643,8 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			break;
 		case NE:
 //printf("evexpr(): NE\n");
-			--sattr;
-			--sval;
+			sattr--;
+			sval--;
 
 			if ((*sattr & TDB) != (sattr[1] & TDB))
 				error(seg_error);
@@ -654,8 +654,8 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			break;
 		case '=':
 //printf("evexpr(): =\n");
-			--sattr;
-			--sval;
+			sattr--;
+			sval--;
 
 			if ((*sattr & TDB) != (sattr[1] & TDB))
 				error(seg_error);
@@ -675,15 +675,15 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			switch ((int)tk[-1])
 			{
 			case '*':
-				--sval;
-				--sattr;					// Pop attrib 
+				sval--;
+				sattr--;					// Pop attrib
 //printf("--> NxN: %i x %i = ", *sval, sval[1]);
 				*sval *= sval[1];
 //printf("%i\n", *sval);
 				break;
 			case '/':
-				--sval;
-				--sattr;					// Pop attrib 
+				sval--;
+				sattr--;					// Pop attrib
 
 				if (sval[1] == 0)
 					return error("divide by zero");
@@ -697,8 +697,8 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 //printf("%i\n", *sval);
 				break;
 			case '%':
-				--sval;
-				--sattr;					// Pop attrib 
+				sval--;
+				sattr--;					// Pop attrib
 
 				if (sval[1] == 0)
 					return error("mod (%) by zero");
@@ -706,28 +706,28 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 				*sval %= sval[1];
 				break;
 			case SHL:
-				--sval;
-				--sattr;					// Pop attrib 
+				sval--;
+				sattr--;					// Pop attrib
 				*sval <<= sval[1];
 				break;
 			case SHR:
-				--sval;
-				--sattr;					// Pop attrib 
+				sval--;
+				sattr--;					// Pop attrib
 				*sval >>= sval[1];
 				break;
 			case '&':
-				--sval;
-				--sattr;					// Pop attrib 
+				sval--;
+				sattr--;					// Pop attrib
 				*sval &= sval[1];
 				break;
 			case '^':
-				--sval;
-				--sattr;					// Pop attrib 
+				sval--;
+				sattr--;					// Pop attrib
 				*sval ^= sval[1];
 				break;
 			case '|':
-				--sval;
-				--sattr;					// Pop attrib 
+				sval--;
+				sattr--;					// Pop attrib
 				*sval |= sval[1];
 				break;
 			default:

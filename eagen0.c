@@ -2,20 +2,16 @@
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // EAGEN0.C - Effective Address Code Generation
 //            Generated Code for eaN (Included twice by "eagen.c")
-// Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2017 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
 
 int eaNgen(WORD siz)
 {
-	WORD w;
-	VALUE v;
-	WORD tdb;
-
-	v = aNexval;
-	w = (WORD)(aNexattr & DEFINED);
-	tdb = (WORD)(aNexattr & TDB);
+	VALUE v = aNexval;
+	WORD w = (WORD)(aNexattr & DEFINED);
+	WORD tdb = (WORD)(aNexattr & TDB);
 
 	switch (amN)
 	{
@@ -35,18 +31,16 @@ int eaNgen(WORD siz)
 		// expr(An)
 		if (w)
 		{
-			// Just deposit it 
+			// Just deposit it
 			if (tdb)
-				rmark(cursect, sloc, tdb, MWORD, NULL);
+				MarkRelocatable(cursect, sloc, tdb, MWORD, NULL);
 
 			if ((v == 0) && optim_flags[OPT_INDIRECT_DISP])
 			{
-				// If expr is 0, size optimise the opcode.
-				// Generally the lower 6 bits of the opcode
-				// for expr(ax) are 101rrr where rrr=the
-				// number of the register, then followed by
-				// a word containing 'expr'. We need to change
-				// that to 010rrr.
+				// If expr is 0, size optimise the opcode. Generally the lower
+				// 6 bits of the opcode for expr(ax) are 101rrr where rrr=the
+				// number of the register, then followed by a word containing
+				// 'expr'. We need to change that to 010rrr.
 				if ((siz & 0x8000) == 0)
 				{
 					chptr_opcode[0] &= ((0xFFC7 >> 8) & 255); // mask off bits
@@ -56,9 +50,8 @@ int eaNgen(WORD siz)
 				}
 				else
 				{
-					// Special case for move ea,ea:
-					// there are two ea fields there and
-					// we get a signal if it's the second ea field
+					// Special case for move ea,ea: there are two ea fields
+					// there and we get a signal if it's the second ea field
 					// from m_ea - siz's 16th bit is set
 					chptr_opcode[0] &= ((0xFE3F >> 8) & 255); // mask off bits
 					chptr_opcode[1] &= 0xFE3F & 255;          // mask off bits
@@ -79,8 +72,8 @@ int eaNgen(WORD siz)
 		}
 		else
 		{
-			// Arrange for fixup later on 
-			AddFixup(FU_WORD|FU_SEXT, sloc, aNexpr);
+			// Arrange for fixup later on
+			AddFixup(FU_WORD | FU_SEXT, sloc, aNexpr);
 			D_word(0);
 		}
 
@@ -88,7 +81,7 @@ int eaNgen(WORD siz)
 	case PCDISP:
 		if (w)
 		{
-			// Just deposit it 
+			// Just deposit it
 			if ((aNexattr & TDB) == cursect)
 				v -= (VALUE)sloc;
 			else if ((aNexattr & TDB) != ABS)
@@ -101,8 +94,8 @@ int eaNgen(WORD siz)
 		}
 		else
 		{
-			// Arrange for fixup later on 
-			AddFixup(FU_WORD|FU_SEXT|FU_PCREL, sloc, aNexpr);
+			// Arrange for fixup later on
+			AddFixup(FU_WORD | FU_SEXT | FU_PCREL, sloc, aNexpr);
 			D_word(0);
 		}
 
@@ -113,21 +106,21 @@ int eaNgen(WORD siz)
 
 		if (aNexattr & DEFINED)
 		{
-			// Deposit a byte... 
+			// Deposit a byte...
 			if (tdb)
-				// Can't mark bytes 
+				// Can't mark bytes
 				return error(abs_error);
 
 			if (v + 0x80 >= 0x180)
 				return error(range_error);
 
-			w |= v & 0xff;
+			w |= v & 0xFF;
 			D_word(w);
 		}
 		else
 		{
 			// Fixup the byte later
-			AddFixup(FU_BYTE|FU_SEXT, sloc+1, aNexpr);
+			AddFixup(FU_BYTE | FU_SEXT, sloc + 1, aNexpr);
 			D_word(w);
 		}
 
@@ -138,8 +131,8 @@ int eaNgen(WORD siz)
 
 		if (aNexattr & DEFINED)
 		{
-			// Deposit a byte... 
-			if ((aNexattr & TDB) == cursect) 
+			// Deposit a byte...
+			if ((aNexattr & TDB) == cursect)
 				v -= (VALUE)sloc;
 			else if ((aNexattr & TDB) != ABS)
 				error(rel_error);
@@ -152,8 +145,8 @@ int eaNgen(WORD siz)
 		}
 		else
 		{
-			// Fixup the byte later 
-			AddFixup(FU_WBYTE|FU_SEXT|FU_PCREL, sloc, aNexpr);
+			// Fixup the byte later
+			AddFixup(FU_WBYTE | FU_SEXT | FU_PCREL, sloc, aNexpr);
 			D_word(w);
 		}
 
@@ -174,7 +167,7 @@ int eaNgen(WORD siz)
 			}
 			else
 			{
-				AddFixup(FU_BYTE|FU_SEXT, sloc+1, aNexpr);
+				AddFixup(FU_BYTE | FU_SEXT, sloc + 1, aNexpr);
 				D_word(0);
 			}
 
@@ -183,17 +176,17 @@ int eaNgen(WORD siz)
 		case SIZN:
 			if (w)
 			{
-				if (tdb)
-					rmark(cursect, sloc, tdb, MWORD, NULL);
-
 				if (v + 0x10000 >= 0x20000)
 					return error(range_error);
+
+				if (tdb)
+					MarkRelocatable(cursect, sloc, tdb, MWORD, NULL);
 
 				D_word(v);
 			}
 			else
 			{
-				AddFixup(FU_WORD|FU_SEXT, sloc, aNexpr);
+				AddFixup(FU_WORD | FU_SEXT, sloc, aNexpr);
 				D_word(0);
 			}
 
@@ -202,7 +195,7 @@ int eaNgen(WORD siz)
 			if (w)
 			{
 				if (tdb)
-					rmark(cursect, sloc, tdb, MLONG, NULL);
+					MarkRelocatable(cursect, sloc, tdb, MLONG, NULL);
 
 				D_long(v);
 			}
@@ -220,10 +213,10 @@ int eaNgen(WORD siz)
 
 		break;
 	case ABSW:
-		if (w)
+		if (w) // Defined
 		{
 			if (tdb)
-				rmark(cursect, sloc, tdb, MWORD, NULL);
+				MarkRelocatable(cursect, sloc, tdb, MWORD, NULL);
 
 			if (v + 0x8000 >= 0x10000)
 				return error(range_error);
@@ -232,16 +225,16 @@ int eaNgen(WORD siz)
 		}
 		else
 		{
-			AddFixup(FU_WORD|FU_SEXT, sloc, aNexpr);
+			AddFixup(FU_WORD | FU_SEXT, sloc, aNexpr);
 			D_word(0);
 		}
 
 		break;
 	case ABSL:
-		if (w)
+		if (w) // Defined
 		{
 			if (tdb)
-				rmark(cursect, sloc, tdb, MLONG, NULL);
+				MarkRelocatable(cursect, sloc, tdb, MLONG, NULL);
 
 			D_long(v);
 		}
@@ -260,7 +253,7 @@ int eaNgen(WORD siz)
 	case PCMPRE:
 		return error("unsupported 68020 addressing mode");
 	default:
-		// Bad addressing mode in ea gen 
+		// Bad addressing mode in ea gen
 		interror(3);
 	}
 
@@ -275,4 +268,5 @@ int eaNgen(WORD siz)
 #undef aNexpr
 #undef aNixreg
 #undef aNixsiz
+#undef AnESYM
 

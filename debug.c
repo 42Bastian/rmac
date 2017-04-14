@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // DEBUG.C - Debugging Messages
-// Copyright (C) 199x Landon Dyer, 2011-2012 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2017 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -43,8 +43,7 @@ TOKEN * printexpr(TOKEN * tp)
 			switch ((int)*tp++)
 			{
 			case SYMBOL:
-//				printf("`%s' ", ((SYM *)*tp)->sname);
-				printf("`%s' ", symbolPtr[*tp]->sname);
+				printf("'%s' ", symbolPtr[*tp]->sname);
 				tp++;
 				break;
 			case CONST:
@@ -61,7 +60,6 @@ TOKEN * printexpr(TOKEN * tp)
 		}
 	}
 
-//	printf(";\n");
 	return tp + 1;
 }
 
@@ -88,28 +86,24 @@ int chdump(CHUNK * ch, int format)
 int fudump(CHUNK * ch)
 {
 	PTR p;
-	char * ep;
-	WORD attr, esiz;
-	WORD line, file;
-	LONG loc;
 
 	for(; ch!=NULL;)
 	{
 		p.cp = ch->chptr;
-		ep = ch->chptr + ch->ch_size;
+		uint8_t * ep = ch->chptr + ch->ch_size;
 
 		while (p.cp < ep)
 		{
-			attr = *p.wp++;
-			loc = *p.lp++;
-			file = *p.wp++;
-			line = *p.wp++;
+			uint16_t attr = *p.wp++;
+			uint32_t loc = *p.lp++;
+			uint16_t file = *p.wp++;
+			uint16_t line = *p.wp++;
 
 			printf("$%04X $%08X %d.%d: ", (int)attr, loc, (int)file, (int)line);
 
 			if (attr & FU_EXPR)
 			{
-				esiz = *p.wp++;
+				uint16_t esiz = *p.wp++;
 				printf("(%d long) ", (int)esiz);
 				p.tk = printexpr(p.tk);
 			}
@@ -155,7 +149,7 @@ int mudump(void)
 			mch, (mch->mcptr.lw), mch->mcalloc, (mch->mcused));
 
 		p = mch->mcptr;
-		
+
 		for(;;)
 		{
 			w = *p.wp++;
@@ -192,7 +186,7 @@ int mudump(void)
 // 0 - bytes
 // 1 - words
 // 2 - longwords
-// 
+//
 // if `base' is not -1, then print it at the start of each line, incremented
 // accordingly.
 //
@@ -209,7 +203,7 @@ int mdump(char * start, LONG count, int flg, LONG base)
 			{
 				printf("  ");
 
-				while(j < i)
+				while (j < i)
 				visprt(start[j++]);
 
 				putchar('\n');
@@ -225,7 +219,7 @@ int mdump(char * start, LONG count, int flg, LONG base)
 		{
 		case 0:
 			printf("%02X ", start[i] & 0xff);
-			++i;
+			i++;
 			break;
 		case 1:
 			printf("%02X%02X ", start[i] & 0xff, start[i+1] & 0xff);
@@ -250,12 +244,12 @@ int mdump(char * start, LONG count, int flg, LONG base)
 	{
 		k = ((16 - (i - j)) / (1 << (flg & 3))) * siztab[flg & 3];
 
-		while(k--)
+		while (k--)
 			putchar(' ');
 
 		printf("  ");
 
-		while(j < i)
+		while (j < i)
 			visprt(start[j++]);
 
 		putchar('\n');
@@ -291,34 +285,34 @@ int dumptok(TOKEN * tk)
 		case STRING:                                       // STRING <address>
 			printf("STRING='%s'", string[*tk++]);
 			break;
-		case SYMBOL:                                       // SYMBOL <address> 
+		case SYMBOL:                                       // SYMBOL <address>
 			printf("SYMBOL='%s'", string[*tk++]);
 			break;
-		case EOL:                                          // End of line 
+		case EOL:                                          // End of line
 			printf("EOL");
 			break;
 		case TKEOF:                                        // End of file (or macro)
 			printf("TKEOF");
 			break;
-		case DEQUALS:                                      // == 
+		case DEQUALS:                                      // ==
 			printf("DEQUALS");
 			break;
-		case DCOLON:                                       // :: 
+		case DCOLON:                                       // ::
 			printf("DCOLON");
 			break;
-		case GE:                                           // >= 
+		case GE:                                           // >=
 			printf("GE");
 			break;
-		case LE:                                           // <= 
+		case LE:                                           // <=
 			printf("LE");
 			break;
-		case NE:                                           // <> or != 
+		case NE:                                           // <> or !=
 			printf("NE");
 			break;
-		case SHR:                                          // >> 
+		case SHR:                                          // >>
 			printf("SHR");
 			break;
-		case SHL:                                          // << 
+		case SHL:                                          // <<
 			printf("SHL");
 			break;
 		default:
@@ -338,9 +332,7 @@ int dumptok(TOKEN * tk)
 //
 int dump_everything(void)
 {
-	int i;
-
-	for(i=1; i<NSECTS; i++)
+	for(int i=1; i<NSECTS; i++)
 	{
 		if (sect[i].scattr & SUSED)
 		{
@@ -357,7 +349,7 @@ int dump_everything(void)
 
 	printf("\nMarks:\n");
 	mudump();								// Dump marks
-//	printf("Total memory allocated=$%X\n", amemtot);
 
 	return 0;
 }
+

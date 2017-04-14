@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // AMODE.C - Addressing Modes
-// Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2017 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -78,7 +78,7 @@ int amode(int acount)
 	#define CHK_FOR_DISPn CheckForDisp0
 	#include "parmode.h"
 
-	// If caller wants only one mode, return just one (ignore comma); 
+	// If caller wants only one mode, return just one (ignore comma);
 	// If there is no second addressing mode (no comma), then return just one anyway.
 	nmodes = 1;
 
@@ -146,7 +146,7 @@ int reglist(WORD * a_rmask)
 
 			if (*tok >= KW_D0 && *tok <= KW_A7)
 				cnt = *tok++ & 15;
-			else 
+			else
 				return error("register list syntax");
 
 			if (cnt < r)
@@ -154,7 +154,7 @@ int reglist(WORD * a_rmask)
 
 			cnt -= r;
 		}
-		else 
+		else
 			cnt = 0;
 
 		while (cnt-- >= 0)

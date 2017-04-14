@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // SECT.C - Code Generation, Fixups and Section Management
-// Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2017 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -19,33 +19,33 @@
 
 
 // Function prototypes
-void MakeSection(int, WORD);
+void MakeSection(int, uint16_t);
 void SwitchSection(int);
 
 // Section descriptors
-SECT sect[NSECTS];		// All sections... 
+SECT sect[NSECTS];		// All sections...
 int cursect;			// Current section number
 
 // These are copied from the section descriptor, the current code chunk
 // descriptor and the current fixup chunk descriptor when a switch is made into
 // a section.  They are copied back to the descriptors when the section is left.
-WORD scattr;			// Section attributes 
-LONG sloc;				// Current loc in section 
+uint16_t scattr;		// Section attributes
+uint32_t sloc;			// Current loc in section
 
-CHUNK * scode;			// Current (last) code chunk 
-LONG challoc;			// # bytes alloc'd to code chunk 
-LONG ch_size;			// # bytes used in code chunk 
-char * chptr;			// Deposit point in code chunk buffer 
-char * chptr_opcode;	// Backup of chptr, updated before entering code generators
+CHUNK * scode;			// Current (last) code chunk
+uint32_t challoc;		// # bytes alloc'd to code chunk
+uint32_t ch_size;		// # bytes used in code chunk
+uint8_t * chptr;		// Deposit point in code chunk buffer
+uint8_t * chptr_opcode;	// Backup of chptr, updated before entering code generators
 
 CHUNK * sfix;			// Current (last) fixup chunk
-LONG fchalloc;			// # bytes alloc'd to fixup chunk
-LONG fchsize;			// # bytes used in fixup chunk
+uint32_t fchalloc;		// # bytes alloc'd to fixup chunk
+uint32_t fchsize;		// # bytes used in fixup chunk
 PTR fchptr;				// Deposit point in fixup chunk buffer
 
 // Return a size (SIZB, SIZW, SIZL) or 0, depending on what kind of fixup is
 // associated with a location.
-static char fusiztab[] = {
+static uint8_t fusiztab[] = {
    0,	// FU_QUICK
    1,	// FU_BYTE
    2,	// FU_WORD
@@ -57,7 +57,7 @@ static char fusiztab[] = {
 };
 
 // Offset to REAL fixup location
-static char fusizoffs[] = {
+static uint8_t fusizoffs[] = {
    0,	// FU_QUICK
    0,	// FU_BYTE
    0,	// FU_WORD
@@ -95,7 +95,7 @@ void InitSection(void)
 //
 // Make a new (clean) section
 //
-void MakeSection(int sno, WORD attr)
+void MakeSection(int sno, uint16_t attr)
 {
 	SECT * p = &sect[sno];
 	p->scattr = attr;
@@ -131,7 +131,7 @@ void SwitchSection(int sno)
 	else
 		challoc = ch_size = 0;
 
-	// Copy fixup chunk vars 
+	// Copy fixup chunk vars
 	if ((cp = sfix) != NULL)
 	{
 		fchalloc = cp->challoc;
@@ -165,13 +165,9 @@ void SaveSection(void)
 // Test to see if a location has a fixup sic'd on it.  This is used by the
 // listing generator to print 'xx's instead of '00's for forward references
 //
-int fixtest(int sno, LONG loc)
+int fixtest(int sno, uint32_t loc)
 {
-	CHUNK * ch;
 	PTR fup;
-	char * fuend;
-	WORD w;
-	LONG xloc;
 
 	// Force update to sect[] variables
 	StopMark();
@@ -179,15 +175,15 @@ int fixtest(int sno, LONG loc)
 	// Hairy, ugly linear search for a mark on our location; the speed doesn't
 	// matter, since this is only done when generating a listing, which is
 	// SLOW.
-	for(ch=sect[sno].sffix; ch!=NULL; ch=ch->chnext)
+	for(CHUNK * ch=sect[sno].sffix; ch!=NULL; ch=ch->chnext)
 	{
-		fup.cp = (char *)ch->chptr;
-		fuend = fup.cp + ch->ch_size;
+		fup.cp = (uint8_t *)ch->chptr;
+		uint8_t * fuend = fup.cp + ch->ch_size;
 
 		while (fup.cp < fuend)
 		{
-			w = *fup.wp++;
-			xloc = *fup.lp++ + (int)fusizoffs[w & FUMASK];
+			uint16_t w = *fup.wp++;
+			uint32_t xloc = *fup.lp++ + (int)fusizoffs[w & FUMASK];
 			fup.wp += 2;
 
 			if (xloc == loc)
@@ -207,14 +203,14 @@ int fixtest(int sno, LONG loc)
 }
 
 
-// 
+//
 // Check that there are at least 'amt' bytes left in the current chunk. If
 // there are not, allocate another chunk of at least 'amt' bytes (and probably
 // more).
-// 
+//
 // If 'amt' is zero, ensure there are at least CH_THRESHOLD bytes, likewise.
 //
-int chcheck(LONG amt)
+int chcheck(uint32_t amt)
 {
 	DEBUG { printf("chcheck(%u)\n", amt); }
 	// If in BSS section, no allocation required
@@ -225,7 +221,7 @@ int chcheck(LONG amt)
 		amt = CH_THRESHOLD;
 
 	DEBUG { printf("    challoc=%i, ch_size=%i, diff=%i\n", challoc, ch_size, challoc-ch_size); }
-	if ((int)(challoc - ch_size) >= (int)amt) 
+	if ((int)(challoc - ch_size) >= (int)amt)
 		return 0;
 
 	if (amt < CH_CODE_SIZE)
@@ -246,7 +242,7 @@ int chcheck(LONG amt)
 	{
 		cp->chprev = scode;
 		scode->chnext = cp;
-		scode->ch_size = ch_size;			// Save old chunk's globals 
+		scode->ch_size = ch_size;			// Save old chunk's globals
 	}
 
 	// Setup chunk and global vars
@@ -254,7 +250,7 @@ int chcheck(LONG amt)
 	cp->chnext = NULL;
 	challoc = cp->challoc = amt;
 	ch_size = cp->ch_size = 0;
-	chptr = cp->chptr = ((char *)cp) + sizeof(CHUNK);
+	chptr = cp->chptr = ((uint8_t *)cp) + sizeof(CHUNK);
 	scode = p->scode = cp;
 
 	return 0;
@@ -263,14 +259,14 @@ int chcheck(LONG amt)
 
 // This is really wrong. We need to make some proper structures here so we
 // don't have to count sizes of objects, that's what the compiler's for! :-P
-#define FIXUP_BASE_SIZE (sizeof(WORD) + sizeof(LONG) + sizeof(WORD) + sizeof(WORD))
+#define FIXUP_BASE_SIZE (sizeof(uint16_t) + sizeof(uint32_t) + sizeof(uint16_t) + sizeof(uint16_t))
 //
 // Arrange for a fixup on a location
 //
-int AddFixup(WORD attr, LONG loc, TOKEN * fexpr)
+int AddFixup(uint16_t attr, uint32_t loc, TOKEN * fexpr)
 {
-	LONG i;
-	LONG len = 0;
+	uint32_t i;
+	uint32_t len = 0;
 	CHUNK * cp;
 	SECT * p;
 	// Shamus: Expression lengths are voodoo ATM (variable "i"). Need to fix
@@ -284,14 +280,14 @@ WARNING(!!! AddFixup() is filled with VOODOO !!!)
 	if (*fexpr == SYMBOL && fexpr[2] == ENDEXPR)
 	{
 		// Just a single symbol
-		// SCPCD : correct bit mask for attr (else other FU_xxx will match) 
+		// SCPCD : correct bit mask for attr (else other FU_xxx will match)
 		// NYAN !
 		if ((attr & FUMASKRISC) == FU_JR)
 		{
 //printf("AddFixup: ((attr & FUMASKRISC) == FU_JR)\n");
 //			i = 18;
-//			i = FIXUP_BASE_SIZE + (sizeof(LONG) * 2);
-			i = FIXUP_BASE_SIZE + sizeof(SYM *) + sizeof(LONG);
+//			i = FIXUP_BASE_SIZE + (sizeof(uint32_t) * 2);
+			i = FIXUP_BASE_SIZE + sizeof(SYM *) + sizeof(uint32_t);
 		}
 		else
 		{
@@ -311,9 +307,9 @@ WARNING(!!! AddFixup() is filled with VOODOO !!!)
 				len++;
 		}
 
-		len++;								// Add 1 for ENDEXPR 
+		len++;								// Add 1 for ENDEXPR
 //		i = (len << 2) + 12;
-		i = FIXUP_BASE_SIZE + sizeof(WORD) + (len * sizeof(TOKEN));
+		i = FIXUP_BASE_SIZE + sizeof(uint16_t) + (len * sizeof(TOKEN));
 	}
 
 	// Alloc another fixup chunk for this one to fit in if necessary
@@ -340,7 +336,7 @@ WARNING(!!! AddFixup() is filled with VOODOO !!!)
 		cp->chnext = NULL;
 		fchalloc = cp->challoc = CH_FIXUP_SIZE;
 		fchsize = cp->ch_size = 0;
-		fchptr.cp = cp->chptr = ((char *)cp) + sizeof(CHUNK);
+		fchptr.cp = cp->chptr = ((uint8_t *)cp) + sizeof(CHUNK);
 		sfix = p->sfix = cp;
 	}
 
@@ -349,20 +345,19 @@ WARNING(!!! AddFixup() is filled with VOODOO !!!)
 	*fchptr.wp++ = attr;
 	*fchptr.lp++ = loc;
 	*fchptr.wp++ = cfileno;
-	*fchptr.wp++ = (WORD)curlineno;
+	*fchptr.wp++ = (uint16_t)curlineno;
 
 	// Store postfix expression or pointer to a single symbol, or nothing for a
 	// mark.
 	if (attr & FU_EXPR)
 	{
-		*fchptr.wp++ = (WORD)len;
+		*fchptr.wp++ = (uint16_t)len;
 
 		while (len--)
-			*fchptr.lp++ = (LONG)*fexpr++;
+			*fchptr.lp++ = (uint32_t)*fexpr++;
 	}
 	else
 	{
-//		*fchptr.lp++ = (LONG)fexpr[1];
 		*fchptr.sy++ = symbolPtr[fexpr[1]];
 //printf("AddFixup: adding symbol (%s) [%08X]\n", symbolPtr[fexpr[1]]->sname, symbolPtr[fexpr[1]]->sattr);
 	}
@@ -387,24 +382,20 @@ WARNING(!!! AddFixup() is filled with VOODOO !!!)
 int ResolveFixups(int sno)
 {
 	PTR fup;				// Current fixup
-	WORD * fuend;			// End of last fixup (in this chunk)
-	WORD w;					// Fixup word (type+modes+flags)
-	char * locp;			// Location to fix (in cached chunk) 
-	LONG loc;				// Location to fixup
-	VALUE eval;				// Expression value 
-	WORD eattr;				// Expression attrib
+	uint16_t * fuend;		// End of last fixup (in this chunk)
+	uint16_t w;				// Fixup word (type+modes+flags)
+	uint8_t * locp;			// Location to fix (in cached chunk)
+	uint32_t loc;			// Location to fixup
+	VALUE eval;				// Expression value
+	uint16_t eattr;			// Expression attrib
 	SYM * esym;				// External symbol involved in expr
 	SYM * sy;				// (Temp) pointer to a symbol
-	WORD i;					// (Temp) word
-	WORD tdb;				// eattr & TDB
-	LONG oaddr;
+	uint16_t i;				// (Temp) word
+	uint16_t tdb;			// eattr & TDB
+	uint32_t oaddr;
 	int reg2;
-	WORD flags;
-	unsigned page_jump = 0;
-	unsigned address = 0;
-	//unsigned j;
-	//char buf[EBUFSIZ];
-	
+	uint16_t flags;
+
 	SECT * sc = &sect[sno];
 	CHUNK * ch = sc->sffix;
 
@@ -421,7 +412,7 @@ int ResolveFixups(int sno)
 	do
 	{
 		fup.cp = ch->chptr;					// fup -> start of chunk
-		fuend = (WORD *)(fup.cp + ch->ch_size);	// fuend -> end of chunk
+		fuend = (uint16_t *)(fup.cp + ch->ch_size);	// fuend -> end of chunk
 
 		while (fup.wp < fuend)
 		{
@@ -429,16 +420,18 @@ int ResolveFixups(int sno)
 			loc = *fup.lp++;
 			cfileno = *fup.wp++;
 			curlineno = (int)*fup.wp++;
-DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
+			DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
+
 			// This is based on global vars cfileno, curfname :-P
-			// This approach is kinda meh as well. I think we can do better than this.
+			// This approach is kinda meh as well. I think we can do better
+			// than this.
 			SetFilenameForErrorReporting();
 
 			esym = NULL;
 
 			// Search for chunk containing location to fix up; compute a
 			// pointer to the location (in the chunk). Often we will find the
-			// fixup is in the "cached" chunk, so the linear-search is seldom
+			// Fixup is in the "cached" chunk, so the linear-search is seldom
 			// executed.
 			if (loc < cch->chloc || loc >= (cch->chloc + cch->ch_size))
 			{
@@ -450,7 +443,7 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 
 				if (cch == NULL)
 				{
-					// Fixup (loc) out of range 
+					// Fixup (loc) out of range
 					interror(7);
 					// NOTREACHED
 				}
@@ -460,6 +453,7 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 			eattr = 0;
 
 			// Compute expression/symbol value and attribs
+
 			// Complex expression
 			if (w & FU_EXPR)
 			{
@@ -484,39 +478,31 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 				else
 					eval = 0;
 
+				// If the symbol is not defined, but global, set esym to sy
 				if ((eattr & (GLOBAL | DEFINED)) == GLOBAL)
 					esym = sy;
 			}
 
-			tdb = (WORD)(eattr & TDB);
+			tdb = (uint16_t)(eattr & TDB);
 
 			// If the expression is undefined and no external symbol is
-			// involved, then it's an error.
+			// involved, then that's an error.
 			if (!(eattr & DEFINED) && (esym == NULL))
 			{
 				error(undef_error);
 				continue;
 			}
 
-// It seems that this is completely unnecessary!
-#if 0
-			if (((w & FUMASKRISC) == FU_MOVEI) && esym)
-//{
-//printf("DoFixups: Setting symbol attre to RISCSYM...\n");
-				esym->sattre |= RISCSYM;
-//}
-#endif
-
 			// Do the fixup
-			// 
+			//
 			// If a PC-relative fixup is undefined, its value is *not*
 			// subtracted from the location (that will happen in the linker
 			// when the external reference is resolved).
-			// 
+			//
 			// MWC expects PC-relative things to have the LOC subtracted from
 			// the value, if the value is external (that is, undefined at this
 			// point).
-			// 
+			//
 			// PC-relative fixups must be DEFINED and either in the same
 			// section (whereupon the subtraction takes place) or ABS (with no
 			// subtract).
@@ -556,7 +542,7 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 				eval -= 2;
 
 				if (eval + 0x80 >= 0x100)
-					goto range;
+					goto rangeErr;
 
 				if (eval == 0)
 				{
@@ -564,7 +550,7 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 					continue;
 				}
 
-				*++locp = (char)eval;
+				*++locp = (uint8_t)eval;
 				break;
 			// Fixup one-byte value at locp + 1.
 			case FU_WBYTE:
@@ -585,23 +571,23 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 				}
 
 				if ((w & FU_PCREL) && eval + 0x80 >= 0x100)
-					goto range;
+					goto rangeErr;
 
 				if (w & FU_SEXT)
 				{
 					if (eval + 0x100 >= 0x200)
-						goto range;
+						goto rangeErr;
 				}
 				else if (eval >= 0x100)
-					goto range;
+					goto rangeErr;
 
-				*locp = (char)eval;
+				*locp = (uint8_t)eval;
 				break;
-			// Fixup WORD forward references; 
+			// Fixup WORD forward references;
 			// the word could be unaligned in the section buffer, so we have to
 			// be careful.
 			case FU_WORD:
-				if ((w & FUMASKRISC) == FU_JR)// || ((w & 0x0F00) == FU_MJR))
+				if ((w & FUMASKRISC) == FU_JR)
 				{
 					oaddr = *fup.lp++;
 
@@ -616,9 +602,9 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 						break;
 					}
 
-					*locp = (char)(*locp | ((reg2 >> 3) & 0x03));
+					*locp = (uint8_t)(*locp | ((reg2 >> 3) & 0x03));
 					locp++;
-					*locp = (char)(*locp | ((reg2 & 0x07) << 5));
+					*locp = (uint8_t)(*locp | ((reg2 & 0x07) << 5));
 					break;
 				}
 
@@ -630,9 +616,9 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 						break;
 					}
 
-					*locp = (char)(*locp | ((eval >> 3) & 0x03));
+					*locp = (uint8_t)(*locp | ((eval >> 3) & 0x03));
 					locp++;
-					*locp = (char)(*locp | ((eval & 0x07) << 5));
+					*locp = (uint8_t)(*locp | ((eval & 0x07) << 5));
 					break;
 				}
 
@@ -644,9 +630,9 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 						break;
 					}
 
-					*locp = (char)(*locp | ((eval >> 3) & 0x03));
+					*locp = (uint8_t)(*locp | ((eval >> 3) & 0x03));
 					locp++;
-					*locp = (char)(*locp | ((eval & 0x07) << 5));
+					*locp = (uint8_t)(*locp | ((eval & 0x07) << 5));
 					break;
 				}
 
@@ -662,9 +648,9 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 						eval = (32 - eval);
 
 					eval = (eval == 32) ? 0 : eval;
-					*locp = (char)(*locp | ((eval >> 3) & 0x03));
+					*locp = (uint8_t)(*locp | ((eval >> 3) & 0x03));
 					locp++;
-					*locp = (char)(*locp | ((eval & 0x07) << 5));
+					*locp = (uint8_t)(*locp | ((eval & 0x07) << 5));
 					break;
 				}
 
@@ -676,9 +662,9 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 						break;
 					}
 
-					*locp = (char)(*locp | ((eval >> 3) & 0x03));
+					*locp = (uint8_t)(*locp | ((eval >> 3) & 0x03));
 					locp++;
-					*locp = (char)(*locp | ((eval & 0x07) << 5));
+					*locp = (uint8_t)(*locp | ((eval & 0x07) << 5));
 					break;
 				}
 
@@ -691,28 +677,28 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 					}
 
 					locp++;
-					*locp = (char)(*locp | (eval & 0x1F));
+					*locp = (uint8_t)(*locp | (eval & 0x1F));
 					break;
 				}
 
 				if (!(eattr & DEFINED))
 				{
-					if (w & FU_PCREL)
-						w = MPCREL | MWORD;
-					else
-						w = MWORD;
+					flags = MWORD;
 
-					rmark(sno, loc, 0, w, esym);
+					if (w & FU_PCREL)
+						flags |= MPCREL;
+
+					MarkRelocatable(sno, loc, 0, flags, esym);
 				}
 				else
 				{
 					if (tdb)
-						rmark(sno, loc, tdb, MWORD, NULL);
+						MarkRelocatable(sno, loc, tdb, MWORD, NULL);
 
 					if (w & FU_SEXT)
 					{
 						if (eval + 0x10000 >= 0x20000)
-							goto range;
+							goto rangeErr;
 					}
 					else
 					{
@@ -720,50 +706,40 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 						if (w & FU_ISBRA)
 						{
 							if (eval + 0x8000 >= 0x10000)
-							goto range;
+							goto rangeErr;
 						}
 						else if (eval >= 0x10000)
-							goto range;
+							goto rangeErr;
 					}
 				}
 
-				*locp++ = (char)(eval >> 8);
-				*locp = (char)eval;
+				SETBE16(locp, 0, eval);
 				break;
 			// Fixup LONG forward references;
 			// the long could be unaligned in the section buffer, so be careful
 			// (again).
 			case FU_LONG:
+				flags = MLONG;
+
 				if ((w & FUMASKRISC) == FU_MOVEI)
 				{
 					// Long constant in MOVEI # is word-swapped, so fix it here
-					eval = ((eval >> 16) & 0x0000FFFF) | ((eval << 16) & 0xFFFF0000);
-					flags = (MLONG | MMOVEI);
+					eval = WORDSWAP32(eval);
+					flags |= MMOVEI;
 				}
-				else
-					flags = MLONG;
 
+				// If the symbol is undefined, make sure to pass the symbol in
+				// to the MarkRelocatable() function.
 				if (!(eattr & DEFINED))
-				{
-//printf("Fixup (long): Symbol undefined. loc = $%X, long = $%X, flags = $%x\n", loc, eval, flags);
-					rmark(sno, loc, 0, flags, esym);
-				}
+					MarkRelocatable(sno, loc, 0, flags, esym);
 				else if (tdb)
-				{
-//printf("Fixup (long): TDB = $%X. loc =$%X, long = $%X, flags = $%x\n", tdb, loc, eval, flags);
-					rmark(sno, loc, tdb, flags, NULL);
-				}
-//else
-//printf("Fixup (long): TDB = $%X. loc =$%X, long = $%X, flags = $%x\n", tdb, loc, eval, flags);
+					MarkRelocatable(sno, loc, tdb, flags, NULL);
 
-				*locp++ = (char)(eval >> 24);
-				*locp++ = (char)(eval >> 16);
-				*locp++ = (char)(eval >> 8);
-				*locp = (char)eval;
+				SETBE32(locp, 0, eval);
 				break;
 
 			// Fixup a 3-bit "QUICK" reference in bits 9..1
-			// (range of 1..8) in a word.  Really bits 1..3 in a byte.
+			// (range of 1..8) in a word. Really bits 1..3 in a byte.
 			case FU_QUICK:
 				if (!(eattr & DEFINED))
 				{
@@ -772,7 +748,7 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 				}
 
 				if (eval < 1 || eval > 8)
-					goto range;
+					goto rangeErr;
 
 				*locp |= (eval & 7) << 1;
 				break;
@@ -782,9 +758,9 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 				eval -= (loc + 1);
 
 				if (eval + 0x80 >= 0x100)
-					goto range;
+					goto rangeErr;
 
-				*locp = (char)eval;
+				*locp = (uint8_t)eval;
 				break;
 
 			default:
@@ -793,7 +769,7 @@ DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 				// NOTREACHED
 			}
 			continue;
-range:
+rangeErr:
 			error("expression out of range");
 		}
 
@@ -809,9 +785,6 @@ range:
 //
 int ResolveAllFixups(void)
 {
-	//unsigned i;
-	//char buf[EBUFSIZ];
-
 	// Make undefined symbols GLOBL
 	if (glob_flag)
 		ForceUndefinedSymbolsGlobal();
@@ -823,5 +796,4 @@ int ResolveAllFixups(void)
 
 	return 0;
 }
-
 

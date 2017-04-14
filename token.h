@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // TOKEN.H - Token Handling
-// Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2017 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -43,17 +43,17 @@
 #define SET             149					// Set
 #define REG             'R'					// Reg
 #define DCOLON          'h'					// ::
-#define GE              'i'					// >= 
-#define LE              'j'					// <= 
-#define NE              'k'					// <> or != 
-#define SHR             'l'					// >> 
-#define SHL             'm'					// << 
-#define UNMINUS         'n'					// Unary '-' 
-#define DOTB            'B'					// .b or .B or .s or .S 
-#define DOTW            'W'					// .w or .W 
-#define DOTL            'L'					// .l or .L 
-#define DOTI            'I'					// .l or .L 
-#define ENDEXPR         'E'					// End of expression 
+#define GE              'i'					// >=
+#define LE              'j'					// <=
+#define NE              'k'					// <> or !=
+#define SHR             'l'					// >>
+#define SHL             'm'					// <<
+#define UNMINUS         'n'					// Unary '-'
+#define DOTB            'B'					// .b or .B or .s or .S
+#define DOTW            'W'					// .w or .W
+#define DOTL            'L'					// .l or .L
+#define DOTI            'I'					// .l or .L
+#define ENDEXPR         'E'					// End of expression
 
 // ^^ operators
 #define CR_DEFINED      'p'					// ^^defined - is symbol defined?
@@ -104,7 +104,7 @@ IFILE {
 	char * ifoldfname;		// Old file's name
 	int ifoldlineno;		// Old line number
 	int ifind;				// Position in file buffer
-	int ifcnt;				// #chars left in file buffer 
+	int ifcnt;				// #chars left in file buffer
 	int ifhandle;			// File's descriptor
 	WORD ifno;				// File number
 	char ifbuf[LNBUFSIZ];	// Line buffer
@@ -137,7 +137,7 @@ IREPT {
 	VALUE ir_count;			// Repeat count (decrements)
 };
 
-// Globals, externals etc
+// Exported variables
 extern int lnsave;
 extern int curlineno;
 extern char * curfname;
@@ -153,7 +153,7 @@ extern LONG sloc;
 extern int mjump_align;
 extern char * string[];
 
-// Prototypes
+// Exported functions
 int include(int, char *);
 void InitTokenizer(void);
 void SetFilenameForErrorReporting(void);

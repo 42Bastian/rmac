@@ -7,29 +7,31 @@
 //
 
 #include "symbol.h"
-#include "listing.h"
-#include "procln.h"
 #include "error.h"
+#include "listing.h"
+#include "object.h"
+#include "procln.h"
 
 
 // Macros
-#define NBUCKETS 256					// Number of hash buckets (power of 2)
+#define NBUCKETS 256				// Number of hash buckets (power of 2)
 
-static SYM * symbolTable[NBUCKETS];		// User symbol-table header
-int curenv;								// Current enviroment number
-static SYM * sorder;					// * -> Symbols, in order of reference
-static SYM * sordtail;					// * -> Last symbol in sorder list
-static SYM * sdecl;						// * -> Symbols, in order of declaration
-static SYM * sdecltail;					// * -> Last symbol in sdecl list
-static uint32_t currentUID;				// Symbol UID tracking (done by NewSymbol())
+static SYM * symbolTable[NBUCKETS];	// User symbol-table header
+int curenv;							// Current enviroment number
+static SYM * sorder;				// * -> Symbols, in order of reference
+static SYM * sordtail;				// * -> Last symbol in sorder list
+static SYM * sdecl;					// * -> Symbols, in order of declaration
+static SYM * sdecltail;				// * -> Last symbol in sdecl list
+static uint32_t currentUID;			// Symbol UID tracking (done by NewSymbol())
+uint32_t firstglobal; // Index of the first global symbol in an ELF object.
 
-// Tags for marking symbol spaces
+// Tags for marking symbol spaces:
 // a = absolute
 // t = text
 // d = data
 // ! = "impossible!"
 // b = BSS
-static char tdb_text[8] = {
+static uint8_t tdb_text[8] = {
    'a', 't', 'd', '!', 'b', SPACE, SPACE, SPACE
 };
 
@@ -39,9 +41,7 @@ static char tdb_text[8] = {
 //
 void InitSymbolTable(void)
 {
-	int i;									// Iterator
-
-	for(i=0; i<NBUCKETS; i++)				// Initialise symbol hash table
+	for(int i=0; i<NBUCKETS; i++)			// Initialise symbol hash table
 		symbolTable[i] = NULL;
 
 	curenv = 1;								// Init local symbol enviroment
@@ -54,13 +54,13 @@ void InitSymbolTable(void)
 
 
 //
-// Hash the print name and enviroment number
+// Hash the ASCII name and enviroment number
 //
-int HashSymbol(char * name, int envno)
+int HashSymbol(uint8_t * name, int envno)
 {
-	int sum, k = 0;							// Hash calculation
+	int sum = envno, k = 0;
 
-	for(sum=envno; *name; name++)
+	for(; *name; name++)
 	{
 		if (k++ == 1)
 			sum += *name << 2;
@@ -73,9 +73,9 @@ int HashSymbol(char * name, int envno)
 
 
 //
-// Make a new symbol of type `type' in enviroment `envno'
+// Make a new symbol of type 'type' in enviroment 'envno'
 //
-SYM * NewSymbol(char * name, int type, int envno)
+SYM * NewSymbol(uint8_t * name, int type, int envno)
 {
 	// Allocate the symbol
 	SYM * symbol = malloc(sizeof(SYM));
@@ -88,27 +88,25 @@ SYM * NewSymbol(char * name, int type, int envno)
 
 	// Fill-in the symbol
 	symbol->sname  = strdup(name);
-	symbol->stype  = (BYTE)type;
-	symbol->senv   = (WORD)envno;
+	symbol->stype  = (uint8_t)type;
+	symbol->senv   = (uint16_t)envno;
+	// We don't set this as DEFINED, as it could be a forward reference!
 	symbol->sattr  = 0;
-	// Don't do this, it could be a forward reference!
-//	symbol->sattr  = DEFINED;		// We just defined it...
-	// This is a bad assumption. Not every symbol 1st seen in a RISC section is
-	// a RISC symbol!
-//	symbol->sattre = (rgpu || rdsp ? RISCSYM : 0);
+	// We don't set RISCSYM here as not every symbol first seen in a RISC
+	// section is a RISC symbol!
 	symbol->sattre = 0;
 	symbol->svalue = 0;
 	symbol->sorder = NULL;
 	symbol->uid    = currentUID++;
 
-	// Install symbol in symbol table
+	// Install symbol in the symbol table
 	int hash = HashSymbol(name, envno);
 	symbol->snext = symbolTable[hash];
 	symbolTable[hash] = symbol;
 
-	// Append symbol to symbol-order list
+	// Append symbol to the symbol-order list
 	if (sorder == NULL)
-		sorder = symbol;					// Add first symbol 
+		sorder = symbol;					// Add first symbol
 	else
 		sordtail->sorder = symbol;			// Or append to tail of list
 
@@ -121,7 +119,7 @@ SYM * NewSymbol(char * name, int type, int envno)
 // Look up the symbol name by its UID and return the pointer to the name.
 // If it's not found, return NULL.
 //
-char * GetSymbolNameByUID(uint32_t uid)
+uint8_t * GetSymbolNameByUID(uint32_t uid)
 {
 	//problem is with string lookup, that's why we're writing this
 	//so once this is written, we can put the uid in the token stream
@@ -143,10 +141,10 @@ char * GetSymbolNameByUID(uint32_t uid)
 
 
 //
-// Lookup the symbol `name', of the specified type, with the specified
+// Lookup the symbol 'name', of the specified type, with the specified
 // enviroment level
 //
-SYM * lookup(char * name, int type, int envno)
+SYM * lookup(uint8_t * name, int type, int envno)
 {
 	SYM * symbol = symbolTable[HashSymbol(name, envno)];
 
@@ -182,7 +180,7 @@ void AddToSymbolDeclarationList(SYM * symbol)
 
 	if (sdecl == NULL)
 		sdecl = symbol;				// First on decl-list
-	else 
+	else
 		sdecltail->sdecl = symbol;	// Add to end of list
 
 	// Fix up list's tail
@@ -200,8 +198,8 @@ void ForceUndefinedSymbolsGlobal(void)
 
 	DEBUG printf("~ForceUndefinedSymbolsGlobal()\n");
 
-	// Scan through all symbols;
-	// If a symbol is REFERENCED but not DEFINED, then make it global.
+	// Scan through all symbols; if a symbol is REFERENCED but not DEFINED,
+	// then make it global.
 	for(sy=sorder; sy!=NULL; sy=sy->sorder)
 	{
 		if (sy->stype == LABEL && sy->senv == 0
@@ -212,57 +210,42 @@ void ForceUndefinedSymbolsGlobal(void)
 
 
 //
-// Convert string to uppercase
-//
-int uc_string(char * s)
-{
-	for(; *s; s++)
-	{
-		if (*s >= 'a' && *s <= 'z')
-			*s -= 32;
-	}
-
-	return 0;
-}
-
-
-//
 // Assign numbers to symbols that are to be exported or imported. The symbol
-// number is put in `.senv'. Return the number of symbols that will be in the
+// number is put in 'senv'. Returns the number of symbols that will be in the
 // symbol table.
 //
-int sy_assign(char * buf, char *(* constr)())
+// N.B.: This is usually called twice; first time with NULL parameters and the
+//       second time with real ones. The first one is typically done to get a
+//       count of the # of symbols in the symbol table, and the second is to
+//       actually create it.
+//
+uint32_t sy_assign(uint8_t * buf, uint8_t *(* construct)())
 {
-	SYM * sy;
-	int scount = 0;
+	uint16_t scount = 0;
 
+	// Done only on first pass...
 	if (buf == NULL)
 	{
 		// Append all symbols not appearing on the .sdecl list to the end of
 		// the .sdecl list
-		for(sy=sorder; sy!=NULL; sy=sy->sorder)
+		for(SYM * sy=sorder; sy!=NULL; sy=sy->sorder)
 			AddToSymbolDeclarationList(sy);
 	}
 
 	// Run through all symbols (now on the .sdecl list) and assign numbers to
 	// them. We also pick which symbols should be global or not here.
-	for(sy=sdecl; sy!=NULL; sy=sy->sdecl)
+	for(SYM * sy=sdecl; sy!=NULL; sy=sy->sdecl)
 	{
-		// Don't want register/CC or undefined on our list
-//these should already be rejected above...
-//		if (sy->sattre & (EQUATEDREG | UNDEF_EQUR | EQUATEDCC | UNDEF_CC)))
-//			continue;
-
 		// Export or import external references, and export COMMON blocks.
 		if ((sy->stype == LABEL)
 			&& ((sy->sattr & (GLOBAL | DEFINED)) == (GLOBAL | DEFINED)
 			|| (sy->sattr & (GLOBAL | REFERENCED)) == (GLOBAL | REFERENCED))
 			|| (sy->sattr & COMMON))
 		{
-			sy->senv = (WORD)scount++;
+			sy->senv = scount++;
 
 			if (buf != NULL)
-				buf = (*constr)(buf, sy, 1);
+				buf = construct(buf, sy, 1);
 		}
 		// Export vanilla labels (but don't make them global). An exception is
 		// made for equates, which are not exported unless they are referenced.
@@ -270,10 +253,110 @@ int sy_assign(char * buf, char *(* constr)())
 			&& (sy->sattr & (DEFINED | REFERENCED)) != 0
 			&& (!as68_flag || *sy->sname != 'L'))
 		{
-			sy->senv = (WORD)scount++;
+			sy->senv = scount++;
 
 			if (buf != NULL)
-				buf = (*constr)(buf, sy, 0);
+				buf = construct(buf, sy, 0);
+		}
+	}
+
+	// For ELF object mode run through all symbols in reference order
+	// and export all global-referenced labels. Not sure if this is
+	// required but it's here nonetheless
+/* why?? when you have sy_assign_ELF ???
+	if (obj_format == ELF)
+	{
+		for(sy=sdecl; sy!=NULL; sy=sy->sorder)
+		{
+			if ((sy->sattr == (GLOBAL | REFERENCED)) && (buf != NULL))
+			{
+				buf = (*construct)(buf, sy, 0);
+				scount++;
+			}
+		}
+	}*/
+
+	return scount;
+}
+
+
+//
+// Custom version of sy_assign for ELF .o files.
+// The order that the symbols should be dumped is different.
+// (globals must be explicitly at the end of the table)
+//
+// N.B.: It should be possible to merge this with sy_assign, as there's nothing
+//       really ELF specific in here, other than the "globals go at the end of
+//       the queue" thing, which doesn't break the others. :-P
+uint32_t sy_assign_ELF(uint8_t * buf, uint8_t *(* construct)())
+{
+	uint16_t scount = 0;
+
+//	if (construct == (uint8_t *(*)())constr_elfsymtab)
+//	if (buf == NULL)
+	{
+		// Append all symbols not appearing on the .sdecl list to the end of
+		// the .sdecl list
+		for(SYM * sy=sorder; sy!=NULL; sy=sy->sorder)
+			AddToSymbolDeclarationList(sy);
+	}
+
+	// Run through all symbols (now on the .sdecl list) and assign numbers to
+	// them. We also pick which symbols should be global or not here.
+	for(SYM * sy=sdecl; sy!=NULL; sy=sy->sdecl)
+	{
+		// Export or import external references, and export COMMON blocks.
+		//if ((sy->stype == LABEL)
+		//	&& ((sy->sattr & (GLOBAL | DEFINED)) == (GLOBAL | DEFINED)
+		//	|| (sy->sattr & (GLOBAL | REFERENCED)) == (GLOBAL | REFERENCED))
+		//	|| (sy->sattr & COMMON))
+		//{
+		//	sy->senv = (WORD)scount++;
+        //
+		//	if (buf != NULL)
+		//		buf = (*construct)(buf, sy, 1);
+		//}
+		// Export vanilla labels (but don't make them global). An exception is
+		// made for equates, which are not exported unless they are referenced.
+		if (sy->stype == LABEL && lsym_flag
+			&& (sy->sattr & (DEFINED | REFERENCED)) != 0
+			&& (*sy->sname != '.')
+			&& (sy->sattr & GLOBAL) == 0)
+		//if (sy->stype == 0)
+		//	if (lsym_flag)
+		//		if ((sy->sattr & (DEFINED | REFERENCED)) != 0)
+		//			if ((!as68_flag || *sy->sname != 'L'))
+		{
+			sy->senv = scount++;
+
+			if (buf != NULL)
+				buf = construct(buf, sy, 0);
+		}
+	}
+
+	firstglobal = scount;
+
+	// For ELF object mode run through all symbols in reference order
+	// and export all global-referenced labels. Not sure if this is
+	// required but it's here nonetheless
+
+	//for(sy=sdecl; sy!=NULL; sy=sy->sorder)
+	for(SYM * sy=sdecl; sy!=NULL; sy=sy->sdecl)
+	{
+		if ((sy->stype == LABEL)
+			&& ((sy->sattr & (GLOBAL | DEFINED)) == (GLOBAL | DEFINED)
+			|| (sy->sattr & (GLOBAL | REFERENCED)) == (GLOBAL | REFERENCED))
+			|| (sy->sattr & COMMON))
+		{
+			sy->senv = scount++;
+
+			if (buf != NULL)
+				buf = construct(buf, sy, 1);
+		}
+		else if ((sy->sattr == (GLOBAL | REFERENCED)) &&  (buf != NULL))
+		{
+			buf = construct(buf, sy, 0);
+			scount++;
 		}
 	}
 
@@ -282,37 +365,47 @@ int sy_assign(char * buf, char *(* constr)())
 
 
 //
+// Convert string to uppercase
+//
+void ToUppercase(uint8_t * s)
+{
+	for(; *s; s++)
+	{
+		if (*s >= 'a' && *s <= 'z')
+			*s -= 0x20;
+	}
+}
+
+
+//
 // Generate symbol table for listing file
 //
 int symtable(void)
 {
+	extern int pagelen;
 	int i;
 	int j;
 	SYM * q = NULL;
 	SYM * p;
 	SYM * r;
 	SYM * k;
-	SYM ** sy;
 	SYM * colptr[4];
-	char ln[150];
-	char ln1[150];
+	char ln[200];
+	char ln1[200];
 	char ln2[20];
 	char c, c1;
 	WORD w;
 	int ww;
-	int colhei;
-	extern int pagelen;
+	int colhei = pagelen - 5;
 
-	colhei = pagelen - 5;
+	// Allocate storage for list headers and partition all labels. Throw away
+	// macros and macro arguments.
+	SYM ** sy = (SYM **)malloc(128 * sizeof(uint32_t));
 
-	// Allocate storage for list headers and partition all labels.  
-	// Throw away macros and macro arguments.
-	sy = (SYM **)malloc(128 * sizeof(LONG));
-
-	for(i=0; i<128; ++i)
+	for(i=0; i<128; i++)
 		sy[i] = NULL;
 
-	for(i=0; i<NBUCKETS; ++i)
+	for(i=0; i<NBUCKETS; i++)
 	{
 		for(p=symbolTable[i]; p!=NULL; p=k)
 		{
@@ -372,11 +465,11 @@ int symtable(void)
 
 	while (p != NULL)
 	{
-		for(i=0; i<4; ++i)
+		for(i=0; i<4; i++)
 		{
 			colptr[i] = p;
 
-			for(j=0; j<colhei; ++j)
+			for(j=0; j<colhei; j++)
 			{
 				if (p == NULL)
 					break;
@@ -385,14 +478,14 @@ int symtable(void)
 			}
 		}
 
-		for(i=0; i<colhei; ++i)
+		for(i=0; i<colhei; i++)
 		{
 			*ln = EOS;
 
 			if (colptr[0] == NULL)
 				break;
 
-			for(j=0; j<4; ++j)
+			for(j=0; j<4; j++)
 			{
 				if ((q = colptr[j]) == NULL)
 					break;
@@ -410,7 +503,7 @@ int symtable(void)
 
 				if (w & COMMON)
 					c = 'c';
-				else if ((w & (DEFINED|GLOBAL)) == GLOBAL)
+				else if ((w & (DEFINED | GLOBAL)) == GLOBAL)
 					c = 'x';
 				else if (w & GLOBAL)
 					c = 'g';
@@ -422,7 +515,7 @@ int symtable(void)
 				else
 				{
 					sprintf(ln2, "%08X", q->svalue);
-					uc_string(ln2);
+					ToUppercase(ln2);
 				}
 
 				sprintf(ln1, "  %16s %s %c%c%c", q->sname, ln2, (ww & EQUATEDREG) ? 'e' : SPACE, c1, c);

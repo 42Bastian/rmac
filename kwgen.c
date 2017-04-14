@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // KWGEN.C - Keyword & Mnemonic Definition and State Machine Creation Tool
-// Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2017 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -421,3 +421,4 @@ void panic(char * s)
 	fprintf(stderr, "Panic: %s\n", s);
 	exit(1);
 }
+

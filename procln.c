@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // PROCLN.C - Line Processing
-// Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2017 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -18,7 +18,7 @@
 #include "symbol.h"
 #include "riscasm.h"
 
-#define DEF_KW					// Declare keyword values 
+#define DEF_KW					// Declare keyword values
 #include "kwtab.h"				// Incl generated keyword tables & defs
 
 #define DEF_MN					// Incl 68k keyword definitions
@@ -34,8 +34,8 @@ IFENT * ifent;					// Current ifent
 static IFENT ifent0;			// Root ifent
 static IFENT * f_ifent;			// Freelist of ifents
 static int disabled;			// Assembly conditionally disabled
-int just_bss;					// 1, ds.b in microprocessor mode 
-VALUE pcloc;					// Value of "PC" at beginning of line 
+int just_bss;					// 1, ds.b in microprocessor mode
+VALUE pcloc;					// Value of "PC" at beginning of line
 SYM * lab_sym;					// Label on line (or NULL)
 
 const char extra_stuff[] = "extra (unexpected) text found after addressing mode";
@@ -76,15 +76,15 @@ LONG amsktab[0112] = {
 	0L,												// 076
 	0L,												// 077
 	M_ABASE,										// 0100
-	M_MEMPOST,										// 0101 
-	M_MEMPRE,										// 0102 
+	M_MEMPOST,										// 0101
+	M_MEMPRE,										// 0102
 	M_PCBASE,										// 0103
 	M_PCMPOST,										// 0104
 	M_PCMPRE,										// 0105
 	M_AM_USP,										// 0106
-	M_AM_SR,										// 0107 
+	M_AM_SR,										// 0107
 	M_AM_CCR,										// 0110
-	M_AM_NONE										// 0111 
+	M_AM_NONE										// 0111
 };													// 0112 length
 
 
@@ -251,7 +251,7 @@ as68label:
 	// Check for ".b" ".w" ".l" after directive, macro or mnemonic.
 	siz = SIZN;
 
-	if (*tok == DOTW) 
+	if (*tok == DOTW)
 		siz = SIZW, tok++;
 	else if (*tok == DOTL)
 		siz = SIZL, tok++;
@@ -368,8 +368,8 @@ normal:
 		{
 			if ((equtyp == EQUREG) && (sy->sattre & UNDEF_EQUR))
 			{
-//REALLY?				sy->sattre |= ~UNDEF_EQUR; 
-				sy->sattre &= ~UNDEF_EQUR; 
+//REALLY?				sy->sattre |= ~UNDEF_EQUR;
+				sy->sattre &= ~UNDEF_EQUR;
 				sy->svalue = 0;
 			}
 			else if ((equtyp == CCDEF) && (sy->sattre & UNDEF_CC))
@@ -602,7 +602,7 @@ When checking to see if it's already been equated, issue a warning.
 	// Invoke macro or complain about bad mnemonic
 	if (state < 0)
 	{
-		if ((sy = lookup(opname, MACRO, 0)) != NULL) 
+		if ((sy = lookup(opname, MACRO, 0)) != NULL)
 			InvokeMacro(sy, siz);
 		else
 			errors("unknown op '%s'", opname);
@@ -727,7 +727,7 @@ int HandleLabel(char * label, int labelType)
 }
 
 
-// 
+//
 // .if, Start conditional assembly
 //
 int d_if(void)
@@ -762,7 +762,7 @@ int d_if(void)
 }
 
 
-// 
+//
 // .else, Do alternate case for .if
 //
 int d_else(void)

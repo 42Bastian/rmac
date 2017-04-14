@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // RMAC.H - Main Application Code
-// Copyright (C) 199x Landon Dyer, 2011 Reboot & Friends
+// Copyright (C) 199x Landon Dyer, 2017 Reboot & Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -26,7 +26,7 @@
 	#define PLATFORM        "Win32"
 	#define _OPEN_FLAGS     _O_TRUNC|_O_CREAT|_O_BINARY|_O_RDWR
 	#define _OPEN_INC       _O_RDONLY|_O_BINARY
-	#define _PERM_MODE      _S_IREAD|_S_IWRITE 
+	#define _PERM_MODE      _S_IREAD|_S_IWRITE
 	#ifdef _MSC_VER
 		#if _MSC_VER > 1000
 			#pragma warning(disable:4996)
@@ -36,6 +36,7 @@
 	#define STRINGIZE_HELPER(x) #x
 	#define STRINGIZE(x) STRINGIZE_HELPER(x)
 	#define WARNING(desc) __pragma(message(__FILE__ "(" STRINGIZE(__LINE__) ") : Warning: " #desc))
+	#define inline __inline
 
 	// usage:
 	// WARNING(FIXME: Code removed because...)
@@ -48,15 +49,20 @@
 	// for the fireworks!
 	#define DO_PRAGMA(x) _Pragma (#x)
 	#define WARNING(desc) DO_PRAGMA(message (#desc))
-	#define inline __inline
 
 	#endif
 
-#else 
+#else
+
 	#ifdef __GCCUNIX__
+	#ifdef __MINGW32__
+	#define off64_t long
+	#define off_t long
+	#endif
+
 	#include <sys/fcntl.h>
 	#include <unistd.h>
-	// Release platform - mac OS-X or linux
+	// Release platform - mac OS-X or Linux
 	#define PLATFORM        "OSX/Linux"
 	#define _OPEN_FLAGS     O_TRUNC|O_CREAT|O_RDWR
 	#define _OPEN_INC       O_RDONLY
@@ -65,7 +71,7 @@
 	#define DO_PRAGMA(x) _Pragma (#x)
 	#define WARNING(desc) DO_PRAGMA(message (#desc))
 #else
-	// Release platform - not specified 
+	// Release platform - not specified
 	#include <sys/fcntl.h>
 	#define PLATFORM        "Unknown"
 	#define _OPEN_FLAGS     O_TRUNC|O_CREAT|O_RDWR
@@ -76,6 +82,49 @@
 	#define WARNING(desc) DO_PRAGMA(message (#desc))
 	#endif
 #endif
+
+//
+// Endian related, for safe handling of endian-sensitive data
+// USAGE: GETBExx() is *always* an rvalue, a = pointer to a uint8_t,
+//        r = offset from 0. SETBExx(), v = value to write into 'a'
+//
+#define GETBE16(a, r) \
+	(((uint16_t)(a)[(r + 0)] << 8) | ((uint16_t)(a)[(r + 1)]))
+
+#define GETBE32(a, r) \
+	(((uint32_t)(a)[(r + 0)] << 24) | ((uint32_t)(a)[(r + 1)] << 16) \
+	| ((uint32_t)(a)[(r + 2)] << 8) | ((uint32_t)(a)[(r + 3)]))
+
+#define GETBE64(a, r) \
+	(((uint64_t)(a)[(r + 0)] << 56) | ((uint64_t)(a)[(r + 1)] << 48) \
+	| ((uint64_t)(a)[(r + 2)] << 40) | ((uint64_t)(a)[(r + 3)] << 32) \
+	| ((uint64_t)(a)[(r + 4)] << 24) | ((uint64_t)(a)[(r + 5)] << 16) \
+	| ((uint64_t)(a)[(r + 6)] << 8) | ((uint64_t)(a)[(r + 7)]))
+
+#define SETBE16(a, r, v) \
+	{ (a)[(r + 0)] = (uint8_t)((v) >> 8); \
+	(a)[(r + 1)] = (uint8_t)((v) & 0xFF); }
+
+#define SETBE32(a, r, v) \
+	{ (a)[(r + 0)] = (uint8_t)((v) >> 24); \
+	(a)[(r + 1)] = (uint8_t)(((v) >> 16) & 0xFF); \
+	(a)[(r + 2)] = (uint8_t)(((v) >> 8) & 0xFF); \
+	(a)[(r + 3)] = (uint8_t)((v) & 0xFF); }
+
+#define SETBE64(a, r, v) \
+	{ (a)[(r + 0)] = (uint8_t)((v) >> 56); \
+	(a)[(r + 1)] = (uint8_t)(((v) >> 48) & 0xFF); \
+	(a)[(r + 2)] = (uint8_t)(((v) >> 40) & 0xFF); \
+	(a)[(r + 3)] = (uint8_t)(((v) >> 32) & 0xFF); \
+	(a)[(r + 4)] = (uint8_t)(((v) >> 24) & 0xFF); \
+	(a)[(r + 5)] = (uint8_t)(((v) >> 16) & 0xFF); \
+	(a)[(r + 6)] = (uint8_t)(((v) >> 8) & 0xFF); \
+	(a)[(r + 7)] = (uint8_t)((v) & 0xFF); }
+
+// Byteswap crap
+#define BYTESWAP16(x) ((((x) & 0x00FF) << 8) | (((x) & 0xFF00) >> 8))
+#define BYTESWAP32(x) ((((x) & 0x000000FF) << 24) | (((x) & 0x0000FF00) << 8) | (((x) & 0x00FF0000) >> 8) | (((x) & 0xFF000000) >> 24))
+#define WORDSWAP32(x) ((((x) & 0x0000FFFF) << 16) | (((x) & 0xFFFF0000) >> 16))
 
 //
 // Non-target specific stuff
@@ -90,7 +139,7 @@
 
 #define ERROR        (-1)			// Generic error return
 #define EOS          '\0'			// End of string
-#define SPACE        ' '			// ASCII space 
+#define SPACE        ' '			// ASCII space
 #define SLASHCHAR    '/'
 #define SLASHSTRING  "/"
 #define VALUE        LONG			// Assembler value
@@ -133,15 +182,16 @@
 #define ALCYON       0				// Alcyon/DRI C object format
 #define MWC          1				// Mark Williams object format
 #define BSD          2				// BSD object format
+#define ELF          3				// ELF object format
 
 // Pointer type that can point to (almost) anything
 #define PTR union _ptr
 PTR
 {
-   char * cp;						// Char
-   WORD * wp;						// WORD
-   LONG * lp;						// LONG
-   LONG lw;							// LONG
+   uint8_t * cp;					// Char
+   uint16_t * wp;					// WORD
+   uint32_t * lp;					// LONG
+   uint32_t lw;						// LONG
    SYM ** sy;						// SYM
    TOKEN * tk;						// TOKEN
 };
@@ -168,10 +218,10 @@ PTR
 //#define M6502        0x0008		// 6502/microprocessor (absolute)
 #define TDB          (TEXT|DATA|BSS)	// Mask for text+data+bss
 
-// Sizes 
-#define SIZB         0x0001			// .b 
-#define SIZW         0x0002			// .w 
-#define SIZL         0x0004			// .l 
+// Sizes
+#define SIZB         0x0001			// .b
+#define SIZW         0x0002			// .w
+#define SIZL         0x0004			// .l
 #define SIZN         0x0008			// no .(size) specifier
 
 // RISC register bank definitions (used in extended symbol attributes also)
@@ -188,10 +238,10 @@ PTR
 // Optimisation defines
 enum
 {
-	OPT_ABS_SHORT       = 0,
-	OPT_MOVEL_MOVEQ     = 1,
-	OPT_BSR_BCC_S       = 2,
-	OPT_INDIRECT_DISP   = 3,
+	OPT_ABS_SHORT     = 0,
+	OPT_MOVEL_MOVEQ   = 1,
+	OPT_BSR_BCC_S     = 2,
+	OPT_INDIRECT_DISP = 3,
 	OPT_COUNT   // Dummy, used to count number of optimisation switches
 };
 
@@ -211,6 +261,7 @@ extern int lsym_flag;
 extern int sbra_flag;
 extern int obj_format;
 extern int legacy_flag;
+extern int prg_flag;	// 1 = write ".PRG" relocatable executable
 extern LONG PRGFLAGS;
 extern int optim_flags[OPT_COUNT];
 

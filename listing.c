@@ -21,21 +21,21 @@
 #include "error.h"
 
 char * list_fname;					// Listing filename
-char subttl[TITLESIZ];				// Current subtitle
-int listing;						// Listing level 
+uint8_t subttl[TITLESIZ];			// Current subtitle
+int listing;						// Listing level
 int pagelen = 61;					// Lines on a page
 int nlines;							// #lines on page so far
-LONG lsloc;							// `sloc' at start of line 
+LONG lsloc;							// `sloc' at start of line
 
 // Private
 static int lcursect;				// `cursect' at start of line
-static int llineno;					// `curlineno' at start of line 
-static int pageno;					// Current page number 
+static int llineno;					// `curlineno' at start of line
+static int pageno;					// Current page number
 static int pagewidth;				// #columns on a page
 static int subflag;					// 0, don't do .eject on subttl (set 1)
 static char lnimage[IMAGESIZ];		// Image of output line
 static char title[TITLESIZ];		// Current title
-static char datestr[20];			// Current date dd-mon-yyyy 
+static char datestr[20];			// Current date dd-mon-yyyy
 static char timestr[20];			// Current time hh:mm:ss [am|pm]
 static char buf[IMAGESIZ];			// Buffer for numbers
 static long unused;					// For supressing 'write' warnings
@@ -80,7 +80,7 @@ VALUE dos_date(void)
 }
 
 
-// 
+//
 // Return GEMDOS format time
 //
 VALUE dos_time(void)
@@ -160,7 +160,7 @@ void lnfill(char * dest, int len, char chr)
 }
 
 
-// 
+//
 // Create listing file with the appropriate name
 //
 void list_setup(void)
@@ -176,7 +176,7 @@ void list_setup(void)
 	}
 
 	list_fname = NULL;
-	
+
 	if ((list_fd = open(fnbuf, _OPEN_FLAGS, _PERM_MODE)) < 0)
 		cantcreat(fnbuf);
 }
@@ -348,13 +348,13 @@ nochunk:
 				strcpy(buf, "xx");
 				p++;		// Advance anyway
 			}
-			else 
+			else
 				sprintf(buf, "%02x", *p++ & 0xff);
 
 			strncpy(lnimage + col, buf, 2);
 		}
 
-		// Flush partial line 
+		// Flush partial line
 		if (col > DATA_COL)
 		{
 			uc_ln(lnimage);
@@ -441,7 +441,7 @@ int d_subttl(void)
 
 	tok += 2;
 
-	// Always eject on pages 2+ 
+	// Always eject on pages 2+
 	if (ejectok && (subflag || pageno > 1))
 		eject();
 
@@ -459,7 +459,7 @@ int d_title(void)
 {
 	if (*tok != STRING)
 		return error("missing string");
-	
+
 //	strcpy(title, (char*)tok[1]);
 	strcpy(title, string[tok[1]]);
 	tok += 2;

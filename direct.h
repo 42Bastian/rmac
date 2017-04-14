@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // DIRECT.H - Directive Handling
-// Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2017 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -43,7 +43,7 @@ int ExitMacro(void);
 int d_list(void);
 int d_nlist(void);
 int d_title(void);
-int d_subttl(void);  
+int d_subttl(void);
 int eject(void);
 int d_error(char *);
 int d_warn(char *);

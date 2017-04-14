@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // AMODE.H - Addressing Modes
-// Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2017 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -39,7 +39,7 @@
 #define M_DREG       0x00000001L		// Dn
 #define M_AREG       0x00000002L		// An
 #define M_AIND       0x00000004L		// (An)
-#define M_APOSTINC   0x00000008L		// (An)+ 
+#define M_APOSTINC   0x00000008L		// (An)+
 #define M_APREDEC    0x00000010L		// -(An)
 #define M_ADISP      0x00000020L		// (d16,An) d16(An)
 #define M_AINDEXED   0x00000040L		// (d8,An,Xn) d8(An,Xn)

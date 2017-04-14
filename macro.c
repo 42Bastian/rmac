@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // MACRO.C - Macro Definition and Invocation
-// Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2017 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -17,20 +17,18 @@
 #include "token.h"
 
 
-LONG curuniq;								// Current macro's unique number
-//TOKEN ** argp;								// Free spot in argptrs[]
-int macnum;									// Unique number for macro definition
-TOKEN * argPtrs[128];						// 128 arguments ought to be enough for anyone
+LONG curuniq;				// Current macro's unique number
+int macnum;					// Unique number for macro definition
+TOKEN * argPtrs[128];		// 128 arguments ought to be enough for anyone
 static int argp;
 
-static LONG macuniq;						// Unique-per-macro number
-static SYM * curmac;						// Macro currently being defined
-//static char ** curmln;						// Previous macro line (or NULL)
-static VALUE argno;							// Formal argument count 
+static LONG macuniq;		// Unique-per-macro number
+static SYM * curmac;		// Macro currently being defined
+static VALUE argno;			// Formal argument count
 
-static LONG * firstrpt;						// First .rept line 
-static LONG * nextrpt;						// Last .rept line 
-static int rptlevel;						// .rept nesting level 
+static LONG * firstrpt;		// First .rept line
+static LONG * nextrpt;		// Last .rept line
+static int rptlevel;		// .rept nesting level
 
 
 //
@@ -150,7 +148,7 @@ features of the language. Seems like we can do better here.
 			*curmln = p.cp;
 
 		curmln = (char **)p.cp;
-		return 1;							// Keep looking 
+		return 1;							// Keep looking
 #else
 		if (curmac->lineList == NULL)
 		{
@@ -239,11 +237,11 @@ int defr1(char * ln, int kwno)
 
 	switch (kwno)
 	{
-	case 0:										// .endr 
+	case 0:										// .endr
 		if (--rptlevel == 0)
 		return(0);
 		goto addln;
-	case 1:										// .rept 
+	case 1:										// .rept
 		rptlevel++;
 	default:
 //MORE stupidity here...
@@ -256,7 +254,7 @@ WARNING(!!! Casting (char *) as LONG !!!)
 		*p = 0;
 
 		strcpy((char *)(p + 1), ln);
-		
+
 		if (nextrpt == NULL)
 		{
 			firstrpt = p;           // First line of rept statement
@@ -310,14 +308,14 @@ int defrept(void)
 // Hand off lines of text to the function `lnfunc' until a line containing one
 // of the directives in `dirlist' is encountered. Return the number of the
 // keyword encountered (0..n)
-// 
+//
 // `dirlist' contains null-seperated terminated keywords.  A final null
 // terminates the list. Directives are compared to the keywords without regard
 // to case.
-// 
+//
 // If `lnfunc' is NULL, then lines are simply skipped.
 // If `lnfunc' returns an error, processing is stopped.
-// 
+//
 // `lnfunc' is called with an argument of -1 for every line but the last one,
 // when it is called with an argument of the keyword number that caused the
 // match.
@@ -328,7 +326,7 @@ int lncatch(int (* lnfunc)(), char * dirlist)
 	int k;
 
 	if (lnfunc != NULL)
-		lnsave++;								// Tell tokenizer to keep lines 
+		lnsave++;								// Tell tokenizer to keep lines
 
 	for(;;)
 	{
@@ -359,7 +357,7 @@ int lncatch(int (* lnfunc)(), char * dirlist)
 
 		if (p != NULL)
 		{
-			if (*p == '.')						// ignore leading '.'s 
+			if (*p == '.')						// ignore leading '.'s
 				p++;
 
 			k = kwmatch(p, dirlist);
@@ -438,7 +436,7 @@ int InvokeMacro(SYM * mac, WORD siz)
 //	argp = 0;
 	DEBUG printf("InvokeMacro: argp: %d -> ", argp);
 
-	INOBJ * inobj = a_inobj(SRC_IMACRO);		// Alloc and init IMACRO 
+	INOBJ * inobj = a_inobj(SRC_IMACRO);		// Alloc and init IMACRO
 	IMACRO * imacro = inobj->inobj.imacro;
 	imacro->im_siz = siz;
 	WORD nargs = 0;
@@ -447,7 +445,6 @@ int InvokeMacro(SYM * mac, WORD siz)
 	TOKEN * dest;
 	int stringNum = 0;
 	int argumentNum = 0;
-//	int i;
 
 	for(dry_run=1; ; dry_run--)
 	{
@@ -457,7 +454,7 @@ int InvokeMacro(SYM * mac, WORD siz)
 				nargs++;
 			else
 			{
-#if 0				
+#if 0
 				*argptr++ = p;
 #else
 				argPtrs[argp++] = p;
@@ -569,7 +566,7 @@ streams, we can alleviate this problem.]
 //			argp += nargs;
 #endif
 		}
-		else 
+		else
 			break;
 	}
 

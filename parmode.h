@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // PARMODE.C - Addressing Modes Parser Include
-// Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2017 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -75,7 +75,7 @@
 			goto AMn_IX0;            // Handle ",Xn[.siz][*scale])"
 		}
 		else if (*tok == KW_PC)
-		{                            // (PC,Xn[.siz][*scale]) 
+		{                            // (PC,Xn[.siz][*scale])
 			tok++;
 			AMn = PCINDEXED;
 
@@ -98,7 +98,7 @@
 			AnIXREG = *tok++ & 15;
 
 			switch ((int)*tok)
-			{                        // Index reg size: <empty> | .W | .L 
+			{                        // Index reg size: <empty> | .W | .L
 			case DOTW:
 				tok++;
 			default:
@@ -113,7 +113,7 @@
 			}
 
 			if (*tok == '*')
-			{                        // scale: *1, *2, *4, *8 
+			{                        // scale: *1, *2, *4, *8
 				tok++;
 
 				if (*tok++ != CONST || *tok > 8)
@@ -137,17 +137,17 @@
 				}
 			}
 
-			if (*tok++ != ')')         // final ")" 
+			if (*tok++ != ')')         // final ")"
 				goto badmode;
 
 			goto AnOK;
 		}
 		else if (*tok == '[')
-		{                              // ([... 
+		{                              // ([...
 			goto unmode;
 		}
 		else
-		{                              // (expr... 
+		{                              // (expr...
 			if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
 				return ERROR;
 
@@ -191,7 +191,7 @@
 				}
 				else if (*tok == ')')
 				{
-					AMn = PCDISP;             // expr(PC) 
+					AMn = PCDISP;             // expr(PC)
 					tok++;
 					goto AnOK;
 				}
@@ -241,7 +241,7 @@
 CHK_FOR_DISPn:
 		if (*tok == DOTW)
 		{
-			// expr.W 
+			// expr.W
 			tok++;
 			AMn = ABSW;
 
