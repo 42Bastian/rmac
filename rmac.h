@@ -55,10 +55,6 @@
 #else
 
 	#ifdef __GCCUNIX__
-	#ifdef __MINGW32__
-	#define off64_t long
-	#define off_t long
-	#endif
 
 	#include <sys/fcntl.h>
 	#include <unistd.h>
@@ -67,6 +63,16 @@
 	#define _OPEN_FLAGS     O_TRUNC|O_CREAT|O_RDWR
 	#define _OPEN_INC       O_RDONLY
 	#define _PERM_MODE      S_IRUSR|S_IWUSR
+
+	#ifdef __MINGW32__
+	#define off64_t long
+	#define off_t long
+	#undef _OPEN_FLAGS
+	#undef _OPEN_INC
+	#define _OPEN_FLAGS     _O_TRUNC|_O_CREAT|_O_BINARY|_O_RDWR
+	#define _OPEN_INC       O_RDONLY|_O_BINARY
+	#endif
+
 	// WARNING WARNING WARNING
 	#define DO_PRAGMA(x) _Pragma (#x)
 	#define WARNING(desc) DO_PRAGMA(message (#desc))
