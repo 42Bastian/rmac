@@ -840,13 +840,6 @@ int d_ds(WORD siz)
 
 	VALUE eval;
 
-	// This gets kind of stupid.  This directive is disallowed in normal 68000
-	// mode ("for your own good!"), but is permitted for 6502 and Alcyon-
-	// compatibility modes. For obvious reasons, no auto-even is done in 8-bit
-	// processor modes.
-	if (as68_flag == 0 && (scattr & SBSS) == 0)
-		return error(".ds permitted only in BSS");
-
 	if ((siz != SIZB) && (sloc & 1))	// Automatic .even
 		auto_even();
 
