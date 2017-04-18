@@ -4,13 +4,29 @@
 # MAKEFILE for *nix
 #
 
-rm = /bin/rm -f 
+STD := c99
+
+# Detect old, shitty platforms that aren't C99/POSIX compliant
+OSTYPE := $(shell uname -a)
+
+# Should catch MinGW
+ifeq "$(findstring MINGW, $(OSTYPE))" "MINGW"
+STD := gnu99
+endif
+
+# If we're cross compiling using MXE, we're still fooooooooooked
+ifneq "$(CROSS)" ""
+STD := gnu99
+endif
+
+
+rm = /bin/rm -f
 CC = $(CROSS)gcc
 HOSTCC = gcc
 
-CFLAGS = -std=c99 -D_DEFAULT_SOURCE -g -D__GCCUNIX__ -I. -O2
+CFLAGS = -std=$(STD) -D_DEFAULT_SOURCE -g -D__GCCUNIX__ -I. -O2
 
-SRCS = amode.c debug.c direct.c eagen.c error.c expr.c listing.c mach.c macro.c mark.c object.c procln.c riscasm.c rmac.c sect.c symbol.c token.c 
+SRCS = amode.c debug.c direct.c eagen.c error.c expr.c listing.c mach.c macro.c mark.c object.c procln.c riscasm.c rmac.c sect.c symbol.c token.c
 
 OBJS = amode.o debug.o direct.o eagen.o error.o expr.o listing.o mach.o macro.o mark.o object.o procln.o riscasm.o rmac.o sect.o symbol.o token.o
 
@@ -51,7 +67,7 @@ kwgen : kwgen.o
 	$(HOSTCC) $(CFLAGS) -o kwgen kwgen.o
 
 68kgen.o : 68kgen.c
-	$(HOSTCC) $(CFLAGS) -c 68kgen.c 
+	$(HOSTCC) $(CFLAGS) -c 68kgen.c
 
 68kgen : 68kgen.o
 	$(HOSTCC) $(CFLAGS) -o 68kgen 68kgen.o
@@ -109,15 +125,15 @@ symbol.o : symbol.c
 	$(CC) $(CFLAGS) -c symbol.c
 
 token.o : token.c
-	$(CC) $(CFLAGS) -c token.c 
+	$(CC) $(CFLAGS) -c token.c
 
-rmac : $(OBJS) 
+rmac : $(OBJS)
 	$(CC) $(CFLAGS) -o rmac $(OBJS)
 
 #
 # Clean build environment
 #
 
-clean: 
+clean:
 	$(rm) $(OBJS) kwgen.o 68kgen.o rmac kwgen 68kgen kwtab.h 68ktab.h mntab.h risckw.h
 
