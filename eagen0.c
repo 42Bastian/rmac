@@ -35,7 +35,7 @@ int eaNgen(WORD siz)
 			if (tdb)
 				MarkRelocatable(cursect, sloc, tdb, MWORD, NULL);
 
-			if ((v == 0) && optim_flags[OPT_INDIRECT_DISP])
+			if ((v == 0) && optim_flags[OPT_INDIRECT_DISP] && !movep)
 			{
 				// If expr is 0, size optimise the opcode. Generally the lower
 				// 6 bits of the opcode for expr(ax) are 101rrr where rrr=the

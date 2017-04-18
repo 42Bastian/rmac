@@ -499,12 +499,13 @@ int m_moveq(WORD inst, WORD siz)
 	return 0;
 }
 
-
+int movep = 0;          // Global flag to indicate we're generating a movep instruction
 //
 // movep Dn, disp(An) -- movep disp(An), Dn
 //
 int m_movep(WORD inst, WORD siz)
 {
+    movep = 1;          // Tell ea0gen to lay off the 0(a0) optimisations on this one
 	if (siz == SIZL)
 		inst |= 0x0040;
 
@@ -529,6 +530,7 @@ int m_movep(WORD inst, WORD siz)
 			ea0gen(siz);
 	}
 
+    movep = 0;
 	return 0;
 }
 

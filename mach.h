@@ -19,6 +19,7 @@ extern char rel_error[];
 extern char range_error[];
 extern char abs_error[];
 extern MNTAB machtab[];
+extern int movep;
 
 #endif // __MACH_H__
 
