@@ -189,6 +189,7 @@
 #define MWC          1				// Mark Williams object format
 #define BSD          2				// BSD object format
 #define ELF          3				// ELF object format
+#define XEX          4              // COM/EXE/XEX/whatever a8 object format
 
 // Pointer type that can point to (almost) anything
 #define PTR union _ptr
@@ -221,7 +222,7 @@ PTR
 #define TEXT         0x0001			// Relative to text
 #define DATA         0x0002			// Relative to data
 #define BSS          0x0004			// Relative to BSS
-//#define M6502        0x0008		// 6502/microprocessor (absolute)
+#define M6502        0x0008		    // 6502/microprocessor (absolute)
 #define TDB          (TEXT|DATA|BSS)	// Mask for text+data+bss
 
 // Sizes
@@ -261,6 +262,7 @@ extern int regbank;
 extern char * firstfname;
 extern int list_fd;
 extern int as68_flag;
+extern int m6502;
 extern int list_flag;
 extern int glob_flag;
 extern int lsym_flag;
@@ -270,6 +272,7 @@ extern int legacy_flag;
 extern int prg_flag;	// 1 = write ".PRG" relocatable executable
 extern LONG PRGFLAGS;
 extern int optim_flags[OPT_COUNT];
+extern void Init6502();
 
 // Exported functions
 char * fext(char *, char *, int);

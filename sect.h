@@ -24,8 +24,8 @@
 						*chptr++=(uint8_t)((lw)>>8); \
 						*chptr++=(uint8_t)(lw); \
 						sloc += 4; ch_size += 4; if(orgactive) orgaddr += 4;}
-//#define D_rword(w)	{*chptr++=(uint8_t)w; *chptr++=(uint8_t)(w>>8); \
-//						sloc+=2; ch_size+=2;if(orgactive) orgaddr += 2;}
+#define D_rword(w)	{*chptr++=(uint8_t)w; *chptr++=(uint8_t)(w>>8); \
+						sloc+=2; ch_size+=2;if(orgactive) orgaddr += 2;}
 //#define D_rlong(lw)	{*chptr++=(uint8_t)(lw>>16);*chptr++=(uint8_t)(lw>>24);\
 //						*chptr++=(uint8_t)lw;*chptr++=(uint8_t)(lw>>8); \
 //						sloc+=4; ch_size += 4;if(orgactive) orgaddr += 4;}
@@ -67,6 +67,8 @@
 #define FU_LONG      004		// Fixup long
 #define FU_BBRA      005		// Fixup byte branch
 #define FU_6BRA      007		// Fixup 6502-format branch offset
+#define FU_BYTEH     050        // Fixup 6502 high byte of immediate word
+#define FU_BYTEL     051        // Fixup 6502 low byte of immediate word
 #define FU_SEXT      010		// Ok to sign extend
 #define FU_PCREL     020		// Subtract PC first
 #define FU_EXPR      040		// Expression (not symbol) follows

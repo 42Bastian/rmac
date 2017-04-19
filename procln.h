@@ -22,6 +22,7 @@ extern int just_bss;
 extern VALUE pcloc;
 extern SYM * lab_sym;
 extern LONG amsktab[];
+extern char in_6502mode[];
 
 // Prototypes
 void InitLineProcessor(void);

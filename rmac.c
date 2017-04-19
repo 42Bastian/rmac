@@ -25,6 +25,7 @@
 int perm_verb_flag;				// Permanently verbose, interactive mode
 int list_flag;					// "-l" listing flag on command line
 int verb_flag;					// Be verbose about what's going on
+int m6502;						// 1, assembling 6502 code
 int as68_flag;					// as68 kludge mode
 int glob_flag;					// Assume undefined symbols are global
 int lsym_flag;					// Include local symbols in object file
@@ -129,6 +130,7 @@ void DisplayHelp(void)
 		"                    a: ALCYON (use this for ST)\n"
 		"                    b: BSD (use this for Jaguar)\n"
 		"                    e: ELF\n"
+        "                    x: com/exe/xex (Atari 800)\n"
 		"  -i[path]          Directory to search for include files\n"
 		"  -l[filename]      Create an output listing file\n"
 		"  -n                Don't do things behind your back in RISC assembler\n"
@@ -250,6 +252,7 @@ int Process(int argc, char ** argv)
 	orgactive = 0;					// Not in RISC org section
 	orgwarning = 0;					// No ORG warning issued
 	segpadsize = 2;					// Initialise segment padding size
+    m6502 = 0;                      // 6502 mode off by default
 
 	// Initialise modules
 	InitSymbolTable();				// Symbol table
@@ -260,6 +263,7 @@ int Process(int argc, char ** argv)
 	InitMark();						// Mark tape-recorder
 	InitMacro();					// Macro processor
 	InitListing();					// Listing generator
+    Init6502();						// 6502 assembler
 
 	// Process command line arguments and assemble source files
 	for(argno=0; argno<argc; ++argno)
@@ -318,6 +322,10 @@ int Process(int argc, char ** argv)
 				case 'E':
 					obj_format = ELF;
 					break;
+                case 'x':           // -fx = COM/EXE/XEX
+                case 'X':
+                    obj_format = XEX;
+                    break;
 				default:
 					printf("-f: unknown object format specified\n");
 					errcnt++;
@@ -492,6 +500,8 @@ int Process(int argc, char ** argv)
 	// o  save current section (no more code generation)
 	// o  do auto-even of all sections (or boundary alignment as requested
 	//    through '-r')
+    // o  save the last pc value for 6502 (if we used 6502 at all) and
+    //    detemine if the last section contains anything
 	// o  determine name of object file:
 	//    -  "foo.o" for linkable output;
 	//    -  "foo.prg" for GEMDOS executable (-p flag).
@@ -512,6 +522,13 @@ int Process(int argc, char ** argv)
 
 		SaveSection();
 	}
+
+    SwitchSection(M6502);
+    if (sloc != currentorg[0])
+    {
+        currentorg[1] = sloc;
+        currentorg += 2;
+    }
 
 	if (objfname == NULL)
 	{

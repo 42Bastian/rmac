@@ -12,7 +12,7 @@
 #include "riscasm.h"
 #include "sect.h"
 #include "symbol.h"
-
+extern void m6502obj(int ofd);
 
 //#define DEBUG_ELF
 
@@ -752,6 +752,11 @@ for(int j=0; j<i; j++)
 			free(strtable);
 		}
 	}
+    else if (obj_format == XEX)
+    {
+        // Just write the object file
+        m6502obj(fd);
+    }
 
 	return 0;
 }

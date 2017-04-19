@@ -9,7 +9,7 @@
 #ifndef __OBJECT_H__
 #define __OBJECT_H__
 
-#include <rmac.h>
+#include "rmac.h"
 
 #define BSDHDRSIZE  0x20	// Size of BSD header
 #define HDRSIZE     0x1C	// Size of Alcyon header

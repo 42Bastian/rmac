@@ -29,6 +29,12 @@
 #define DECL_MR
 #include "risckw.h"
 
+#define DEF_MP			/* include 6502 keyword definitions */
+#define DECL_MP			/* include 6502 keyword state machine tables */
+#include "6502.h"
+extern int m6502;		/* 1, assembler in .6502 mode */
+extern VOID m6502cg();		/* 6502 code generator */
+extern VOID m6502obj(int ofd);
 
 IFENT * ifent;					// Current ifent
 static IFENT ifent0;			// Root ifent
@@ -566,6 +572,44 @@ When checking to see if it's already been equated, issue a warning.
 	if (state == -3)
 		goto loop;
 
+	/*
+	 *  If we're in 6502 mode and are still in need
+	 *  of a mnemonic, then search for valid 6502 mnemonic.
+	 */
+	if (m6502 &&
+		  (state < 0 || state >= 1000))
+	{
+#ifdef ST
+		state = kmatch(opname, mpbase, mpcheck, mptab, mpaccept);
+#else
+		for (state = 0, p = opname; state >= 0;)
+		{
+			j = mpbase[state] + tolowertab[*p];
+			if (mpcheck[j] != state)	/* reject, character doesn't match */
+			{
+				state = -1;		/* no match */
+				break;
+			}
+
+			if (!*++p)
+			{			/* must accept or reject at EOS */
+				state = mpaccept[j];	/* (-1 on no terminal match) */
+				break;
+			}
+			state = mptab[j];
+		}
+#endif
+
+		/*
+		 *  Call 6502 code generator if we found a mnemonic
+		 */
+		if (state >= 2000)
+		{
+			m6502cg(state - 2000);
+			goto loop;
+		}
+	}
+    
 	// If we are in GPU or DSP mode and still in need of a mnemonic then search
 	// for one
 	if ((rgpu || rdsp) && (state < 0 || state >= 1000))

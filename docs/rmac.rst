@@ -15,7 +15,7 @@ the accuracy of printed or duplicated material after the date of publication and
 disclaims liability for changes, errors or omissions.*
 
 
-*Copyright © 2011-2015, Reboot*
+*Copyright © 2011-2017, Reboot*
 
 *All rights reserved.*
 
@@ -51,10 +51,6 @@ the original Atari ST Developer's Kit, but most changes are minor and a few minu
 with an editor should allow you to assemble your current source files. If you are an
 AS68 user, before you leap into the unknown please read the section on Notes for
 AS68 Users.
-
-This manual was typeset with TEX and the Computer Modern fonts, and it
-was printed on the Atari SLM-804 laser printer with a MEGA ST. Except for 200
-lines of assembly language, the assembler is written entirely in C.
 
 .. [1] It processes 30,000 lines a minute on a lightly loaded VAX 11/780; maybe 40,000 on a 520-ST with an SH-204 hard disk. Yet it could be sped up even more with some effort and without resorting to assembly language; C doesn't have to be slow!
 
@@ -968,6 +964,53 @@ described in the chapter on `6502 Support`_.
            INTIE:  ds.l     1
            PTSIN:  ds.l     1
 
+   Another interesting example worth mentioning is the emulation of "C"'s "union" keyword
+   using *.abs*. For example, the following "C" code:
+
+          ::
+
+           struct spritesheet
+           {
+                short spf_w;
+                short spf_h;
+                short spf_xo;
+                short spf_yo;
+                union { int spf_em_colour;     int spf_emx_colour;    };
+                union { int spf_em_psmask[16]; int spf_emx_colouropt; };
+           }
+
+   can be expressed as:
+
+          ::
+
+           .abs
+           *-------------------------------------------------------*
+           spf_w:          ds.w    1   ;<- common
+           spf_h:          ds.w    1
+           spf_xo:         ds.w    1
+           spf_yo:         ds.w    1
+           spf_data:       ds.l    0
+           *-------------------------------------------------------*
+           ;           .union  set
+           spf_em_colour:      ds.l    1   ;<- union #1
+           spf_em_psmask:      ds.l    16
+           *-------------------------------------------------------*
+           .68000
+                       .abs spf_em_colour
+           ;           .union  reset
+           spf_emx_colour:     ds.l    1   ;<- union #2
+           spf_emx_colouropt:  ds.l    1
+           spf_emx_psmask:     ds.l    16
+           spf_emx_psmaskopt:  ds.l    16
+           
+           .68000
+           ;*-------------------------------------------------------*
+           
+               move #spf_em_colour,d0
+               move #spf_emx_colour,d0
+
+   In this example, *spf_em_colour* and *spf_emx_colour* will have the same value.
+           
 **.comm** *symbol*, *expression*
    Specifies a label and the size of a common region. The label is made global,
    thus confined symbols cannot be made common. The linker groups all common
@@ -1588,6 +1631,8 @@ the Atari Coinop assembler.
 *empty*        implied or accumulator (e.g. tsx or ror)
 *expr*         absolute or zeropage
 #\ *expr*      immediate
+#<\ *expr*     immediate low byte of a word
+#>\ *expr*     immediate high byte of a word
 (*expr*,x)     indirect X
 (*expr*),y     indirect Y
 (*expr*)       indirect
@@ -1599,10 +1644,6 @@ the Atari Coinop assembler.
 x,\ *expr*     indexed X
 y,\ *expr*     indexed Y
 ============== ========================================
-
-While RMAC lacks "high" and "low" operators, high bytes of words may
-be extracted with the shift (``>>``) or divide (``/``) operators, and low bytes may be
-extracted with the bitwise AND (``&``) operator.
 
 `6502 Directives`_
 ''''''''''''''''''
@@ -1643,43 +1684,17 @@ extracted with the bitwise AND (``&``) operator.
 
 `6502 Object Code Format`_
 ''''''''''''''''''''''''''
-This is a little bit of a kludge. An object file consists of a page map, followed by
-one or more page images, followed by a normal Alcyon 68000 object file. If the page
-map is all zero, it is not written.
+Traditionally Madmac had a very kludgy way of storing object files. This has been
+replaced with a more standard *.exe* (or *.com* or *.xex* if you prefer). Briefly,
+the *.exe* format consists of chunks of this format (one after the other):
 
-The page map contains a byte for each of the 256 256-byte pages in the 6502's
-64K address space. The byte is zero (``$00``) if the page contained only zero bytes, or
-one (``$01``) if the page contained any non-zero bytes. If a page is flagged with a one,
-then it is written (in order) following the page map.
+    ::
 
-The following code:
-
-     ::
-
-      .6502
-      .org  $8000
-      .dc.b 1
-      .org  $8100
-      .dc.b 1
-      .org  $8300
-      .dc.b 1
-      .end
-
-will generate a page map that looks (to a programmer) something like:
-
-     ::
-
-      <80 bytes of zero>
-      01 01 00 01
-      <$7c more bytes of zero, for $100 total>
-      <image of page $80>
-      <image of page $81>
-      <image of page $83>
-
-Following the last page image is an Alcyon-format object file, starting with
-the magic number ``$601a``. It may contain 68000 code (although that is probably
-useless), but the symbol table is valid and available for debugging purposes. 6502
-symbols will be absolute (not in text, data or bss).
+     Offset     Description
+     00-01      $FFFF - Indicates a binary load file. Mandatory for first segment, optional for any other segment
+     02-03      Start Address. The segment will load at this address
+     04-05      End Address. The last byte to load for this segment
+     06-..      The actual segment data to load (End Address-Start Address + 1 bytes)
 
 `Error Messages`_
 =================

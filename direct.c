@@ -21,7 +21,6 @@
 #define DEF_KW
 #include "kwtab.h"
 
-
 TOKEN exprbuf[128];			// Expression buffer
 SYM * symbolPtr[1000000];	// Symbol pointers table
 static long unused;			// For supressing 'write' warnings
@@ -32,7 +31,7 @@ char buffer[256];			// Scratch buffer for messages
 int (*dirtab[])() = {
 	d_org,				// 0 org
 	d_even,				// 1 even
-	d_unimpl,			// 2 .6502
+	d_6502,			    // 2 .6502
 	d_68000,			// 3 .68000
 	d_bss,				// 4 bss
 	d_data,				// 5 data
@@ -139,24 +138,53 @@ int d_warn(char *str)
 //
 int d_org(void)
 {
-	VALUE address;
+    VALUE address;
+    
+    if (!rgpu && !rdsp && !m6502)
+    	return error(".org permitted only in gpu/dsp and 6502 sections");
+    
+    if (rgpu | rdsp)
+    {
+        orgaddr = 0;
 
-	if (!rgpu && !rdsp)
-		return error(".org permitted only in gpu/dsp section");
+        if (abs_expr(&address) == ERROR)
+        {
+            error("cannot determine org'd address");
+            return ERROR;
+        }
 
-	orgaddr = 0;
+        orgaddr = address;
+        orgactive = 1;
+        //printf("ORG: address = $%08X...\n", orgaddr);
 
-	if (abs_expr(&address) == ERROR)
-	{
-		error("cannot determine org'd address");
-		return ERROR;
-	}
+        return 0;
+    }
+    else
+    {
+        // 6502
+        // We also kludge `lsloc' so the listing generator doesn't
+        // try to spew out megabytes.
+	    VALUE eval;
 
-	orgaddr = address;
-	orgactive = 1;
-//printf("ORG: address = $%08X...\n", orgaddr);
+	    //if (m6502 == 0) return error(".org permitted only in .6502 section");
+	    if (abs_expr(&eval) < 0) return 0;
+	    if (eval >= 0x10000L) return error(range_error);
 
-	return 0;
+        if (sloc != currentorg[0])
+        {
+            currentorg[1] = sloc;
+            currentorg += 2;
+        }
+
+        currentorg[0] = eval;
+	    ch_size = 0;
+	    lsloc = sloc = eval;
+	    chptr = scode->chptr + eval;
+    	orgactive = 1;
+    	orgaddr = eval;
+	    at_eol();
+        return 0;
+    }
 }
 
 
@@ -467,6 +495,9 @@ static inline void SkipBytes(unsigned bytesToSkip)
 //
 int d_even(void)
 {
+    if (m6502)
+        return error(in_6502mode);
+
 	unsigned skip = (rgpu || rdsp ? orgaddr : sloc) & 0x01;
 
 	if (skip)
@@ -562,6 +593,8 @@ int d_qphrase(void)
 //
 void auto_even(void)
 {
+  if (cursect != M6502)
+  {    
 	if (scattr & SBSS)
 		sloc++;				// Bump BSS section
 	else
@@ -569,6 +602,7 @@ void auto_even(void)
 
 	if (lab_sym != NULL)	// Bump label if we have to
 		lab_sym->svalue++;
+  }
 }
 
 
@@ -737,6 +771,9 @@ int globl1(char * p)
 
 int d_globl(void)
 {
+  if (m6502)
+    return error(in_6502mode);
+
 	symlist(globl1);
 	return 0;
 }
@@ -770,6 +807,9 @@ int d_abs(void)
 {
 	VALUE eval;
 
+    if (m6502)
+        return error(in_6502mode);
+    
 	SaveSection();
 
 	if (*tok == EOL)
@@ -790,6 +830,8 @@ int d_text(void)
 {
 	if (rgpu || rdsp)
 		return error("directive forbidden in gpu/dsp mode");
+    if (m6502)
+        return error(in_6502mode);
 
 	if (cursect != TEXT)
 	{
@@ -805,6 +847,8 @@ int d_data(void)
 {
 	if (rgpu || rdsp)
 		return error("directive forbidden in gpu/dsp mode");
+    if (m6502)
+        return error(in_6502mode);
 
 	if (cursect != DATA)
 	{
@@ -820,6 +864,8 @@ int d_bss(void)
 {
 	if (rgpu || rdsp)
 		return error("directive forbidden in gpu/dsp mode");
+    if (m6502)
+        return error(in_6502mode);
 
 	if (cursect != BSS)
 	{
@@ -840,8 +886,11 @@ int d_ds(WORD siz)
 
 	VALUE eval;
 
-	if ((siz != SIZB) && (sloc & 1))	// Automatic .even
-		auto_even();
+    if (cursect != M6502)
+    {
+	    if ((siz != SIZB) && (sloc & 1))	// Automatic .even
+		    auto_even();
+    }
 
 	if (abs_expr(&eval) != OK)
 		return 0;
@@ -854,11 +903,12 @@ int d_ds(WORD siz)
 	// In non-TDB section (BSS, ABS and M6502) just advance the location
 	// counter appropriately. In TDB sections, deposit (possibly large) chunks
 	// of zeroed memory....
-	if (scattr & SBSS)
+	if ((scattr & SBSS) || cursect == M6502)
 	{
 		listvalue(eval);
 		eval *= siz;
 		sloc += eval;
+        if (cursect == M6502) chptr += eval;
 		just_bss = 1;					// No data deposited (8-bit CPU mode)
 	}
 	else
@@ -884,7 +934,7 @@ int d_dc(WORD siz)
 		return error("illegal initialization of section");
 
 	// Do an auto_even if it's not BYTE sized (hmm, should we be doing this???)
-	if ((siz != SIZB) && (sloc & 1))
+	if (cursect != M6502 && (siz != SIZB) && (sloc & 1))
 		auto_even();
 
 	// Check to see if we're trying to set LONGS on a non 32-bit aligned
@@ -971,11 +1021,22 @@ int d_dc(WORD siz)
 					MarkRelocatable(cursect, sloc, tdb, MWORD, NULL);
 
 				// Deposit 68000 or 6502 (byte-reversed) word
-				D_word(eval);
+	            if (cursect != M6502)
+		        {
+		            D_word(eval);
+		        }
+	            else
+		        {
+		            D_rword(eval);
+		        }
+        
 			}
 
 			break;
 		case SIZL:
+	        if (m6502)
+	            return error(in_6502mode);
+
 			if (!defined)
 			{
 				if (movei)
@@ -1030,7 +1091,7 @@ int d_dcb(WORD siz)
 	if (expr(exprbuf, &eval, &eattr, NULL) < 0)
 		return 0;
 
-	if ((siz != SIZB) && (sloc & 1))
+	if (cursect != M6502 && (siz != SIZB) && (sloc & 1))
 		auto_even();
 
 	dep_block(evalc, siz, eval, eattr, exprbuf);
@@ -1160,11 +1221,22 @@ int dep_block(VALUE count, WORD siz, VALUE eval, WORD eattr, TOKEN * exprbuf)
 					return error(range_error);
 
 				// Deposit 68000 or 6502 (byte-reversed) word
-				D_word(eval);
+				if (cursect != M6502)
+				{
+					D_word(eval);
+				}
+				else
+				{
+					D_rword(eval);
+				}
+
 			}
 
 			break;
 		case SIZL:
+			if (m6502)
+				return error(in_6502mode);
+            
 			if (!defined)
 			{
 				AddFixup(FU_LONG, sloc, exprbuf);
@@ -1194,6 +1266,9 @@ int d_comm(void)
 	SYM * sym;
 	char * p;
 	VALUE eval;
+
+	if (m6502)
+		return error(in_6502mode);
 
 	if (*tok != SYMBOL)
 		return error("missing symbol");

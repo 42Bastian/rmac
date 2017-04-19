@@ -26,15 +26,15 @@ HOSTCC = gcc
 
 CFLAGS = -std=$(STD) -D_DEFAULT_SOURCE -g -D__GCCUNIX__ -I. -O2
 
-SRCS = amode.c debug.c direct.c eagen.c error.c expr.c listing.c mach.c macro.c mark.c object.c procln.c riscasm.c rmac.c sect.c symbol.c token.c
+SRCS = amode.c debug.c direct.c eagen.c error.c expr.c listing.c mach.c macro.c mark.c object.c procln.c riscasm.c rmac.c sect.c symbol.c token.c 6502.c
 
-OBJS = amode.o debug.o direct.o eagen.o error.o expr.o listing.o mach.o macro.o mark.o object.o procln.o riscasm.o rmac.o sect.o symbol.o token.o
+OBJS = amode.o debug.o direct.o eagen.o error.o expr.o listing.o mach.o macro.o mark.o object.o procln.o riscasm.o rmac.o sect.o symbol.o token.o 6502.o
 
 #
 # Build everything
 #
 
-all : mntab.h 68ktab.h kwtab.h risckw.h rmac
+all : mntab.h 68ktab.h kwtab.h risckw.h 6502.h rmac
 	@echo
 	@echo "Don't forget to bump the version number before commiting!"
 	@echo
@@ -52,6 +52,9 @@ mntab.h : mntab 68kmn kwgen
 
 kwtab.h : kwtab kwgen
 	./kwgen kw <kwtab >kwtab.h
+
+6502.h : 6502.tbl kwgen
+	./kwgen mp <6502.tbl >6502.h
 
 risckw.h : kwtab kwgen
 	./kwgen mr <risctab >risckw.h
@@ -123,6 +126,9 @@ sect.o : sect.c
 
 symbol.o : symbol.c
 	$(CC) $(CFLAGS) -c symbol.c
+
+6502.o : 6502.c
+	$(CC) $(CFLAGS) -c 6502.c
 
 token.o : token.c
 	$(CC) $(CFLAGS) -c token.c

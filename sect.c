@@ -16,6 +16,7 @@
 #include "riscasm.h"
 #include "symbol.h"
 #include "token.h"
+extern int m6502;		/* 1, assembler in .6502 mode */
 
 
 // Function prototypes
@@ -85,7 +86,7 @@ void InitSection(void)
 	MakeSection(TEXT, SUSED | TEXT       );		// TEXT
 	MakeSection(DATA, SUSED | DATA       );		// DATA
 	MakeSection(BSS,  SUSED | BSS  | SBSS);		// BSS
-//	MakeSection(M6502, SUSED | TEXT       );		// 6502 code section
+	MakeSection(M6502, SUSED | TEXT      );		// 6502 code section
 
 	// Switch to TEXT for starters
 	SwitchSection(TEXT);
@@ -114,6 +115,8 @@ void SwitchSection(int sno)
 	CHUNK * cp;
 	cursect = sno;
 	SECT * p = &sect[sno];
+
+    m6502 = (sno == M6502);	/* set 6502-mode */
 
 	// Copy section vars
 	scattr = p->scattr;
@@ -409,6 +412,12 @@ int ResolveFixups(int sno)
 	if (cch == NULL)
 		return 0;
 
+	/*
+	 *  Wire the 6502 segment's size to its allocated size (64K)
+	 */
+	if (sno == M6502)
+		cch->ch_size = cch->challoc;
+    
 	do
 	{
 		fup.cp = ch->chptr;					// fup -> start of chunk
@@ -583,6 +592,25 @@ int ResolveFixups(int sno)
 
 				*locp = (uint8_t)eval;
 				break;
+            // Fixup high/low byte off word for 6502
+            case FU_BYTEH:
+                if (!(eattr & DEFINED))
+                {
+                    error("external byte reference");
+                    continue;
+                }
+
+                *locp = (uint8_t)((eval >> 8) & 0xff);
+                break;
+            case FU_BYTEL:
+                if (!(eattr & DEFINED))
+                {
+                    error("external byte reference");
+                    continue;
+                }
+
+                *locp = (uint8_t)(eval & 0xff);
+                break;
 			// Fixup WORD forward references;
 			// the word could be unaligned in the section buffer, so we have to
 			// be careful.
@@ -713,7 +741,15 @@ int ResolveFixups(int sno)
 					}
 				}
 
-				SETBE16(locp, 0, eval);
+				if (sno != M6502)
+				{
+					*locp++ = (char)(eval >> 8);
+					*locp = (char)eval;
+				}
+				else
+				{
+				    SETBE16(locp, 0, eval);
+                }
 				break;
 			// Fixup LONG forward references;
 			// the long could be unaligned in the section buffer, so be careful
@@ -793,6 +829,8 @@ int ResolveAllFixups(void)
 	ResolveFixups(TEXT);
 	DEBUG printf("Resolving DATA sections...\n");
 	ResolveFixups(DATA);
+	DEBUG printf("Resolving 6502 sections...\n");
+	ResolveFixups(M6502);		/* fixup 6502 section (if any) */
 
 	return 0;
 }

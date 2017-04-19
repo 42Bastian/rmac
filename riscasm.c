@@ -23,7 +23,7 @@
 
 
 unsigned altbankok = 0;		// Ok to use alternate register bank
-unsigned orgactive = 0;		// RISC org directive active
+unsigned orgactive = 0;		// RISC/6502 org directive active
 unsigned orgaddr = 0;		// Org'd address
 unsigned orgwarning = 0;	// Has an ORG warning been issued
 int lastOpcode = -1;		// Last RISC opcode assembled

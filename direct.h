@@ -15,6 +15,10 @@
 extern TOKEN exprbuf[];
 extern SYM * symbolPtr[];
 extern int (* dirtab[])();
+extern int as68_flag;		/* 1, AS68 kludge mode for Alcyon back-end */
+extern int m6502;		/* 1, assembler in 6502 mode */
+extern char in_6502mode[];
+extern uint16_t *currentorg;
 
 // Prototypes
 int d_even(void);

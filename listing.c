@@ -301,11 +301,14 @@ void listeol(void)
 	{
 		ch = sect[lcursect].sfcode;
 
+		if (lcursect != M6502)
+        {
 		for(; ch!=NULL; ch=ch->chnext)
 		{
 			if (lsloc >= ch->chloc && lsloc < (ch->chloc + ch->ch_size))
 				break;
 		}
+        }
 
 		// Fatal: Can't find chunk holding code
 		if (ch == NULL)
@@ -331,7 +334,8 @@ nochunk:
 				strncpy(lnimage + LOC_COL, buf, 8);
 			}
 
-			if (lsloc >= (ch->chloc + ch->ch_size))
+			if (lcursect != M6502 &&
+                    lsloc >= (ch->chloc + ch->ch_size))
 			{
 				if ((ch = ch->chnext) == NULL)
 					goto nochunk;
