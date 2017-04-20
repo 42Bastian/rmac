@@ -10,7 +10,6 @@
 #define __RISCA_H__
 
 #include "rmac.h"
-#include "procln.h"
 
 #define MAXINTERNCC 26			// Maximum internal condition codes
 

@@ -26,9 +26,9 @@ HOSTCC = gcc
 
 CFLAGS = -std=$(STD) -D_DEFAULT_SOURCE -g -D__GCCUNIX__ -I. -O2
 
-SRCS = amode.c debug.c direct.c eagen.c error.c expr.c listing.c mach.c macro.c mark.c object.c procln.c riscasm.c rmac.c sect.c symbol.c token.c 6502.c
+SRCS = 6502.c amode.c debug.c direct.c eagen.c error.c expr.c listing.c mach.c macro.c mark.c object.c procln.c riscasm.c rmac.c sect.c symbol.c token.c
 
-OBJS = amode.o debug.o direct.o eagen.o error.o expr.o listing.o mach.o macro.o mark.o object.o procln.o riscasm.o rmac.o sect.o symbol.o token.o 6502.o
+OBJS = 6502.o amode.o debug.o direct.o eagen.o error.o expr.o listing.o mach.o macro.o mark.o object.o procln.o riscasm.o rmac.o sect.o symbol.o token.o
 
 #
 # Build everything
@@ -54,7 +54,7 @@ kwtab.h : kwtab kwgen
 	./kwgen kw <kwtab >kwtab.h
 
 6502.h : 6502.tbl kwgen
-	./kwgen mp <6502.tbl >6502.h
+	./kwgen mp <6502.tbl >6502kw.h
 
 risckw.h : kwtab kwgen
 	./kwgen mr <risctab >risckw.h
@@ -79,58 +79,58 @@ kwgen : kwgen.o
 # Build RMAC executable
 #
 
-amode.o : amode.c
+amode.o : amode.c amode.h
 	$(CC) $(CFLAGS) -c amode.c
 
-debug.o : debug.c
+debug.o : debug.c debug.h
 	$(CC) $(CFLAGS) -c debug.c
 
-direct.o : direct.c
+direct.o : direct.c direct.h
 	$(CC) $(CFLAGS) -c direct.c
 
-eagen.o : eagen.c
+eagen.o : eagen.c eagen.h eagen0.c
 	$(CC) $(CFLAGS) -c eagen.c
 
-error.o : error.c
+error.o : error.c error.h
 	$(CC) $(CFLAGS) -c error.c
 
-expr.o : expr.c
+expr.o : expr.c expr.h
 	$(CC) $(CFLAGS) -c expr.c
 
-listing.o : listing.c
+listing.o : listing.c listing.h
 	$(CC) $(CFLAGS) -c listing.c
 
-mach.o : mach.c
+mach.o : mach.c mach.h
 	$(CC) $(CFLAGS) -c mach.c
 
-macro.o : macro.c
+macro.o : macro.c macro.h
 	$(CC) $(CFLAGS) -c macro.c
 
-mark.o : mark.c
+mark.o : mark.c mark.h
 	$(CC) $(CFLAGS) -c mark.c
 
-object.o : object.c
+object.o : object.c object.h
 	$(CC) $(CFLAGS) -c object.c
 
-procln.o : procln.c
+procln.o : procln.c procln.h
 	$(CC) $(CFLAGS) -c procln.c
 
-risca.o : risca.c
+risca.o : risca.c risca.h
 	$(CC) $(CFLAGS) -c risca.c
 
-rmac.o : rmac.c
+rmac.o : rmac.c rmac.h
 	$(CC) $(CFLAGS) -c rmac.c
 
-sect.o : sect.c
+sect.o : sect.c sect.h
 	$(CC) $(CFLAGS) -c sect.c
 
-symbol.o : symbol.c
+symbol.o : symbol.c symbol.h
 	$(CC) $(CFLAGS) -c symbol.c
 
-6502.o : 6502.c
+6502.o : 6502.c 6502.h
 	$(CC) $(CFLAGS) -c 6502.c
 
-token.o : token.c
+token.o : token.c token.h
 	$(CC) $(CFLAGS) -c token.c
 
 rmac : $(OBJS)
@@ -141,5 +141,5 @@ rmac : $(OBJS)
 #
 
 clean:
-	$(rm) $(OBJS) kwgen.o 68kgen.o rmac kwgen 68kgen kwtab.h 68ktab.h mntab.h risckw.h
+	$(rm) $(OBJS) kwgen.o 68kgen.o rmac kwgen 68kgen kwtab.h 68ktab.h mntab.h risckw.h 6502kw.h
 

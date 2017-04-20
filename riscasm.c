@@ -7,13 +7,14 @@
 //
 
 #include "riscasm.h"
+#include "amode.h"
+#include "direct.h"
 #include "error.h"
+#include "expr.h"
+#include "mark.h"
+#include "procln.h"
 #include "sect.h"
 #include "token.h"
-#include "expr.h"
-#include "direct.h"
-#include "mark.h"
-#include "amode.h"
 
 #define DEF_MR				// Declare keyword values
 #include "risckw.h"			// Incl. generated risc keywords

@@ -11,7 +11,7 @@
 
 #include "rmac.h"
 
-// Prototypes
+// Exported functions
 int mudump(void);
 int mdump(char *, LONG, int, LONG);
 int dumptok(TOKEN *);

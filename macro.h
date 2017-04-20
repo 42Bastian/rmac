@@ -11,13 +11,11 @@
 
 #include "rmac.h"
 
-// Globals, externals etc
+// Exported variables
 extern LONG curuniq;
-//extern TOKEN ** argp;
-//extern int mjump_align;
 extern TOKEN * argPtrs[];
 
-// Prototypes
+// Exported functions
 void InitMacro(void);
 int ExitMacro(void);
 int DefineMacro(void);

@@ -77,14 +77,13 @@ static VALUE str_value(char * p)
 //
 void InitExpression(void)
 {
-	int i;
-	char * p;
-
 	// Initialize token-class table (all set to END)
-	for(i=0; i<256; i++)
+	for(int i=0; i<256; i++)
 		tokenClass[i] = END;
 
-	for(i=0, p=itokcl; *p!=1; p++)
+	int i = 0;
+
+	for(char * p=itokcl; *p!=1; p++)
 	{
 		if (*p == 0)
 			i++;

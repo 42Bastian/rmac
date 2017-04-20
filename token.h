@@ -119,7 +119,6 @@ TOKENSTREAM {
 // Information about a macro invocation
 IMACRO {
 	IMACRO * im_link;		// Pointer to ancient IMACROs
-//	LONG * im_nextln;		// Next line to include
 	struct LineList * im_nextln;	// Next line to include
 	WORD im_nargs;			// # of arguments supplied on invocation
 	WORD im_siz;			// Size suffix supplied on invocation
@@ -147,9 +146,6 @@ extern char lnbuf[];
 extern char lntag;
 extern char tolowertab[];
 extern INOBJ * cur_inobj;
-extern unsigned orgactive;
-extern unsigned orgaddr;
-extern LONG sloc;
 extern int mjump_align;
 extern char * string[];
 
@@ -160,8 +156,8 @@ void SetFilenameForErrorReporting(void);
 int TokenizeLine(void);
 int fpop(void);
 int d_goto(WORD);
-//int d_goto(void);
 INOBJ * a_inobj(int);
 void DumpTokenBuffer(void);
 
 #endif // __TOKEN_H__
+

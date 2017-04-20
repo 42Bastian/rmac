@@ -59,19 +59,20 @@
 // token.L     expression list
 // (etc)
 // ENDEXPR.L	(end of expression)
-#define FUMASK       007		// Mask for fixup cases:
-#define FU_QUICK     000		// Fixup 3-bit quick instr field
-#define FU_BYTE      001		// Fixup byte
-#define FU_WORD      002		// Fixup word
-#define FU_WBYTE     003		// Fixup byte (at loc+1)
-#define FU_LONG      004		// Fixup long
-#define FU_BBRA      005		// Fixup byte branch
-#define FU_6BRA      007		// Fixup 6502-format branch offset
-#define FU_BYTEH     050        // Fixup 6502 high byte of immediate word
-#define FU_BYTEL     051        // Fixup 6502 low byte of immediate word
-#define FU_SEXT      010		// Ok to sign extend
-#define FU_PCREL     020		// Subtract PC first
-#define FU_EXPR      040		// Expression (not symbol) follows
+#define FUMASK       0x000F		// Mask for fixup cases:(shouldn't this be $7F?)
+#define FU_QUICK     0x0000		// Fixup 3-bit quick instruction field
+#define FU_BYTE      0x0001		// Fixup byte
+#define FU_WORD      0x0002		// Fixup word
+#define FU_WBYTE     0x0003		// Fixup byte (at loc+1)
+#define FU_LONG      0x0004		// Fixup long
+#define FU_BBRA      0x0005		// Fixup byte branch
+#define FU_6BRA      0x0007		// Fixup 6502-format branch offset
+#define FU_BYTEH     0x0008		// Fixup 6502 high byte of immediate word
+#define FU_BYTEL     0x0009		// Fixup 6502 low byte of immediate word
+
+#define FU_SEXT      0x0010		// Ok to sign extend
+#define FU_PCREL     0x0020		// Subtract PC first
+#define FU_EXPR      0x0040		// Expression (not symbol) follows
 
 #define FU_GLOBAL    0x0080		// Mark global symbol
 

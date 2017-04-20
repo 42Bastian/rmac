@@ -127,6 +127,11 @@
 	(a)[(r + 6)] = (uint8_t)(((v) >> 8) & 0xFF); \
 	(a)[(r + 7)] = (uint8_t)((v) & 0xFF); }
 
+// In 6502 mode, turns out we need this:
+#define SETLE16(a, r, v) \
+	{ (a)[(r + 0)] = (uint8_t)((v) & 0xFF); \
+	(a)[(r + 1)] = (uint8_t)((v) >> 8); }
+
 // Byteswap crap
 #define BYTESWAP16(x) ((((x) & 0x00FF) << 8) | (((x) & 0xFF00) >> 8))
 #define BYTESWAP32(x) ((((x) & 0x000000FF) << 24) | (((x) & 0x0000FF00) << 8) | (((x) & 0x00FF0000) >> 8) | (((x) & 0xFF000000) >> 24))
@@ -189,7 +194,7 @@
 #define MWC          1				// Mark Williams object format
 #define BSD          2				// BSD object format
 #define ELF          3				// ELF object format
-#define XEX          4              // COM/EXE/XEX/whatever a8 object format
+#define XEX          4				// COM/EXE/XEX/whatever a8 object format
 
 // Pointer type that can point to (almost) anything
 #define PTR union _ptr
@@ -222,7 +227,7 @@ PTR
 #define TEXT         0x0001			// Relative to text
 #define DATA         0x0002			// Relative to data
 #define BSS          0x0004			// Relative to BSS
-#define M6502        0x0008		    // 6502/microprocessor (absolute)
+#define M6502        0x0008			// 6502/microprocessor (absolute)
 #define TDB          (TEXT|DATA|BSS)	// Mask for text+data+bss
 
 // Sizes
@@ -240,8 +245,6 @@ PTR
 #define EQUATEDCC    0x0020
 #define UNDEF_CC     0x0040
 
-//#define RISCSYM      0x00010000
-
 // Optimisation defines
 enum
 {
@@ -252,7 +255,7 @@ enum
 	OPT_COUNT   // Dummy, used to count number of optimisation switches
 };
 
-// Globals, externals, etc.
+// Exported variables
 extern int verb_flag;
 extern int debug;
 extern int rgpu, rdsp;
@@ -272,7 +275,6 @@ extern int legacy_flag;
 extern int prg_flag;	// 1 = write ".PRG" relocatable executable
 extern LONG PRGFLAGS;
 extern int optim_flags[OPT_COUNT];
-extern void Init6502();
 
 // Exported functions
 char * fext(char *, char *, int);

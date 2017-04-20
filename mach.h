@@ -9,7 +9,6 @@
 #ifndef __MACH_H__
 #define __MACH_H__
 
-#include "rmac.h"
 #include "amode.h"
 
 // Exported variables

@@ -7,20 +7,21 @@
 //
 
 #include "rmac.h"
+#include "6502.h"
+#include "debug.h"
+#include "direct.h"
 #include "error.h"
-#include "listing.h"
-#include "procln.h"
-#include "token.h"
 #include "expr.h"
-#include "sect.h"
+#include "listing.h"
 #include "mark.h"
 #include "macro.h"
-#include "riscasm.h"
-#include "direct.h"
-#include "version.h"
-#include "debug.h"
-#include "symbol.h"
 #include "object.h"
+#include "procln.h"
+#include "riscasm.h"
+#include "sect.h"
+#include "symbol.h"
+#include "token.h"
+#include "version.h"
 
 int perm_verb_flag;				// Permanently verbose, interactive mode
 int list_flag;					// "-l" listing flag on command line
@@ -130,17 +131,17 @@ void DisplayHelp(void)
 		"                    a: ALCYON (use this for ST)\n"
 		"                    b: BSD (use this for Jaguar)\n"
 		"                    e: ELF\n"
-        "                    x: com/exe/xex (Atari 800)\n"
+		"                    x: com/exe/xex (Atari 800)\n"
 		"  -i[path]          Directory to search for include files\n"
 		"  -l[filename]      Create an output listing file\n"
 		"  -n                Don't do things behind your back in RISC assembler\n"
 		"  -o file           Output file name\n"
 		"  +o[value]         Turn a specific optimisation on\n"
-        "                    Available optimisation values and default settings:\n"
-        "                    o0: Absolute long adddresses to word (on)\n"
-        "                    o1: move.l #x,dn/an to moveq         (on)\n"
-        "                    o2: Word branches to short           (on)\n"
-        "                    o3: Outer displacement 0(an) to (an) (off)\n"
+		"                    Available optimisation values and default settings:\n"
+		"                    o0: Absolute long adddresses to word (on)\n"
+		"                    o1: move.l #x,dn/an to moveq         (on)\n"
+		"                    o2: Word branches to short           (on)\n"
+		"                    o3: Outer displacement 0(an) to (an) (off)\n"
 		"  ~o[value]         Turn a specific optimisation off\n"
 		"  +oall             Turn all optimisations on\n"
 		"  ~oall             Turn all optimisations off\n"
@@ -252,7 +253,7 @@ int Process(int argc, char ** argv)
 	orgactive = 0;					// Not in RISC org section
 	orgwarning = 0;					// No ORG warning issued
 	segpadsize = 2;					// Initialise segment padding size
-    m6502 = 0;                      // 6502 mode off by default
+	m6502 = 0;                      // 6502 mode off by default
 
 	// Initialise modules
 	InitSymbolTable();				// Symbol table
@@ -263,10 +264,10 @@ int Process(int argc, char ** argv)
 	InitMark();						// Mark tape-recorder
 	InitMacro();					// Macro processor
 	InitListing();					// Listing generator
-    Init6502();						// 6502 assembler
+	Init6502();						// 6502 assembler
 
 	// Process command line arguments and assemble source files
-	for(argno=0; argno<argc; ++argno)
+	for(argno=0; argno<argc; argno++)
 	{
 		if (*argv[argno] == '-')
 		{
@@ -322,10 +323,10 @@ int Process(int argc, char ** argv)
 				case 'E':
 					obj_format = ELF;
 					break;
-                case 'x':           // -fx = COM/EXE/XEX
-                case 'X':
-                    obj_format = XEX;
-                    break;
+				case 'x':			// -fx = COM/EXE/XEX
+				case 'X':
+					obj_format = XEX;
+					break;
 				default:
 					printf("-f: unknown object format specified\n");
 					errcnt++;
@@ -523,12 +524,13 @@ int Process(int argc, char ** argv)
 		SaveSection();
 	}
 
-    SwitchSection(M6502);
-    if (sloc != currentorg[0])
-    {
-        currentorg[1] = sloc;
-        currentorg += 2;
-    }
+	SwitchSection(M6502);
+
+	if (sloc != currentorg[0])
+	{
+		currentorg[1] = sloc;
+		currentorg += 2;
+	}
 
 	if (objfname == NULL)
 	{

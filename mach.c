@@ -7,19 +7,22 @@
 //
 
 #include "mach.h"
+#include "eagen.h"
 #include "error.h"
-#include "sect.h"
 #include "direct.h"
-#include "token.h"
 #include "procln.h"
 #include "riscasm.h"
 #include "rmac.h"
+#include "sect.h"
+#include "token.h"
 
 #define DEF_KW
 #include "kwtab.h"
 
+// Exported variables
+int movep = 0; // Global flag to indicate we're generating a movep instruction
 
-// Fucntion prototypes
+// Function prototypes
 int m_unimp(WORD, WORD), m_badmode(WORD, WORD), m_bad6mode(WORD, WORD), m_bad6inst(WORD, WORD);
 int m_self(WORD, WORD);
 int m_abcd(WORD, WORD);
@@ -53,9 +56,6 @@ char rel_error[] = "illegal relative address";
 char siz_error[] = "bad size specified";
 char undef_error[] = "undefined expression";
 char fwd_error[] = "forward or undefined expression";
-
-extern int ea0gen(WORD);
-extern int ea1gen(WORD);
 
 // Include code tables
 MNTAB machtab[] = {
@@ -499,7 +499,6 @@ int m_moveq(WORD inst, WORD siz)
 	return 0;
 }
 
-int movep = 0;          // Global flag to indicate we're generating a movep instruction
 //
 // movep Dn, disp(An) -- movep disp(An), Dn
 //

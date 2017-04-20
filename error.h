@@ -11,13 +11,13 @@
 
 #include "rmac.h"
 
-#define EBUFSIZ         200                                 // Max size of an error message
+#define EBUFSIZ         200   // Max size of an error message
 
-// Globals, externals etc
+// Exported variables
 extern int errcnt;
 extern char * err_fname;
 
-// Prototypes
+// Exported functions
 int error(const char *);
 int errors(const char *, char *);
 int fatal(const char *);

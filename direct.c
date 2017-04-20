@@ -7,16 +7,18 @@
 //
 
 #include "direct.h"
-#include "sect.h"
-#include "riscasm.h"
+#include "6502.h"
 #include "error.h"
-#include "token.h"
-#include "procln.h"
 #include "expr.h"
-#include "mach.h"
 #include "listing.h"
+#include "mach.h"
+#include "macro.h"
 #include "mark.h"
+#include "procln.h"
+#include "riscasm.h"
+#include "sect.h"
 #include "symbol.h"
+#include "token.h"
 
 #define DEF_KW
 #include "kwtab.h"
@@ -26,12 +28,50 @@ SYM * symbolPtr[1000000];	// Symbol pointers table
 static long unused;			// For supressing 'write' warnings
 char buffer[256];			// Scratch buffer for messages
 
+// Function prototypes
+int d_unimpl(void);
+int d_68000(void);
+int d_bss(void);
+int d_data(void);
+int d_text(void);
+int d_abs(void);
+int d_comm(void);
+int d_dc(WORD);
+int d_ds(WORD);
+int d_dcb(WORD);
+int d_globl(void);
+int d_gpu(void);
+int d_dsp(void);
+int d_assert(void);
+int d_include(void);
+int d_list(void);
+int d_nlist(void);
+int d_error(char *);
+int d_warn(char *);
+int d_org(void);
+int d_init(WORD);
+int d_cargs(void);
+int d_undmac(void);
+int d_regbank0(void);
+int d_regbank1(void);
+int d_incbin(void);
+int d_noclear(void);
+int d_equrundef(void);
+int d_ccundef(void);
+int d_print(void);
+int d_gpumain(void);
+int d_jpad(void);
+int d_nojpad(void);
+int d_fail(void);
+int d_cstruct(void);
+int d_prgflags(void);
+int d_opt(void);
 
 // Directive handler table
 int (*dirtab[])() = {
 	d_org,				// 0 org
 	d_even,				// 1 even
-	d_6502,			    // 2 .6502
+	d_6502,				// 2 .6502
 	d_68000,			// 3 .68000
 	d_bss,				// 4 bss
 	d_data,				// 5 data
@@ -138,53 +178,45 @@ int d_warn(char *str)
 //
 int d_org(void)
 {
-    VALUE address;
-    
-    if (!rgpu && !rdsp && !m6502)
-    	return error(".org permitted only in gpu/dsp and 6502 sections");
-    
-    if (rgpu | rdsp)
-    {
-        orgaddr = 0;
+	VALUE address;
 
-        if (abs_expr(&address) == ERROR)
-        {
-            error("cannot determine org'd address");
-            return ERROR;
-        }
+	if (!rgpu && !rdsp && !m6502)
+		return error(".org permitted only in gpu/dsp and 6502 sections");
 
-        orgaddr = address;
-        orgactive = 1;
-        //printf("ORG: address = $%08X...\n", orgaddr);
+	if (abs_expr(&address) == ERROR)
+	{
+		error("cannot determine org'd address");
+		return ERROR;
+	}
 
-        return 0;
-    }
-    else
-    {
-        // 6502
-        // We also kludge `lsloc' so the listing generator doesn't
-        // try to spew out megabytes.
-	    VALUE eval;
+	if (rgpu | rdsp)
+	{
+		orgaddr = address;
+		orgactive = 1;
+	}
+	else
+	{
+		// 6502.  We also kludge `lsloc' so the listing generator doesn't try
+		// to spew out megabytes.
+		if (address > 0xFFFF)
+			return error(range_error);
 
-	    //if (m6502 == 0) return error(".org permitted only in .6502 section");
-	    if (abs_expr(&eval) < 0) return 0;
-	    if (eval >= 0x10000L) return error(range_error);
+		if (sloc != currentorg[0])
+		{
+			currentorg[1] = sloc;
+			currentorg += 2;
+		}
 
-        if (sloc != currentorg[0])
-        {
-            currentorg[1] = sloc;
-            currentorg += 2;
-        }
+		currentorg[0] = address;
+		ch_size = 0;
+		lsloc = sloc = address;
+		chptr = scode->chptr + address;
+		orgaddr = address;
+		orgactive = 1;
+		at_eol();
+	}
 
-        currentorg[0] = eval;
-	    ch_size = 0;
-	    lsloc = sloc = eval;
-	    chptr = scode->chptr + eval;
-    	orgactive = 1;
-    	orgaddr = eval;
-	    at_eol();
-        return 0;
-    }
+	return 0;
 }
 
 
@@ -495,8 +527,8 @@ static inline void SkipBytes(unsigned bytesToSkip)
 //
 int d_even(void)
 {
-    if (m6502)
-        return error(in_6502mode);
+	if (m6502)
+		return error(in_6502mode);
 
 	unsigned skip = (rgpu || rdsp ? orgaddr : sloc) & 0x01;
 
@@ -593,16 +625,16 @@ int d_qphrase(void)
 //
 void auto_even(void)
 {
-  if (cursect != M6502)
-  {    
-	if (scattr & SBSS)
-		sloc++;				// Bump BSS section
-	else
-		D_byte(0);			// Deposit 0.b in non-BSS
+	if (cursect != M6502)
+	{
+		if (scattr & SBSS)
+			sloc++;				// Bump BSS section
+		else
+			D_byte(0);			// Deposit 0.b in non-BSS
 
-	if (lab_sym != NULL)	// Bump label if we have to
-		lab_sym->svalue++;
-  }
+		if (lab_sym != NULL)	// Bump label if we have to
+			lab_sym->svalue++;
+	}
 }
 
 
@@ -771,8 +803,8 @@ int globl1(char * p)
 
 int d_globl(void)
 {
-  if (m6502)
-    return error(in_6502mode);
+	if (m6502)
+		return error(in_6502mode);
 
 	symlist(globl1);
 	return 0;
@@ -807,9 +839,9 @@ int d_abs(void)
 {
 	VALUE eval;
 
-    if (m6502)
-        return error(in_6502mode);
-    
+	if (m6502)
+		return error(in_6502mode);
+
 	SaveSection();
 
 	if (*tok == EOL)
@@ -830,8 +862,8 @@ int d_text(void)
 {
 	if (rgpu || rdsp)
 		return error("directive forbidden in gpu/dsp mode");
-    if (m6502)
-        return error(in_6502mode);
+	else if (m6502)
+		return error(in_6502mode);
 
 	if (cursect != TEXT)
 	{
@@ -847,8 +879,8 @@ int d_data(void)
 {
 	if (rgpu || rdsp)
 		return error("directive forbidden in gpu/dsp mode");
-    if (m6502)
-        return error(in_6502mode);
+	else if (m6502)
+		return error(in_6502mode);
 
 	if (cursect != DATA)
 	{
@@ -864,8 +896,8 @@ int d_bss(void)
 {
 	if (rgpu || rdsp)
 		return error("directive forbidden in gpu/dsp mode");
-    if (m6502)
-        return error(in_6502mode);
+	else if (m6502)
+		return error(in_6502mode);
 
 	if (cursect != BSS)
 	{
@@ -886,11 +918,11 @@ int d_ds(WORD siz)
 
 	VALUE eval;
 
-    if (cursect != M6502)
-    {
-	    if ((siz != SIZB) && (sloc & 1))	// Automatic .even
-		    auto_even();
-    }
+	if (cursect != M6502)
+	{
+		if ((siz != SIZB) && (sloc & 1))	// Automatic .even
+			auto_even();
+	}
 
 	if (abs_expr(&eval) != OK)
 		return 0;
@@ -908,7 +940,10 @@ int d_ds(WORD siz)
 		listvalue(eval);
 		eval *= siz;
 		sloc += eval;
-        if (cursect == M6502) chptr += eval;
+
+		if (cursect == M6502)
+			chptr += eval;
+
 		just_bss = 1;					// No data deposited (8-bit CPU mode)
 	}
 	else
@@ -1021,21 +1056,16 @@ int d_dc(WORD siz)
 					MarkRelocatable(cursect, sloc, tdb, MWORD, NULL);
 
 				// Deposit 68000 or 6502 (byte-reversed) word
-	            if (cursect != M6502)
-		        {
-		            D_word(eval);
-		        }
-	            else
-		        {
-		            D_rword(eval);
-		        }
-        
+				if (cursect != M6502)
+					D_word(eval)
+				else
+					D_rword(eval)
 			}
 
 			break;
 		case SIZL:
-	        if (m6502)
-	            return error(in_6502mode);
+			if (m6502)
+				return error(in_6502mode);
 
 			if (!defined)
 			{
@@ -1222,13 +1252,9 @@ int dep_block(VALUE count, WORD siz, VALUE eval, WORD eattr, TOKEN * exprbuf)
 
 				// Deposit 68000 or 6502 (byte-reversed) word
 				if (cursect != M6502)
-				{
-					D_word(eval);
-				}
+					D_word(eval)
 				else
-				{
-					D_rword(eval);
-				}
+					D_rword(eval)
 
 			}
 
@@ -1236,7 +1262,7 @@ int dep_block(VALUE count, WORD siz, VALUE eval, WORD eattr, TOKEN * exprbuf)
 		case SIZL:
 			if (m6502)
 				return error(in_6502mode);
-            
+
 			if (!defined)
 			{
 				AddFixup(FU_LONG, sloc, exprbuf);

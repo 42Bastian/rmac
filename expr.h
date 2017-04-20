@@ -30,7 +30,7 @@
 #define XOR          11		// Bitwise xor: ^
 #define OR           12		// Bitwise or: |
 
-// Prototypes
+// Exported functions
 void InitExpression(void);
 int expr1(void);
 int expr2(void);

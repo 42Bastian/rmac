@@ -6,7 +6,7 @@
 // Source utilised with the kind permission of Landon Dyer
 //
 
-#include "rmac.h"
+#include "eagen.h"
 #include "amode.h"
 #include "sect.h"
 #include "mark.h"

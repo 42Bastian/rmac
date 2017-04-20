@@ -22,25 +22,27 @@
 #define TAG_COL         38				// Tag character
 #define SRC_COL         40				// Source start
 
-// Globals, externals etc
+// Exported variables
 extern char * list_fname;
 extern int listing;
 extern int pagelen;
 extern int nlines;
 extern LONG lsloc;
+extern uint8_t subttl[];
 
-// Prototypes
-void InitListing(void);
+// Exported functions
 int eject(void);
-void ship_ln(const char *);
-void taglist(char);
-void println(const char *);
-void listeol(void);
 VALUE dos_date(void);
 VALUE dos_time(void);
+void taglist(char);
+void println(const char *);
+void ship_ln(const char *);
+void InitListing(void);
+void listeol(void);
 void lstout(char);
 int listvalue(VALUE);
 int d_subttl(void);
 int d_title(void);
 
 #endif // __LISTING_H__
+

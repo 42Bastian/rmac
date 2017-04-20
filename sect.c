@@ -7,6 +7,7 @@
 //
 
 #include "sect.h"
+#include "6502.h"
 #include "direct.h"
 #include "error.h"
 #include "expr.h"
@@ -16,7 +17,6 @@
 #include "riscasm.h"
 #include "symbol.h"
 #include "token.h"
-extern int m6502;		/* 1, assembler in .6502 mode */
 
 
 // Function prototypes
@@ -417,7 +417,7 @@ int ResolveFixups(int sno)
 	 */
 	if (sno == M6502)
 		cch->ch_size = cch->challoc;
-    
+
 	do
 	{
 		fup.cp = ch->chptr;					// fup -> start of chunk
@@ -592,25 +592,25 @@ int ResolveFixups(int sno)
 
 				*locp = (uint8_t)eval;
 				break;
-            // Fixup high/low byte off word for 6502
-            case FU_BYTEH:
-                if (!(eattr & DEFINED))
-                {
-                    error("external byte reference");
-                    continue;
-                }
+			// Fixup high/low byte off word for 6502
+			case FU_BYTEH:
+				if (!(eattr & DEFINED))
+				{
+					error("external byte reference");
+					continue;
+				}
 
-                *locp = (uint8_t)((eval >> 8) & 0xff);
-                break;
-            case FU_BYTEL:
-                if (!(eattr & DEFINED))
-                {
-                    error("external byte reference");
-                    continue;
-                }
+				*locp = (uint8_t)((eval >> 8) & 0xFF);
+				break;
+			case FU_BYTEL:
+				if (!(eattr & DEFINED))
+				{
+					error("external byte reference");
+					continue;
+				}
 
-                *locp = (uint8_t)(eval & 0xff);
-                break;
+				*locp = (uint8_t)(eval & 0xFF);
+				break;
 			// Fixup WORD forward references;
 			// the word could be unaligned in the section buffer, so we have to
 			// be careful.
@@ -741,15 +741,12 @@ int ResolveFixups(int sno)
 					}
 				}
 
-				if (sno != M6502)
-				{
-					*locp++ = (char)(eval >> 8);
-					*locp = (char)eval;
-				}
+				// 6502 words are little endian, so handle that here
+				if (sno == M6502)
+					SETLE16(locp, 0, eval)
 				else
-				{
-				    SETBE16(locp, 0, eval);
-                }
+				    SETBE16(locp, 0, eval)
+
 				break;
 			// Fixup LONG forward references;
 			// the long could be unaligned in the section buffer, so be careful

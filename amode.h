@@ -107,7 +107,7 @@ MNTAB {
 // mnattr:
 #define CGSPECIAL    0x8000				// Special (don't parse addr modes)
 
-// Prototypes
+// Exported functions
 int amode(int);
 int reglist(WORD *);
 

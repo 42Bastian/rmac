@@ -7,16 +7,17 @@
 //
 
 #include "procln.h"
-#include "listing.h"
+#include "6502.h"
 #include "amode.h"
-#include "error.h"
-#include "sect.h"
-#include "expr.h"
-#include "mach.h"
 #include "direct.h"
+#include "error.h"
+#include "expr.h"
+#include "listing.h"
+#include "mach.h"
 #include "macro.h"
-#include "symbol.h"
 #include "riscasm.h"
+#include "sect.h"
+#include "symbol.h"
 
 #define DEF_KW					// Declare keyword values
 #include "kwtab.h"				// Incl generated keyword tables & defs
@@ -29,12 +30,9 @@
 #define DECL_MR
 #include "risckw.h"
 
-#define DEF_MP			/* include 6502 keyword definitions */
-#define DECL_MP			/* include 6502 keyword state machine tables */
-#include "6502.h"
-extern int m6502;		/* 1, assembler in .6502 mode */
-extern VOID m6502cg();		/* 6502 code generator */
-extern VOID m6502obj(int ofd);
+#define DEF_MP					// Include 6502 keyword definitions
+#define DECL_MP					// Include 6502 keyword state machine tables
+#include "6502kw.h"
 
 IFENT * ifent;					// Current ifent
 static IFENT ifent0;			// Root ifent
@@ -572,44 +570,41 @@ When checking to see if it's already been equated, issue a warning.
 	if (state == -3)
 		goto loop;
 
-	/*
-	 *  If we're in 6502 mode and are still in need
-	 *  of a mnemonic, then search for valid 6502 mnemonic.
-	 */
-	if (m6502 &&
-		  (state < 0 || state >= 1000))
+	// If we're in 6502 mode and are still in need of a mnemonic, then search
+	// for valid 6502 mnemonic.
+	if (m6502 && (state < 0 || state >= 1000))
 	{
 #ifdef ST
 		state = kmatch(opname, mpbase, mpcheck, mptab, mpaccept);
 #else
-		for (state = 0, p = opname; state >= 0;)
+		for(state=0, p=opname; state>= 0; )
 		{
 			j = mpbase[state] + tolowertab[*p];
-			if (mpcheck[j] != state)	/* reject, character doesn't match */
+
+			if (mpcheck[j] != state)	// Reject, character doesn't match
 			{
-				state = -1;		/* no match */
+				state = -1;		// No match
 				break;
 			}
 
 			if (!*++p)
-			{			/* must accept or reject at EOS */
-				state = mpaccept[j];	/* (-1 on no terminal match) */
+			{			// Must accept or reject at EOS
+				state = mpaccept[j];	// (-1 on no terminal match)
 				break;
 			}
+
 			state = mptab[j];
 		}
 #endif
 
-		/*
-		 *  Call 6502 code generator if we found a mnemonic
-		 */
+		// Call 6502 code generator if we found a mnemonic
 		if (state >= 2000)
 		{
 			m6502cg(state - 2000);
 			goto loop;
 		}
 	}
-    
+
 	// If we are in GPU or DSP mode and still in need of a mnemonic then search
 	// for one
 	if ((rgpu || rdsp) && (state < 0 || state >= 1000))

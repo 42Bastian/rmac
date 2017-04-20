@@ -10,6 +10,7 @@
 #include "error.h"
 #include "macro.h"
 #include "procln.h"
+#include "sect.h"
 #include "symbol.h"
 
 #define DECL_KW				// Declare keyword arrays

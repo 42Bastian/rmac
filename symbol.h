@@ -36,9 +36,8 @@ SYM
 	uint32_t uid;					// Symbol's unique ID
 };
 
-// Globals, externals, etc.
+// Exported variables
 extern int curenv;
-extern uint8_t subttl[];
 extern uint32_t firstglobal;// Index of the fist global symbol in an ELF object.
 
 // Exported functions

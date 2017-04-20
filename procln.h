@@ -12,7 +12,7 @@
 #include "rmac.h"
 #include "token.h"
 
-// Globals, externals etc
+// Exported variables
 extern IFENT * ifent;
 extern const char comma_error[];
 extern const char locgl_error[];
@@ -22,9 +22,8 @@ extern int just_bss;
 extern VALUE pcloc;
 extern SYM * lab_sym;
 extern LONG amsktab[];
-extern char in_6502mode[];
 
-// Prototypes
+// Exported functions
 void InitLineProcessor(void);
 void Assemble(void);
 int d_if(void);
@@ -32,3 +31,4 @@ int d_else(void);
 int d_endif(void);
 
 #endif // __PROCLN_H__
+

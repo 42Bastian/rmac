@@ -57,7 +57,7 @@ See left.		4 & 5	If these bits are set to 0 (PF_PRIVATE), the processes'
 
 
 //
-// Add entry to symbol table
+// Add entry to symbol table (in ALCYON mode)
 // If 'globflag' is 1, make the symbol global
 // If in .PRG mode, adjust symbol values for fake link
 //
@@ -752,11 +752,11 @@ for(int j=0; j<i; j++)
 			free(strtable);
 		}
 	}
-    else if (obj_format == XEX)
-    {
-        // Just write the object file
-        m6502obj(fd);
-    }
+	else if (obj_format == XEX)
+	{
+		// Just write the object file
+		m6502obj(fd);
+	}
 
 	return 0;
 }
