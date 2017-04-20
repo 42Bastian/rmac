@@ -19,11 +19,11 @@
 
 #define	UPSEG_SIZE	0x10010L // size of 6502 code buffer, 64K+16bytes
 
-//
-// Exported vars
-//
-const char in_6502mode[] = "directive illegal in .6502 section";
+// Internal vars
 static uint16_t orgmap[1024][2];		// Mark all 6502 org changes
+
+// Exported vars
+const char in_6502mode[] = "directive illegal in .6502 section";
 uint16_t * currentorg = &orgmap[0][0];	// Current org range
 
 //
@@ -345,7 +345,12 @@ void m6502cg(int op)
 		//   y,foo
 		//
 		p = string[tok[1]];
-
+		// ggn: the following code is effectively disabled as it would make
+		//      single letter labels not work correctly (would not identify the
+		//      label properly). And from what I understand it's something to
+		//      keep compatibility with the coinop assembler which is probably
+		//      something we don't care about much :D
+#if 0
 		if (*tok == SYMBOL && p[1] == EOS && tok[2] == ',')
 		{
 			tok += 3;		// Past: SYMBOL <string> ','
@@ -369,6 +374,7 @@ void m6502cg(int op)
 		}
 
 not_coinop:
+#endif
 		if (expr(exprbuf, &eval, &eattr, NULL) < 0)
 			return;
 
@@ -550,8 +556,10 @@ badmode:
 // Generate 6502 object output file.
 //
 // ggn: converted into a com/exe/xex output format
-//      Notes: 1. The $FFFF is only mandatory for the first segment, but let's dump it everywhere for now
-//             2. It's still dumping pages instead of more fine grained stuff. Should look into this - a8 people don't like waste so much ;)
+//      Notes: 1. The $FFFF is only mandatory for the first segment, but let's
+//                dump it everywhere for now
+//             2. It's still dumping pages instead of more fine grained stuff.
+//                Should look into this - a8 people don't like waste so much ;)
 void m6502obj(int ofd)
 {
 	uint16_t exeheader[3];
@@ -571,9 +579,13 @@ void m6502obj(int ofd)
 	{
 		exeheader[1] = l[0];
 		exeheader[2] = l[1] - 1;
-		size_t unused = write(ofd, headpoint, headsize);   // Write header
+
+		// Write header
+		size_t unused = write(ofd, headpoint, headsize);
 		unused = write(ofd, p + l[0], l[1] - l[0]);
-		headpoint = &exeheader[1];            // Skip the $FFFF after first segment, it's not mandatory
+
+		// Skip the $FFFF after first segment, it's not mandatory
+		headpoint = &exeheader[1];
 		headsize = 4;
 	}
 }

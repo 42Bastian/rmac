@@ -79,6 +79,9 @@ kwgen : kwgen.o
 # Build RMAC executable
 #
 
+6502.o : 6502.c 6502.h
+	$(CC) $(CFLAGS) -c 6502.c
+
 amode.o : amode.c amode.h
 	$(CC) $(CFLAGS) -c amode.c
 
@@ -127,9 +130,6 @@ sect.o : sect.c sect.h
 symbol.o : symbol.c symbol.h
 	$(CC) $(CFLAGS) -c symbol.c
 
-6502.o : 6502.c 6502.h
-	$(CC) $(CFLAGS) -c 6502.c
-
 token.o : token.c token.h
 	$(CC) $(CFLAGS) -c token.c
 
@@ -142,4 +142,47 @@ rmac : $(OBJS)
 
 clean:
 	$(rm) $(OBJS) kwgen.o 68kgen.o rmac kwgen 68kgen kwtab.h 68ktab.h mntab.h risckw.h 6502kw.h
+
+#
+# Dependencies
+#
+6502.o: 6502.c direct.h rmac.h symbol.h expr.h error.h mach.h amode.h \
+ procln.h token.h riscasm.h sect.h
+68kgen.o: 68kgen.c
+amode.o: amode.c amode.h rmac.h symbol.h error.h token.h expr.h kwtab.h \
+ mntab.h parmode.h
+debug.o: debug.c debug.h rmac.h symbol.h amode.h direct.h mark.h sect.h \
+ token.h
+direct.o: direct.c direct.h rmac.h symbol.h 6502.h error.h expr.h \
+ listing.h mach.h amode.h macro.h mark.h procln.h token.h riscasm.h \
+ sect.h kwtab.h
+eagen.o: eagen.c eagen.h rmac.h symbol.h amode.h sect.h mark.h error.h \
+ mach.h riscasm.h eagen0.c
+error.o: error.c error.h rmac.h symbol.h token.h listing.h
+expr.o: expr.c expr.h rmac.h symbol.h direct.h error.h listing.h mach.h \
+ amode.h procln.h token.h riscasm.h sect.h kwtab.h
+kwgen.o: kwgen.c
+listing.o: listing.c listing.h rmac.h symbol.h version.h token.h procln.h \
+ sect.h error.h
+mach.o: mach.c mach.h amode.h rmac.h symbol.h eagen.h error.h direct.h \
+ procln.h token.h riscasm.h sect.h kwtab.h 68ktab.h
+macro.o: macro.c macro.h rmac.h symbol.h debug.h direct.h error.h expr.h \
+ listing.h procln.h token.h
+mark.o: mark.c mark.h rmac.h symbol.h error.h object.h riscasm.h sect.h
+object.o: object.c object.h rmac.h symbol.h error.h mark.h riscasm.h \
+ sect.h
+procln.o: procln.c procln.h rmac.h symbol.h token.h 6502.h amode.h \
+ direct.h error.h expr.h listing.h mach.h macro.h riscasm.h sect.h \
+ kwtab.h mntab.h risckw.h 6502kw.h
+riscasm.o: riscasm.c riscasm.h rmac.h symbol.h amode.h direct.h error.h \
+ expr.h mark.h procln.h token.h sect.h risckw.h kwtab.h
+rmac.o: rmac.c rmac.h symbol.h 6502.h debug.h direct.h error.h expr.h \
+ listing.h mark.h macro.h object.h procln.h token.h riscasm.h sect.h \
+ version.h
+sect.o: sect.c sect.h rmac.h symbol.h 6502.h direct.h error.h expr.h \
+ listing.h mach.h amode.h mark.h riscasm.h token.h
+symbol.o: symbol.c symbol.h error.h rmac.h listing.h object.h procln.h \
+ token.h
+token.o: token.c token.h rmac.h symbol.h error.h macro.h procln.h sect.h \
+ kwtab.h
 
