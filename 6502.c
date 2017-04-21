@@ -25,6 +25,7 @@ static uint16_t orgmap[1024][2];		// Mark all 6502 org changes
 // Exported vars
 const char in_6502mode[] = "directive illegal in .6502 section";
 uint16_t * currentorg = &orgmap[0][0];	// Current org range
+char strtoa8[128];	// ASCII to Atari 800 internal conversion table
 
 //
 // 6502 addressing modes;
@@ -145,9 +146,24 @@ static int abs2zp[] =
 	-1			// ZPY
 };
 
+static char a8internal[] =
+{
+    ' ', 0,   '!', 1,   '"', 2,   '#', 3,   '$',  4,   '%', 5,   '&', 6,   '\'', 7,
+    '(', 8,   ')', 9,   '*', 10,  '+', 11,  ',',  12,  '-', 13,  '.', 14,  '/',  15,
+    '0', 16,  '1', 17,  '2', 18,  '3', 19,  '4',  20,  '5', 21,  '6', 22,  '7',  23,
+    '8', 24,  '9', 25,  ':', 26,  ';', 27,  '<',  28,  '=', 29,  '>', 30,  '?',  31,
+    '@', 32,  'A', 33,  'B', 34,  'C', 35,  'D',  36,  'E', 37,  'F', 38,  'G',  39,
+    'H', 40,  'I', 41,  'J', 42,  'K', 43,  'L',  44,  'M', 45,  'N', 46,  'O',  47,
+    'P', 48,  'Q', 49,  'R', 50,  'S', 51,  'T',  52,  'U', 53,  'V', 54,  'W',  55,
+    'X', 56,  'Y', 57,  'Z', 58,  '[', 59,  '\\', 60,  ']', 61,  '^', 62,  '_',  63,
+    'a', 97,  'b', 98,  'c', 99,  'd', 100, 'e',  101, 'f', 102, 'g', 103, 'h',  104,
+    'i', 105, 'j', 106, 'k', 107, 'l', 108, 'm',  109, 'n', 110, 'o', 111, 'p',  112,
+    'q', 113, 'r', 114, 's', 115, 't', 116, 'u',  117, 'v', 118, 'w', 119, 'x',  120,
+    'y', 121, 'z', 122
+};
 
 //
-// Initialize 6502 assembler
+//  initialize 6502 assembler
 //
 void Init6502()
 {
@@ -186,8 +202,26 @@ void Init6502()
 
 	// Set up first org section (set to zero)
 	orgmap[0][0] = 0;
-}
 
+    SwitchSection(M6502);	// Switch to 6502 section
+    //
+    // Initialise string conversion table(s)
+    //
+
+    char *p = a8internal;
+    memset(strtoa8, 31, 128);   // 31=fallback value ("?")
+    for (; p < a8internal + sizeof(a8internal); p += 2)
+    {
+        strtoa8[p[0]] = p[1];
+    }
+
+    if (challoc == 0) {
+        // Allocate and clear 64K of space for the 6502 section
+        chcheck(UPSEG_SIZE);
+        memset(sect[M6502].scode->chptr, 0, UPSEG_SIZE);
+    }
+    SwitchSection(TEXT);    // Go back to TEXT
+}
 
 //
 // .6502 --- enter 6502 mode
@@ -196,13 +230,6 @@ int d_6502()
 {
 	SaveSection();			// Save curent section
 	SwitchSection(M6502);	// Switch to 6502 section
-
-	if (challoc == 0)
-	{
-		// Allocate and clear 64K of space for the 6502 section
-		chcheck(UPSEG_SIZE);
-		memset(sect[M6502].scode->chptr, 0, UPSEG_SIZE);
-	}
 
 	return 0;
 }
@@ -556,10 +583,6 @@ badmode:
 // Generate 6502 object output file.
 //
 // ggn: converted into a com/exe/xex output format
-//      Notes: 1. The $FFFF is only mandatory for the first segment, but let's
-//                dump it everywhere for now
-//             2. It's still dumping pages instead of more fine grained stuff.
-//                Should look into this - a8 people don't like waste so much ;)
 void m6502obj(int ofd)
 {
 	uint16_t exeheader[3];

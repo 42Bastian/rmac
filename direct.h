@@ -15,6 +15,7 @@
 extern TOKEN exprbuf[];
 extern SYM * symbolPtr[];
 extern int (* dirtab[])();
+extern char strtoa8[];
 
 // Exported functions
 void auto_even(void);

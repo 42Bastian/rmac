@@ -1591,8 +1591,8 @@ common in bitmap-graphics routines). For example:
 ======================
 
 RMAC will generate code for the Atari jaguar GPU and DSP custom RISC (Reduced
-Instruction Set Computer) processors. See the Atari Jaguar Software reference Manual – Tom
-& Jerry for a complete listing of Jaguar GPU and DSP assembler mnemonics and addressing
+Instruction Set Computer) processors. See the Atari Jaguar Software reference Manual "Tom
+& Jerry" for a complete listing of Jaguar GPU and DSP assembler mnemonics and addressing
 modes.
 
 `Condition Codes`_

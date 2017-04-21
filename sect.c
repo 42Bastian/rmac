@@ -130,6 +130,11 @@ void SwitchSection(int sno)
 		challoc = cp->challoc;
 		ch_size = cp->ch_size;
 		chptr = cp->chptr + ch_size;
+        if (m6502)
+        {
+            // For 6502 mode, add the last org'd address
+            chptr = cp->chptr + orgaddr;
+        }
 	}
 	else
 		challoc = ch_size = 0;
