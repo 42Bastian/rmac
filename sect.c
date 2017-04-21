@@ -47,26 +47,26 @@ PTR fchptr;				// Deposit point in fixup chunk buffer
 // Return a size (SIZB, SIZW, SIZL) or 0, depending on what kind of fixup is
 // associated with a location.
 static uint8_t fusiztab[] = {
-   0,	// FU_QUICK
-   1,	// FU_BYTE
-   2,	// FU_WORD
-   2,	// FU_WBYTE
-   4,	// FU_LONG
-   1,	// FU_BBRA
-   0,	// (unused)
-   1,	// FU_6BRA
+	0,	// FU_QUICK
+	1,	// FU_BYTE
+	2,	// FU_WORD
+	2,	// FU_WBYTE
+	4,	// FU_LONG
+	1,	// FU_BBRA
+	0,	// (unused)
+	1,	// FU_6BRA
 };
 
 // Offset to REAL fixup location
 static uint8_t fusizoffs[] = {
-   0,	// FU_QUICK
-   0,	// FU_BYTE
-   0,	// FU_WORD
-   1,	// FU_WBYTE
-   0,	// FU_LONG
-   1,	// FU_BBRA
-   0,	// (unused)
-   0,	// FU_6BRA
+	0,	// FU_QUICK
+	0,	// FU_BYTE
+	0,	// FU_WORD
+	1,	// FU_WBYTE
+	0,	// FU_LONG
+	1,	// FU_BBRA
+	0,	// (unused)
+	0,	// FU_6BRA
 };
 
 
@@ -116,7 +116,7 @@ void SwitchSection(int sno)
 	cursect = sno;
 	SECT * p = &sect[sno];
 
-    m6502 = (sno == M6502);	/* set 6502-mode */
+    m6502 = (sno == M6502);	// Set 6502-mode flag
 
 	// Copy section vars
 	scattr = p->scattr;
@@ -130,11 +130,10 @@ void SwitchSection(int sno)
 		challoc = cp->challoc;
 		ch_size = cp->ch_size;
 		chptr = cp->chptr + ch_size;
-        if (m6502)
-        {
-            // For 6502 mode, add the last org'd address
-            chptr = cp->chptr + orgaddr;
-        }
+
+		// For 6502 mode, add the last org'd address
+		if (m6502)
+			chptr = cp->chptr + orgaddr;
 	}
 	else
 		challoc = ch_size = 0;

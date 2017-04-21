@@ -162,8 +162,9 @@ static char a8internal[] =
     'y', 121, 'z', 122
 };
 
+
 //
-//  initialize 6502 assembler
+// Initialize 6502 assembler
 //
 void Init6502()
 {
@@ -203,25 +204,25 @@ void Init6502()
 	// Set up first org section (set to zero)
 	orgmap[0][0] = 0;
 
-    SwitchSection(M6502);	// Switch to 6502 section
-    //
-    // Initialise string conversion table(s)
-    //
+	SwitchSection(M6502);	// Switch to 6502 section
 
-    char *p = a8internal;
-    memset(strtoa8, 31, 128);   // 31=fallback value ("?")
-    for (; p < a8internal + sizeof(a8internal); p += 2)
-    {
-        strtoa8[p[0]] = p[1];
-    }
+	// Initialise string conversion table(s)
+	char * p = a8internal;
+	memset(strtoa8, 31, 128);   // 31=fallback value ("?")
 
-    if (challoc == 0) {
-        // Allocate and clear 64K of space for the 6502 section
-        chcheck(UPSEG_SIZE);
-        memset(sect[M6502].scode->chptr, 0, UPSEG_SIZE);
-    }
-    SwitchSection(TEXT);    // Go back to TEXT
+	for(; p<a8internal+sizeof(a8internal); p+=2)
+		strtoa8[p[0]] = p[1];
+
+	if (challoc == 0)
+	{
+		// Allocate and clear 64K of space for the 6502 section
+		chcheck(UPSEG_SIZE);
+		memset(sect[M6502].scode->chptr, 0, UPSEG_SIZE);
+	}
+
+	SwitchSection(TEXT);    // Go back to TEXT
 }
+
 
 //
 // .6502 --- enter 6502 mode

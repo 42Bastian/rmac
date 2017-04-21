@@ -154,7 +154,6 @@ extern char tolowertab[];
 extern INOBJ * cur_inobj;
 extern int mjump_align;
 extern char * string[];
-extern int stringtype;
 
 // Exported functions
 int include(int, char *);

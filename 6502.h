@@ -12,6 +12,7 @@
 // Exported variables
 extern const char in_6502mode[];
 extern uint16_t * currentorg;	// Current org range
+extern char strtoa8[];
 
 // Exported functions
 extern void Init6502();

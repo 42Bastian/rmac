@@ -7,6 +7,7 @@
 //
 
 #include "token.h"
+#include "direct.h"
 #include "error.h"
 #include "macro.h"
 #include "procln.h"
@@ -1161,7 +1162,8 @@ if (debug) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 		// Handle multiple-character tokens
 		if (c & MULTX)
 		{
-            stringtype = 0;
+			stringtype = 0;
+
 			switch (*ln++)
 			{
 			case '!':		// ! or !=
@@ -1175,11 +1177,10 @@ if (debug) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 
 				continue;
 			case '\'':		// 'string'
-                if (m6502)
-                {
-                    stringtype = A8INT; // hardcoded for now, maybe this will change in the future
-                }
-                // Fall through
+				if (m6502)
+					stringtype = A8INT; // hardcoded for now, maybe this will change in the future
+
+				// Fall through
 			case '\"':		// "string"
 				c1 = ln[-1];
 				*tk++ = STRING;

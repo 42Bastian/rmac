@@ -990,20 +990,20 @@ int d_dc(WORD siz)
 			if ((challoc - ch_size) < i)
 				chcheck(i);
 
-            if (stringtype == NORMAL)
-            {
-                for (p = string[tok[1]]; *p != EOS; p++)
-				D_byte(*p);
-            }
-            else if(stringtype == A8INT)
-            {    
-                for (p = string[tok[1]]; *p != EOS; p++)
-                D_byte(strtoa8[*p]);          
-            }
-            else
-            {
-                error("String format not supported yet");
-            }
+			if (stringtype == NORMAL)
+			{
+				for(p=string[tok[1]]; *p!=EOS; p++)
+					D_byte(*p);
+			}
+			else if(stringtype == A8INT)
+			{
+				for(p=string[tok[1]]; *p!=EOS; p++)
+					D_byte(strtoa8[*p]);
+			}
+			else
+			{
+				error("String format not supported... yet");
+			}
 
 
 			tok += 2;
