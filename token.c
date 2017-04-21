@@ -1162,7 +1162,6 @@ if (debug) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 		// Handle multiple-character tokens
 		if (c & MULTX)
 		{
-			stringtype = 0;
 
 			switch (*ln++)
 			{
@@ -1178,12 +1177,15 @@ if (debug) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 				continue;
 			case '\'':		// 'string'
 				if (m6502)
-					stringtype = A8INT; // hardcoded for now, maybe this will change in the future
-
+                {
+					*tk++ = STRINGA8; // hardcoded for now, maybe this will change in the future
+                    goto dostring;
+                }
 				// Fall through
 			case '\"':		// "string"
-				c1 = ln[-1];
 				*tk++ = STRING;
+dostring:
+				c1 = ln[-1];
 //#warning
 // More char * stuffing (8 bytes) into the space of 4 (TOKEN).
 // Need to figure out how to fix this crap.

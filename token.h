@@ -75,12 +75,6 @@
 #define MULTX           64					// Multiple-character tokens
 #define DOT             128					// [bwlsBWSL] for what follows a `.'
 
-// "special" string types
-#define NORMAL          0                   // Standard for PC/ST/whatever
-#define A8INT           1                   // Atari 800 ATASCII translation
-#define PETSCII         2                   // lol
-#define ORICSCII        3                   // lolol
-
 // Conditional assembly structures
 IFENT {
 	IFENT * if_prev;		// Ptr prev .if state block (or NULL)

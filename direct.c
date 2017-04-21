@@ -27,7 +27,6 @@ TOKEN exprbuf[128];			// Expression buffer
 SYM * symbolPtr[1000000];	// Symbol pointers table
 static long unused;			// For supressing 'write' warnings
 char buffer[256];			// Scratch buffer for messages
-int stringtype;             // Non-zero if we need any special string conversions
 
 // Function prototypes
 int d_unimpl(void);
@@ -983,19 +982,19 @@ int d_dc(WORD siz)
 	for(;; tok++)
 	{
 		// dc.b 'string' [,] ...
-		if (siz == SIZB && *tok == STRING && (tok[2] == ',' || tok[2] == EOL))
+		if (siz == SIZB && (*tok == STRING || *tok == STRINGA8) && (tok[2] == ',' || tok[2] == EOL))
 		{
 			uint32_t i = strlen(string[tok[1]]);
 
 			if ((challoc - ch_size) < i)
 				chcheck(i);
 
-			if (stringtype == NORMAL)
+			if (*tok == STRING)
 			{
 				for(p=string[tok[1]]; *p!=EOS; p++)
 					D_byte(*p);
 			}
-			else if(stringtype == A8INT)
+			else if(*tok == STRINGA8)
 			{
 				for(p=string[tok[1]]; *p!=EOS; p++)
 					D_byte(strtoa8[*p]);

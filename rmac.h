@@ -168,6 +168,7 @@
 #define CONST        'a'			// CONST <value>
 #define ACONST       'A'			// ACONST <value> <attrib>
 #define STRING       'b'			// STRING <address>
+#define STRINGA8     'S'            // Atari 800 internal STRING <address>
 #define SYMBOL       'c'			// SYMBOL <address>
 #define EOL          'e'			// End of line
 #define TKEOF        'f'			// End of file (or macro)
