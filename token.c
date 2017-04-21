@@ -1177,25 +1177,19 @@ if (debug) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 				continue;
 			case '\'':		// 'string'
 				if (m6502)
-                {
-					*tk++ = STRINGA8; // hardcoded for now, maybe this will change in the future
-                    goto dostring;
-                }
+				{
+					// Hardcoded for now, maybe this will change in the future
+					*tk++ = STRINGA8;
+					goto dostring;
+				}
 				// Fall through
 			case '\"':		// "string"
 				*tk++ = STRING;
 dostring:
 				c1 = ln[-1];
-//#warning
-// More char * stuffing (8 bytes) into the space of 4 (TOKEN).
-// Need to figure out how to fix this crap.
-#if 0
-				*tk++ = (TOKEN)ln;
-#else
 				string[stringNum] = ln;
 				*tk++ = stringNum;
 				stringNum++;
-#endif
 
 				for(p=ln; *ln!=EOS && *ln!=c1;)
 				{

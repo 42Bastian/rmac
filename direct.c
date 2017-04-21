@@ -1004,7 +1004,6 @@ int d_dc(WORD siz)
 				error("String format not supported... yet");
 			}
 
-
 			tok += 2;
 			goto comma;
 		}

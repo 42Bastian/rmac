@@ -527,21 +527,7 @@ uint32_t CreateELFRelocationRecord(uint8_t * buf, uint8_t * secBuf, uint16_t sec
 				else
 					r_type = 1;  // R_68K_32
 
-#ifdef DEBUG_IMAGE_MARKING
-if (symbol)
-{
-	printf("CreateELFReloc: symbol-svalue = $%08X\n", symbol->svalue);
-}
-
-printf("CreateELFReloc: deposited value = $%08X\n", GETBE32(secBuf + r_offset, 0));
-
-#endif
-//Turns out this is pretty much bollocks. So now we punt all the time :-)
-//N.B.: Once this is proved out, this will go for good.
-//				if (symbol != NULL)
-//					r_addend = symbol->svalue;    // Mark offset into section
-//				else
-					r_addend = GETBE32(secBuf + r_offset, 0);
+				r_addend = GETBE32(secBuf + r_offset, 0);
 
 				// Deposit the relocation record
 				D_long(r_offset);
