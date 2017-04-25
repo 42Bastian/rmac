@@ -20,7 +20,7 @@
 
 
 int lnsave;					// 1; strcpy() text of current line
-int curlineno;				// Current line number
+uint16_t curlineno;			// Current line number (64K max currently)
 int totlines;				// Total # of lines
 int mjump_align = 0;		// mjump alignment flag
 char lntag;					// Line tag
@@ -517,9 +517,9 @@ DEBUG printf("ExM: SYMBOL=\"%s\"", d);
 								*dst++ = '"';
 								continue;
 								break;
-// Shamus: Changing the format specifier from %lx to %ux caused
-//         the assembler to choke on legitimate code... Need to investigate
-//         this further before changing anything else here!
+// Shamus: Changing the format specifier from %lx to %ux caused the assembler
+//         to choke on legitimate code... Need to investigate this further
+//         before changing anything else here!
 							case CONST:
 								sprintf(numbuf, "$%lx", (LONG)*tk++);
 								d = numbuf;
@@ -1567,17 +1567,12 @@ goteol:
 // expansion, and is NOT subject to macro expansion.  The whitespace may also
 // be EOL.
 //
-//int d_goto(WORD siz) {
-//int d_goto(void)
 int d_goto(WORD unused)
 {
-	char * s1, * s2;
-
 	// Setup for the search
 	if (*tok != SYMBOL)
 		return error("missing label");
 
-//	sym = (char *)tok[1];
 	char * sym = string[tok[1]];
 	tok += 2;
 
@@ -1585,39 +1580,35 @@ int d_goto(WORD unused)
 		return error("goto not in macro");
 
 	IMACRO * imacro = cur_inobj->inobj.imacro;
-//	defln = (LONG *)imacro->im_macro->svalue;
 	struct LineList * defln = imacro->im_macro->lineList;
 
-	// Find the label, starting with the first line.
+	// Attempt to find the label, starting with the first line.
 	for(; defln!=NULL; defln=defln->next)
 	{
-//		if (*(char *)(defln + 1) == ':')
+		// Must start with a colon
 		if (defln->line[0] == ':')
 		{
 			// Compare names (sleazo string compare)
-			// This string compare is not right. Doesn't check for lengths.
-			// (actually it does, but in a crappy, unclear way.)
-WARNING(!!!! Bad string comparison !!!)
-			s1 = sym;
-//			s2 = (char *)(defln + 1) + 1;
-			s2 = defln->line;
+			char * s1 = sym;
+			char * s2 = defln->line;
 
-			while (*s1 == *s2)
+			// Either we will match the strings to EOS on both, or we will
+			// match EOS on string 1 to whitespace on string 2. Otherwise, we
+			// have no match.
+			while ((*s1 == *s2) || ((*s1 == EOS) && (chrtab[*s2] & WHITE)))
 			{
+				// If we reached the end of string 1 (sym), we're done.
+				// Note that we're also checking for the end of string 2 as
+				// well, since we've established they're equal above.
 				if (*s1 == EOS)
-					break;
-				else
 				{
-					s1++;
-					s2++;
+					// Found the label, set new macro next-line and return.
+					imacro->im_nextln = defln;
+					return 0;
 				}
-			}
 
-			// Found the label, set new macro next-line and return.
-			if ((*s2 == EOS) || ((int)chrtab[*s2] & WHITE))
-			{
-				imacro->im_nextln = defln;
-				return 0;
+				s1++;
+				s2++;
 			}
 		}
 	}

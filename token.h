@@ -138,7 +138,7 @@ IREPT {
 
 // Exported variables
 extern int lnsave;
-extern int curlineno;
+extern uint16_t curlineno;
 extern char * curfname;
 extern WORD cfileno;
 extern TOKEN * tok;

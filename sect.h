@@ -59,7 +59,7 @@
 // token.L     expression list
 // (etc)
 // ENDEXPR.L	(end of expression)
-#define FUMASK       0x000F		// Mask for fixup cases:(shouldn't this be $7F?)
+#define FUMASK       0x000F		// Mask for fixup cases:
 #define FU_QUICK     0x0000		// Fixup 3-bit quick instruction field
 #define FU_BYTE      0x0001		// Fixup byte
 #define FU_WORD      0x0002		// Fixup word

@@ -19,6 +19,9 @@
 #include "token.h"
 
 
+// Minimum size of a fixup record
+#define MIN_FIXUP_MEM  (3 * sizeof(uint16_t) + 1 * sizeof(uint32_t))
+
 // Function prototypes
 void MakeSection(int, uint16_t);
 void SwitchSection(int);
@@ -75,18 +78,16 @@ static uint8_t fusizoffs[] = {
 //
 void InitSection(void)
 {
-	int i;
-
 	// Cleanup all sections
-	for(i=0; i<NSECTS; i++)
+	for(int i=0; i<NSECTS; i++)
 		MakeSection(i, 0);
 
 	// Construct default sections, make TEXT the current section
-	MakeSection(ABS,  SUSED | SABS | SBSS);		// ABS
-	MakeSection(TEXT, SUSED | TEXT       );		// TEXT
-	MakeSection(DATA, SUSED | DATA       );		// DATA
-	MakeSection(BSS,  SUSED | BSS  | SBSS);		// BSS
-	MakeSection(M6502, SUSED | TEXT      );		// 6502 code section
+	MakeSection(ABS,   SUSED | SABS | SBSS);		// ABS
+	MakeSection(TEXT,  SUSED | TEXT       );		// TEXT
+	MakeSection(DATA,  SUSED | DATA       );		// DATA
+	MakeSection(BSS,   SUSED | BSS  | SBSS);		// BSS
+	MakeSection(M6502, SUSED | TEXT       );		// 6502 code section
 
 	// Switch to TEXT for starters
 	SwitchSection(TEXT);
@@ -116,7 +117,7 @@ void SwitchSection(int sno)
 	cursect = sno;
 	SECT * p = &sect[sno];
 
-    m6502 = (sno == M6502);	// Set 6502-mode flag
+	m6502 = (sno == M6502);	// Set 6502-mode flag
 
 	// Copy section vars
 	scattr = p->scattr;
@@ -264,66 +265,64 @@ int chcheck(uint32_t amt)
 }
 
 
-// This is really wrong. We need to make some proper structures here so we
-// don't have to count sizes of objects, that's what the compiler's for! :-P
-#define FIXUP_BASE_SIZE (sizeof(uint16_t) + sizeof(uint32_t) + sizeof(uint16_t) + sizeof(uint16_t))
+//
+// A fixup record is at least 4 pieces of data long, with some optional data at
+// the end. Is of the form:
+//
+// SYMBOL      EXPRESSION
+// ------      ----------
+// FU_EXPR.W   FU_EXPR.W        fixup type
+// loc.L       loc.L            location in section
+// fileno.W    fileno.W         file number fixup occurred in
+// lineno.W    lineno.W         line number fixup occurred in
+// symbol.*    size.W           &symbol (32 or 64 bits) / size of expression
+//             token.L          size (zero or more) TOKENS (32-bits each)
+//             ENDEXPR.L        End of expression (with size > zero)
+// JR.L                         Possible ORG address of RISC JR instruction
 //
 // Arrange for a fixup on a location
 //
 int AddFixup(uint16_t attr, uint32_t loc, TOKEN * fexpr)
 {
-	uint32_t i;
-	uint32_t len = 0;
-	CHUNK * cp;
-	SECT * p;
-	// Shamus: Expression lengths are voodoo ATM (variable "i"). Need to fix
-	//         this.
-WARNING(!!! AddFixup() is filled with VOODOO !!!)
+	uint32_t i = MIN_FIXUP_MEM;
+	uint16_t len = 0;
+
 	DEBUG printf("FIXUP@$%X: $%X\n", loc, attr);
 
 	// Compute length of expression (could be faster); determine if it's the
-	// single-symbol case; no expression if it's just a mark. This code assumes
-	// 16 bit WORDs and 32 bit LONGs
-	if (*fexpr == SYMBOL && fexpr[2] == ENDEXPR)
+	// single-symbol case; no expression if it's just a mark. (? is this true?)
+	if ((*fexpr == SYMBOL) && (fexpr[2] == ENDEXPR))
 	{
-		// Just a single symbol
-		// SCPCD : correct bit mask for attr (else other FU_xxx will match)
+		// Just a single symbol, possibly followed by a DWORD
+		i += sizeof(SYM *);
+
+		// SCPCD: Correct bit mask for attr (else other FU_xxx will match)
 		// NYAN !
 		if ((attr & FUMASKRISC) == FU_JR)
-		{
-//printf("AddFixup: ((attr & FUMASKRISC) == FU_JR)\n");
-//			i = 18;
-//			i = FIXUP_BASE_SIZE + (sizeof(uint32_t) * 2);
-			i = FIXUP_BASE_SIZE + sizeof(SYM *) + sizeof(uint32_t);
-		}
-		else
-		{
-//printf("AddFixup: ((attr & FUMASKRISC) == FU_JR) ELSE\n");
-//			i = 14;
-			i = FIXUP_BASE_SIZE + sizeof(SYM *);
-		}
+			i += sizeof(uint32_t);
 	}
 	else
 	{
-//printf("AddFixup: !SYMBOL\n");
 		attr |= FU_EXPR;
 
+		// Count the # of tokens in the expression
 		for(len=0; fexpr[len]!=ENDEXPR; len++)
 		{
+			// Add one to len for 2X tokens
 			if (fexpr[len] == CONST || fexpr[len] == SYMBOL)
 				len++;
 		}
 
-		len++;								// Add 1 for ENDEXPR
-//		i = (len << 2) + 12;
-		i = FIXUP_BASE_SIZE + sizeof(uint16_t) + (len * sizeof(TOKEN));
+		// Add 1 for ENDEXPR
+		len++;
+		i += sizeof(uint16_t) + (len * sizeof(TOKEN));
 	}
 
 	// Alloc another fixup chunk for this one to fit in if necessary
 	if ((fchalloc - fchsize) < i)
 	{
-		p = &sect[cursect];
-		cp = (CHUNK *)malloc(sizeof(CHUNK) + CH_FIXUP_SIZE);
+		SECT * p = &sect[cursect];
+		CHUNK * cp = (CHUNK *)malloc(sizeof(CHUNK) + CH_FIXUP_SIZE);
 
 		// First fixup chunk in section
 		if (sfix == NULL)
@@ -352,30 +351,30 @@ WARNING(!!! AddFixup() is filled with VOODOO !!!)
 	*fchptr.wp++ = attr;
 	*fchptr.lp++ = loc;
 	*fchptr.wp++ = cfileno;
-	*fchptr.wp++ = (uint16_t)curlineno;
+	*fchptr.wp++ = curlineno;
 
 	// Store postfix expression or pointer to a single symbol, or nothing for a
-	// mark.
+	// mark (a zero word is stored in this case--[? is it?]).
 	if (attr & FU_EXPR)
 	{
-		*fchptr.wp++ = (uint16_t)len;
+		*fchptr.wp++ = len;
 
 		while (len--)
-			*fchptr.lp++ = (uint32_t)*fexpr++;
+			*fchptr.lp++ = *fexpr++;
 	}
 	else
 	{
 		*fchptr.sy++ = symbolPtr[fexpr[1]];
-//printf("AddFixup: adding symbol (%s) [%08X]\n", symbolPtr[fexpr[1]]->sname, symbolPtr[fexpr[1]]->sattr);
-	}
 
-	// SCPCD : correct bit mask for attr (else other FU_xxx will match) NYAN !
-	if ((attr & FUMASKRISC) == FU_JR)
-	{
-		if (orgactive)
-			*fchptr.lp++ = orgaddr;
-		else
-			*fchptr.lp++ = 0x00000000;
+		// SCPCD: Correct bit mask for attr (else other FU_xxx will match)
+		// NYAN !
+		if ((attr & FUMASKRISC) == FU_JR)
+		{
+			if (orgactive)
+				*fchptr.lp++ = orgaddr;
+			else
+				*fchptr.lp++ = 0x00000000;
+		}
 	}
 
 	fchsize += i;
@@ -389,17 +388,9 @@ WARNING(!!! AddFixup() is filled with VOODOO !!!)
 int ResolveFixups(int sno)
 {
 	PTR fup;				// Current fixup
-	uint16_t * fuend;		// End of last fixup (in this chunk)
-	uint16_t w;				// Fixup word (type+modes+flags)
-	uint8_t * locp;			// Location to fix (in cached chunk)
-	uint32_t loc;			// Location to fixup
 	VALUE eval;				// Expression value
-	uint16_t eattr;			// Expression attrib
-	SYM * esym;				// External symbol involved in expr
 	SYM * sy;				// (Temp) pointer to a symbol
 	uint16_t i;				// (Temp) word
-	uint16_t tdb;			// eattr & TDB
-	uint32_t oaddr;
 	int reg2;
 	uint16_t flags;
 
@@ -416,23 +407,21 @@ int ResolveFixups(int sno)
 	if (cch == NULL)
 		return 0;
 
-	/*
-	 *  Wire the 6502 segment's size to its allocated size (64K)
-	 */
+	// Wire the 6502 segment's size to its allocated size (64K)
 	if (sno == M6502)
 		cch->ch_size = cch->challoc;
 
 	do
 	{
 		fup.cp = ch->chptr;					// fup -> start of chunk
-		fuend = (uint16_t *)(fup.cp + ch->ch_size);	// fuend -> end of chunk
+		uint16_t * fuend = (uint16_t *)(fup.cp + ch->ch_size);	// fuend -> end of chunk
 
 		while (fup.wp < fuend)
 		{
-			w = *fup.wp++;
-			loc = *fup.lp++;
+			uint16_t w = *fup.wp++;		// Fixup word (type+modes+flags)
+			uint32_t loc = *fup.lp++;	// Location to fixup
 			cfileno = *fup.wp++;
-			curlineno = (int)*fup.wp++;
+			curlineno = *fup.wp++;
 			DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
 
 			// This is based on global vars cfileno, curfname :-P
@@ -440,7 +429,7 @@ int ResolveFixups(int sno)
 			// than this.
 			SetFilenameForErrorReporting();
 
-			esym = NULL;
+			SYM * esym = NULL;			// External symbol involved in expr
 
 			// Search for chunk containing location to fix up; compute a
 			// pointer to the location (in the chunk). Often we will find the
@@ -462,8 +451,9 @@ int ResolveFixups(int sno)
 				}
 			}
 
-			locp = cch->chptr + (loc - cch->chloc);
-			eattr = 0;
+			// Location to fix (in cached chunk)
+			uint8_t * locp = cch->chptr + (loc - cch->chloc);
+			uint16_t eattr = 0;			// Expression attrib
 
 			// Compute expression/symbol value and attribs
 
@@ -496,7 +486,7 @@ int ResolveFixups(int sno)
 					esym = sy;
 			}
 
-			tdb = (uint16_t)(eattr & TDB);
+			uint16_t tdb = eattr & TDB;
 
 			// If the expression is undefined and no external symbol is
 			// involved, then that's an error.
@@ -542,7 +532,7 @@ int ResolveFixups(int sno)
 			}
 
 			// Do fixup classes
-			switch ((int)(w & FUMASK))
+			switch (w & FUMASK)
 			{
 			// FU_BBRA fixes up a one-byte branch offset.
 			case FU_BBRA:
@@ -621,12 +611,12 @@ int ResolveFixups(int sno)
 			case FU_WORD:
 				if ((w & FUMASKRISC) == FU_JR)
 				{
-					oaddr = *fup.lp++;
+					uint32_t orgaddr = *fup.lp++;
 
-					if (oaddr)
-						reg2 = (signed)((eval - (oaddr + 2)) / 2);// & 0x1F;
+					if (orgaddr)
+						reg2 = (signed)((eval - (orgaddr + 2)) / 2);
 					else
-						reg2 = (signed)((eval - (loc + 2)) / 2);// & 0x1F;
+						reg2 = (signed)((eval - (loc + 2)) / 2);
 
 					if ((reg2 < -16) || (reg2 > 15))
 					{
