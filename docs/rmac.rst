@@ -4,9 +4,11 @@ RMAC
 =====================
 Reference Manual
 ================
-version 1.4.2
+version 1.6.5
 =============
 
+© and notes
+===========
 
 *NOTE: Every effort has been made to ensure the accuracy and robustness of this
 manual and the associated software. However, because Reboot is constantly improving
@@ -44,7 +46,7 @@ It was not originally a back-end to a C compiler, therefore it
 has creature comfort that are usually neglected in such back-end assemblers. It
 supports include files, macros, symbols with limited scope, some limited control
 structures, and other features. RMAC is also blindingly fast, another feature
-often sadly and obviously missing in today's assemblers.[1]_
+often sadly and obviously missing in today's assemblers.\ [1]_
 
 RMAC is not entirely compatible with the AS68 assembler provided with
 the original Atari ST Developer's Kit, but most changes are minor and a few minutes
@@ -89,7 +91,7 @@ AS68 Users.
 
 The assembler is called "**rmac**" or "**rmac.prg**". The command line takes the form:
 
-                          **mac** [*switches*] [*files* ...]
+                          **rmac** [*switches*] [*files* ...]
 
 A command line consists of any number of switches followed by the names of files
 to assemble. A switch is specified with a dash (**-**) followed immediately by a key
@@ -102,11 +104,7 @@ one pass, and switches usually take effect when they are encountered. In general
 is best to specify all switches before the names of any input files.
 
 If the command line is entirely empty then RMAC prints a copyright message
-and enters an "interactive" mode, prompting for successive command lines
-with a star (\*). An empty command line will exit (See the examples in the chapter
-on `Using RMAC`_). After each assembly in interactive mode, the assembler
-will print a summary of the amount of memory used, the amount of memory left,
-the number of lines processed, and the number of seconds the assembly took.
+along with usage info and exit.
 
 Input files are assumed to have the extension "**.s**"; if a filename has no extension
 (i.e. no dot) then "**.s**" will be appended to it. More than one source filename may be
@@ -122,11 +120,25 @@ Switch               Description
 ===================  ===========
 -dname\ *[=value]*   Define symbol, with optional value.
 -e\ *[file[.err]]*   Direct error messages to the specified file.
--fa                  TODO: add me
--fb                  BSD COFF
+-fa                  ALCYON output object file format (implied with **-ps** is enabled).
+-fb                  BSD COFF output object file format.
+-fe                  ELF output object file format.
+-fx                  Atari 800 com/exe/xex output object file format.
 -i\ *path*           Set include-file directory search path.
 -l\ *[file[prn]]*    Construct and direct assembly listing to the specified file.
+-l\ *\*[filename]*   Create an output listing file without pagination
 -o\ *file[.o]*       Direct object code output to the specified file.
++/~oall              Turn all optimisations on/off
++o\ *0-3*            Enable specific optimisation
+~o\ *0-3*            Disable specific optimisation
+
+                      `0: Absolute long adddresses to word`
+                      
+                      `1: move.l #x,dn/an to moveq`
+
+                      `2: Word branches to short
+                      
+                      `3: Outer displacement 0(an) to (an)`                      
 -p                   Produce an executable (**.prg**) output file.
 -ps                  Produce an executable (**.prg**) output file with symbols.
 -q                   Make RMAC resident in memory (Atari ST only).
@@ -143,11 +155,11 @@ Switch               Description
                       `-rd Double Phrase (16 bytes)`
                       
                       `-rq Quad Phrase (32 bytes)`
--s                   Warn about unoptimized long branches.
--u                   Assume that all undefined symbols are external.
+-s                   Warn about unoptimized long branches and applied optimisations.
+-u                   Force referenced and undefined symbols global.
 -v                   Verbose mode (print running dialogue).
+-x                   Turn on debugging mode
 -yn                  Set listing page size to n lines.
--6                   "Back end" mode for Alcyon C68.
 file\ *[s]*          Assemble the specified file.
 ===================  ===========
 
@@ -188,13 +200,13 @@ the table.
 
  will cause the assembler to search the current directory of device **M**, and the
  directories include and include\sys on drive **C**. If *-i* is not specified, and the
- enviroment variable "**MACPATH**" exists, its value is used in the same manner.
+ enviroment variable "**RMACPATH**" exists, its value is used in the same manner.
  For example, users of the Mark Williams shell could put the following line in
  their profile script to achieve the same result as the **-i** example above:
 
   ::
 
-      setenv MACPATH="m:;c:include;c:include\sys"
+      setenv RMACPATH="m:;c:include;c:include\sys"
 **-l**
  The -l switch causes RMAC to generate an assembly listing file. If a file-
  name immediately follows the switch character, the listing is written to the
@@ -256,7 +268,7 @@ two commands:
 
  ::
 
-      % mac examples
+      % rmac examples
       % aln -s example.s
 
 could be replaced by the single command:
@@ -293,42 +305,6 @@ assembles the file "**example.s**". (Take a deep breath - you got all that?)
 One last thing. If there are any assembly errors, RMAC will terminate
 with an exit code of 1. If the assembly succeeds (no errors, although there may be
 warnings) the exit code will be 0. This is primarily for use with "make" utilities.
-
-`Interactive Mode`_
-'''''''''''''''''''
-If you invoke RMAC with an empty command line it will print a copyright
-message and prompt you for more commands with a star (*****). This is useful if you
-are used to working directly from the desktop, or if you want to assemble several files
-in succession without having to reload the assembler from disk for each assembly.
-
-In interactive mode, the assembler is also in verbose mode (just as if you had
-specified **-v** on each command line):
-
- ::
-
-     %. rmac
-
-     MADMAC Atari Macro Assembler
-     Copyright 1987 Atari Corporation
-     Beta version 0.12 Jun 1987 lmd
-
-     * -ps example
-     [Including: example.s]
-     [Including: atari.s]
-     [Leaving: atari.s]
-     [Leaving; example. a]
-     [Writing executable tile: example.prg
-     36K used, 3868K left, 850 lines, 2.0 seconds
-
-
-You can see that the assembler gave a "blow-by-blow" account of the files it processed,
-as well as a summary of the assembly's memory usage, the number of lines
-processed (including macro and repeat-block expansion), and how long the assembly
-took
-
-The assembler prompts for another command with the star. At this point you
-can either type a new command line for the assembler to process, or you can exit
-by typing control-C or an empty line.
 
 Things You Should Be Aware Of
 '''''''''''''''''''''''''''''
@@ -376,14 +352,15 @@ like Devpac or vasm. This section
 outlines the major differences. In practice, we have found that very few changes are
 necessary to make other assemblers' source code assemble.
 
-o A semicolon (;) must be used to introduce a comment, except that a star (*)
+o A semicolon (;) must be used to introduce a comment,
+  except that a star (*)
   may be used in the first column. AS68 treated anything following the operand
   field, preceeded by whitespace, as a comment. (RMAC treats a star that
   is not in column 1 as a multiplication operator).
-
 o Labels require colons (even labels that begin in column 1).
 
-o Conditional assembly directives are called **if**, **else** and **endif**. Devpac and vasm called these
+o Conditional assembly directives are called **if**, **else** and **endif**.
+  Devpac and vasm called these
   **ifne**, **ifeq** (etc.), and **endc**.
 o The tilde (~) character is an operator, and back-quote (`) is an illegal character.
   AS68 permitted the tilde and back-quote characters in symbols.
@@ -405,9 +382,10 @@ o Back-slashes in strings are "electric" characters that are used to escape C-li
   you will have to convert them to double-backslashes.
 o Expression evaluation is done left-to-right without operator precedence. Use parentheses to
   force the expression evaluation as you wish.
-
-o Mark your segments across files. Branching to a code segment that could be identified as BSS will cause a "Error: cannot initialize non-storage (BSS) section"
-o rs.b/rs.w/rs.l/rscount/rsreset can be simulated in rmac using abs. For example the following source:
+o Mark your segments across files.
+  Branching to a code segment that could be identified as BSS will cause a "Error: cannot initialize non-storage (BSS) section"
+o rs.b/rs.w/rs.l/rscount/rsreset can be simulated in rmac using abs.
+  For example the following source:
 
   ::
 
@@ -430,7 +408,6 @@ o rs.b/rs.w/rs.l/rscount/rsreset can be simulated in rmac using abs. For example
    label4: ds.b 2
    
    size_so_far equ ^^abscount
-
 o A rare case: if your macro contains something like:
 
   ::
@@ -441,7 +418,7 @@ o A rare case: if your macro contains something like:
 
    test 10
 
-  then by the assembler's design this will fail as the parameters are automatically converted to hex. Changing the code like his works:
+  then by the assembler's design this will fail as the parameters are automatically converted to hex. Changing the code like this works:
 
   ::
 
@@ -497,7 +474,7 @@ A statement may also take one of these special forms:
 
       *symbol* **=** *expression*
 
-      *symbol* **--** *expression*
+      *symbol* **==** *expression*
 
       *symbol* **set** *expression*
 
@@ -539,9 +516,9 @@ collisions.
 
      ::
 
-      reallyLougSymbolliame .reallyLongConfinadSymbollame
-      al0 ret move dc frog aae a9 ????
-      .al .ret .move .dc .frog .a9 .9 ????
+      reallyLongSymbolName .reallyLongConfinedSymbolName
+      a10 ret move dc frog aa6 a9 ????
+      .a1 .ret .move .dc .frog .a9 .9 ????
       .0  .00  .000 .1  .11. .111 . ._
       _frog ?zippo? sys$syetem atari Atari ATARI aTaRi
 
@@ -598,10 +575,10 @@ and may not be used as symbols (e.g. labels, equates, or the names of macros):
 
       equ set reg
       sr ccr pc sp ssp usp
-      dO di d2 d3 d4 d5 d6 d7
-      a0 al a2 a3 a4 a5 a6 aT
-      r0 ri r2 r3 r4 r5 r6 r7
-      r8 r9 r10 1'11 r12 rl3 ri4 ri5
+      d0 d1 d2 d3 d4 d5 d6 d7
+      a0 a1 a2 a3 a4 a5 a6 a7
+      r0 r1 r2 r3 r4 r5 r6 r7
+      r8 r9 r10 r11 r12 rl3 r14 ri5
 
 `Constants`_
 ''''''''''''
@@ -655,8 +632,8 @@ bits set (i.e. character codes 128...255).
 
 You should be aware that backslash characters are popular in GEMDOS path
 names, and that you may have to escape backslash characters in your existing source
-code. For example, to get the file "'c:\auto\ahdi.s'" you would specify the string
-"`c:\\auto\\ahdi.s`".
+code. For example, to get the file "'c:\\auto\\ahdi.s'" you would specify the string
+"`c:\\\\auto\\\\ahdi.s`".
 
 `Register Lists`_
 '''''''''''''''''
@@ -670,7 +647,7 @@ and Rn,m<n, seperated by a dash. For example:
 
        register list           value
        -------------           -----
-       40-d7/a0-a7             $FFFF
+       d0-d7/a0-a7             $FFFF
        d2-d7/a0/a3-a6          $39FC
        d0/d1/a0-a3/d7/a6-a7    $CF83
        d0                      $0001
@@ -684,10 +661,10 @@ mnemonic, as in this example:
        temps   reg     d0-d2/a0-a2     ; temp registers
        keeps   reg     d3-d7/d3-a6     ; registers to preserve
        allregs reg     d0-d7/a0-a7     ; all registers
-               movem.l #temps, -(sp)   ; these two lines ...
-               aovea.l dO -d2/a0 -a2, -(sp) ; are identical
-               movea.l #keeps, -(sp)   ; save "keep" registers
-               noven.1 (sp)+,#keeps    ; restore "keep" registers
+               movem.l #temps,-(sp)    ; these two lines ...
+               movea.l d0-d2/a0-a2,-(sp) ; are identical
+               movem.l #keeps,-(sp)    ; save "keep" registers
+               movem.l (sp)+,#keeps    ; restore "keep" registers
 
 
 `Expressions`_
@@ -727,10 +704,10 @@ sections. For example, in this code:
 
     ::
 
-     linel:  dc.l   line2, linel+8
-     line2:  dc.l   linel, line2-8
-     line3:  dc.l   line2-linel, 8
-     error:  dc.l   linel+line2, line2 >> 1, line3/4
+     linel:  dc.l   line2, line1+8
+     line2:  dc.l   line1, line2-8
+     line3:  dc.l   line2-line1, 8
+     error:  dc.l   line1+line2, line2 >> 1, line3/4
 
 Line 1 deposits two longwords that point to line 2. Line 2 deposits two longwords
 that point to line 1. Line 3 deposits two longwords that have the absolute value
@@ -773,10 +750,10 @@ Operator                            Description
 **^^abscount**                      Returns the size of current .abs section
 ================================    ========================================
 
-   o The boolean operators generate the value 1 if the expression is true, and 0 if
-     it is not.
+ o The boolean operators generate the value 1 if the expression is true, and 0 if it is not.
 
-   o A symbol is referenced if it is involved in an expression. A symbol may have
+ o A symbol is referenced if it is involved in an expression.
+     A symbol may have
      any combination of attributes: undefined and unreferenced, defined and unref-
      erenced (i.e. declared but never used), undefined and referenced (in the case
      of a forward or external reference), or defined and referenced.
@@ -790,7 +767,7 @@ Operator                            Description
 Operator     Description
 ===========  ==============================================
 \ + - * /    The usual arithmetic operators.
-%            Modulo.
+%            Modulo. Do *not* attempt to modulo by 0 or 1.
 & | ^        Bit-wise **AND**, **OR** and **Exclusive-OR**.
 << >>        Bit-wise shift left and shift right.
 < <=  >=  >  Boolean magnitude comparisons.
@@ -798,10 +775,10 @@ Operator     Description
 <>  !=       Boolean inequality.
 ===========  ==============================================
 
-   o All binary operators have the same precedence: expressions are evaluated
-     strictly left to right.
+ o All binary operators have the same precedence:
+   expressions are evaluated strictly left to right.
 
-   o Division or modulo by zero yields an assembly error
+ o Division or modulo by zero yields an assembly error.
 
    o The "<>" and "!=" operators are synonyms.
 
@@ -874,7 +851,7 @@ code if the debugging code is referenced, as in:
                .iif ^^defined debug, .include "debug.s"
 
 The **jsr** statement references the symbol debug. Near the end of the source file, the
-"**.iif**' statement includes the file "**debug.s**" if the symbol debug was referenced.
+"**.iif**" statement includes the file "**debug.s**" if the symbol debug was referenced.
 
 In production code, presumably all references to the debug symbol will be removed,
 and the debug source file will not be included. (We could have as easily made the
@@ -894,33 +871,39 @@ described in the chapter on `6502 Support`_.
 
 
 **.even**
+
    If the location counter for the current section is odd, make it even by adding
    one to it. In text and data sections a zero byte is deposited if necessary.
 **.long**
+
    Align the program counter to the next integral long boundary (4 bytes).
    Note that GPU/DSP code sections are not contained in their own
    segments and are actually part of the TEXT or DATA segments.
    Therefore, to align GPU/DSP code, align the current section before and
    after the GPU/DSP code.
 **.phrase**
+
    Align the program counter to the next integral phrase boundary (8 bytes).
    Note that GPU/DSP code sections are not contained in their own
    segments and are actually part of the TEXT or DATA segments.
    Therefore, to align GPU/DSP code, align the current section before and
    after the GPU/DSP code.
 **.dphrase**
+
    Align the program counter to the next integral double phrase boundary (16
    bytes). Note that GPU/DSP code sections are not contained in their own
    segments and are actually part of the TEXT or DATA segments.
    Therefore, to align GPU/DSP code, align the current section before and
    after the GPU/DSP code.
 **.qphrase**
+
    Align the program counter to the next integral quad phrase boundary (32
    bytes). Note that GPU/DSP code sections are not contained in their own
    segments and are actually part of the TEXT or DATA segments.
    Therefore, to align GPU/DSP code, align the current section before and
    after the GPU/DSP code.
 **.assert** *expression* [,\ *expression*...]
+
    Assert that the conditions are true (non-zero). If any of the comma-seperated
    expressions evaluates to zero an assembler warning is issued. For example:
 
@@ -934,14 +917,17 @@ described in the chapter on `6502 Support`_.
 **.data**
 
 **.text**
+
    Switch to the BSS, data or text segments. Instructions and data may not
    be assembled into the BSS-segment, but symbols may be defined and storage
    may be reserved with the **.ds** directive. Each assembly starts out in the text
    segment.
 **.abs** [*location*]
+
    Start an absolute section, beginning with the specified location (or zero, if
    no location is specified). An absolute section is much like BSS, except that
    locations declared with .ds are based absolute. This directive is useful for
+
    declaring structures or hardware locations.
    For example, the following equates:
 
@@ -1012,11 +998,13 @@ described in the chapter on `6502 Support`_.
    In this example, *spf_em_colour* and *spf_emx_colour* will have the same value.
            
 **.comm** *symbol*, *expression*
+
    Specifies a label and the size of a common region. The label is made global,
    thus confined symbols cannot be made common. The linker groups all common
    regions of the same name; the largest size determines the real size of the
    common region when the file is linked.
 **.ccdef** *expression*
+
    Allows you to define names for the condition codes used by the JUMP
    and JR instructions for GPU and DSP code. For example:
 
@@ -1027,34 +1015,41 @@ described in the chapter on `6502 Support`_.
           jump Always,(r3) ; ‘Always’ is actually 0
 
 **.ccundef** *regname*
+
    Undefines a register name (regname) previously assigned using the
    .CCDEF directive. This is only implemented in GPU and DSP code
    sections.     
 **.dc.i** *expression*
+
    This directive generates long data values and is similar to the DC.L
    directive, except the high and low words are swapped. This is provided
    for use with the GPU/DSP MOVEI instruction.
 **.dc**\ [.\ *size*] *expression* [, *expression*...]
+
    Deposit initialized storage in the current section. If the specified size is word
    or long, the assembler will execute a .even before depositing data. If the size
    is .b, then strings that are not part of arithmetic expressions are deposited
    byte-by-byte. If no size is specified, the default is .w. This directive cannot be
    used in the BSS section.
 **.dcb**\ [.\ *size*] *expression1*, *expression2*
+
    Generate an initialized block of *expression1* bytes, words or longwords of the
    value *expression2*. If the specified size is word or long, the assembler will
    execute .even before generating data. If no size is specified, the default is **.w**.
    This directive cannot be used in the BSS section.
 **.ds**\ [.\ *size*] *expression*
+
    Reserve space in the current segment for the appropriate number of bytes,
    words or longwords. If no size is specified, the default size is .w. If the size
    is word or long, the assembler will execute .even before reserving space. This
    directive can only be used in the BSS or ABS sections (in text or data, use
    .dcb to reserve large chunks of initialized storage.)
 **.dsp**
+
    Switch to Jaguar DSP assembly mode. This directive must be used
    within the TEXT or DATA segments.
 **.init**\ [.\ *size*] [#\ *expression*,]\ *expression*\ [.\ *size*] [,...]
+
    Generalized initialization directive. The size specified on the directive becomes
    the default size for the rest of the line. (The "default" default size is **.w**.) A
    comma-seperated list of expressions follows the directive; an expression may be
@@ -1072,6 +1067,7 @@ described in the chapter on `6502 Support`_.
    No auto-alignment is performed within the line, but a **.even** is done once
    (before the first value is deposited) if the default size is word or long.
 **.cargs** [#\ *expression*,] *symbol*\ [.\ *size*] [, *symbol*\ [.\ *size*].. .]
+
    Compute stack offsets to C (and other language) arguments. Each symbol is
    assigned an absolute value (like equ) which starts at expression and increases
    by the size of each symbol, for each symbol. If the expression is not supplied,
@@ -1097,11 +1093,13 @@ described in the chapter on `6502 Support`_.
                rts                    ; return string length
 
 **.end**
+
    End the assembly. In an include file, end the include file and resume assembling
    the superior file. This statement is not required, nor are warning messages
    generated if it is missing at the end of a file. This directive may be used inside
    conditional assembly, macros or **.rept** blocks.
 **.equr** *expression*
+
    Allows you to name a register. This is only implemented for GPU/DSP
    code sections. For example:
 
@@ -1143,11 +1141,13 @@ described in the chapter on `6502 Support`_.
 **.endm**
 
 **.exitm**
+
    Define a macro called name with the specified formal arguments. The macro
    definition is terminated with a **.endm** statement. A macro may be exited early
    with the .exitm directive. See the chapter on `Macros`_ for more information.
 
 **.undefmac** *macroName* [, *macroName*...]
+
    Remove the macro-definition for the specified macro names. If reference is
    made to a macro that is not defined, no error message is printed and the name
    is ignored.
@@ -1155,6 +1155,7 @@ described in the chapter on `6502 Support`_.
 **.rept** *expression*
 
 **.endr**
+
    The statements between the **.rept** and **.endr** directives will be repeated *expression*
    times. If the expression is zero or negative, no statements will be
    assembled. No label may appear on a line containing either of these directives.
@@ -1162,6 +1163,7 @@ described in the chapter on `6502 Support`_.
 **.globl** *symbol* [, *symbol*...]
 
 **.extern** *symbol* [, *symbol*...]
+
    Each symbol is made global. None of the symbols may be confined symbols
    (those starting with a period). If the symbol is defined in the assembly, the
    symbol is exported in the object file. If the symbol is undefined at the end
@@ -1170,6 +1172,7 @@ described in the chapter on `6502 Support`_.
    linker. The **.extern** directive is merely a synonym for **.globl**.
 
 **.include** "*file*"
+
    Include a file. If the filename is not enclosed in quotes, then a default extension
    of "**.s**" is applied to it. If the filename is quoted, then the name is not changed
    in any way.
@@ -1179,15 +1182,17 @@ described in the chapter on `6502 Support`_.
              because such names are not symbols.
 
    If the include file cannot be found in the current directory, then the directory
-   search path, as specified by -i on the commandline, or' by the 'MACPATH'
+   search path, as specified by -i on the commandline, or' by the 'RMACPATH'
    enviroment string, is traversed.
 
 **.eject**
+
    Issue a page eject in the listing file.
 
 **.title** "*string*"
 
 **.subttl** [-] "*string*"
+
    Set the title or subtitle on the listing page. The title should be specified on
    the the first line of the source program in order to take effect on the first page.
    The second and subsequent uses of **.title** will cause page ejects. The second
@@ -1197,11 +1202,13 @@ described in the chapter on `6502 Support`_.
 **.list**
 
 **.nlist**
+
    Enable or disable source code listing. These directives increment and decrement
    an internal counter, so they may be appropriately nested. They have no effect
    if the **-l** switch is not specified on the commandline.
 
 **.goto** *label*
+
    This directive provides unstructured flow of control within a macro definition.
    It will transfer control to the line of the macro containing the specified goto
    label. A goto label is a symbol preceeded by a colon that appears in the first
@@ -1229,11 +1236,14 @@ described in the chapter on `6502 Support`_.
                                .endm
 
 **.gpu**
+
    Switch to Jaguar GPU assembly mode. This directive must be used
    within the TEXT or DATA segments.
 **.gpumain**
+
    No. Just... no. Don't ask about it. Ever.
 **.prgflags** *value*
+
    Sets ST executable .PRG field *PRGFLAGS* to *value*. *PRGFLAGS* is a bit field defined as follows:
 
 ============ ======  =======
@@ -1591,8 +1601,8 @@ common in bitmap-graphics routines). For example:
 ======================
 
 RMAC will generate code for the Atari jaguar GPU and DSP custom RISC (Reduced
-Instruction Set Computer) processors. See the Atari Jaguar Software reference Manual "Tom
-& Jerry" for a complete listing of Jaguar GPU and DSP assembler mnemonics and addressing
+Instruction Set Computer) processors. See the Atari Jaguar Software reference Manual – Tom
+& Jerry for a complete listing of Jaguar GPU and DSP assembler mnemonics and addressing
 modes.
 
 `Condition Codes`_
@@ -1764,108 +1774,149 @@ order, along with a short description of what may have caused the problem.
 '''''''''
 
 **.cargs syntax**
+
     Syntax error in **.cargs** directive.
 **.comm symbol already defined**
+
     You tried to ``.comm`` a symbol that was already defined.
 **.ds permitted only in BSS**
+
     You tried to use ``.ds`` in the text or data section.
 **.init not permitted in BSS or ABS**
+
     You tried to use ``.init`` in the BSS or ABS section.
 **.org permitted only in .6502 section**
+
     You tried to use ``.org`` in a 68000 section.
 **Cannot create:** *filename*
+
     The assembler could not create the indicated filename.
 **External quick reference**
+
     You tried to make the immediate operand of a **moveq**, **subq** or **addq** instruction external.
 **PC-relative expr across sections**
+
     You tried to make a PC-relative reference to a location contained in another
     section.
 **[bwsl] must follow '.' in symbol**
+
     You tried to follow a dot in a symbol name with something other than one of
     the four characters 'B', 'W', 'S' or 'L'.
 **addressing mode syntax**
+
     You made a syntax error in an addressing mode.
 **assert failure**
+
     One of your **.assert** directives failed!
 **bad (section) expression**
+
     You tried to mix and match sections in an expression
 **bad 6502 addressing mode**
+
     The 6502 mnemonic will not work with the addressing mode you specified.
 **bad expression**
+
     There's a syntax error in the expression you typed.
 **bad size specified**
+
   You tried to use an inappropriate size suffix for the instruction. Check your
   68000 manual for allowable sizes.
 **bad size suffix**
+
   You can't use .b (byte) mode with the **movem** instruction.
 **cannot .globl local symbol**
+
   You tried to make a confined symbol global or common.
 **cannot initialize non-storage (BSS) section**
+
   You tried to generate instructions (or data, with dc) in the BSS or ABS section.
 **cannot use '.b' with an address register**
+
   You tried to use a byte-size suffix with an address register. The 68000 does not
   perform byte-sized address register operations.
 **directive illegal in .6502 section**
+
   You tried to use a 68000-oriented directive in the 6502 section.
 **divide by zero**
+
   The expression you typed involves a division by zero.
 **expression out of range**
+
   The expression you typed is out of range for its application.
 **external byte reference**
+
   You tried to make a byte-sized reference to an external symbol, which the
   object file format will not allow
 **external short branch**
+
   You tried to make a short branch to an external symbol, which the linker cannot
   handle.
 **extra (unexpected) text found after addressing mode**
+
   RMAC thought it was done processing a line, but it ran up against "extra"
   stuff. Be sure that any comment on the line begins with a semicolon, and check
   for dangling commas, etc.
 **forward or undefined .assert**
+
   The expression you typed after a **.assert** directive had an undefined value.
   Remember that RMAC is one-pass.
 **hit EOF without finding matching .endif**
+
   The assembler fell off the end of last input file without finding a **.endif** to
   match an . it. You probably forgot a **.endif** somewhere.
 **illegal 6502 addressing mode**
+
   The 6502 instruction you typed doesn't work with the addressing mode you
   specified.
 **illegal absolute expression**
+
   You can't use an absolute-valued expression here.
 **illegal bra.s with zero offset**
+
   You can't do a short branch to the very next instruction (read your 68000
   manual).
 **illegal byte-sized relative reference**
+
   The object file format does not permit bytes contain relocatable values; you
   tried to use a byte-sized relocatable expression in an immediate addressing
   mode.
 **illegal character**
+
  Your source file contains a character that RMAC doesn't allow. (most
  control characters fall into this category).
 **illegal initialization of section**
+
  You tried to use .dc or .dcb in the BSS or ABS sections.
 **illegal relative address**
+
  The relative address you specified is illegal because it belongs to a different
  section.
 **illegal word relocatable (in .PRG mode)**
+
  You can't have anything other than long relocatable values when you're gener-
  ating a **.PRG** file.
 **inappropriate addressing mode**
+
  The mnemonic you typed doesn't work with the addressing modes you specified.
  Check your 68000 manual for allowable combinations.
 **invalid addressing mode**
+
  The combination of addressing modes you picked for the **movem** instruction
  are not implemented by the 68000. Check your 68000 reference manual for
  details.
 **invalid symbol following ^^**
+
  What followed the ^^ wasn't a valid symbol at all.
 **mis-nested .endr**
+
  The assembler found a **.endr** directive when it wasn't prepared to find one.
  Check your repeat-block nesting.
 **mismatched .else**
+
  The assembler found a **.else** directive when it wasn't prepared to find one.
  Check your conditional assembly nesting.
 **mismatched .endif**
+
  The assembler found a **.endif** directive when it wasn't prepared to find one.
  Check your conditional assembly nesting.
 
@@ -1888,55 +1939,74 @@ order, along with a short description of what may have caused the problem.
 **missing symbol**
 
 **missing symbol or string**
+
  The assembler expected to see a symbol/filename/string (etc...), but found
  something else instead. In most cases the problem should be obvious.
 **misuse of '.', not allowed in symbols**
+
  You tried to use a dot (.) in the middle of a symbol name.
 **mod (%) by zero**
+
  The expression you typed involves a modulo by zero.
 **multiple formal argument definition**
+
   The list of formal parameter names you supplied for a macro definition includes
   two identical names.
 **multiple macro definition**
+
   You tried to define a macro which already had a definition.
 **non-absolute byte reference**
+
   You tried to make a byte reference to a relocatable value, which the object file
   format does not allow.
 **non-absolute byte value**
+
   You tried to dc.b or dcb.b a relocatable value. Byte relocatable values are
   not permitted by the object file format.
 **register list order**
+
   You tried to specify a register list like **D7-D0**, which is illegal. Remember
   that the first register number must be less than or equal to the second register
   number.
 **register list syntax**
+
   You made an error in specifying a register list for a **.reg** directive or a **.movem**
   instruction.
 **symbol list syntax**
+
   You probably forgot a comma between the names of two symbols in a symbol
   list, or you left a comma dangling on the end of the line.
 **syntax error**
+
   This is a "catch-all" error.
 **undefined expression**
+
   The expression has an undefined value because of a forward reference, or an
   undefined or external symbol.
 **unimplemented addressing mode**
+
   You tried to use 68020 "square-bracket" notation for a 68020 addressing mode.
   RMAC does not support 68020 addressing modes.
 **unimplemented directive**
+
   You have found a directive that didn't appear in the documentation. It doesn't
   work.
 **unimplemented mnemonic**
+
   You've found an assembler for documentation) bug.
 **unknown symbol following ^^**
+
   You followed a ^^ with something other than one of the names defined, ref-
   erenced or streq.
 **unsupported 68020 addressing mode**
+
   The assembler saw a 68020-type addressing mode. RMAC does not assem-
   ble code for the 68020 or 68010.
 **unterminated string**
+
   You specified a string starting with a single or double quote, but forgot to type
   the closing quote.
 **write error**
+
   The assembler had a problem writing an object file. This is usually caused by
   a full disk, or a bad sector on the media.
