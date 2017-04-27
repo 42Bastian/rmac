@@ -521,7 +521,7 @@ DEBUG printf("ExM: SYMBOL=\"%s\"", d);
 //         to choke on legitimate code... Need to investigate this further
 //         before changing anything else here!
 							case CONST:
-								sprintf(numbuf, "$%lx", (LONG)*tk++);
+								sprintf(numbuf, "$%lx", (long unsigned int)*tk++);
 								d = numbuf;
 								break;
 							case DEQUALS:
@@ -648,7 +648,6 @@ char * GetNextMacroLine(void)
 //
 char * GetNextRepeatLine(void)
 {
-
 	IREPT * irept = cur_inobj->inobj.irept;
 	LONG * strp = irept->ir_nextln;			// initial null
 
