@@ -265,6 +265,7 @@ extern int err_fd;
 extern int regbank;
 extern char * firstfname;
 extern int list_fd;
+extern int list_pag;
 extern int as68_flag;
 extern int m6502;
 extern int list_flag;

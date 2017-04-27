@@ -25,6 +25,7 @@
 
 int perm_verb_flag;				// Permanently verbose, interactive mode
 int list_flag;					// "-l" listing flag on command line
+int list_pag = 1;               // Enable listing pagination by default
 int verb_flag;					// Be verbose about what's going on
 int m6502;						// 1, assembling 6502 code
 int as68_flag;					// as68 kludge mode
@@ -134,6 +135,7 @@ void DisplayHelp(void)
 		"                    x: com/exe/xex (Atari 800)\n"
 		"  -i[path]          Directory to search for include files\n"
 		"  -l[filename]      Create an output listing file\n"
+        "  -l*[filename]     Create an output listing file without pagination\n"
 		"  -n                Don't do things behind your back in RISC assembler\n"
 		"  -o file           Output file name\n"
 		"  +o[value]         Turn a specific optimisation on\n"
@@ -343,7 +345,15 @@ int Process(int argc, char ** argv)
 				break;
 			case 'l':				// Produce listing file
 			case 'L':
-				list_fname = argv[argno] + 2;
+                if (*(argv[argno] + 2) == '*')
+                {
+                    list_fname = argv[argno] + 3;
+                    list_pag = 0;    // Special case - turn off pagination
+                }
+                else
+                {
+                    list_fname = argv[argno] + 2;
+                }
 				listing = 1;
 				list_flag = 1;
 				lnsave++;

@@ -217,27 +217,30 @@ void ship_ln(const char * ln)
 	if (listing <= 0)
 		return;
 
-	// Notice bottom of page
-	if (nlines >= pagelen - BOT_MAR)
-		eject();
+    if (list_pag)
+    {
+        // Notice bottom of page
+        if (nlines >= pagelen - BOT_MAR)
+            eject();
 
-	// Print title, boilerplate, and subtitle at top of page
-	if (nlines == 0)
-	{
-		pageno++;
-		println("");
-		date_string(datestr, dos_date());
-		time_string(timestr, dos_time());
-		sprintf(buf,
-			"%-40s%-20s Page %-4d    %s %s        RMAC %01i.%01i.%02i (%s)",
-			title, curfname, pageno, timestr, datestr, MAJOR, MINOR, PATCH,
-			PLATFORM);
-		println(buf);
-		sprintf(buf, "%s", subttl);
-		println(buf);
-		println("");
-		nlines = 4;
-	}
+        // Print title, boilerplate, and subtitle at top of page
+        if (nlines == 0)
+        {
+            pageno++;
+            println("");
+            date_string(datestr, dos_date());
+            time_string(timestr, dos_time());
+            sprintf(buf,
+                "%-40s%-20s Page %-4d    %s %s        RMAC %01i.%01i.%02i (%s)",
+                title, curfname, pageno, timestr, datestr, MAJOR, MINOR, PATCH,
+                PLATFORM);
+            println(buf);
+            sprintf(buf, "%s", subttl);
+            println(buf);
+            println("");
+            nlines = 4;
+        }
+    }
 
 	println(ln);
 	nlines++;

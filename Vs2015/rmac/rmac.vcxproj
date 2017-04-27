@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\6502.c" />
     <ClCompile Include="..\..\amode.c" />
     <ClCompile Include="..\..\debug.c" />
     <ClCompile Include="..\..\direct.c" />
@@ -38,6 +39,7 @@
     <ClCompile Include="..\..\token.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\6502.h" />
     <ClInclude Include="..\..\amode.h" />
     <ClInclude Include="..\..\debug.h" />
     <ClInclude Include="..\..\direct.h" />
@@ -114,7 +116,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)\..</OutDir>
+    <OutDir>$(SolutionDir)..\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>

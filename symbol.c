@@ -400,7 +400,7 @@ int symtable(void)
 
 	// Allocate storage for list headers and partition all labels. Throw away
 	// macros and macro arguments.
-	SYM ** sy = (SYM **)malloc(128 * sizeof(uint32_t));
+	SYM ** sy = (SYM **)malloc(128 * sizeof(SYM **));
 
 	for(i=0; i<128; i++)
 		sy[i] = NULL;
