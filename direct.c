@@ -929,7 +929,9 @@ int d_ds(WORD siz)
 
 	// Check to see if the value being passed in is negative (who the hell does
 	// that?--nobody does; it's the code gremlins, or rum, that does it)
-	if (eval < 0)
+	// N.B.: Since VALUE is of type uint32_t, if it goes negative, it will have
+	//       its high bit set.
+	if (eval & 0x80000000)
 		return error("negative sizes not allowed");
 
 	// In non-TDB section (BSS, ABS and M6502) just advance the location

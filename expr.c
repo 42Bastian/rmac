@@ -464,17 +464,12 @@ thrown away right here. What the hell is it for?
 //
 int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
 {
-	WORD * sattr;
-	VALUE * sval;
 	WORD attr;
 	SYM * sy;
-	SYM * esym;
-	WORD sym_seg;
-
-	sval = evstk;							// (Empty) initial stack
-	sattr = evattr;
-	esym = NULL;							// No external symbol involved
-	sym_seg = 0;
+	VALUE * sval = evstk;					// (Empty) initial stack
+	WORD * sattr = evattr;
+	SYM * esym = NULL;						// No external symbol involved
+	WORD sym_seg = 0;
 
 	while (*tk != ENDEXPR)
 	{
@@ -744,7 +739,7 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 	// sym_seg added in 1.0.16 to solve a problem with forward symbols in
 	// expressions where absolute values also existed. The absolutes were
 	// overiding the symbol segments and not being included :(
-	//*a_attr = *sattr | sym_seg;                                        // Copy value + attrib
+	//*a_attr = *sattr | sym_seg;           // Copy value + attrib
 
 	*a_attr = *sattr;						// Copy value + attrib
 	*a_value = *sval;
