@@ -1303,16 +1303,19 @@ dostring:
 
 					if (obj_format == ALCYON)
 					{
-						if ((*(ln + 1) == 'w') || (*(ln + 1) == 'W'))
-						{
-							*tk++ = DOTW;
-							ln += 2;
-						}
-						else if ((*(ln + 1) == 'l') || (*(ln + 1) == 'L'))
-						{
-							*tk++ = DOTL;
-							ln += 2;
-						}
+                        if (*ln == '.')
+                        {
+                            if ((*(ln + 1) == 'w') || (*(ln + 1) == 'W'))
+                            {
+                                *tk++ = DOTW;
+                                ln += 2;
+                            }
+                            else if ((*(ln + 1) == 'l') || (*(ln + 1) == 'L'))
+                            {
+                                *tk++ = DOTL;
+                                ln += 2;
+                            }
+                        }
 					}
 				}
 				else
