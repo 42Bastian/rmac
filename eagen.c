@@ -13,6 +13,7 @@
 #include "error.h"
 #include "mach.h"
 #include "riscasm.h"
+#include "sect.h"
 
 #define eaNgen    ea0gen
 #define amN       am0
@@ -22,6 +23,9 @@
 #define aNixreg   a0ixreg
 #define aNixsiz   a0ixsiz
 #define AnESYM    a0esym
+#define aNexten   a0extension
+#define aNbdexval a0bexval
+#define aNbdexattr a0bexattr
 #include "eagen0.c"
 
 #define eaNgen    ea1gen
@@ -32,4 +36,7 @@
 #define aNixreg   a1ixreg
 #define aNixsiz   a1ixsiz
 #define AnESYM    a1esym
+#define aNexten   a1extension
+#define aNbdexval a1bexval
+#define aNbdexattr a1bexattr
 #include "eagen0.c"

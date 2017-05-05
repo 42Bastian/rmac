@@ -40,8 +40,8 @@
  *  Tunable definitions
  *
  */
-#define TABSIZE 1024		/* state table size */
-#define NSTRINGS 500		/* maximum number of keywords */
+#define TABSIZE 2048		/* state table size */
+#define NSTRINGS 1024		/* maximum number of keywords */
 #define STRPOOLSIZ (NSTRINGS * 10) /* size of string pool */
 
 

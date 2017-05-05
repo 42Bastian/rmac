@@ -53,6 +53,10 @@
 #define DOTW            'W'					// .w or .W
 #define DOTL            'L'					// .l or .L
 #define DOTI            'I'					// .l or .L
+#define DOTX			'X'					// .x or .X
+#define DOTD			'D'					// .d or .D
+#define DOTP			'P'					// .p or .P
+#define DOTQ			'Q'					// .q or .Q (essentially an alias for P)
 #define ENDEXPR         'E'					// End of expression
 
 // ^^ operators
@@ -146,6 +150,9 @@ extern char lnbuf[];
 extern char lntag;
 extern char tolowertab[];
 extern INOBJ * cur_inobj;
+extern unsigned orgactive;
+extern unsigned orgaddr;
+extern LONG sloc;
 extern int mjump_align;
 extern char * string[];
 

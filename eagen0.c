@@ -9,9 +9,12 @@
 
 int eaNgen(WORD siz)
 {
-	VALUE v = aNexval;
-	WORD w = (WORD)(aNexattr & DEFINED);
-	WORD tdb = (WORD)(aNexattr & TDB);
+	VALUE vbd, v = aNexval;
+	WORD wbd, w = (WORD)(aNexattr & DEFINED);
+	WORD tdbbd, tdb = (WORD)(aNexattr & TDB);
+    vbd = aNbdexval;
+    wbd = (WORD)(aNbdexattr & DEFINED);
+    tdbbd = (WORD)(aNbdexattr & TDB);
 
 	switch (amN)
 	{
@@ -212,6 +215,10 @@ int eaNgen(WORD siz)
 		}
 
 		break;
+    case SIZP:
+            // 68881/68882/68040 only
+            return error("Sorry, .p constant format is not implemented yet!");
+            break;
 	case ABSW:
 		if (w) // Defined
 		{
@@ -251,7 +258,100 @@ int eaNgen(WORD siz)
 	case PCBASE:
 	case PCMPOST:
 	case PCMPRE:
-		return error("unsupported 68020 addressing mode");
+		D_word(aNexten);
+		// Deposit bd (if not suppressed)
+		if ((aNexten&0x0030)==EXT_BDSIZE0)
+		{
+			// Don't deposit anything (suppressed)
+		}
+		else if ((aNexten&0x0030)==EXT_BDSIZEW)
+		{
+			// Deposit word bd
+			if (wbd)
+			{
+				// Just deposit it 
+				if (tdb)
+					MarkRelocatable(cursect, sloc, tdbbd, MWORD, NULL);
+
+				if (vbd + 0x8000 >= 0x10000)
+					return error(range_error);
+
+				D_word(vbd);
+			}
+			else
+			{
+				// Arrange for fixup later on 
+				AddFixup(FU_WORD|FU_SEXT, sloc, aNexpr);
+				D_word(0);
+			}
+		}
+		else
+		{
+			// Deposit long bd
+			if (wbd)
+			{
+				// Just deposit it 
+				if (tdbbd)
+					MarkRelocatable(cursect, sloc, tdbbd, MLONG, NULL);
+
+				D_long(vbd);
+			}
+			else
+			{
+				// Arrange for fixup later on 
+				AddFixup(FU_LONG|FU_SEXT, sloc, aNexpr);
+				D_long(0);
+			}
+		}
+		// Deposit od (if not suppressed)
+		if ((aNexten&7)==EXT_IISPRE0 || (aNexten&7)==EXT_IISPREN 
+			|| (aNexten&7)==EXT_IISNOIN || (aNexten&7)==EXT_IISPOSN)
+		{
+			// Don't deposit anything (suppressed)
+		}
+		else if ((aNexten&7)==EXT_IISPREW
+			|| (aNexten&7)==EXT_IISPOSW || (aNexten&7)==EXT_IISNOIW)
+		{
+			// Deposit word od
+			if (w)
+			{
+				// Just deposit it 
+				if (tdb)
+					MarkRelocatable(cursect, sloc, tdb, MWORD, NULL);
+
+				if (v + 0x8000 >= 0x10000)
+					return error(range_error);
+
+				D_word(v);
+			}
+			else
+			{
+				// Arrange for fixup later on 
+				AddFixup(FU_WORD|FU_SEXT, sloc, aNexpr);
+				D_word(0);
+			}
+		}
+		else
+		{
+			// Deposit long od
+			if (w)
+			{
+				// Just deposit it 
+				if (tdb)
+					MarkRelocatable(cursect, sloc, tdb, MLONG, NULL);
+
+				D_long(v);
+			}
+			else
+			{
+				// Arrange for fixup later on 
+				AddFixup(FU_LONG|FU_SEXT, sloc, aNexpr);
+				D_long(0);
+			}
+		}
+
+		break;
+		//return error("unsupported 68020 addressing mode");
 	default:
 		// Bad addressing mode in ea gen
 		interror(3);
@@ -268,5 +368,8 @@ int eaNgen(WORD siz)
 #undef aNexpr
 #undef aNixreg
 #undef aNixsiz
+#undef aNexten
+#undef aNbdexval
+#undef aNbdexattr
 #undef AnESYM
 

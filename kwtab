@@ -23,6 +23,58 @@ pc	145
 sr	146
 ccr	147
 
+ic40	185
+dc40	186
+bc40	187
+
+sfc 188
+dfc 189
+vbr 191
+
+cacr    192
+caar    193
+msp 194
+isp 195
+
+tc  196
+itt0    197
+itt1    198
+dtt0    199
+dtt1    200
+mmusr   201
+urp 202
+srp 203
+
+iacr0   204
+iacr1   205
+dacr0   206
+dacr1   207
+
+tt0     208
+tt1     209
+
+crp     210
+
+fpiar   220
+fpsr    221
+fpcr    222
+
+fp0     224
+fp1     225
+fp2     226
+fp3     227
+fp4     228
+fp5     229
+fp6     230
+fp7     231
+mr 272
+omr 273
+la 274
+lc 275
+ssh 276
+ssl 277
+ss 278
+
 .equ	61
 equ	61
 .equr  148
@@ -30,6 +82,7 @@ equr   148
 .regequ  148
 regequ   148
 set	149
+
 reg	150
 r0	151
 r1	152

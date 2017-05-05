@@ -66,6 +66,7 @@ int d_fail(void);
 int d_cstruct(void);
 int d_prgflags(void);
 int d_opt(void);
+int d_dsp(void);
 
 // Directive handler table
 int (*dirtab[])() = {
@@ -127,6 +128,14 @@ int (*dirtab[])() = {
 	d_nojpad,			// 55 .nojpad (deprecated)
 	d_gpumain,			// 56 .gpumain (deprecated)
 	d_prgflags,			// 57 .prgflags
+	d_68020,			// 58 .68020
+	d_68030,			// 59 .68030
+	d_68040,			// 60 .68040
+	d_68060,			// 61 .68060
+	d_68881,			// 62 .68881
+	d_68882,			// 63 .68882
+	d_56001,			// 64 .56001
+	d_nofpu,			// 65 nofpu
 	d_opt,				// 58 .opt
 };
 
@@ -1041,14 +1050,14 @@ int d_dc(WORD siz)
 			}
 			else
 			{
+				if (tdb)
+					return error("non-absolute byte value");
+
 				if (eval + 0x100 >= 0x200)
 				{
 					sprintf(buffer, "%s (value = $%X)", range_error, eval);
 					return error(buffer);
 				}
-
-				if (tdb)
-					return error("non-absolute byte value");
 
 				D_byte(eval);
 			}
@@ -1376,9 +1385,88 @@ int d_68000(void)
 	orgwarning = 0;
 	SaveSection();
 	SwitchSection(TEXT);
+	activecpu=CPU_68000;
 	return 0;
 }
 
+//
+// .68020 - Back to 68000 TEXT segment and select 68020
+//
+int d_68020(void)
+{
+	d_68000();
+	activecpu=CPU_68020;
+	return 0;
+}
+
+//
+// .68030 - Back to 68000 TEXT segment and select 68030
+//
+int d_68030(void)
+{
+	d_68000();
+	activecpu=CPU_68030;
+	return 0;
+}
+
+//
+// .68040 - Back to 68000 TEXT segment and select 68040
+//
+int d_68040(void)
+{
+	d_68000();
+	activecpu=CPU_68040;
+	activefpu=FPU_68040;
+	return 0;
+}
+
+//
+// .68060 - Back to 68000 TEXT segment and select 68060
+//
+int d_68060(void)
+{
+	d_68000();
+	activecpu=CPU_68060;
+	activefpu=FPU_68040;
+	return 0;
+}
+
+//
+// .68881 - Back to 68000 TEXT segment and select 68881 FPU
+//
+int d_68881(void)
+{
+	d_68000();
+	activefpu=FPU_68881;
+	return 0;
+}
+
+//
+// .68882 - Back to 68000 TEXT segment and select 68882 FPU
+//
+int d_68882(void)
+{
+	d_68000();
+	activefpu=FPU_68881;
+	return 0;
+}
+
+//
+// nofpu - Deselect FPUs.
+//
+int d_nofpu(void)
+{
+	activefpu=FPU_NONE;
+	return 0;
+}
+
+//
+// DSP56001
+//
+int d_56001(void)
+{
+	return error("Not yet, child. Be patient.");
+}
 
 //
 // .gpu - Switch to GPU assembler

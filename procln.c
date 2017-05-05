@@ -41,6 +41,8 @@ static int disabled;			// Assembly conditionally disabled
 int just_bss;					// 1, ds.b in microprocessor mode
 VALUE pcloc;					// Value of "PC" at beginning of line
 SYM * lab_sym;					// Label on line (or NULL)
+int bfparam1;					// bfxxx instruction parameters
+int bfparam2;					// bfxxx instruction parameters
 
 const char extra_stuff[] = "extra (unexpected) text found after addressing mode";
 const char comma_error[] = "missing comma";
@@ -49,7 +51,7 @@ const char locgl_error[] = "cannot GLOBL local symbol";
 const char lab_ignored[] = "label ignored";
 
 // Table to convert an addressing-mode number to a bitmask.
-LONG amsktab[0112] = {
+LONG amsktab[0124] = {
 	M_DREG, M_DREG, M_DREG, M_DREG,
 	M_DREG, M_DREG, M_DREG, M_DREG,
 
@@ -88,8 +90,18 @@ LONG amsktab[0112] = {
 	M_AM_USP,										// 0106
 	M_AM_SR,										// 0107
 	M_AM_CCR,										// 0110
-	M_AM_NONE										// 0111
-};													// 0112 length
+	M_AM_NONE,										// 0111 
+	0x30,											// 0112 
+	0x30,											// 0113
+	0L,											    // 0114
+	0L,											    // 0115
+	0L,											    // 0116
+	0L,											    // 0117
+	M_CREG,										    // 0120 (caches - TODO: is this correct or does it need its own bitfield?)
+	M_CREG,										    // 0121
+	M_FREG,                                         // 0122
+	M_FPSCR                                         // 0123
+};													// 0123 length
 
 
 // Function prototypes
@@ -177,6 +189,9 @@ loop1:										// Internal line processing loop
 	// First token MUST be a symbol (Shamus: not sure why :-/)
 	if (*tok != SYMBOL)
 	{
+        if (*tok>=KW_D0 && *tok<=KW_R31)
+            error("cannot use reserved keyword as label name or .equ");
+        else
 		error("syntax error; expected symbol");
 		goto loop;
 	}
@@ -261,6 +276,17 @@ as68label:
 		siz = SIZL, tok++;
 	else if (*tok == DOTB)
 		siz = SIZB, tok++;
+	else if(*tok == DOTD)
+		siz = SIZD, tok++;
+	else if(*tok == DOTP)
+		siz = SIZP, tok++;
+	else if(*tok == DOTQ)
+		siz = SIZQ, tok++;
+	else if(*tok == DOTS)
+		siz = SIZS, tok++;
+	else if(*tok == DOTX)
+		siz = SIZX, tok++;
+
 
 	// Do special directives (500..999) (These must be handled in "real time")
 	if (state >= 500 && state < 1000)

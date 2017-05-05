@@ -81,34 +81,58 @@ char chrtab[] = {
 
 	MULTX, STSYM+CTSYM+HDIGIT,									// @ A
 	(char)((BYTE)DOT)+STSYM+CTSYM+HDIGIT, STSYM+CTSYM+HDIGIT,	// B C
-	STSYM+CTSYM+HDIGIT, STSYM+CTSYM+HDIGIT,						// D E
+	(char)((BYTE)DOT)+STSYM+CTSYM+HDIGIT, STSYM+CTSYM+HDIGIT,						// D E
 	STSYM+CTSYM+HDIGIT, STSYM+CTSYM,							// F G
-	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,			// H I J K
+	STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,			// H I J K
 	(char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,	// L M N O
 
-	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM,	// P Q R S
+	(char)((BYTE)DOT)+STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM,	// P Q R S
 	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM,	// T U V W
 	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, SELF,				// X Y Z [
 	SELF, SELF, MULTX, STSYM+CTSYM,								// \ ] ^ _
 
 	ILLEG, STSYM+CTSYM+HDIGIT,									// ` a
 	(char)((BYTE)DOT)+STSYM+CTSYM+HDIGIT, STSYM+CTSYM+HDIGIT,	// b c
-	STSYM+CTSYM+HDIGIT, STSYM+CTSYM+HDIGIT,						// d e
+	(char)((BYTE)DOT)+STSYM+CTSYM+HDIGIT, STSYM+CTSYM+HDIGIT,						// d e
 	STSYM+CTSYM+HDIGIT, STSYM+CTSYM,							// f g
-	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,			// h i j k
+	STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,			// h i j k
 	(char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,	// l m n o
 
-	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM,	// p q r s
-	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM,	// t u v w
-	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, SELF,				// x y z {
+	(char)((BYTE)DOT)+STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM,	// p q r s 
+	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM,	// t u v w 
+	(char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, SELF,				// x y z { 
 	SELF, SELF, SELF, ILLEG										// | } ~ DEL
 };
 
 // Names of registers
 static char * regname[] = {
-	"d0", "d1",  "d2",  "d3", "d4", "d5", "d6", "d7",
-	"a0", "a1",  "a2",  "a3", "a4", "a5", "a6", "a7",
-	"pc", "ssp", "usp", "sr", "ccr"
+//	"d0", "d1",  "d2",  "d3", "d4", "d5", "d6", "d7",
+//	"a0", "a1",  "a2",  "a3", "a4", "a5", "a6", "a7",
+//	"pc", "ssp", "usp", "sr", "ccr"
+    "d0","d1","d2","d3","d4","d5","d6","d7", // 128,135
+    "a0","a1","a2","a3","a4","a5","a6","sp", // 136,143
+    "ssp","pc","sr","ccr","regequ","set","reg","r0", // 144,151
+    "r1","r2","r3","r4","r5","r6","r7","r8", // 152,159
+    "r9","r10","r11","r12","r13","r14","r15","r16", // 160,167
+    "r17","r18","r19","r20","r21","r22","r23","r24", // 168,175
+    "r25","r26","r27","r28","r29","r30","r31","ccdef", // 176,183
+    "usp","ic40","dc40","bc40","sfc","dfc","","vbr", // 184,191
+    "cacr","caar","msp","isp","tc","itt0","itt1","dtt0", // 192,199
+    "dtt1","mmusr","urp","srp","iacr0","iacr1","dacr0","dacr1", // 200,207
+    "tt0","tt1","crp","","","","","", // 208,215
+    "","","","","fpiar","fpsr","fpcr","", // 216,223
+    "fp0","fp1","fp2","fp3","fp4","fp5","fp6","fp7", // 224,231
+    "","","","","","","","", // 232,239
+    "","","","","","","","", // 240,247
+    "","","","","","","","", // 248,255
+    "","","","","x0","x1","y0","y1", // 256,263
+    "","b0","","b2","","b1","a","b", // 264,271
+    "mr","omr","la","lc","ssh","ssl","ss","", // 272,279
+    "n0","n1","n2","n3","n4","n5","n6","n7", // 280,287
+    "m0","m1","m2","m3","m4","m5","m6","m7", // 288,295
+    "","","","","","","l","p", // 296,303
+    "mr","omr","la","lc","ssh","ssl","ss","", // 304,311
+    "a10","b10","x","y","","","ab","ba"  // 312,319
 };
 
 static char * riscregname[] = {
@@ -159,14 +183,24 @@ void InitTokenizer(void)
 	// These characters are legal immediately after a period
 	dotxtab['b'] = DOTB;					// .b .B .s .S
 	dotxtab['B'] = DOTB;
-	dotxtab['s'] = DOTB;
-	dotxtab['S'] = DOTB;
-	dotxtab['w'] = DOTW;					// .w .W
+	//dotxtab['s'] = DOTB;
+	//dotxtab['S'] = DOTB;
+	dotxtab['w'] = DOTW;					// .w .W 
 	dotxtab['W'] = DOTW;
-	dotxtab['l'] = DOTL;					// .l .L
+	dotxtab['l'] = DOTL;					// .l .L 
 	dotxtab['L'] = DOTL;
-	dotxtab['i'] = DOTI;					// .i .I (???)
+	dotxtab['i'] = DOTI;					// .i .I (???) 
 	dotxtab['I'] = DOTI;
+	dotxtab['D'] = DOTD;					// .d .D (quad word)
+	dotxtab['d'] = DOTD;
+	dotxtab['S'] = DOTS;					// .s .S
+	dotxtab['s'] = DOTS;					
+	dotxtab['Q'] = DOTQ;					// .q .Q
+	dotxtab['q'] = DOTQ;					
+	dotxtab['X'] = DOTX;					// .x .x
+	dotxtab['x'] = DOTX;					
+	dotxtab['P'] = DOTP;					// .p .P
+	dotxtab['p'] = DOTP;					
 }
 
 
@@ -1251,32 +1285,6 @@ dostring:
 					while (hextab[*ln] >= 0)
 						v = (v << 4) + (int)hextab[*ln++];
 
-					// ggn: Okay, some comments here are in order I think....
-					// The original madmac sources didn't parse the size at
-					// this point (i.e. .b/.w/.l). It was probably done at
-					// another point, although it's unclear to me exactly
-					// where. So why change this? My understanding (at least
-					// from what SCPCD said on IRC) is that .w addressing
-					// formats produce wrong code on jaguar (or doesn't execute
-					// properly? something like that). So the code was changed
-					// to mask off the upper bits depending on length (note: I
-					// don't think .b is valid at all! I only know of .w/.l, so
-					// this should probably be wiped). Then the code that
-					// parses the constant and checks to see if it's between
-					// $ffff0000 and $8000 never got triggered, so yay job
-					// done! ...now say we want to assemble a st .prg. One of
-					// the most widely spread optimisations is move.X expr.w,Y
-					// (or vice versa, or both, anyway...) to access hardware
-					// registers (which are mapped to $fxxxxx). This botchy
-					// thing would create "hilarious" code while trying to
-					// access hardware registers. So I made a condition to see
-					// if st mode or jaguar is active and apply the both or
-					// not. One last note: this is hardcoded to get optimised
-					// for now on ST mode, i.e. it can't generate code like
-					// move.w $00001234,d0 - it'll always get optimised to
-					// move.w $1234.w,d0. It's probably ok, but maybe a warning
-					// should be emitted? Or maybe finding a way to make it not
-					// auto-optimise? I think it's ok for now...
 					if (*ln == '.')
 					{
 						if (obj_format == BSD)

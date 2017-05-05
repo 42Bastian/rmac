@@ -34,7 +34,7 @@ OBJS = 6502.o amode.o debug.o direct.o eagen.o error.o expr.o listing.o mach.o m
 # Build everything
 #
 
-all : mntab.h 68ktab.h kwtab.h risckw.h 6502.h rmac
+all : mntab.h 68ktab.h kwtab.h risckw.h 6502kw.h rmac
 	@echo
 	@echo "Don't forget to bump the version number before commiting!"
 	@echo
@@ -50,10 +50,11 @@ mntab.h : mntab 68kmn kwgen
 68ktab.h 68kmn : 68ktab 68ktab 68kgen
 	./68kgen 68kmn <68ktab >68ktab.h
 
+
 kwtab.h : kwtab kwgen
 	./kwgen kw <kwtab >kwtab.h
 
-6502.h : 6502.tbl kwgen
+6502kw.h : 6502.tbl kwgen
 	./kwgen mp <6502.tbl >6502kw.h
 
 risckw.h : kwtab kwgen

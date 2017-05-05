@@ -11,7 +11,7 @@
 
 #include "rmac.h"
 
-#define EBUFSIZ         200   // Max size of an error message
+#define EBUFSIZ         256                                 // Max size of an error message
 
 // Exported variables
 extern int errcnt;

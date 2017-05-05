@@ -113,6 +113,30 @@ SECT {
 	CHUNK * sfix;				// Last fixup chunk
 };
 
+// 680x0 defines
+#define CPU_68000 1
+#define CPU_68020 2
+#define CPU_68030 4
+#define CPU_68040 8
+#define CPU_68060 16
+#define FPU_NONE  0
+#define FPU_68881 1
+#define FPU_68882 2
+#define FPU_68040 4
+
+// Helper macros to test for active CPU
+#define CHECK00 if (activecpu == CPU_68000) return error(unsupport)
+#define CHECK20 if (activecpu == CPU_68020) return error(unsupport)
+#define CHECK30 if (activecpu == CPU_68030) return error(unsupport)
+#define CHECK40 if (activecpu == CPU_68040) return error(unsupport)
+#define CHECK60 if (activecpu == CPU_68060) return error(unsupport)
+#define CHECKNO00 if (activecpu != CPU_68000) return error(unsupport)
+#define CHECKNO20 if (activecpu != CPU_68020) return error(unsupport)
+#define CHECKNO30 if (activecpu != CPU_68030) return error(unsupport)
+#define CHECKNO40 if (activecpu != CPU_68040) return error(unsupport)
+#define CHECKNO60 if (activecpu != CPU_68060) return error(unsupport)
+
+
 // Globals, external etc
 extern uint32_t sloc;
 extern uint16_t scattr;

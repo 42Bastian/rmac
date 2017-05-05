@@ -39,6 +39,7 @@ int debug;						// [1..9] Enable debugging levels
 int err_flag;					// '-e' specified
 int err_fd;						// File to write error messages to
 int rgpu, rdsp;					// Assembling Jaguar GPU or DSP code
+int dsp56001;					// Assembling DSP 56001 code
 int list_fd;					// File to write listing to
 int regbank;					// RISC register bank
 int segpadsize;					// Segment padding size
@@ -49,6 +50,8 @@ char * cmdlnexec;				// Executable name, pointer to ARGV[0]
 char * searchpath;				// Search path for include files
 char defname[] = "noname.o";	// Default output filename
 int optim_flags[OPT_COUNT];	// Specific optimisations on/off matrix
+int activecpu=CPU_68000;		// Active 68k CPU (68000 by default) 
+int activefpu=FPU_NONE;			// Active FPU (none by default)
 
 //
 // Manipulate file extension.
@@ -144,6 +147,8 @@ void DisplayHelp(void)
 		"                    o1: move.l #x,dn/an to moveq         (on)\n"
 		"                    o2: Word branches to short           (on)\n"
 		"                    o3: Outer displacement 0(an) to (an) (off)\n"
+        "                    o4: lea size(An),An to addq #size,An        (off)\n"
+        "                    o5: Absolute long base displacement to word (off)\n"
 		"  ~o[value]         Turn a specific optimisation off\n"
 		"  +oall             Turn all optimisations on\n"
 		"  ~oall             Turn all optimisations off\n"

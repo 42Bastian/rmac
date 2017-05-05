@@ -188,6 +188,11 @@
 #define DOTW         'W'			// .w or .W
 #define DOTL         'L'			// .l or .L
 #define DOTI         'I'			// .i or .I
+#define DOTD         'D'            // .d or .D
+#define DOTS         'S'			// .s or .S (FPU Single)
+#define DOTQ         'Q'			// .q oe .Q (FPU Quad)
+#define DOTX         'X'			// .x or .X (FPU Extended)
+#define DOTP         'P'			// .p or .P (FPU Packed)
 #define ENDEXPR      'E'			// End of expression
 
 // Object code formats
@@ -236,6 +241,11 @@ PTR
 #define SIZW         0x0002			// .w
 #define SIZL         0x0004			// .l
 #define SIZN         0x0008			// no .(size) specifier
+#define SIZD         0x0010         // .d (quad word or FPU double precision real)
+#define SIZS		 0x0020			// .s (FPU single precision real)
+#define SIZX         0x0040         // .x (FPU extended precision real)
+#define SIZP		 0x0080		    // .p (FPU pakced decimal real)
+#define SIZQ         SIZD
 
 // RISC register bank definitions (used in extended symbol attributes also)
 #define BANK_N       0x0000			// No register bank specified
@@ -246,6 +256,29 @@ PTR
 #define EQUATEDCC    0x0020
 #define UNDEF_CC     0x0040
 
+/* Construct binary constants at compile time
+Code by Tom Torfs */
+
+/* Helper macros */
+#define HEX__(n) 0x##n##LU
+#define B8__(x) ((x&0x0000000FLU)?1:0) \
++((x&0x000000F0LU)?2:0) \
++((x&0x00000F00LU)?4:0) \
++((x&0x0000F000LU)?8:0) \
++((x&0x000F0000LU)?16:0) \
++((x&0x00F00000LU)?32:0) \
++((x&0x0F000000LU)?64:0) \
++((x&0xF0000000LU)?128:0)
+
+/* User macros */
+#define B8(d) ((unsigned char)B8__(HEX__(d)))
+#define B16(dmsb,dlsb) (((unsigned short)B8(dmsb)<<8) \
++ B8(dlsb))
+#define B32(dmsb,db2,db3,dlsb) (((unsigned long)B8(dmsb)<<24) \
++ ((unsigned long)B8(db2)<<16) \
++ ((unsigned long)B8(db3)<<8) \
++ B8(dlsb))
+
 // Optimisation defines
 enum
 {
@@ -253,6 +286,8 @@ enum
 	OPT_MOVEL_MOVEQ   = 1,
 	OPT_BSR_BCC_S     = 2,
 	OPT_INDIRECT_DISP = 3,
+    OPT_LEA_ADDQ        = 4,
+    OPT_BASE_DISP       = 5,
 	OPT_COUNT   // Dummy, used to count number of optimisation switches
 };
 
@@ -260,6 +295,7 @@ enum
 extern int verb_flag;
 extern int debug;
 extern int rgpu, rdsp;
+extern int dsp56001;
 extern int err_flag;
 extern int err_fd;
 extern int regbank;

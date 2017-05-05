@@ -34,6 +34,10 @@
 #define AM_SR        0107
 #define AM_CCR       0110
 #define AM_NONE      0111				// Nothing
+#define CACHES       0120               // Instruction/Data/Both Caches (IC/DC/BC)
+#define CREG         0121				// Control registers (see CREGlut in mach.h)
+#define FREG         0122               // FPU registers (fp0-fp7)
+#define FPSCR        0123               // FPU system control registers (fpiar, fpsr, fpcr)
 
 // Addressing-mode masks
 #define M_DREG       0x00000001L		// Dn
@@ -50,7 +54,7 @@
 #define M_IMMED      0x00000800L		// #data
 #define M_ABASE      0x00001000L		// (bd,An,Xn)
 #define M_MEMPOST    0x00002000L		// ([bd,An],Xn,od)
-#define M_MEMPRE     0x00004000L		// ([bc,An,Xn],od)
+#define M_MEMPRE     0x00004000L		// ([bd,An,Xn],od)
 #define M_PCBASE     0x00008000L		// (bd,PC,Xn)
 #define M_PCMPOST    0x00010000L		// ([bd,PC],Xn,od)
 #define M_PCMPRE     0x00020000L		// ([bc,PC,Xn],od)
@@ -58,6 +62,10 @@
 #define M_AM_SR      0x00080000L		// SR
 #define M_AM_CCR     0x00100000L		// CCR
 #define M_AM_NONE    0x00200000L		// (nothing)
+#define M_BITFLD     0x00400000L		// 68020 bitfield
+#define M_CREG       0x00800000L		// Control registers
+#define M_FREG       0x01000000L		// FPn
+#define M_FPSCR      0x02000000L		// fpiar, fpsr, fpcr
 
 // Addr mode categories
 #define C_ALL        0x00000FFFL
@@ -65,6 +73,10 @@
 #define C_MEM        0x00000FFCL
 #define C_CTRL       0x000007E4L
 #define C_ALT        0x000001FFL
+#define C_ALL030     0x0003FFFFL
+#define C_CTRL030    0x0003F7E4L
+#define C_DATA030    0x0003FFFDL
+#define C_MOVES      (M_AIND|M_APOSTINC|M_APREDEC|M_ADISP|M_AINDEXED|M_ABSW|M_ABSL|M_ABASE|M_MEMPRE|M_MEMPOST)
 
 #define C_ALTDATA    (C_DATA&C_ALT)
 #define C_ALTMEM     (C_MEM&C_ALT)
@@ -72,18 +84,50 @@
 #define C_LABEL      (M_ABSW|M_ABSL)
 #define C_NONE       M_AM_NONE
 
+#define C_CREG       (M_AM_USP|M_CREG)
+
 // Scales
 #define TIMES1       00000				// (empty or *1)
 #define TIMES2       01000				// *2
 #define TIMES4       02000				// *4
 #define TIMES8       03000				// *8
 
+#define M_FC		(M_IMMED|M_DREG|M_CREG)
+#define M_MRN		(M_DREG|M_AREG|M_CREG)
+
+//EA extension word
+#define EXT_D		 0x0000			// Dn
+#define EXT_A		 0x8000			// An
+#define EXT_W		 0x0000			// Index Size Sign-Extended Word
+#define EXT_L		 0x0800			// Index Size Long Word
+#define EXT_TIMES1   0x0000         // Scale factor 1
+#define EXT_TIMES2   0x0200         // Scale factor 2
+#define EXT_TIMES4   0x0400         // Scale factor 4
+#define EXT_TIMES8   0x0600         // Scale factor 8
+#define EXT_FULLWORD 0x0100			// Use full extension word format
+#define EXT_BS		 0x0080			// Base Register Suppressed
+#define EXT_IS		 0x0040			// Index Operand Suppressed
+#define EXT_BDSIZE0  0x0010			// Base Displacement Size Null (Suppressed)
+#define EXT_BDSIZEW  0x0020			// Base Displacement Size Word
+#define EXT_BDSIZEL  0x0030			// Base Displacement Size Long
+#define EXT_IISPRE0  0x0000			// Indirect and Indexing Operand - No Memory Indirect Action
+#define EXT_IISPREN  0x0001			// Indirect and Indexing Operand - Indirect Preindexed with Null Outer Displacement
+#define EXT_IISPREW  0x0002			// Indirect and Indexing Operand - Indirect Preindexed with Word Outer Displacement
+#define EXT_IISPREL  0x0003			// Indirect and Indexing Operand - Indirect Preindexed with Long Outer Displacement
+#define EXT_IISPOSN  0x0005			// Indirect and Indexing Operand - Indirect Postindexed with Null Outer Displacement
+#define EXT_IISPOSW  0x0006			// Indirect and Indexing Operand - Indirect Postindexed with Word Outer Displacement
+#define EXT_IISPOSL  0x0007			// Indirect and Indexing Operand - Indirect Postindexed with Long Outer Displacement
+#define EXT_IISNOI0  0x0000			// Indirect and Indexing Operand - No Memory Indirect Action
+#define EXT_IISNOIN  0x0001			// Indirect and Indexing Operand - Memory Indirect with Null Outer Displacement
+#define EXT_IISNOIW  0x0002			// Indirect and Indexing Operand - Memory Indirect with Word Outer Displacement
+#define EXT_IISNOIL  0x0003			// Indirect and Indexing Operand - Memory Indirect with Long Outer Displacement
+
 #define EXPRSIZE     128				// Maximum #tokens in an expression
 
 // Addressing mode variables, output of amode()
 extern int nmodes;
 extern int am0, am1;
-extern int a0reg, a1reg;
+extern int a0reg, a1reg, a2reg;
 extern TOKEN a0expr[], a1expr[];
 extern VALUE a0exval, a1exval;
 extern WORD a0exattr, a1exattr;
@@ -93,6 +137,11 @@ extern TOKEN a0oexpr[], a1oexpr[];
 extern VALUE a0oexval, a1oexval;
 extern WORD a0oexattr, a1oexattr;
 extern SYM * a0esym, * a1esym;
+extern VALUE a0bexval, a1bexval;
+extern WORD a0bexattr, a1bexattr;
+extern WORD a0bsize, a1bsize;
+extern TOKEN a0bexpr[], a1bexpr[];
+extern WORD a0extension, a1extension;
 
 // Mnemonic table structure
 #define MNTAB  struct _mntab
@@ -110,6 +159,7 @@ MNTAB {
 // Exported functions
 int amode(int);
 int reglist(WORD *);
-
+int fpu_reglist_left(WORD *);
+int fpu_reglist_right(WORD *);
 #endif // __AMODE_H__
 

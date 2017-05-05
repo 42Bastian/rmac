@@ -27,25 +27,39 @@ asr   NBWL   M_DREG          M_DREG          %1110rrr0ss100rrr   m_shr     +
 -     NBWL   M_DREG          M_AM_NONE       %11100010ss000rrS   m_reg     +
 -     NW     C_ALTMEM        M_AM_NONE       %1110000011eee000   m_ea
 
-bcc   NBW    C_LABEL         M_AM_NONE       %01100100bbbbbbbb   m_br
+bcc   NBWS   C_LABEL         M_AM_NONE       %01100100bbbbbbbb   m_br +
 bhs
-bcs   NBW    C_LABEL         M_AM_NONE       %01100101bbbbbbbb   m_br
+-     L      C_LABEL         M_AM_NONE       %0110010011111111   m_br30
+bcs   NBWS   C_LABEL         M_AM_NONE       %01100101bbbbbbbb   m_br +
 blo
-beq   NBW    C_LABEL         M_AM_NONE       %01100111bbbbbbbb   m_br
+-     L      C_LABEL         M_AM_NONE       %0110010111111111   m_br30
+beq   NBWS   C_LABEL         M_AM_NONE       %01100111bbbbbbbb   m_br +
 bze
 bz
-bge   NBW    C_LABEL         M_AM_NONE       %01101100bbbbbbbb   m_br
-bgt   NBW    C_LABEL         M_AM_NONE       %01101110bbbbbbbb   m_br
-bhi   NBW    C_LABEL         M_AM_NONE       %01100010bbbbbbbb   m_br
-ble   NBW    C_LABEL         M_AM_NONE       %01101111bbbbbbbb   m_br
-bls   NBW    C_LABEL         M_AM_NONE       %01100011bbbbbbbb   m_br
-blt   NBW    C_LABEL         M_AM_NONE       %01101101bbbbbbbb   m_br
-bmi   NBW    C_LABEL         M_AM_NONE       %01101011bbbbbbbb   m_br
-bne   NBW    C_LABEL         M_AM_NONE       %01100110bbbbbbbb   m_br
+-     L      C_LABEL         M_AM_NONE       %0110011111111111   m_br30
+bge   NBWS   C_LABEL         M_AM_NONE       %01101100bbbbbbbb   m_br +
+-     L      C_LABEL         M_AM_NONE       %0110110011111111   m_br30
+bgt   NBWS   C_LABEL         M_AM_NONE       %01101110bbbbbbbb   m_br +
+-     L      C_LABEL         M_AM_NONE       %0110111011111111   m_br30
+bhi   NBWS   C_LABEL         M_AM_NONE       %01100010bbbbbbbb   m_br +
+-     L      C_LABEL         M_AM_NONE       %0110001011111111   m_br30
+ble   NBWS   C_LABEL         M_AM_NONE       %01101111bbbbbbbb   m_br +
+-     L      C_LABEL         M_AM_NONE       %0110111111111111   m_br30
+bls   NBWS   C_LABEL         M_AM_NONE       %01100011bbbbbbbb   m_br +
+-     L      C_LABEL         M_AM_NONE       %0110001111111111   m_br30
+blt   NBWS   C_LABEL         M_AM_NONE       %01101101bbbbbbbb   m_br +
+-     L      C_LABEL         M_AM_NONE       %0110110111111111   m_br30
+bmi   NBWS   C_LABEL         M_AM_NONE       %01101011bbbbbbbb   m_br +
+-     L      C_LABEL         M_AM_NONE       %0110101111111111   m_br30
+bne   NBWS   C_LABEL         M_AM_NONE       %01100110bbbbbbbb   m_br +
 bnz
-bpl   NBW    C_LABEL         M_AM_NONE       %01101010bbbbbbbb   m_br
-bvc   NBW    C_LABEL         M_AM_NONE       %01101000bbbbbbbb   m_br
-bvs   NBW    C_LABEL         M_AM_NONE       %01101001bbbbbbbb   m_br
+-     L      C_LABEL         M_AM_NONE       %01100110bbbbbbbb   m_br30
+bpl   NBWS   C_LABEL         M_AM_NONE       %01101010bbbbbbbb   m_br +
+-     L      C_LABEL         M_AM_NONE       %0110101011111111   m_br30
+bvc   NBWS   C_LABEL         M_AM_NONE       %01101000bbbbbbbb   m_br +
+-     L      C_LABEL         M_AM_NONE       %0110100011111111   m_br30
+bvs   NBWS   C_LABEL         M_AM_NONE       %01101001bbbbbbbb   m_br +
+-     L      C_LABEL         M_AM_NONE       %0110100111111111   m_br30
 
 bchg  NL     M_DREG          M_DREG          %0000rrr101eeeeee   m_bitop  +
 -     NB     M_DREG          C_ALTDATA       %0000rrr101eeeeee   m_bitop  +
@@ -57,7 +71,18 @@ bclr  NL     M_DREG          M_DREG          %0000rrr110eeeeee   m_bitop  +
 -     NL     M_IMMED         M_DREG          %0000100010eeeeee   m_bitop  +
 -     NB     M_IMMED         C_ALTDATA       %0000100010eeeeee   m_bitop
 
-bra   NBW    C_LABEL         M_AM_NONE       %01100000bbbbbbbb   m_br
+bfchg N      C_ALL030+M_BITFLD M_AM_NONE     %1110101011eeeeee   m_bfop
+bfclr N      C_ALL030+M_BITFLD M_AM_NONE     %1110110011eeeeee   m_bfop
+bfexts N     C_ALL030+M_BITFLD M_DREG        %1110101111eeeeee   m_bfop
+bfextu N     C_ALL030+M_BITFLD M_DREG        %1110100111eeeeee   m_bfop
+bfffo N      C_ALL030+M_BITFLD M_DREG        %1110110111eeeeee   m_bfop
+bfins N      M_DREG        C_ALL030+M_BITFLD %1110111111eeeeee   m_bfop
+bfset N      C_ALL030+M_BITFLD M_AM_NONE     %1110111011eeeeee   m_bfop
+bftst N      C_ALL030+M_BITFLD M_AM_NONE     %1110100011eeeeee   m_bfop
+bkpt  N      M_IMMED         M_AM_NONE       %0100100001001bbb   m_bkpt
+
+bra   NBWS   C_LABEL         M_AM_NONE       %01100000bbbbbbbb   m_br +
+-     L      C_LABEL         M_AM_NONE       %0110000011111111   m_br30
 bt
 
 bset  NL     M_DREG          M_DREG          %0000rrr111eeeeee   m_bitop  +
@@ -65,14 +90,27 @@ bset  NL     M_DREG          M_DREG          %0000rrr111eeeeee   m_bitop  +
 -     NL     M_IMMED         M_DREG          %0000100011eeeeee   m_bitop  +
 -     NB     M_IMMED         C_ALTDATA       %0000100011eeeeee   m_bitop
 
-bsr   NBW    C_LABEL         M_AM_NONE       %01100001bbbbbbbb   m_br
+bsr   NBWS   C_LABEL         M_AM_NONE       %01100001bbbbbbbb   m_br +
+-     L      C_LABEL         M_AM_NONE       %0110000111111111   m_br30
 
 btst  NL     M_DREG          M_DREG          %0000rrr100eeeeee   m_bitop  +
 -     NB     M_DREG          C_DATA          %0000rrr100eeeeee   m_bitop  +
 -     NL     M_IMMED         M_DREG          %0000100000eeeeee   m_bitop  +
 -     NB     M_IMMED         C_DATA-M_IMMED  %0000100000eeeeee   m_bitop
 
-chk   NW     C_DATA          M_DREG          %0100rrr110eR1000   m_ea
+callm N      M_IMMED         C_ALL030        %0000011011eeeeee   m_callm
+
+cas   !      M_AM_NONE       M_AM_NONE       %00001ss011eeeeee   m_cas
+cas2  !      M_AM_NONE       M_AM_NONE       %00001ss011111100   m_cas2
+
+chk   NW     C_DATA          M_DREG          %0100rrr110eR1000   m_ea +
+-     L      C_DATA030       M_DREG          %0100rrr100eeeeee   m_ea030
+
+cinvl N      CACHES          M_AIND          %11110100cc001rrr   m_cinv
+cinvp N      CACHES          M_AIND          %11110100cc010rrr   m_cinv
+cinva N      CACHES          M_AM_NONE       %11110100cc011rrr   m_cinv
+
+chk2  NBWL   C_DATA          M_DREG+M_AREG   %00000ss011eeeeee   m_chk2
 
 clr   NBWL   C_ALTDATA       M_AM_NONE       %01000010sseeeS00   m_ea      +
 -     NWL    M_AREG          M_AM_NONE       %1001rrrs11001rrr   m_clra
@@ -82,6 +120,87 @@ cmp   NWL    M_AREG          M_DREG          %1011rrr0sseR1S00   m_ea      +
 cmpa  NWL    C_ALL           M_AREG          %1011rrrs11eeeeee   m_adda    +
 cmpi  NBWL   M_IMMED         C_ALTDATA       %00001100sseeeS11   m_ea	   +
 cmpm  NBWL   M_APOSTINC      M_APOSTINC      %1011xxx1ss001yRS   m_reg
+
+cmp2  NBWL   C_ALL030        M_DREG+M_AREG   %00000ss011eeeeee   m_cmp2
+
+cpbeq NBW    C_LABEL         M_AM_NONE       %111100101s000001   m_cpbr
+cpbze
+cpbz
+cpbge NBW    C_LABEL         M_AM_NONE       %111100101s010011   m_cpbr
+cpbgt NBW    C_LABEL         M_AM_NONE       %111100101s010010   m_cpbr
+cpbgl NBW    C_LABEL         M_AM_NONE       %111100101s010110   m_cpbr
+cpbgle NBW   C_LABEL         M_AM_NONE       %111100101s010111   m_cpbr
+cpble NBW    C_LABEL         M_AM_NONE       %111100101s010101   m_cpbr
+cpblt NBW    C_LABEL         M_AM_NONE       %111100101s010100   m_cpbr
+cpbne NBW    C_LABEL         M_AM_NONE       %111100101s001110   m_cpbr
+cpbngt NBW   C_LABEL         M_AM_NONE       %111100101s011101   m_cpbr
+cpbnge NBW   C_LABEL         M_AM_NONE       %111100101s011100   m_cpbr
+cpbngl NBW   C_LABEL         M_AM_NONE       %111100101s011001   m_cpbr
+cpbnle NBW   C_LABEL         M_AM_NONE       %111100101s011010   m_cpbr
+cpbngle NBW  C_LABEL         M_AM_NONE       %111100101s011000   m_cpbr
+cpbnz
+cpbogt NBW   C_LABEL         M_AM_NONE       %111100101s000010   m_cpbr
+cpbule NBW   C_LABEL         M_AM_NONE       %111100101s001101   m_cpbr
+cpboge NBW   C_LABEL         M_AM_NONE       %111100101s000011   m_cpbr
+cpbult NBW   C_LABEL         M_AM_NONE       %111100101s001100   m_cpbr
+cpbolt NBW   C_LABEL         M_AM_NONE       %111100101s000100   m_cpbr
+cpbuge NBW   C_LABEL         M_AM_NONE       %111100101s001011   m_cpbr
+cpbole NBW   C_LABEL         M_AM_NONE       %111100101s000101   m_cpbr
+cpbugt NBW   C_LABEL         M_AM_NONE       %111100101s001010   m_cpbr
+cpbogl NBW   C_LABEL         M_AM_NONE       %111100101s000110   m_cpbr
+cpbueq NBW   C_LABEL         M_AM_NONE       %111100101s001001   m_cpbr
+cpbor NBW    C_LABEL         M_AM_NONE       %111100101s000111   m_cpbr
+cpbun NBW    C_LABEL         M_AM_NONE       %111100101s001000   m_cpbr
+cpbt  NBW    C_LABEL         M_AM_NONE       %111100101s001111   m_cpbr
+cpbra
+cpbf  NBW    C_LABEL         M_AM_NONE       %111100101s000000   m_cpbr
+cpbsf NBW    C_LABEL         M_AM_NONE       %111100101s010000   m_cpbr
+cpbst NBW    C_LABEL         M_AM_NONE       %111100101s011111   m_cpbr
+cpbseq NBW   C_LABEL         M_AM_NONE       %111100101s010001   m_cpbr
+cpbsne NBW   C_LABEL         M_AM_NONE       %111100101s011110   m_cpbr
+
+cpdbeq NBW   M_DREG          C_LABEL         %111100101s000001   m_cpbr
+cpdbze
+cpdbz
+cpdbge NBW   M_DREG          C_LABEL         %111100101s010011   m_cpdbr
+cpdbgt NBW   M_DREG          C_LABEL         %111100101s010010   m_cpdbr
+cpdbgl NBW   M_DREG          C_LABEL         %111100101s010110   m_cpdbr
+cpdbgle NBW  M_DREG          C_LABEL         %111100101s010111   m_cpdbr
+cpdble NBW   M_DREG          C_LABEL         %111100101s010101   m_cpdbr
+cpdblt NBW   M_DREG          C_LABEL         %111100101s010100   m_cpdbr
+cpdbne NBW   M_DREG          C_LABEL         %111100101s001110   m_cpdbr
+cpdbngt NBW  M_DREG          C_LABEL         %111100101s011101   m_cpdbr
+cpdbnge NBW  M_DREG          C_LABEL         %111100101s011100   m_cpdbr
+cpdbngl NBW  M_DREG          C_LABEL         %111100101s011001   m_cpdbr
+cpdbnle NBW  M_DREG          C_LABEL         %111100101s011010   m_cpdbr
+cpdbngle NBW M_DREG          C_LABEL         %111100101s011000   m_cpdbr
+cpdbnz
+cpdbogt NBW  M_DREG          C_LABEL         %111100101s000010   m_cpdbr
+cpdbule NBW  M_DREG          C_LABEL         %111100101s001101   m_cpdbr
+cpdboge NBW  M_DREG          C_LABEL         %111100101s000011   m_cpdbr
+cpdbult NBW  M_DREG          C_LABEL         %111100101s001100   m_cpdbr
+cpdbolt NBW  M_DREG          C_LABEL         %111100101s000100   m_cpdbr
+cpdbuge NBW  M_DREG          C_LABEL         %111100101s001011   m_cpdbr
+cpdbole NBW  M_DREG          C_LABEL         %111100101s000101   m_cpdbr
+cpdbugt NBW  M_DREG          C_LABEL         %111100101s001010   m_cpdbr
+cpdbogl NBW  M_DREG          C_LABEL         %111100101s000110   m_cpdbr
+cpdbueq NBW  M_DREG          C_LABEL         %111100101s001001   m_cpdbr
+cpdbor NBW   M_DREG          C_LABEL         %111100101s000111   m_cpdbr
+cpdbun NBW   M_DREG          C_LABEL         %111100101s001000   m_cpdbr
+cpdbt  NBW   M_DREG          C_LABEL         %111100101s001111   m_cpdbr
+cpdbra
+cpdbf  NBW   M_DREG          C_LABEL         %111100101s000000   m_cpdbr
+cpdbsf NBW   M_DREG          C_LABEL         %111100101s010000   m_cpdbr
+cpdbst NBW   M_DREG          C_LABEL         %111100101s011111   m_cpdbr
+cpdbseq NBW  M_DREG          C_LABEL         %111100101s010001   m_cpdbr
+cpdbsne NBW  M_DREG          C_LABEL         %111100101s011110   m_cpdbr
+
+cprestore N  C_ALL030        M_AM_NONE       %1111001101eeeeee   m_cprest
+cpsave N     C_ALL030        M_AM_NONE       %1111001100eeeeee   m_cprest
+
+cpushl N     CACHES          M_AIND          %11110100cc001rrr   m_cinv
+cpushp N     CACHES          M_AIND          %11110100cc010rrr   m_cinv
+cpusha N     CACHES          M_AM_NONE       %11110100cc011rrr   m_cinv
 
 dbcc  NW     M_DREG          C_LABEL         %0101010011001rrr   m_dbra
 dbcs  NW     M_DREG          C_LABEL         %0101010111001rrr   m_dbra
@@ -105,9 +224,17 @@ dbt   NW     M_DREG          C_LABEL         %0101000011001rrr   m_dbra
 dbvc  NW     M_DREG          C_LABEL         %0101100011001rrr   m_dbra
 dbvs  NW     M_DREG          C_LABEL         %0101100111001rrr   m_dbra
 
-divs  NW     C_DATA          M_DREG          %1000rrr111eR1000   m_ea
+divs  NW     C_DATA          M_DREG          %1000rrr111eR1000   m_ea     +
+-     L      C_DATA030       M_DREG          %0100110001eeeeee   m_divs   +
+-     L      C_DATA030       M_DREG          %0100110001eeeeee   m_divs
 
-divu  NW     C_DATA          M_DREG          %1000rrr011eR1000   m_ea
+divsl NL     C_DATA030       M_DREG          %0100110001eeeeee   m_divsl
+
+divu  NW     C_DATA          M_DREG          %1000rrr011eR1000   m_ea     +
+-     L      C_DATA030       M_DREG          %0100110001eeeeee   m_divu   +
+-     L      C_DATA030       M_DREG          %0100110001eeeeee   m_divu   +
+
+divul LN     C_DATA030       M_DREG          %0100110001eeeeee   m_divul
 
 eor   NBWL   M_DREG          C_ALTDATA       %1011rrr1sseR0S01   m_ea      +
 eori  NBWL   M_IMMED         C_ALTDATA       %00001010sseeeS11   m_ea      +
@@ -118,16 +245,349 @@ exg   NL     M_DREG|M_AREG   M_DREG|M_AREG   %1100rrr1ooooorrr   m_exg
 
 ext   NW     M_DREG          M_AM_NONE       %0100100010000rrr   m_reg     +
 -     L      M_DREG          M_AM_NONE       %0100100011000rrr   m_reg
+extb  NL     M_DREG          M_AM_NONE       %0100100111000rrr   m_reg
+
+fabs  NBWLSQXP C_ALL030      M_FREG          %1111001000eeeeee   m_fabs    +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fabs    +
+-     NX       M_FREG        M_AM_NONE       %1111001000eeeeee   m_fabs
+fsabs NBWLSQXP C_ALL030      M_FREG          %1111001000eeeeee   m_fsabs   +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fsabs   +
+-     NX       M_FREG        M_AM_NONE       %1111001000eeeeee   m_fsabs
+fdabs NBWLSQXP C_ALL030      M_FREG          %1111001000eeeeee   m_fdabs   +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fdabs   +
+-     NX       M_FREG        M_AM_NONE       %1111001000eeeeee   m_fdabs
+facos NBWLSQXP C_ALL030      M_FREG          %1111001000eeeeee   m_facos   +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_facos   +
+-     NX       M_FREG        M_AM_NONE       %1111001000eeeeee   m_facos
+fadd  NBWLSQXP C_ALL030      M_FREG          %1111001000eeeeee   m_fadd    +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fadd    
+fsadd NBWLSQXP C_ALL030      M_FREG          %1111001000eeeeee   m_fsadd   +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fsadd   
+fdadd NBWLSQXP C_ALL030      M_FREG          %1111001000eeeeee   m_fdadd   +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fdadd   
+fasin NBWLSQXP C_ALL030      M_FREG          %1111001000eeeeee   m_fasin   +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fasin   +
+-     NX       M_FREG        M_AM_NONE       %1111001000eeeeee   m_fasin
+fatan NBWLSQXP C_ALL030      M_FREG          %1111001000eeeeee   m_fatan   +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fatan   +
+-     NX       M_FREG        M_AM_NONE       %1111001000eeeeee   m_fatan
+fatanh NBWLSQXP C_ALL030     M_FREG          %1111001000eeeeee   m_fatanh  +
+-      NX       M_FREG        M_FREG          %1111001000eeeeee   m_fatanh +
+-      NX       M_FREG        M_AM_NONE       %1111001000eeeeee   m_fatanh
+
+fbeq  NBW      C_LABEL       M_AM_NONE       %111100101s000001   m_cpbr
+fbze
+fbz
+fbge  NWL      C_LABEL       M_AM_NONE       %111100101s010011   m_cpbr
+fbgt  NWL      C_LABEL       M_AM_NONE       %111100101s010010   m_cpbr
+fbgl  NWL      C_LABEL       M_AM_NONE       %111100101s010110   m_cpbr
+fbgle NWL      C_LABEL       M_AM_NONE       %111100101s010111   m_cpbr
+fble  NWL      C_LABEL       M_AM_NONE       %111100101s010101   m_cpbr
+fblt  NWL      C_LABEL       M_AM_NONE       %111100101s010100   m_cpbr
+fbne  NWL      C_LABEL       M_AM_NONE       %111100101s001110   m_cpbr
+fbngt NWL      C_LABEL       M_AM_NONE       %111100101s011101   m_cpbr
+fbnge NWL      C_LABEL       M_AM_NONE       %111100101s011100   m_cpbr
+fbngl NWL      C_LABEL       M_AM_NONE       %111100101s011001   m_cpbr
+fbnle NWL      C_LABEL       M_AM_NONE       %111100101s011010   m_cpbr
+fbnlt NWL      C_LABEL       M_AM_NONE       %111100101s011011   m_cpbr
+fbngle NWL     C_LABEL       M_AM_NONE       %111100101s011000   m_cpbr
+fbnz
+fbogt NWL      C_LABEL       M_AM_NONE       %111100101s000010   m_cpbr
+fbule NWL      C_LABEL       M_AM_NONE       %111100101s001101   m_cpbr
+fboge NWL      C_LABEL       M_AM_NONE       %111100101s000011   m_cpbr
+fbult NWL      C_LABEL       M_AM_NONE       %111100101s001100   m_cpbr
+fbolt NWL      C_LABEL       M_AM_NONE       %111100101s000100   m_cpbr
+fbuge NWL      C_LABEL       M_AM_NONE       %111100101s001011   m_cpbr
+fbole NWL      C_LABEL       M_AM_NONE       %111100101s000101   m_cpbr
+fbugt NWL      C_LABEL       M_AM_NONE       %111100101s001010   m_cpbr
+fbogl NWL      C_LABEL       M_AM_NONE       %111100101s000110   m_cpbr
+fbueq NWL      C_LABEL       M_AM_NONE       %111100101s001001   m_cpbr
+fbor  NWL      C_LABEL       M_AM_NONE       %111100101s000111   m_cpbr
+fbun  NWL      C_LABEL       M_AM_NONE       %111100101s001000   m_cpbr
+fbt   NWL      C_LABEL       M_AM_NONE       %111100101s001111   m_cpbr
+fbra
+fbf   NWL      C_LABEL       M_AM_NONE       %111100101s000000   m_cpbr
+fbsf  NWL      C_LABEL       M_AM_NONE       %111100101s010000   m_cpbr
+fbst  NWL      C_LABEL       M_AM_NONE       %111100101s011111   m_cpbr
+fbseq NWL      C_LABEL       M_AM_NONE       %111100101s010001   m_cpbr
+fbsne NWL      C_LABEL       M_AM_NONE       %111100101s011110   m_cpbr
+
+fcmp  NBWLSQXP C_ALL030      M_FREG          %1111001000eeeeee   m_fcmp   +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fcmp   
+fcos  NBWLSQXP C_ALL030      M_FREG          %1111001000eeeeee   m_fcos    +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fcos    +
+-     NX       M_FREG        M_AM_NONE       %1111001000eeeeee   m_fcos
+fcosh NBWLSQXP C_ALL030      M_FREG          %1111001000eeeeee   m_fcosh   +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fcosh   +   
+-     NX       M_FREG        M_AM_NONE       %1111001000eeeeee   m_fcosh
+
+fdbeq  N       M_DREG        C_LABEL         %1111001001000001  m_fdbcc
+fdbze
+fdbz
+fdbge  N       M_DREG        C_LABEL         %1111001001010011  m_fdbcc
+fdbgt  N       M_DREG        C_LABEL         %1111001001010010  m_fdbcc
+fdbgl  N       M_DREG        C_LABEL         %1111001001010110  m_fdbcc
+fdbgle N       M_DREG        C_LABEL         %1111001001010111  m_fdbcc
+fdble  N       M_DREG        C_LABEL         %1111001001010101  m_fdbcc
+fdblt  N       M_DREG        C_LABEL         %1111001001010100  m_fdbcc
+fdbne  N       M_DREG        C_LABEL         %1111001001001110  m_fdbcc
+fdbngt N       M_DREG        C_LABEL         %1111001001011101  m_fdbcc
+fdbnge N       M_DREG        C_LABEL         %1111001001011100  m_fdbcc
+fdbngl N       M_DREG        C_LABEL         %1111001001011001  m_fdbcc
+fdbnle N       M_DREG        C_LABEL         %1111001001011010  m_fdbcc
+fdbnlt N       M_DREG        C_LABEL         %1111001001011011  m_fdbcc
+fdbngle N      M_DREG        C_LABEL         %1111001001011000  m_fdbcc
+fdbnz
+fdbogt N       M_DREG        C_LABEL         %1111001001000010  m_fdbcc
+fdbule N       M_DREG        C_LABEL         %1111001001001101  m_fdbcc
+fdboge N       M_DREG        C_LABEL         %1111001001000011  m_fdbcc
+fdbult N       M_DREG        C_LABEL         %1111001001001100  m_fdbcc
+fdbolt N       M_DREG        C_LABEL         %1111001001000100  m_fdbcc
+fdbuge N       M_DREG        C_LABEL         %1111001001001011  m_fdbcc
+fdbole N       M_DREG        C_LABEL         %1111001001000101  m_fdbcc
+fdbugt N       M_DREG        C_LABEL         %1111001001001010  m_fdbcc
+fdbogl N       M_DREG        C_LABEL         %1111001001000110  m_fdbcc
+fdbueq N       M_DREG        C_LABEL         %1111001001001001  m_fdbcc
+fdbor  N       M_DREG        C_LABEL         %1111001001000111  m_fdbcc
+fdbun  N       M_DREG        C_LABEL         %1111001001001000  m_fdbcc
+fdbt   N       M_DREG        C_LABEL         %1111001001001111  m_fdbcc
+fdbra  N       M_DREG        C_LABEL         %1111001001000000  m_fdbcc
+fdbf   N       M_DREG        C_LABEL         %1111001001000000  m_fdbcc
+fdbsf  N       M_DREG        C_LABEL         %1111001001010000  m_fdbcc
+fdbst  N       M_DREG        C_LABEL         %1111001001011111  m_fdbcc
+fdbseq N       M_DREG        C_LABEL         %1111001001010001  m_fdbcc
+fdbsne N       M_DREG        C_LABEL         %1111001001011110  m_fdbcc
+
+fdiv  NBWLSQXP  C_ALL030     M_FREG          %1111001000eeeeee  m_fdiv    +
+-     NX        M_FREG       M_FREG          %1111001000eeeeee  m_fdiv    +
+-     NX        M_FREG       M_AM_NONE       %1111001000eeeeee  m_fdiv
+fsdiv NBWLSQXP  C_ALL030     M_FREG          %1111001000eeeeee  m_fsdiv   +
+-     NX        M_FREG       M_FREG          %1111001000eeeeee  m_fsdiv   +
+-     NX        M_FREG       M_AM_NONE       %1111001000eeeeee  m_fsdiv
+fddiv NBWLSQXP  C_ALL030     M_FREG          %1111001000eeeeee  m_fddiv   +
+-     NX        M_FREG       M_FREG          %1111001000eeeeee  m_fddiv   +
+-     NX        M_FREG       M_AM_NONE       %1111001000eeeeee  m_fddiv
+fetox NBWLSQXP  C_ALL030     M_FREG          %1111001000eeeeee  m_fetox   +
+-     NX        M_FREG       M_FREG          %1111001000eeeeee  m_fetox   +
+-     NX        M_FREG       M_AM_NONE       %1111001000eeeeee  m_fetox
+fetoxm1 NBWLSQXP C_ALL030    M_FREG          %1111001000eeeeee  m_fetoxm1   +
+-       NX       M_FREG      M_FREG          %1111001000eeeeee  m_fetoxm1   +
+-       NX       M_FREG      M_AM_NONE       %1111001000eeeeee  m_fetoxm1
+fgetexp NBWLSQXP C_ALL030    M_FREG          %1111001000eeeeee  m_fgetexp   +
+-       NX       M_FREG      M_FREG          %1111001000eeeeee  m_fgetexp   +
+-       NX       M_FREG      M_AM_NONE       %1111001000eeeeee  m_fgetexp
+fgetman NBWLSQXP C_ALL030    M_FREG          %1111001000eeeeee  m_fgetman   +
+-       NX       M_FREG      M_FREG          %1111001000eeeeee  m_fgetman   +
+-       NX       M_FREG      M_AM_NONE       %1111001000eeeeee  m_fgetman
+fint  NBWLSQXP  C_ALL030     M_FREG          %1111001000eeeeee   m_fint   + 
+-     NX        M_FREG       M_FREG          %1111001000eeeeee   m_fint   +
+-     NX        M_FREG       M_AM_NONE       %1111001000eeeeee   m_fint
+fintrz NBWLSQXP C_ALL030     M_FREG          %1111001000eeeeee   m_fintrz   + 
+-      NX       M_FREG       M_FREG          %1111001000eeeeee   m_fintrz   +
+-      NX       M_FREG       M_AM_NONE       %1111001000eeeeee   m_fintrz
+flog10 NBWLSQXP C_ALL030     M_FREG          %1111001000eeeeee   m_flog10   + 
+-      NX       M_FREG       M_FREG          %1111001000eeeeee   m_flog10   +
+-      NX       M_FREG       M_AM_NONE       %1111001000eeeeee   m_flog10
+flog2  NBWLSQXP C_ALL030     M_FREG          %1111001000eeeeee   m_flog2   + 
+-      NX       M_FREG       M_FREG          %1111001000eeeeee   m_flog2   +
+-      NX       M_FREG       M_AM_NONE       %1111001000eeeeee   m_flog2
+flogn  NBWLSQXP C_ALL030     M_FREG          %1111001000eeeeee   m_flogn   + 
+-      NX       M_FREG       M_FREG          %1111001000eeeeee   m_flogn   +
+-      NX       M_FREG       M_AM_NONE       %1111001000eeeeee   m_flogn
+flognp1 NBWLSQXP C_ALL030     M_FREG          %1111001000eeeeee   m_flognp1   + 
+-       NX       M_FREG       M_FREG          %1111001000eeeeee   m_flognp1   +
+-       NX       M_FREG       M_AM_NONE       %1111001000eeeeee   m_flognp1
+fmod   NBWLSQXP C_ALL030     M_FREG          %1111001000eeeeee   m_fmod   + 
+-      NX       M_FREG       M_FREG          %1111001000eeeeee   m_fmod   +
+-      NX       M_FREG       M_AM_NONE       %1111001000eeeeee   m_fmod
+fmove  NBWLSQXP C_ALL030     M_FREG          %1111001000eeeeee   m_fmove +
+-      NBWLSQXP M_FREG       C_ALL030        %1111001000eeeeee   m_fmove +
+-      NBWLSQXP M_FREG       M_FREG          %1111001000eeeeee   m_fmove +
+-      NL       M_FPSCR      C_ALL030        %1111001000eeeeee   m_fmovescr +
+-      NL       C_ALL030     M_FPSCR         %1111001000eeeeee   m_fmovescr +
+fsmove NBWLSQXP C_ALL030     M_FREG          %1111001000eeeeee   m_fsmove
+fdmove NBWLSQXP C_ALL030     M_FREG          %1111001000eeeeee   m_fdmove
+fmovecr NX     M_IMMED         M_FREG          %1111001000000000   m_fmovecr
+fmovem !       M_AM_NONE       M_AM_NONE       %1111001000eeeeee   m_fmovem
+fmul  NBWLSQXP C_ALL030      M_FREG          %1111001000eeeeee   m_fmul    +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fmul    
+fsmul NBWLSQXP C_ALL030      M_FREG          %1111001000eeeeee   m_fsmul   +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fsmul   
+fdmul NX       C_ALL030      M_FREG          %1111001000eeeeee   m_fdmul   +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fdmul   
+fneg  NBWLSQXP C_ALL030      M_FREG          %1111001000eeeeee   m_fneg    +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fneg    +
+-     NX       M_FREG        M_AM_NONE       %1111001000eeeeee   m_fneg
+fsneg NBWLSQXP C_ALL030      M_FREG          %1111001000eeeeee   m_fsneg   +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fsneg   +
+-     NX       M_FREG        M_AM_NONE       %1111001000eeeeee   m_fsneg
+fdneg NBWLSQXP C_ALL030      M_FREG          %1111001000eeeeee   m_fdneg   +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fdneg   +
+-     NX       M_FREG        M_AM_NONE       %1111001000eeeeee   m_fdneg
+fnop  N        M_AM_NONE     M_AM_NONE       %1111001010000000   m_fnop
+frem  NBWLSQXP C_ALL030      M_FREG          %1111001000eeeeee   m_frem   +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_frem
+fscale NBWLSQXP C_ALL030     M_FREG          %1111001000eeeeee   m_fscale  + 
+-      NX      M_FREG       M_FREG          %1111001000eeeeee   m_fscale  
+
+fseq  NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fseq 
+fsze
+fsz 
+fsge  NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsge 
+fsgt  NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsgt 
+fsgl  NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsgl 
+fsgle NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsgle
+fsle  NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsle 
+fslt  NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fslt 
+fsne  NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsne 
+fsngt NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsngt
+fsnge NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsnge
+fsngl NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsngl
+fsnle NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsnle
+fsnlt NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsnlt
+fsngle NB      C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsngle
+fsogt NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsogt
+fsule NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsule
+fsoge NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsoge
+fsult NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsult
+fsolt NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsolt
+fsuge NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsuge
+fsole NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsole
+fsugt NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsugt
+fsogl NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsogl
+fsueq NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsueq
+fsor  NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsor 
+fsun  NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsun 
+fst   NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fst  
+fsf   NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsf  
+fssf  NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fssf 
+fsst  NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsst 
+fsseq NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fsseq
+fssne NB       C_ALL030      M_AM_NONE       %1111001001eeeeee  m_fssne
+
+fsgldiv NBWLSQXP C_ALL030    M_FREG          %1111001000eeeeee   m_fsgldiv  + 
+-       NX       M_FREG      M_FREG          %1111001000eeeeee   m_fsgldiv 
+fsglmul NBWLSQXP C_ALL030    M_FREG          %1111001000eeeeee   m_fsglmul  + 
+-       NX       M_FREG      M_FREG          %1111001000eeeeee   m_fsglmul 
+fsin   NBWLSQXP C_ALL030     M_FREG          %1111001000eeeeee   m_fsin   +
+-      NX       M_FREG       M_FREG          %1111001000eeeeee   m_fsin   +
+-      NX       M_FREG       M_AM_NONE       %1111001000eeeeee   m_fsin
+fsincos NBWLSQXP C_ALL030    M_FREG          %1111001000eeeeee   m_fsincos  + 
+-       NX       M_FREG      M_FREG          %1111001000eeeeee   m_fsincos 
+fsinh  NBWLSQXP C_ALL030     M_FREG          %1111001000eeeeee   m_fsinh   +
+-      NX       M_FREG       M_FREG          %1111001000eeeeee   m_fsinh   +
+-      NX       M_FREG       M_AM_NONE       %1111001000eeeeee   m_fsinh
+fsqrt  NBWLSQXP C_ALL030     M_FREG          %1111001000eeeeee   m_fsqrt    +
+-      NX       M_FREG       M_FREG          %1111001000eeeeee   m_fsqrt    +
+-      NX       M_FREG       M_AM_NONE       %1111001000eeeeee   m_fsqrt
+fssqrt NBWLSQXP C_ALL030     M_FREG          %1111001000eeeeee   m_fsfsqrt   +
+-      NX       M_FREG       M_FREG          %1111001000eeeeee   m_fsfsqrt   +
+-      NX       M_FREG       M_AM_NONE       %1111001000eeeeee   m_fsfsqrt
+fdsqrt NBWLSQXP C_ALL030     M_FREG          %1111001000eeeeee   m_fdfsqrt   +
+-      NX       M_FREG       M_FREG          %1111001000eeeeee   m_fdfsqrt   +
+-      NX       M_FREG       M_AM_NONE       %1111001000eeeeee   m_fdfsqrt
+fsub  NBWLSQXP C_ALL030      M_FREG          %1111001000eeeeee   m_fsub    +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fsub    
+fssub NBWLSQXP C_ALL030      M_FREG          %1111001000eeeeee   m_fsub   +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fsub   
+fdsub NBWLSQXP C_ALL030      M_FREG          %1111001000eeeeee   m_fdsub   +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fdsub   
+ftan  NBWLSQXP C_ALL030      M_FREG          %1111001000eeeeee   m_ftan   +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_ftan   +
+-     NX       M_FREG        M_AM_NONE       %1111001000eeeeee   m_ftan
+ftanh NBWLSQXP C_ALL030      M_FREG          %1111001000eeeeee   m_ftanh   +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_ftanh   +
+-     NX       M_FREG        M_AM_NONE       %1111001000eeeeee   m_ftanh
+ftentox NBWLSQXP C_ALL030    M_FREG          %1111001000eeeeee   m_ftentox   +
+-       NX       M_FREG      M_FREG          %1111001000eeeeee   m_ftentox   +
+-       NX       M_FREG      M_AM_NONE       %1111001000eeeeee   m_ftentox
+ftst  NBWLSQXP C_ALL030      M_AM_NONE       %1111001000eeeeee   m_ftst +
+-      X          M_FREG      M_AM_NONE       %1111001000eeeeee  m_ftst
+ftwotox NBWLSQXP C_ALL030    M_FREG          %1111001000eeeeee   m_ftwotox   +
+-       NX       M_FREG      M_FREG          %1111001000eeeeee   m_ftwotox   +
+-       NX       M_FREG      M_AM_NONE       %1111001000eeeeee   m_ftwotox
+
+ftrapeq   WL  M_IMMED    M_AM_NONE       %1111001001111e10  m_ftrapeq +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111eee  m_ftrapeqn
+ftrapze
+ftrapz
+ftrapge   WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapge +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapgen
+ftrapgt   WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapgt +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapgtn
+ftrapgl   WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapgl +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapgln
+ftrapgle  WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapgle +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapglen
+ftraple   WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftraple +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftraplen
+ftraplt   WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftraplt +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapltn
+ftrapne   WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapne +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapnen
+ftrapngt  WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapngt +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapngtn
+ftrapnge  WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapnge +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapngen
+ftrapngl  WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapngl +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapngln
+ftrapnle  WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapnle +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapnlen
+ftrapnlt  WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapnlt +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapnltn
+ftrapngle WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapngle +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapnglen
+ftrapogt  WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapogt +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapogtn
+ftrapule  WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapule +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapulen
+ftrapoge  WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapoge +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapogen
+ftrapult  WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapult +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapultn
+ftrapolt  WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapolt +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapoltn
+ftrapuge  WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapuge +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapugen
+ftrapole  WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapole +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapolen
+ftrapugt  WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapugt +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapugtn
+ftrapogl  WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapogl +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapogln
+ftrapueq  WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapueq +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapueqn
+ftrapor   WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapor  +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftraporn
+ftrapun   WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapun  +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapunn
+ftrapt    WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapt   +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftraptn
+ftrapf    WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapf   +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapfn
+ftrapsf   WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapsf  +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapsfn
+ftrapst   WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapst  +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapstn
+ftrapseq  WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapseq +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapseqn
+ftrapsne  WL  M_IMMED    M_AM_NONE       %111100100111101e  m_ftrapsne +
+-         N   M_AM_NONE  M_AM_NONE       %1111001001111100  m_ftrapsnen
+
+
+frestore N   C_DATA030       M_AM_NONE       %1111001101eeeeee   m_cprest
+fsave N      C_DATA030       M_AM_NONE       %1111001100eeeeee   m_cprest
 
 illegal N    M_AM_NONE       M_AM_NONE       %0100101011111100   m_self
 
-jmp   N      C_CTRL          M_AM_NONE       %0100111011eee000   m_ea
+jmp   N      C_CTRL          M_AM_NONE       %0100111011eee000   m_ea     +
+-     N      C_CTRL030       M_AM_NONE       %0100111011eee000   m_ea030
 
 jsr   N      C_CTRL          M_AM_NONE       %0100111010eee000   m_ea
 
-lea   NL     C_CTRL          M_AREG          %0100rrr111eR1000   m_ea
+lea   NL     C_CTRL          M_AREG          %0100rrr111eR1000   m_lea
 
-link  N      M_AREG          M_IMMED         %0100111001010rrr   m_link
+link  NWL    M_AREG          M_IMMED         %0100111001010rrr   m_link
 
 lsl   NBWL   M_DREG          M_DREG          %1110rrr1ss101rrr   m_shr     +
 -     NBWL   M_IMMED         M_DREG          %1110ccc1ss001rrr   m_shi     +
@@ -145,9 +605,21 @@ move  NBWL   C_ALL           C_ALTDATA       %00ssddddddssssss   m_move    +
 -     NW     M_AM_SR         C_ALTDATA       %0100000011ddd001   m_ea      +
 -     NW     C_DATA          M_AM_CCR        %0100010011sss000   m_ea      +
 -     NL     M_AM_USP        M_AREG          %0100111001101rrr   m_usp     +
--     NL     M_AREG          M_AM_USP        %0100111001100rrr   m_usp
+-     NL     M_AREG          M_AM_USP        %0100111001100rrr   m_usp     +
+-     NBWL   C_ALL030        C_ALTDATA       %00ssddddddssssss   m_move30  +
+-     NBWL   C_ALL030        C_ALL030        %00ssddddddssssss   m_move30  +
+-     NW     M_AM_CCR        C_DATA030       %0100001011sss000   m_ea030
 
 movea NWL    C_ALL           M_AREG          %00ssddd001ssssss   m_move
+
+movec NL     M_DREG+M_AREG   C_CREG          %0100111001111011   m_movec   +
+-     NL     C_CREG          M_DREG+M_AREG   %0100111001111010   m_movec
+
+moves NBWL   M_DREG+M_AREG   C_MOVES         %00001110sseeeeee   m_moves   +
+-     NBWL   C_MOVES         M_DREG+M_AREG   %00001110sseeeeee   m_moves   
+
+move16 N     APOSTINC       APOSTINC         %1111011000100rrr   m_move16a +
+-     N      AIND+APOSTINC+ABSL AIND+APOSTINC+ABSL %11110110000ooorrr m_move16b 
 
 movem !      M_AM_NONE       M_AM_NONE       %01001d001seeeeee   m_movem
 
@@ -156,8 +628,11 @@ movep NWL    M_DREG          M_AIND|M_ADISP  %0000rrr11s001aaa   m_movep   +
 
 moveq NL     M_IMMED         M_DREG          %0111rrr0dddddddd   m_moveq
 
-muls  NW     C_DATA          M_DREG          %1100rrr111eR1000   m_ea
-mulu  NW     C_DATA          M_DREG          %1100rrr011eR1000   m_ea
+muls  NW     C_DATA          M_DREG          %1100rrr111eR1000   m_ea      +
+-     L      C_DATA030       M_DREG          %0100110000eeeeee   m_muls    
+mulu  NW     C_DATA          M_DREG          %1100rrr011eR1000   m_ea      +
+-     L      C_DATA030       M_DREG          %0100110000eeeeee   m_mulu
+
 nbcd  NB     C_ALTDATA       M_AM_NONE       %0100100000eee000   m_ea
 neg   NBWL   C_ALTDATA       M_AM_NONE       %01000100sseeeS00   m_ea
 negx  NBWL   C_ALTDATA       M_AM_NONE       %01000000sseeeS00   m_ea
@@ -169,6 +644,92 @@ or    NBWL   C_DATA          M_DREG          %1000rrr0sseR1S00   m_ea      +
 ori   NBWL   M_IMMED         C_ALTDATA       %00000000sseeeS11   m_ea      +
 -     NB     M_IMMED         M_AM_CCR        %0000000000111100   m_imm8    +
 -     NW     M_IMMED         M_AM_SR         %0000000001111100   m_imm
+
+pack  !      M_AM_NONE       M_AM_NONE       %1000rrr10100mrrr   m_pack
+
+pbbs  NWL    C_LABEL         M_AM_NONE       %111100001s000000   m_cpbr
+pbls  NWL    C_LABEL         M_AM_NONE       %111100001s000010   m_cpbr
+pbss  NWL    C_LABEL         M_AM_NONE       %111100001s000100   m_cpbr
+pbas  NWL    C_LABEL         M_AM_NONE       %111100001s000110   m_cpbr
+pbws  NWL    C_LABEL         M_AM_NONE       %111100001s001000   m_cpbr
+pbis  NWL    C_LABEL         M_AM_NONE       %111100001s001010   m_cpbr
+pbgs  NWL    C_LABEL         M_AM_NONE       %111100001s001100   m_cpbr
+pbcs  NWL    C_LABEL         M_AM_NONE       %111100001s001110   m_cpbr
+pbbc  NWL    C_LABEL         M_AM_NONE       %111100001s000001   m_cpbr
+pblc  NWL    C_LABEL         M_AM_NONE       %111100001s000011   m_cpbr
+pbsc  NWL    C_LABEL         M_AM_NONE       %111100001s000101   m_cpbr
+pbac  NWL    C_LABEL         M_AM_NONE       %111100001s000111   m_cpbr
+pbwc  NWL    C_LABEL         M_AM_NONE       %111100001s001001   m_cpbr
+pbic  NWL    C_LABEL         M_AM_NONE       %111100001s001011   m_cpbr
+pbgc  NWL    C_LABEL         M_AM_NONE       %111100001s001101   m_cpbr
+pbcc  NWL    C_LABEL         M_AM_NONE       %111100001s001111   m_cpbr
+
+pdbbs NWL    M_DREG          C_LABEL         %1111000001001ccc   m_cpdbr
+pdbls NWL    M_DREG          C_LABEL         %1111000001001ccc   m_cpdbr
+pdbss NWL    M_DREG          C_LABEL         %1111000001001ccc   m_cpdbr
+pdbas NWL    M_DREG          C_LABEL         %1111000001001ccc   m_cpdbr
+pdbws NWL    M_DREG          C_LABEL         %1111000001001ccc   m_cpdbr
+pdbis NWL    M_DREG          C_LABEL         %1111000001001ccc   m_cpdbr
+pdbgs NWL    M_DREG          C_LABEL         %1111000001001ccc   m_cpdbr
+pdbcs NWL    M_DREG          C_LABEL         %1111000001001ccc   m_cpdbr
+pdbbc NWL    M_DREG          C_LABEL         %1111000001001ccc   m_cpdbr
+pdblc NWL    M_DREG          C_LABEL         %1111000001001ccc   m_cpdbr
+pdbsc NWL    M_DREG          C_LABEL         %1111000001001ccc   m_cpdbr
+pdbac NWL    M_DREG          C_LABEL         %1111000001001ccc   m_cpdbr
+pdbwc NWL    M_DREG          C_LABEL         %1111000001001ccc   m_cpdbr
+pdbic NWL    M_DREG          C_LABEL         %1111000001001ccc   m_cpdbr
+pdbgc NWL    M_DREG          C_LABEL         %1111000001001ccc   m_cpdbr
+pdbcc NWL    M_DREG          C_LABEL         %1111000001001ccc   m_cpdbr
+
+pflusha N    M_AM_NONE       M_AM_NONE       %1111000000000000   m_pflusha
+pflush N     M_CREG+M_DREG+M_IMMED M_IMMED   %1111000000eeeeee   m_pflush
+pflushr N    C_ALL030        M_AM_NONE       %1111000000eeeeee   m_pflushr
+
+ploadr N     M_FC            C_ALL030        %1111000000eeeeee   m_pload
+ploadw N     M_FC            C_ALL030        %1111000000eeeeee   m_pload      
+
+pmove NWLD   M_MRN           C_ALL030        %1111000000eeeeee   m_pmove +
+-     NWLD   C_ALL030        M_MRN           %1111000000eeeeee   m_pmove
+pmovefd NWLD C_ALL030        M_MRN           %1111000000eeeeee   m_pmovefd
+
+prestore N   C_ALL030        M_AM_NONE       %1111000101eeeeee   m_ea
+psave  N     C_ALL030        M_AM_NONE       %1111000100eeeeee   m_ea
+
+ptestr N     M_FC            M_IMMED         %1111000000eeeeee   m_ptest
+ptestw N     M_FC            M_IMMED         %1111000000eeeeee   m_ptest
+
+ptrapbs WL   M_IMMED         M_AM_NONE       %111100000111101o   m_ptrapbs +
+-       N    M_AM_NONE       M_AM_NONE       %1111000001111100   m_ptrapbsn
+ptrapls WL   M_IMMED         M_AM_NONE       %111100000111101o   m_ptrapls +
+-       N    M_AM_NONE       M_AM_NONE       %1111000001111100   m_ptraplsn
+ptrapss WL   M_IMMED         M_AM_NONE       %111100000111101o   m_ptrapss +
+-       N    M_AM_NONE       M_AM_NONE       %1111000001111100   m_ptrapssn
+ptrapas WL   M_IMMED         M_AM_NONE       %111100000111101o   m_ptrapas +
+-       N    M_AM_NONE       M_AM_NONE       %1111000001111100   m_ptrapasn
+ptrapws WL   M_IMMED         M_AM_NONE       %111100000111101o   m_ptrapws +
+-       N    M_AM_NONE       M_AM_NONE       %1111000001111100   m_ptrapwsn
+ptrapis WL   M_IMMED         M_AM_NONE       %111100000111101o   m_ptrapis +
+-       N    M_AM_NONE       M_AM_NONE       %1111000001111100   m_ptrapisn
+ptrapgs WL   M_IMMED         M_AM_NONE       %111100000111101o   m_ptrapgs +
+-       N    M_AM_NONE       M_AM_NONE       %1111000001111100   m_ptrapgsn
+ptrapcs WL   M_IMMED         M_AM_NONE       %111100000111101o   m_ptrapcs +
+-       N    M_AM_NONE       M_AM_NONE       %1111000001111100   m_ptrapcsn
+ptrapbc WL   M_IMMED         M_AM_NONE       %111100000111101o   m_ptrapbc +
+-       N    M_AM_NONE       M_AM_NONE       %1111000001111100   m_ptrapbcn
+ptraplc WL   M_IMMED         M_AM_NONE       %111100000111101o   m_ptraplc +
+-       N    M_AM_NONE       M_AM_NONE       %1111000001111100   m_ptraplcn
+ptrapsc WL   M_IMMED         M_AM_NONE       %111100000111101o   m_ptrapsc +
+-       N    M_AM_NONE       M_AM_NONE       %1111000001111100   m_ptrapscn
+ptrapac WL   M_IMMED         M_AM_NONE       %111100000111101o   m_ptrapac +
+-       N    M_AM_NONE       M_AM_NONE       %1111000001111100   m_ptrapacn
+ptrapwc WL   M_IMMED         M_AM_NONE       %111100000111101o   m_ptrapwc +
+-       N    M_AM_NONE       M_AM_NONE       %1111000001111100   m_ptrapwcn
+ptrapic WL   M_IMMED         M_AM_NONE       %111100000111101o   m_ptrapic +
+-       N    M_AM_NONE       M_AM_NONE       %1111000001111100   m_ptrapicn
+ptrapgc WL   M_IMMED         M_AM_NONE       %111100000111101o   m_ptrapgc +
+-       N    M_AM_NONE       M_AM_NONE       %1111000001111100   m_ptrapgcn
+ptrapcc WL   M_IMMED         M_AM_NONE       %111100000111101o   m_ptrapcc +
+-       N    M_AM_NONE       M_AM_NONE       %1111000001111100   m_ptrapccn
 
 pea   NL     C_CTRL          M_AM_NONE       %0100100001eee000   m_ea
 
@@ -194,7 +755,9 @@ roxr  NBWL   M_DREG          M_DREG          %1110rrr0ss110rrr   m_shr     +
 -     NBWL   C_ALTMEM        M_AM_NONE       %1110010011eee000   m_ea      +
 -     NBWL   M_DREG          M_AM_NONE       %11100010ss010rrS   m_reg
 
+rtd   N      M_IMMED         M_AM_NONE       %0100111001110100   m_rtd
 rte   N      M_AM_NONE       M_AM_NONE       0x4e73              m_self
+rtm   N      M_DREG+M_AREG   M_AM_NONE       %000001101100drrr   m_rtm
 rtr   N      M_AM_NONE       M_AM_NONE       0x4e77              m_self
 rts   N      M_AM_NONE       M_AM_NONE       0x4e75              m_self
 
@@ -237,6 +800,43 @@ subx  NBWL   M_DREG          M_DREG          %1001xxx1ss000yyS   m_abcd    +
 swap  NW     M_DREG          M_AM_NONE       %0100100001000rrr   m_reg
 tas   NB     C_ALTDATA       M_AM_NONE       %0100101011eee000   m_ea
 trap  N      M_IMMED         M_AM_NONE       %010011100100vvvv   m_trap
+trapcc NWL   M_IMMED         M_AM_NONE       %0101010011111ooo   m_trapcc +
+-      NWL   M_AM_NONE       M_AM_NONE       %0101010011111100   m_self
+trapcs NWL   M_IMMED         M_AM_NONE       %0101010111111ooo   m_trapcc +
+-      NWL   M_AM_NONE       M_AM_NONE       %0101010111111100   m_self
+traplo                                                
+trapeq NWL   M_IMMED         M_AM_NONE       %0101011111111ooo   m_trapcc +
+-      NWL   M_AM_NONE       M_AM_NONE       %0101011111111100   m_self
+trapze                                                
+trapf  NWL   M_IMMED         M_AM_NONE       %0101000111111ooo   m_trapcc +
+-      NWL   M_AM_NONE       M_AM_NONE       %0101000111111100   m_self
+trapge NWL   M_IMMED         M_AM_NONE       %0101110011111ooo   m_trapcc +
+-      NWL   M_AM_NONE       M_AM_NONE       %0101110011111100   m_self
+trapgt NWL   M_IMMED         M_AM_NONE       %0101111011111ooo   m_trapcc +
+-      NWL   M_AM_NONE       M_AM_NONE       %0101111011111100   m_self
+traphi NWL   M_IMMED         M_AM_NONE       %0101001011111ooo   m_trapcc +
+-      NWL   M_AM_NONE       M_AM_NONE       %0101001011111100   m_self
+traple NWL   M_IMMED         M_AM_NONE       %0101111111111ooo   m_trapcc +
+-      NWL   M_AM_NONE       M_AM_NONE       %0101111111111100   m_self
+trapls NWL   M_IMMED         M_AM_NONE       %0101001111111ooo   m_trapcc +
+-      NWL   M_AM_NONE       M_AM_NONE       %0101001111111100   m_self
+traplt NWL   M_IMMED         M_AM_NONE       %0101110111111ooo   m_trapcc +
+-      NWL   M_AM_NONE       M_AM_NONE       %0101110111111100   m_self
+trapmi NWL   M_IMMED         M_AM_NONE       %0101101111111ooo   m_trapcc +
+-      NWL   M_AM_NONE       M_AM_NONE       %0101101111111100   m_self
+trapne NWL   M_IMMED         M_AM_NONE       %0101011011111ooo   m_trapcc +
+-      NWL   M_AM_NONE       M_AM_NONE       %0101011011111100   m_self
+trapnz                                                
+trappl NWL   M_IMMED         M_AM_NONE       %0101101011111ooo   m_trapcc +
+-      NWL   M_AM_NONE       M_AM_NONE       %0101101011111100   m_self
+trapt  NWL   M_IMMED         M_AM_NONE       %0101000011111ooo   m_trapcc +
+-      NWL   M_AM_NONE       M_AM_NONE       %0101000011111100   m_self
+trapvc NWL   M_IMMED         M_AM_NONE       %0101100011111ooo   m_trapcc +
+-      NWL   M_AM_NONE       M_AM_NONE       %0101100011111100   m_self
+trapvs NWL   M_IMMED         M_AM_NONE       %0101100111111ooo   m_trapcc +
+-      NWL   M_AM_NONE       M_AM_NONE       %0101100111111100   m_self
 trapv N      M_AM_NONE       M_AM_NONE       0x4e76              m_self
-tst   NBWL   C_ALTDATA       M_AM_NONE       %01001010sseeeS00   m_ea
+tst   NBWL   C_ALTDATA       M_AM_NONE       %01001010sseeeS00   m_ea      +
+-     NBWL   C_ALL030        M_AM_NONE       %01001010sseeeS00   m_ea030
 unlk  N      M_AREG          M_AM_NONE       %0100111001011rrr   m_reg
+unpack !     M_AM_NONE       M_AM_NONE       %1000rrr11000mrrr   m_pack

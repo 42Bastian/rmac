@@ -95,8 +95,8 @@ if (symbol)
 	//
 	if (prg_flag)
 	{
-		if ((flags & MLONG) == 0)
-			error("illegal word relocatable (in .PRG mode)");
+		//if ((flags & MLONG) == 0)
+		//	error("illegal word relocatable (in .PRG mode)");
 
 		if (symbol != NULL)
 			errors("illegal external reference (in .PRG mode) to '%s'",
