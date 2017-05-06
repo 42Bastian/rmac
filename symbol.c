@@ -390,8 +390,8 @@ int symtable(void)
 	SYM * r;
 	SYM * k;
 	SYM * colptr[4];
-	char ln[200];
-	char ln1[200];
+	char ln[1024];
+	char ln1[1024];
 	char ln2[20];
 	char c, c1;
 	WORD w;

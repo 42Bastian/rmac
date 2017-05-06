@@ -13,8 +13,8 @@
 #include "rmac.h"
 
 #define BOT_MAR         1				// #blank lines on bottom of page
-#define IMAGESIZ        200				// Max size of a line of text
-#define TITLESIZ        200				// Max size of a title
+#define IMAGESIZ        1024			// Max size of a line of text
+#define TITLESIZ        1024			// Max size of a title
 #define LN_COL          0				// Column for line numbers
 #define LOC_COL         7				// Location ptr
 #define DATA_COL        17				// Data start (for 20 chars, usually 16)
