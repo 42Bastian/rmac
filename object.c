@@ -7,12 +7,12 @@
 //
 
 #include "object.h"
+#include "6502.h"
 #include "error.h"
 #include "mark.h"
 #include "riscasm.h"
 #include "sect.h"
 #include "symbol.h"
-extern void m6502obj(int ofd);
 
 //#define DEBUG_ELF
 

@@ -49,9 +49,10 @@ char * firstfname;				// First source filename
 char * cmdlnexec;				// Executable name, pointer to ARGV[0]
 char * searchpath;				// Search path for include files
 char defname[] = "noname.o";	// Default output filename
-int optim_flags[OPT_COUNT];	// Specific optimisations on/off matrix
-int activecpu=CPU_68000;		// Active 68k CPU (68000 by default) 
-int activefpu=FPU_NONE;			// Active FPU (none by default)
+int optim_flags[OPT_COUNT];		// Specific optimisations on/off matrix
+int activecpu = CPU_68000;		// Active 68k CPU (68000 by default)
+int activefpu = FPU_NONE;		// Active FPU (none by default)
+
 
 //
 // Manipulate file extension.
@@ -129,7 +130,7 @@ void DisplayHelp(void)
 		"\n"
 		"Options:\n"
 		"  -? or -h          Display usage information\n"
-		"  -dsymbol[=value]  Define symbol\n"
+		"  -dsymbol[=value]  Define symbol (with optional value, default=0)\n"
 		"  -e[errorfile]     Send error messages to file, not stdout\n"
 		"  -f[format]        Output object file format\n"
 		"                    a: ALCYON (use this for ST)\n"
@@ -143,12 +144,12 @@ void DisplayHelp(void)
 		"  -o file           Output file name\n"
 		"  +o[value]         Turn a specific optimisation on\n"
 		"                    Available optimisation values and default settings:\n"
-		"                    o0: Absolute long adddresses to word (on)\n"
-		"                    o1: move.l #x,dn/an to moveq         (on)\n"
-		"                    o2: Word branches to short           (on)\n"
-		"                    o3: Outer displacement 0(an) to (an) (off)\n"
-        "                    o4: lea size(An),An to addq #size,An        (off)\n"
-        "                    o5: Absolute long base displacement to word (off)\n"
+		"                    o0: Absolute long adddresses to word        (on)\n"
+		"                    o1: move.l #x,dn/an to moveq                (on)\n"
+		"                    o2: Word branches to short                  (on)\n"
+		"                    o3: Outer displacement 0(an) to (an)        (off)\n"
+		"                    o4: lea size(An),An to addq #size,An        (off)\n"
+		"                    o5: Absolute long base displacement to word (off)\n"
 		"  ~o[value]         Turn a specific optimisation off\n"
 		"  +oall             Turn all optimisations on\n"
 		"  ~oall             Turn all optimisations off\n"
@@ -260,7 +261,7 @@ int Process(int argc, char ** argv)
 	orgactive = 0;					// Not in RISC org section
 	orgwarning = 0;					// No ORG warning issued
 	segpadsize = 2;					// Initialise segment padding size
-	m6502 = 0;                      // 6502 mode off by default
+	m6502 = 0;						// 6502 mode off by default
 
 	// Initialise modules
 	InitSymbolTable();				// Symbol table
@@ -627,15 +628,13 @@ int main(int argc, char ** argv)
 	perm_verb_flag = 0;				// Clobber "permanent" verbose flag
 	legacy_flag = 1;				// Default is legacy mode on (:-P)
 
-	// Set legacy optimisation flags to on
-	// and everything else to off
+	// Set legacy optimisation flags to on and everything else to off
 	memset(optim_flags, 0, OPT_COUNT * sizeof(int));
 	optim_flags[OPT_ABS_SHORT] =
 		optim_flags[OPT_MOVEL_MOVEQ] =
 		optim_flags[OPT_BSR_BCC_S] = 1;
 
 	cmdlnexec = argv[0];			// Obtain executable name
-
 	endian = GetEndianess();		// Get processor endianess
 
 	// If commands were passed in, process them

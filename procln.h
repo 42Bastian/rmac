@@ -11,7 +11,6 @@
 
 #include "rmac.h"
 #include "token.h"
-#include "amode.h"
 
 // Exported variables
 extern IFENT * ifent;
@@ -23,13 +22,6 @@ extern int just_bss;
 extern VALUE pcloc;
 extern SYM * lab_sym;
 extern LONG amsktab[];
-int bfparam1;
-int bfparam2;
-TOKEN bf0expr[EXPRSIZE];	// Expression
-VALUE bf0exval;				// Expression's value
-WORD bf0exattr;				// Expression's attribute
-SYM * bf0esym;				// External symbol involved in expr
-
 
 // Exported functions
 void InitLineProcessor(void);
@@ -37,7 +29,6 @@ void Assemble(void);
 int d_if(void);
 int d_else(void);
 int d_endif(void);
-int check030bf(void);
 
 #endif // __PROCLN_H__
 

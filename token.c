@@ -98,41 +98,38 @@ char chrtab[] = {
 	STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,			// h i j k
 	(char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,	// l m n o
 
-	(char)((BYTE)DOT)+STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM,	// p q r s 
-	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM,	// t u v w 
-	(char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, SELF,				// x y z { 
+	(char)((BYTE)DOT)+STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM,	// p q r s
+	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM,	// t u v w
+	(char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, SELF,				// x y z {
 	SELF, SELF, SELF, ILLEG										// | } ~ DEL
 };
 
 // Names of registers
 static char * regname[] = {
-//	"d0", "d1",  "d2",  "d3", "d4", "d5", "d6", "d7",
-//	"a0", "a1",  "a2",  "a3", "a4", "a5", "a6", "a7",
-//	"pc", "ssp", "usp", "sr", "ccr"
-    "d0","d1","d2","d3","d4","d5","d6","d7", // 128,135
-    "a0","a1","a2","a3","a4","a5","a6","sp", // 136,143
-    "ssp","pc","sr","ccr","regequ","set","reg","r0", // 144,151
-    "r1","r2","r3","r4","r5","r6","r7","r8", // 152,159
-    "r9","r10","r11","r12","r13","r14","r15","r16", // 160,167
-    "r17","r18","r19","r20","r21","r22","r23","r24", // 168,175
-    "r25","r26","r27","r28","r29","r30","r31","ccdef", // 176,183
-    "usp","ic40","dc40","bc40","sfc","dfc","","vbr", // 184,191
-    "cacr","caar","msp","isp","tc","itt0","itt1","dtt0", // 192,199
-    "dtt1","mmusr","urp","srp","iacr0","iacr1","dacr0","dacr1", // 200,207
-    "tt0","tt1","crp","","","","","", // 208,215
-    "","","","","fpiar","fpsr","fpcr","", // 216,223
-    "fp0","fp1","fp2","fp3","fp4","fp5","fp6","fp7", // 224,231
-    "","","","","","","","", // 232,239
-    "","","","","","","","", // 240,247
-    "","","","","","","","", // 248,255
-    "","","","","x0","x1","y0","y1", // 256,263
-    "","b0","","b2","","b1","a","b", // 264,271
-    "mr","omr","la","lc","ssh","ssl","ss","", // 272,279
-    "n0","n1","n2","n3","n4","n5","n6","n7", // 280,287
-    "m0","m1","m2","m3","m4","m5","m6","m7", // 288,295
-    "","","","","","","l","p", // 296,303
-    "mr","omr","la","lc","ssh","ssl","ss","", // 304,311
-    "a10","b10","x","y","","","ab","ba"  // 312,319
+	"d0","d1","d2","d3","d4","d5","d6","d7", // 128,135
+	"a0","a1","a2","a3","a4","a5","a6","sp", // 136,143
+	"ssp","pc","sr","ccr","regequ","set","reg","r0", // 144,151
+	"r1","r2","r3","r4","r5","r6","r7","r8", // 152,159
+	"r9","r10","r11","r12","r13","r14","r15","r16", // 160,167
+	"r17","r18","r19","r20","r21","r22","r23","r24", // 168,175
+	"r25","r26","r27","r28","r29","r30","r31","ccdef", // 176,183
+	"usp","ic40","dc40","bc40","sfc","dfc","","vbr", // 184,191
+	"cacr","caar","msp","isp","tc","itt0","itt1","dtt0", // 192,199
+	"dtt1","mmusr","urp","srp","iacr0","iacr1","dacr0","dacr1", // 200,207
+	"tt0","tt1","crp","","","","","", // 208,215
+	"","","","","fpiar","fpsr","fpcr","", // 216,223
+	"fp0","fp1","fp2","fp3","fp4","fp5","fp6","fp7", // 224,231
+	"","","","","","","","", // 232,239
+	"","","","","","","","", // 240,247
+	"","","","","","","","", // 248,255
+	"","","","","x0","x1","y0","y1", // 256,263
+	"","b0","","b2","","b1","a","b", // 264,271
+	"mr","omr","la","lc","ssh","ssl","ss","", // 272,279
+	"n0","n1","n2","n3","n4","n5","n6","n7", // 280,287
+	"m0","m1","m2","m3","m4","m5","m6","m7", // 288,295
+	"","","","","","","l","p", // 296,303
+	"mr","omr","la","lc","ssh","ssl","ss","", // 304,311
+	"a10","b10","x","y","","","ab","ba"  // 312,319
 };
 
 static char * riscregname[] = {
@@ -185,22 +182,22 @@ void InitTokenizer(void)
 	dotxtab['B'] = DOTB;
 	//dotxtab['s'] = DOTB;
 	//dotxtab['S'] = DOTB;
-	dotxtab['w'] = DOTW;					// .w .W 
+	dotxtab['w'] = DOTW;					// .w .W
 	dotxtab['W'] = DOTW;
-	dotxtab['l'] = DOTL;					// .l .L 
+	dotxtab['l'] = DOTL;					// .l .L
 	dotxtab['L'] = DOTL;
-	dotxtab['i'] = DOTI;					// .i .I (???) 
+	dotxtab['i'] = DOTI;					// .i .I (???)
 	dotxtab['I'] = DOTI;
 	dotxtab['D'] = DOTD;					// .d .D (quad word)
 	dotxtab['d'] = DOTD;
 	dotxtab['S'] = DOTS;					// .s .S
-	dotxtab['s'] = DOTS;					
+	dotxtab['s'] = DOTS;
 	dotxtab['Q'] = DOTQ;					// .q .Q
-	dotxtab['q'] = DOTQ;					
+	dotxtab['q'] = DOTQ;
 	dotxtab['X'] = DOTX;					// .x .x
-	dotxtab['x'] = DOTX;					
+	dotxtab['x'] = DOTX;
 	dotxtab['P'] = DOTP;					// .p .P
-	dotxtab['p'] = DOTP;					
+	dotxtab['p'] = DOTP;
 }
 
 

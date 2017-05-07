@@ -78,58 +78,58 @@
 		{
 			//Since index register isn't used here, store register number in this field
 			AnIXREG = *tok++ & 7;                                // (Dn)
-			if (*tok==')')
+			if (*tok == ')')
 			{
-                tok++;
-                AnEXTEN |= EXT_FULLWORD;    // Definitely using full extension format, so set bit 8
-                AnEXTEN |= EXT_BS;          // Base register suppressed
-                AnEXTEN |= EXT_BDSIZE0;     // Base displacement null
-                AnEXTEN |= EXT_IISPOSN;     // Indirect Postindexed with Null Outer Displacement
-                AMn= MEMPOST;
-                AnREG = 6 << 3;		// stuff 110 to mode field
-                goto AnOK;
+				tok++;
+				AnEXTEN |= EXT_FULLWORD;    // Definitely using full extension format, so set bit 8
+				AnEXTEN |= EXT_BS;          // Base register suppressed
+				AnEXTEN |= EXT_BDSIZE0;     // Base displacement null
+				AnEXTEN |= EXT_IISPOSN;     // Indirect Postindexed with Null Outer Displacement
+				AMn= MEMPOST;
+				AnREG = 6 << 3;		// stuff 110 to mode field
+				goto AnOK;
 			}
-			else if (*tok=='L')                                
+			else if (*tok == 'L')
 			{
-                // TODO: does DINDL gets used at all?
+				// TODO: does DINDL gets used at all?
 				//AMn=DINDL;                                     // (Dn.l)
-                //AnEXTEN = 1 << 1;   // Long index size
+				//AnEXTEN = 1 << 1;   // Long index size
 				//tok++;
 			}
-			else if (*tok=='W')                                 // (Dn.w)
+			else if (*tok == 'W')                                // (Dn.w)
 			{
-                // TODO: does DINDW gets used at all?
-                //AMn=DINDW;
-                //AnEXTEN = 1 << 1;   // Word index size
-                //tok++;
+				// TODO: does DINDW gets used at all?
+				//AMn=DINDW;
+				//AnEXTEN = 1 << 1;   // Word index size
+				//tok++;
 			}
-            else if (*tok == ',')
-            {
-                // ([bd,An],Xn..) without bd, An
-                // Base displacement is suppressed
-                AnEXTEN |= EXT_FULLWORD;    // Definitely using full extension format, so set bit 8
-                AnEXTEN |= EXT_BS;          // Base register suppressed
-                AnEXTEN |= EXT_BDSIZE0;
-                AnREG = 6 << 3;		// stuff 110 to mode field
-                tok++;
-                goto CHECKODn;
-            }
+			else if (*tok == ',')
+			{
+				// ([bd,An],Xn..) without bd, An
+				// Base displacement is suppressed
+				AnEXTEN |= EXT_FULLWORD;    // Definitely using full extension format, so set bit 8
+				AnEXTEN |= EXT_BS;          // Base register suppressed
+				AnEXTEN |= EXT_BDSIZE0;
+				AnREG = 6 << 3;		// stuff 110 to mode field
+				tok++;
+				goto CHECKODn;
+			}
 			else
 				return error("(Dn) error");
 
-            if (*tok == ')')
-            {
-                tok++;
-                AnEXTEN |= EXT_FULLWORD;    // Definitely using full extension format, so set bit 8
-                AnEXTEN |= EXT_BS;          // Base register suppressed
-                AnEXTEN |= EXT_BDSIZE0;     // Base displacement null
-                AnEXTEN |= EXT_IISPOSN;     // Indirect Postindexed with Null Outer Displacement
-                AnREG = 6 << 3;		// stuff 110 to mode field
-                AMn = MEMPOST;
-                goto AnOK;
-            }
-            else
-                return error("unhandled so far");
+			if (*tok == ')')
+			{
+				tok++;
+				AnEXTEN |= EXT_FULLWORD;    // Definitely using full extension format, so set bit 8
+				AnEXTEN |= EXT_BS;          // Base register suppressed
+				AnEXTEN |= EXT_BDSIZE0;     // Base displacement null
+				AnEXTEN |= EXT_IISPOSN;     // Indirect Postindexed with Null Outer Displacement
+				AnREG = 6 << 3;		// stuff 110 to mode field
+				AMn = MEMPOST;
+				goto AnOK;
+			}
+			else
+				return error("unhandled so far");
 		}
 		else if (*tok == KW_PC)
 		{                            // (PC,Xn[.siz][*scale])
@@ -233,33 +233,36 @@
     					AnEXTEN|=EXT_BDSIZEW;
 						tok++;
 					}
-                    else
-                    {
-					    // Defined, absolute values from $FFFF8000..$00007FFF get optimized
-					    // to absolute short
-					    if (optim_flags[OPT_ABS_SHORT] && (AnBEXATTR & (TDB|DEFINED)) == DEFINED && (AnBEXVAL + 0x8000) < 0x10000)
-					    {
-						    AnEXTEN|=EXT_BDSIZEW;
+					else
+					{
+						// Defined, absolute values from $FFFF8000..$00007FFF get optimized
+						// to absolute short
+						if (optim_flags[OPT_ABS_SHORT]
+							&& ((AnBEXATTR & (TDB | DEFINED)) == DEFINED)
+							&& ((AnBEXVAL + 0x8000) < 0x10000))
+						{
+							AnEXTEN |= EXT_BDSIZEW;
 							warn("absolute value in base displacement ranging $FFFF8000..$00007FFF optimised to absolute short");
-					    }
-	    				else
-		    			{
-						    AnEXTEN|=EXT_BDSIZEL;
-                        }
-                    }
+						}
+						else
+						{
+							AnEXTEN |= EXT_BDSIZEL;
+						}
+					}
 				}
-				if (*tok==',')
+
+				if (*tok == ',')
 					tok++;
 				//else
 				//	return error("Comma expected after base displacement");
 			}
 
+			// Check for address register or PC, suppress base register
+			// otherwise
 
-			// Check for address register or PC, suppress base register otherwise
-
-			if (*tok==KW_PC)
+			if (*tok == KW_PC)
 			{					// ([bd,PC,...
-				AnREG=(7<<3)|3;	// PC is special case - stuff 011 to register field and 111 to the mode field
+				AnREG = (7 << 3) | 3;	// PC is special case - stuff 011 to register field and 111 to the mode field
 				tok++;
 			}
 			else if ((*tok >= KW_A0) && (*tok <= KW_A7))
@@ -268,17 +271,20 @@
 				tok++;
 			}
 			else if ((*tok >= KW_D0) && (*tok <= KW_D7))
-			{					// ([bd,Dn,...
-				AnREG = (6<<3);
-				AnEXTEN|=((*tok&7)<<12);
-				AnEXTEN|=EXT_D;
-				AnEXTEN|=EXT_BS; // Oh look, a data register! Which means that base register is suppressed
+			{
+				// ([bd,Dn,...
+				AnREG = (6 << 3);
+				AnEXTEN |= ((*tok & 7) << 12);
+				AnEXTEN |= EXT_D;
+				AnEXTEN |= EXT_BS; // Oh look, a data register! Which means that base register is suppressed
 				tok++;
 
 				// Check for size
-				{	// ([bd,An/PC],Xn.W/L...)
+				{
+					// ([bd,An/PC],Xn.W/L...)
 					switch ((int)*tok)
-					{                                // Index reg size: <empty> | .W | .L 
+					{
+					// Index reg size: <empty> | .W | .L
 					case DOTW:
 						tok++;
 						break;
@@ -288,17 +294,20 @@
 						AnEXTEN |= EXT_L;
 						tok++;
 						break;
-					case DOTB:                                      // .B not allowed here...
+					case DOTB:
+						// .B not allowed here...
 						goto badmode;
 					}
 				}
 
 				// Check for scale
-				if (*tok=='*')			// ([bd,An/PC],Xn*...)
+				if (*tok == '*')			// ([bd,An/PC],Xn*...)
 				{
 					tok++;
-					if (*tok==CONST)	// TODO: I suppose the scale is stored as a CONST and nothing else? So prolly the if is not needed?
+
+					if (*tok == CONST)	// TODO: I suppose the scale is stored as a CONST and nothing else? So prolly the if is not needed?
 						tok++;
+
 					switch ((int)*tok++)
 					{
 					case 1:
@@ -314,67 +323,73 @@
 						break;
 					default:
 						goto badmode;
-					}					
+					}
 				}
-				if (*tok==']')  // ([bd,Dn]...
+
+				if (*tok == ']')  // ([bd,Dn]...
 				{
 					tok++;
 					goto IS_SUPPRESSEDn;
 				}
 			}
-			else if (*tok==']')
+			else if (*tok == ']')
 			{
-                // PC and Xn is suppressed
-				AnREG=6<<3;		// stuff 110 to mode field
+				// PC and Xn is suppressed
+				AnREG = 6 << 3;		// stuff 110 to mode field
 				//AnEXTEN|=EXT_BS|EXT_IS;
-                AnEXTEN |= EXT_BS;
-            }
-            else
-            {
-                goto badmode;
-            }
+				AnEXTEN |= EXT_BS;
+			}
+			else
+			{
+				goto badmode;
+			}
 
 			// At a crossroads here. We can accept either ([bd,An/PC],... or ([bd,An/PC,Xn*scale],...
-			if (*tok==']')
-			{						//([bd,An/PC],Xn,od)
+			if (*tok == ']')
+			{
+				//([bd,An/PC],Xn,od)
 				// Check for Xn
 				tok++;
-				if (*tok==')')
-				{	//Xn and od are non existent, get out of jail free card
-					AMn=MEMPRE;			// ([bc,An,Xn],od) with no Xn and od
-					AnEXTEN|=EXT_IS|EXT_IISPREN;	//Suppress Xn and od
+
+				if (*tok == ')')
+				{
+					//Xn and od are non existent, get out of jail free card
+					AMn = MEMPRE;			// ([bc,An,Xn],od) with no Xn and od
+					AnEXTEN |= EXT_IS | EXT_IISPREN;	//Suppress Xn and od
 					tok++;
 					goto AnOK;
 				}
-				else if (*tok!=',')
+				else if (*tok != ',')
 					return error("comma expected after ]");
 				else
 					tok++;				// eat the comma
 
 				if ((*tok >= KW_A0) && (*tok <= KW_A7))
 				{
-					AnIXREG=((*tok&7)<<12);
-					AnEXTEN|=EXT_A;
+					AnIXREG = ((*tok & 7) << 12);
+					AnEXTEN |= EXT_A;
 					tok++;
 				}
 				else if ((*tok >= KW_D0) && (*tok <= KW_D7))
 				{
-					AnEXTEN|=((*tok&7)<<12);
-					AnEXTEN|=EXT_D;
+					AnEXTEN |= ((*tok & 7) << 12);
+					AnEXTEN |= EXT_D;
 					tok++;
 				}
 				else
 				{
 					//No index found, suppress it
-					AnEXTEN|=EXT_IS;
+					AnEXTEN |= EXT_IS;
 					tok--;							// Rewind tok to point to the comma
 					goto IS_SUPPRESSEDn;			// https://xkcd.com/292/ - what does he know anyway?
 				}
 
 				// Check for size
-				{	// ([bd,An/PC],Xn.W/L...)
+				{
+					// ([bd,An/PC],Xn.W/L...)
 					switch ((int)*tok)
-					{                                // Index reg size: <empty> | .W | .L 
+					{
+					// Index reg size: <empty> | .W | .L
 					case DOTW:
 						tok++;
 						break;
@@ -384,17 +399,21 @@
 						AnEXTEN |= EXT_L;
 						tok++;
 						break;
-					case DOTB:                                      // .B not allowed here...
+					case DOTB:
+						// .B not allowed here...
 						goto badmode;
 					}
 				}
 
 				// Check for scale
-				if (*tok=='*')			// ([bd,An/PC],Xn*...)
+				if (*tok == '*')
 				{
+					// ([bd,An/PC],Xn*...)
 					tok++;
-					if (*tok==CONST)	// TODO: I suppose the scale is stored as a CONST and nothing else? So prolly the if is not needed?
+
+					if (*tok == CONST)	// TODO: I suppose the scale is stored as a CONST and nothing else? So prolly the if is not needed?
 						tok++;
+
 					switch ((int)*tok++)
 					{
 					case 1:
@@ -410,14 +429,15 @@
 						break;
 					default:
 						goto badmode;
-					}					
+					}
 				}
 
 				// Check for od
-				if (*tok==')')	// ([bd,An/PC],Xn)
-				{	//od is non existant, get out of jail free card
-					AMn=MEMPOST;		// let's say it's ([bd,An],Xn,od) with od=0 then
-					AnEXTEN|=EXT_IISPOSN; // No outer displacement
+				if (*tok == ')')	// ([bd,An/PC],Xn)
+				{
+					//od is non existant, get out of jail free card
+					AMn = MEMPOST;		// let's say it's ([bd,An],Xn,od) with od=0 then
+					AnEXTEN |= EXT_IISPOSN; // No outer displacement
 					tok++;
 					goto AnOK;
 				}
@@ -426,29 +446,34 @@
 				else
 					tok++;	// eat the comma
 
-                CHECKODn:
+				CHECKODn:
+
 				if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
 					goto badmode;
-				if (optim_flags[OPT_BASE_DISP] && AnEXVAL==0)
+
+				if (optim_flags[OPT_BASE_DISP] && (AnEXVAL == 0))
 				{
 					// od=0 so optimise it out
-					AMn=MEMPOST;		 // let's say it's ([bd,An],Xn,od) with od=0 then
-					AnEXTEN|=EXT_IISPOSN; // No outer displacement
+					AMn = MEMPOST;		 // let's say it's ([bd,An],Xn,od) with od=0 then
+					AnEXTEN |= EXT_IISPOSN; // No outer displacement
 					tok++;
 					goto AnOK;
 				}
+
 				// ([bd,An/PC],Xn,od)
 				if (*tok == DOTL)
 				{
 					// expr.L
-					AnEXTEN|=EXT_IISPOSL; // Long outer displacement
+					AnEXTEN |= EXT_IISPOSL; // Long outer displacement
 					AMn = MEMPOST;
 
-			// Defined, absolute values from $FFFF8000..$00007FFF get optimized
-			// to absolute short
-			if (optim_flags[OPT_ABS_SHORT] && (AnEXATTR & (TDB|DEFINED)) == DEFINED && (AnEXVAL + 0x8000) < 0x10000)
-			{
-						AnEXTEN|=EXT_IISPOSW; // Word outer displacement
+					// Defined, absolute values from $FFFF8000..$00007FFF get
+					// optimized to absolute short
+					if (optim_flags[OPT_ABS_SHORT]
+						&& ((AnEXATTR & (TDB | DEFINED)) == DEFINED)
+						&& ((AnEXVAL + 0x8000) < 0x10000))
+					{
+						AnEXTEN |= EXT_IISPOSW; // Word outer displacement
 						AMn = MEMPOST;
 						warn("outer displacement absolute value from $FFFF8000..$00007FFF optimised to absolute short");
 					}
@@ -457,7 +482,7 @@
 				else
 				{
 					// expr[.W]
-					AnEXTEN|=EXT_IISPOSW; // Word outer displacement
+					AnEXTEN |= EXT_IISPOSW; // Word outer displacement
 					AMn = MEMPOST;
 
 					// Is .W forced here?
@@ -465,11 +490,10 @@
 					{
 						tok++;
 					}
-
 				}
 
 				// Check for final closing parenthesis
-				if (*tok==')')
+				if (*tok == ')')
 				{
 					tok++;
 					goto AnOK;
@@ -480,10 +504,11 @@
 				IS_SUPPRESSEDn:
 
 				// Check for od
-				if (*tok==')')	// ([bd,An/PC],Xn)
-				{	//od is non existant, get out of jail free card
-					AMn=MEMPOST;		// let's say it's ([bd,An],Xn,od) with od=0 then
-					AnEXTEN|=EXT_IISNOIN; // No outer displacement
+				if (*tok == ')')	// ([bd,An/PC],Xn)
+				{
+					//od is non existant, get out of jail free card
+					AMn = MEMPOST;		// let's say it's ([bd,An],Xn,od) with od=0 then
+					AnEXTEN |= EXT_IISNOIN; // No outer displacement
 					tok++;
 					goto AnOK;
 				}
@@ -492,82 +517,85 @@
 				else
 					tok++;	// eat the comma
 
-                if (*tok != CONST && *tok != SYMBOL)
-				//if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
+                if ((*tok != CONST) && (*tok != SYMBOL))
 					goto badmode;
-                expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM);
-				if (optim_flags[OPT_BASE_DISP] && AnEXVAL==0)
+
+				expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM);
+
+				if (optim_flags[OPT_BASE_DISP] && (AnEXVAL == 0))
 				{
 					// od=0 so optimise it out
-					AMn=MEMPOST;		 // let's say it's ([bd,An],Xn,od) with od=0 then
-					AnEXTEN|=EXT_IISNOIN; // No outer displacement
+					AMn = MEMPOST;		 // let's say it's ([bd,An],Xn,od) with od=0 then
+					AnEXTEN |= EXT_IISNOIN; // No outer displacement
 					tok++;
 					goto AnOK;
 				}
+
 				// ([bd,An/PC],Xn,od)
 				if (*tok == DOTL)
 				{
 					// expr.L
 					tok++;
 					AMn = MEMPOST;
-					AnEXTEN|=EXT_IISNOIL; // Long outer displacement with IS suppressed
-					//goto AnOK;
-
+					AnEXTEN |= EXT_IISNOIL; // Long outer displacement with IS suppressed
 				}
 				else
 				{
 					// expr[.W][]
-                    AnEXTEN |= EXT_IISNOIW; // Word outer displacement with IS suppressed
-                    AMn = MEMPRE;
-                    if (*tok == DOTW)
-                    {
-                        //AnEXTEN|=EXT_IISNOIW; // Word outer displacement
-					    AMn = MEMPOST;
-						tok++;
-                    }
+					AnEXTEN |= EXT_IISNOIW; // Word outer displacement with IS suppressed
+					AMn = MEMPRE;
 
-					// Defined, absolute values from $FFFF8000..$00007FFF get optimized
-					// to absolute short
-					else if (optim_flags[OPT_BASE_DISP] && (AnEXATTR & (TDB|DEFINED)) == DEFINED && (AnEXVAL + 0x8000) < 0x10000)
+					if (*tok == DOTW)
+					{
+						//AnEXTEN|=EXT_IISNOIW; // Word outer displacement
+						AMn = MEMPOST;
+						tok++;
+					}
+
+					// Defined, absolute values from $FFFF8000..$00007FFF get
+					// optimized to absolute short
+					else if (optim_flags[OPT_BASE_DISP]
+						&& ((AnEXATTR & (TDB | DEFINED)) == DEFINED)
+						&& ((AnEXVAL + 0x8000) < 0x10000))
 					{
 						//AnEXTEN|=EXT_IISNOIW; // Word outer displacement with IS suppressed
 						warn("outer displacement absolute value from $FFFF8000..$00007FFF optimised to absolute short");
 					}
-
-
 				}
 
 				// Check for final closing parenthesis
-				if (*tok==')')
+				if (*tok == ')')
 				{
 					tok++;
 					goto AnOK;
 				}
 				else
 					return error("Closing parenthesis missing on addressing mode");
-
 			}
-			else if (*tok==',')
+			else if (*tok == ',')
 			{
 				*tok++;			// ([bd,An,Xn.size*scale],od)
+
 				//Check for Xn
 				if ((*tok >= KW_A0) && (*tok <= KW_A7))
 				{
-					AnEXTEN|=((*tok&7)<<12);
-					AnEXTEN|=EXT_A;
+					AnEXTEN |= ((*tok & 7) << 12);
+					AnEXTEN |= EXT_A;
 					tok++;
 				}
 				else if ((*tok >= KW_D0) && (*tok <= KW_D7))
 				{
-					AnEXTEN|=((*tok&7)<<12);
-					AnEXTEN|=EXT_D;
+					AnEXTEN |= ((*tok & 7) << 12);
+					AnEXTEN |= EXT_D;
 					tok++;
 				}
 
 				// Check for size
-				{ // ([bd,An/PC],Xn.W/L...)
+				{
+					// ([bd,An/PC],Xn.W/L...)
 					switch ((int)*tok)
-					{                                // Index reg size: <empty> | .W | .L 
+					{
+					// Index reg size: <empty> | .W | .L
 					case DOTW:
 						tok++;
 						break;
@@ -577,18 +605,20 @@
 						tok++;
 						AnEXTEN |= EXT_L;
 						break;
-					case DOTB:                                      // .B not allowed here...
+					case DOTB:
+						// .B not allowed here...
 						goto badmode;
 					}
-					
 				}
-				
+
 				// Check for scale
-				if (*tok=='*')			// ([bd,An/PC],Xn*...)
+				if (*tok == '*')			// ([bd,An/PC],Xn*...)
 				{
 					tok++;
-					if (*tok==CONST)	// TODO: I suppose the scale is stored as a CONST and nothing else? So prolly the if is not needed?
+
+					if (*tok == CONST)	// TODO: I suppose the scale is stored as a CONST and nothing else? So prolly the if is not needed?
 						tok++;
+
 					switch ((int)*tok++)
 					{
 					case 1:
@@ -604,52 +634,56 @@
 						break;
 					default:
 						goto badmode;
-					}					
+					}
 				}
 
 				//Check for ]
-				if (*tok!=']')
+				if (*tok != ']')
 					return error("Expected closing bracket ]");
+
 				tok++;			// Eat the bracket
 
 				//Check for od
-				if (*tok==')')	// ([bd,An/PC,Xn]...
-				{	//od is non existant, get out of jail free card
+				if (*tok == ')')	// ([bd,An/PC,Xn]...
+				{
+					//od is non existant, get out of jail free card
 					//AnEXVAL=0;		// zero outer displacement
-					AMn=MEMPRE;			// let's say it's ([bd,An,Xn],od) with od suppressed then
-					AnEXTEN|=EXT_IISPREN; // No outer displacement
+					AMn = MEMPRE;			// let's say it's ([bd,An,Xn],od) with od suppressed then
+					AnEXTEN |= EXT_IISPREN; // No outer displacement
 					tok++;
 					goto AnOK;
 				}
 				else if (*tok++!=',')
 					return error("comma expected after ]");
-                WARNING(Put symbol and constant checks here!)
+
+				WARNING(Put symbol and constant checks here!)
+
 				if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
 					goto badmode;
-				if (optim_flags[OPT_BASE_DISP] && AnEXVAL==0)
+
+				if (optim_flags[OPT_BASE_DISP] && (AnEXVAL == 0))
 				{
 					// od=0 so optimise it out
-					AMn=MEMPRE;		 // let's say it's ([bd,An],Xn,od) with od=0 then
-					AnEXTEN|=EXT_IISPRE0; // No outer displacement
+					AMn = MEMPRE;		 // let's say it's ([bd,An],Xn,od) with od=0 then
+					AnEXTEN |= EXT_IISPRE0; // No outer displacement
 					tok++;
 					goto AnOK;
 				}
+
 				// ([bd,An/PC,Xn],od)
 				if (*tok == DOTL)
 				{
 					// expr.L
 					AMn = MEMPRE;
 					tok++;
-
-					AnEXTEN|=EXT_IISPREL;
-
+					AnEXTEN |= EXT_IISPREL;
 				}
 				else
 				{
-					// expr.[W] 
+					// expr.[W]
 					//tok++;
 
-					AnEXTEN|=EXT_IISPREW;
+					AnEXTEN |= EXT_IISPREW;
 					AMn = MEMPRE;
 
                     // Is .W forced here?
@@ -660,15 +694,17 @@
 
 					// Defined, absolute values from $FFFF8000..$00007FFF get optimized
 					// to absolute short
-					else if (optim_flags[OPT_BASE_DISP] && (AnEXATTR & (TDB|DEFINED)) == DEFINED && (AnEXVAL + 0x8000) < 0x10000)
+					else if (optim_flags[OPT_BASE_DISP]
+						&& ((AnEXATTR & (TDB | DEFINED)) == DEFINED)
+						&& ((AnEXVAL + 0x8000) < 0x10000))
 					{
-						AnEXTEN|=EXT_IISPREW;
+						AnEXTEN |= EXT_IISPREW;
 						warn("outer displacement absolute value from $FFFF8000..$00007FFF optimised to absolute short");
 					}
 				}
 
 				// Check for final closing parenthesis
-				if (*tok==')')
+				if (*tok == ')')
 				{
 					tok++;
 					goto AnOK;
@@ -678,11 +714,10 @@
 			}
 			else
 				goto badmode;
-
-			//goto unmode;
 		}
 		else
-		{                                              // (expr... 
+		{
+			// (expr...
 			if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
 				return ERROR;
 
@@ -709,11 +744,11 @@
 					goto AMn_IXN;
 				}
 				else if (*tok == ')')
-			{
-				AMn = ADISP;
-				tok++;
-				goto AnOK;
-			}
+				{
+					AMn = ADISP;
+					tok++;
+					goto AnOK;
+				}
 				else
 					goto badmode;
 			}
@@ -726,7 +761,7 @@
 				}
 				else if (*tok == ')')
 				{
-					AMn = PCDISP;                                // expr(PC) 
+					AMn = PCDISP;                                // expr(PC)
 					tok++;
 					goto AnOK;
 				}
@@ -737,7 +772,7 @@
 				goto badmode;
 		}
 	}
-	else if (*tok=='-' && tok[1]=='(' && ((tok[2]>=KW_A0) && (tok[2]<=KW_A7)) && tok[3]==')')
+	else if (*tok == '-' && tok[1] == '(' && ((tok[2] >= KW_A0) && (tok[2] <= KW_A7)) && tok[3] == ')')
 	{
 		AMn = APREDEC;
 		AnREG = tok[2] & 7;
@@ -759,34 +794,35 @@
 	{
 		AMn = AM_USP;
 		tok++;
-		AnREG=2;	//Added this for the case of USP used in movec (see CREGlut in mach.c). Hopefully nothing gets broken!
+		AnREG = 2;	//Added this for the case of USP used in movec (see CREGlut in mach.c). Hopefully nothing gets broken!
 		goto AnOK;
 	}
-	else if ((*tok>=KW_IC40) && (*tok<=KW_BC40))
+	else if ((*tok >= KW_IC40) && (*tok <= KW_BC40))
 	{
-		AMn=CACHES;
-		AnREG=*tok++-KW_IC40;
+		AMn = CACHES;
+		AnREG = *tok++ - KW_IC40;
 
 		// After a cache keyword only a comma or EOL is allowed
-		if ((*tok!=',') && (*tok!=EOL))
+		if ((*tok != ',') && (*tok != EOL))
 			return ERROR;
+
 		goto AnOK;
 	}
-	else if ((*tok>=KW_SFC) && (*tok<=KW_CRP))
+	else if ((*tok >= KW_SFC) && (*tok <= KW_CRP))
 	{
-		AMn=CREG;
-		AnREG=(*tok++)-KW_SFC;
+		AMn = CREG;
+		AnREG = (*tok++) - KW_SFC;
 		goto AnOK;
 	}
-	else if ((*tok>=KW_FP0) && (*tok<=KW_FP7))
+	else if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
 	{
-		AMn=FREG;
-		AnREG=(*tok++&7);
+		AMn = FREG;
+		AnREG = (*tok++ & 7);
 	}
-	else if ((*tok>=KW_FPIAR) && (*tok<=KW_FPCR))
+	else if ((*tok >= KW_FPIAR) && (*tok <= KW_FPCR))
 	{
-		AMn=FPSCR;
-		AnREG=(1<<((*tok++)-KW_FPIAR+10));
+		AMn = FPSCR;
+		AnREG = (1 << ((*tok++) - KW_FPIAR + 10));
 	}
 	// expr
 	// expr.w
@@ -803,11 +839,11 @@
 CHK_FOR_DISPn:
 		if (*tok == DOTW)
 		{
-			// expr.W 
+			// expr.W
 			tok++;
 			AMn = ABSW;
 
-			if ((AnEXATTR & (TDB|DEFINED)) == DEFINED && (AnEXVAL < 0x10000))
+			if (((AnEXATTR & (TDB | DEFINED)) == DEFINED) && (AnEXVAL < 0x10000))
 				AnEXVAL = (int32_t)(int16_t)AnEXVAL;  // Sign extend value
 
 			goto AnOK;
@@ -819,7 +855,9 @@ CHK_FOR_DISPn:
 
 			// Defined, absolute values from $FFFF8000..$00007FFF get optimized
 			// to absolute short
-			if (optim_flags[OPT_ABS_SHORT] && (AnEXATTR & (TDB|DEFINED)) == DEFINED && (AnEXVAL + 0x8000) < 0x10000)
+			if (optim_flags[OPT_ABS_SHORT]
+				&& ((AnEXATTR & (TDB | DEFINED)) == DEFINED)
+				&& ((AnEXVAL + 0x8000) < 0x10000))
 			{
 				AMn = ABSW;
 
@@ -869,8 +907,7 @@ CHK_FOR_DISPn:
 	}
 
 	// Addressing mode OK
-
-	AnOK:
+AnOK:
 	;
 }
 

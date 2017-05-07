@@ -41,8 +41,6 @@ static int disabled;			// Assembly conditionally disabled
 int just_bss;					// 1, ds.b in microprocessor mode
 VALUE pcloc;					// Value of "PC" at beginning of line
 SYM * lab_sym;					// Label on line (or NULL)
-int bfparam1;					// bfxxx instruction parameters
-int bfparam2;					// bfxxx instruction parameters
 
 const char extra_stuff[] = "extra (unexpected) text found after addressing mode";
 const char comma_error[] = "missing comma";
@@ -73,35 +71,35 @@ LONG amsktab[0124] = {
 	M_AINDEXED, M_AINDEXED, M_AINDEXED, M_AINDEXED,
 	M_AINDEXED, M_AINDEXED, M_AINDEXED, M_AINDEXED,
 
-	M_ABSW,											// 070
-	M_ABSL,											// 071
-	M_PCDISP,										// 072
-	M_PCINDEXED,									// 073
-	M_IMMED,										// 074
-	0L,												// 075
-	0L,												// 076
-	0L,												// 077
-	M_ABASE,										// 0100
-	M_MEMPOST,										// 0101
-	M_MEMPRE,										// 0102
-	M_PCBASE,										// 0103
-	M_PCMPOST,										// 0104
-	M_PCMPRE,										// 0105
-	M_AM_USP,										// 0106
-	M_AM_SR,										// 0107
-	M_AM_CCR,										// 0110
-	M_AM_NONE,										// 0111 
-	0x30,											// 0112 
-	0x30,											// 0113
-	0L,											    // 0114
-	0L,											    // 0115
-	0L,											    // 0116
-	0L,											    // 0117
-	M_CREG,										    // 0120 (caches - TODO: is this correct or does it need its own bitfield?)
-	M_CREG,										    // 0121
-	M_FREG,                                         // 0122
-	M_FPSCR                                         // 0123
-};													// 0123 length
+	M_ABSW,			// 070
+	M_ABSL,			// 071
+	M_PCDISP,		// 072
+	M_PCINDEXED,	// 073
+	M_IMMED,		// 074
+	0L,				// 075
+	0L,				// 076
+	0L,				// 077
+	M_ABASE,		// 0100
+	M_MEMPOST,		// 0101
+	M_MEMPRE,		// 0102
+	M_PCBASE,		// 0103
+	M_PCMPOST,		// 0104
+	M_PCMPRE,		// 0105
+	M_AM_USP,		// 0106
+	M_AM_SR,		// 0107
+	M_AM_CCR,		// 0110
+	M_AM_NONE,		// 0111
+	0x30,			// 0112
+	0x30,			// 0113
+	0L,				// 0114
+	0L,				// 0115
+	0L,				// 0116
+	0L,				// 0117
+	M_CREG,			// 0120 (caches - TODO: is this correct or does it need its own bitfield?)
+	M_CREG,			// 0121
+	M_FREG,			// 0122
+	M_FPSCR			// 0123
+};					// 0123 length
 
 
 // Function prototypes

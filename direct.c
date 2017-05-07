@@ -8,6 +8,7 @@
 
 #include "direct.h"
 #include "6502.h"
+#include "amode.h"
 #include "error.h"
 #include "expr.h"
 #include "listing.h"
@@ -31,6 +32,15 @@ char buffer[256];			// Scratch buffer for messages
 // Function prototypes
 int d_unimpl(void);
 int d_68000(void);
+int d_68000(void);
+int d_68020(void);
+int d_68030(void);
+int d_68040(void);
+int d_68060(void);
+int d_68881(void);
+int d_68882(void);
+int d_56001(void);
+int d_nofpu(void);
 int d_bss(void);
 int d_data(void);
 int d_text(void);
@@ -1385,9 +1395,10 @@ int d_68000(void)
 	orgwarning = 0;
 	SaveSection();
 	SwitchSection(TEXT);
-	activecpu=CPU_68000;
+	activecpu = CPU_68000;
 	return 0;
 }
+
 
 //
 // .68020 - Back to 68000 TEXT segment and select 68020
@@ -1395,9 +1406,10 @@ int d_68000(void)
 int d_68020(void)
 {
 	d_68000();
-	activecpu=CPU_68020;
+	activecpu = CPU_68020;
 	return 0;
 }
+
 
 //
 // .68030 - Back to 68000 TEXT segment and select 68030
@@ -1405,9 +1417,10 @@ int d_68020(void)
 int d_68030(void)
 {
 	d_68000();
-	activecpu=CPU_68030;
+	activecpu = CPU_68030;
 	return 0;
 }
+
 
 //
 // .68040 - Back to 68000 TEXT segment and select 68040
@@ -1415,10 +1428,11 @@ int d_68030(void)
 int d_68040(void)
 {
 	d_68000();
-	activecpu=CPU_68040;
-	activefpu=FPU_68040;
+	activecpu = CPU_68040;
+	activefpu = FPU_68040;
 	return 0;
 }
+
 
 //
 // .68060 - Back to 68000 TEXT segment and select 68060
@@ -1426,10 +1440,11 @@ int d_68040(void)
 int d_68060(void)
 {
 	d_68000();
-	activecpu=CPU_68060;
-	activefpu=FPU_68040;
+	activecpu = CPU_68060;
+	activefpu = FPU_68040;
 	return 0;
 }
+
 
 //
 // .68881 - Back to 68000 TEXT segment and select 68881 FPU
@@ -1437,9 +1452,10 @@ int d_68060(void)
 int d_68881(void)
 {
 	d_68000();
-	activefpu=FPU_68881;
+	activefpu = FPU_68881;
 	return 0;
 }
+
 
 //
 // .68882 - Back to 68000 TEXT segment and select 68882 FPU
@@ -1447,18 +1463,20 @@ int d_68881(void)
 int d_68882(void)
 {
 	d_68000();
-	activefpu=FPU_68881;
+	activefpu = FPU_68881;
 	return 0;
 }
+
 
 //
 // nofpu - Deselect FPUs.
 //
 int d_nofpu(void)
 {
-	activefpu=FPU_NONE;
+	activefpu = FPU_NONE;
 	return 0;
 }
+
 
 //
 // DSP56001
@@ -1467,6 +1485,7 @@ int d_56001(void)
 {
 	return error("Not yet, child. Be patient.");
 }
+
 
 //
 // .gpu - Switch to GPU assembler

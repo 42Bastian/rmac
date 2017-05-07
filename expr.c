@@ -288,16 +288,16 @@ int expr2(void)
 		// '*' takes attributes of current section, not ABS!
 		*evalTokenBuffer++ = cursect | DEFINED;
 		break;
-    case '{':
-		if (expr0() != OK)                          // Eat up first parameter (register or immediate)
+	case '{':
+		if (expr0() != OK)							// Eat up first parameter (register or immediate)
 			return ERROR;
 
-		if (*tok++ != ':')                          // Demand a ':' there
+		if (*tok++ != ':')							// Demand a ':' there
 			return error("missing colon ':'");
-                
-		if (expr0() != OK)                          // Eat up second parameter (register or immediate)
+
+		if (expr0() != OK)							// Eat up second parameter (register or immediate)
 			return ERROR;
-                
+
 		if (*tok++ != '}')
 			return error("missing close bracket '}'");
 

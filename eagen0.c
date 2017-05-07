@@ -12,9 +12,9 @@ int eaNgen(WORD siz)
 	VALUE vbd, v = aNexval;
 	WORD wbd, w = (WORD)(aNexattr & DEFINED);
 	WORD tdbbd, tdb = (WORD)(aNexattr & TDB);
-    vbd = aNbdexval;
-    wbd = (WORD)(aNbdexattr & DEFINED);
-    tdbbd = (WORD)(aNbdexattr & TDB);
+	vbd = aNbdexval;
+	wbd = (WORD)(aNbdexattr & DEFINED);
+	tdbbd = (WORD)(aNbdexattr & TDB);
 
 	switch (amN)
 	{
@@ -216,9 +216,9 @@ int eaNgen(WORD siz)
 
 		break;
     case SIZP:
-            // 68881/68882/68040 only
-            return error("Sorry, .p constant format is not implemented yet!");
-            break;
+		// 68881/68882/68040 only
+		return error("Sorry, .p constant format is not implemented yet!");
+		break;
 	case ABSW:
 		if (w) // Defined
 		{
@@ -269,7 +269,7 @@ int eaNgen(WORD siz)
 			// Deposit word bd
 			if (wbd)
 			{
-				// Just deposit it 
+				// Just deposit it
 				if (tdb)
 					MarkRelocatable(cursect, sloc, tdbbd, MWORD, NULL);
 
@@ -280,7 +280,7 @@ int eaNgen(WORD siz)
 			}
 			else
 			{
-				// Arrange for fixup later on 
+				// Arrange for fixup later on
 				AddFixup(FU_WORD|FU_SEXT, sloc, aNexpr);
 				D_word(0);
 			}
@@ -290,7 +290,7 @@ int eaNgen(WORD siz)
 			// Deposit long bd
 			if (wbd)
 			{
-				// Just deposit it 
+				// Just deposit it
 				if (tdbbd)
 					MarkRelocatable(cursect, sloc, tdbbd, MLONG, NULL);
 
@@ -298,13 +298,13 @@ int eaNgen(WORD siz)
 			}
 			else
 			{
-				// Arrange for fixup later on 
+				// Arrange for fixup later on
 				AddFixup(FU_LONG|FU_SEXT, sloc, aNexpr);
 				D_long(0);
 			}
 		}
 		// Deposit od (if not suppressed)
-		if ((aNexten&7)==EXT_IISPRE0 || (aNexten&7)==EXT_IISPREN 
+		if ((aNexten&7)==EXT_IISPRE0 || (aNexten&7)==EXT_IISPREN
 			|| (aNexten&7)==EXT_IISNOIN || (aNexten&7)==EXT_IISPOSN)
 		{
 			// Don't deposit anything (suppressed)
@@ -315,7 +315,7 @@ int eaNgen(WORD siz)
 			// Deposit word od
 			if (w)
 			{
-				// Just deposit it 
+				// Just deposit it
 				if (tdb)
 					MarkRelocatable(cursect, sloc, tdb, MWORD, NULL);
 
@@ -326,7 +326,7 @@ int eaNgen(WORD siz)
 			}
 			else
 			{
-				// Arrange for fixup later on 
+				// Arrange for fixup later on
 				AddFixup(FU_WORD|FU_SEXT, sloc, aNexpr);
 				D_word(0);
 			}
@@ -336,7 +336,7 @@ int eaNgen(WORD siz)
 			// Deposit long od
 			if (w)
 			{
-				// Just deposit it 
+				// Just deposit it
 				if (tdb)
 					MarkRelocatable(cursect, sloc, tdb, MLONG, NULL);
 
@@ -344,7 +344,7 @@ int eaNgen(WORD siz)
 			}
 			else
 			{
-				// Arrange for fixup later on 
+				// Arrange for fixup later on
 				AddFixup(FU_LONG|FU_SEXT, sloc, aNexpr);
 				D_long(0);
 			}

@@ -24,6 +24,7 @@ rm = /bin/rm -f
 CC = $(CROSS)gcc
 HOSTCC = gcc
 
+#CFLAGS = -std=$(STD) -D_DEFAULT_SOURCE -g -D__GCCUNIX__ -I. -O2 -MMD
 CFLAGS = -std=$(STD) -D_DEFAULT_SOURCE -g -D__GCCUNIX__ -I. -O2
 
 SRCS = 6502.c amode.c debug.c direct.c eagen.c error.c expr.c listing.c mach.c macro.c mark.c object.c procln.c riscasm.c rmac.c sect.c symbol.c token.c
@@ -119,8 +120,8 @@ object.o : object.c object.h
 procln.o : procln.c procln.h
 	$(CC) $(CFLAGS) -c procln.c
 
-risca.o : risca.c risca.h
-	$(CC) $(CFLAGS) -c risca.c
+riscasm.o : riscasm.c riscasm.h
+	$(CC) $(CFLAGS) -c riscasm.c
 
 rmac.o : rmac.c rmac.h
 	$(CC) $(CFLAGS) -c rmac.c
@@ -147,31 +148,31 @@ clean:
 #
 # Dependencies
 #
-6502.o: 6502.c direct.h rmac.h symbol.h expr.h error.h mach.h amode.h \
- procln.h token.h riscasm.h sect.h
+6502.o: 6502.c direct.h rmac.h symbol.h expr.h error.h mach.h procln.h \
+ token.h riscasm.h sect.h
 68kgen.o: 68kgen.c
-amode.o: amode.c amode.h rmac.h symbol.h error.h token.h expr.h kwtab.h \
- mntab.h parmode.h
+amode.o: amode.c amode.h rmac.h symbol.h error.h expr.h mach.h procln.h \
+ token.h sect.h kwtab.h mntab.h parmode.h
 debug.o: debug.c debug.h rmac.h symbol.h amode.h direct.h mark.h sect.h \
  token.h
-direct.o: direct.c direct.h rmac.h symbol.h 6502.h error.h expr.h \
- listing.h mach.h amode.h macro.h mark.h procln.h token.h riscasm.h \
- sect.h kwtab.h
+direct.o: direct.c direct.h rmac.h symbol.h 6502.h amode.h error.h expr.h \
+ listing.h mach.h macro.h mark.h procln.h token.h riscasm.h sect.h \
+ kwtab.h
 eagen.o: eagen.c eagen.h rmac.h symbol.h amode.h sect.h mark.h error.h \
  mach.h riscasm.h eagen0.c
 error.o: error.c error.h rmac.h symbol.h token.h listing.h
 expr.o: expr.c expr.h rmac.h symbol.h direct.h error.h listing.h mach.h \
- amode.h procln.h token.h riscasm.h sect.h kwtab.h
+ procln.h token.h riscasm.h sect.h kwtab.h
 kwgen.o: kwgen.c
-listing.o: listing.c listing.h rmac.h symbol.h version.h token.h procln.h \
- sect.h error.h
-mach.o: mach.c mach.h amode.h rmac.h symbol.h eagen.h error.h direct.h \
+listing.o: listing.c listing.h rmac.h symbol.h error.h procln.h token.h \
+ sect.h version.h
+mach.o: mach.c mach.h rmac.h symbol.h amode.h direct.h eagen.h error.h \
  procln.h token.h riscasm.h sect.h kwtab.h 68ktab.h
 macro.o: macro.c macro.h rmac.h symbol.h debug.h direct.h error.h expr.h \
  listing.h procln.h token.h
 mark.o: mark.c mark.h rmac.h symbol.h error.h object.h riscasm.h sect.h
-object.o: object.c object.h rmac.h symbol.h error.h mark.h riscasm.h \
- sect.h
+object.o: object.c object.h rmac.h symbol.h 6502.h error.h mark.h \
+ riscasm.h sect.h
 procln.o: procln.c procln.h rmac.h symbol.h token.h 6502.h amode.h \
  direct.h error.h expr.h listing.h mach.h macro.h riscasm.h sect.h \
  kwtab.h mntab.h risckw.h 6502kw.h
@@ -181,9 +182,9 @@ rmac.o: rmac.c rmac.h symbol.h 6502.h debug.h direct.h error.h expr.h \
  listing.h mark.h macro.h object.h procln.h token.h riscasm.h sect.h \
  version.h
 sect.o: sect.c sect.h rmac.h symbol.h 6502.h direct.h error.h expr.h \
- listing.h mach.h amode.h mark.h riscasm.h token.h
+ listing.h mach.h mark.h riscasm.h token.h
 symbol.o: symbol.c symbol.h error.h rmac.h listing.h object.h procln.h \
  token.h
-token.o: token.c token.h rmac.h symbol.h error.h macro.h procln.h sect.h \
- kwtab.h
+token.o: token.c token.h rmac.h symbol.h direct.h error.h macro.h \
+ procln.h sect.h kwtab.h
 

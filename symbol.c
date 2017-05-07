@@ -382,7 +382,6 @@ void ToUppercase(uint8_t * s)
 //
 int symtable(void)
 {
-	extern int pagelen;
 	int i;
 	int j;
 	SYM * q = NULL;

@@ -14,11 +14,11 @@
 // nnnnn           =vvvvvvvv
 
 #include "listing.h"
-#include "version.h"
-#include "token.h"
+#include "error.h"
 #include "procln.h"
 #include "sect.h"
-#include "error.h"
+#include "token.h"
+#include "version.h"
 
 char * list_fname;					// Listing filename
 uint8_t subttl[TITLESIZ];			// Current subtitle
@@ -252,8 +252,6 @@ void ship_ln(const char * ln)
 //
 void InitListing(void)
 {
-	extern VALUE dos_date(), dos_time();
-
 	subflag = 0;
 	pageno = 0;
 	nlines = 0;
