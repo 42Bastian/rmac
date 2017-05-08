@@ -4,7 +4,7 @@ RMAC
 =====================
 Reference Manual
 ================
-version 1.6.5
+version 1.7.0
 =============
 
 © and notes
@@ -59,8 +59,6 @@ AS68 Users.
 `Getting Started`_
 ''''''''''''''''''
 
- =>Write protect your distribution disk and make a backup of it now. Put the
-   original disk in a safe place.
 
 * The distribution disk contains a file called README that you should read.
   This file contains important nays about the contents of the distribution disk
@@ -313,7 +311,7 @@ reading each source file exactly once and then "back-patching" to fix up forward
 references. This one-pass nature is usually transparent to the programmer, with
 the following important exceptions:
 
- o in listings, the object code for forward references is not shown. Instead, lower-
+ * In listings, the object code for forward references is not shown. Instead, lower-
    case "xx"s are displayed for each undefined byte, as in the following example:
 
     ::
@@ -322,12 +320,12 @@ the following important exceptions:
      xxxxxxxx  dc.l .2  ;forward reference
      60FE  .2: bra.s.2  ;backward reference
 
- o Forward branches (including **BSR**\s) are never optimized to their short forms.
+ * Forward branches (including **BSR**\s) are never optimized to their short forms.
    To get a short forward branch it is necessary to explicitly use the ".s" suffix in
    the source code.
- o Error messages may appear at the end of the assembly, referring to earlier source
+ * Error messages may appear at the end of the assembly, referring to earlier source
    lines that contained undefined symbols.
- o All object code generated must fit in memory. Running out of memory is a
+ * All object code generated must fit in memory. Running out of memory is a
    fatal error that you must deal with by splitting up your source files, re-sizing
    or eliminating memory-using programs such as ramdisks and desk accessories,
    or buying more RAM.
@@ -352,39 +350,39 @@ like Devpac or vasm. This section
 outlines the major differences. In practice, we have found that very few changes are
 necessary to make other assemblers' source code assemble.
 
-o A semicolon (;) must be used to introduce a comment,
+* A semicolon (;) must be used to introduce a comment,
   except that a star (*)
   may be used in the first column. AS68 treated anything following the operand
   field, preceeded by whitespace, as a comment. (RMAC treats a star that
   is not in column 1 as a multiplication operator).
-o Labels require colons (even labels that begin in column 1).
+* Labels require colons (even labels that begin in column 1).
 
-o Conditional assembly directives are called **if**, **else** and **endif**.
+* Conditional assembly directives are called **if**, **else** and **endif**.
   Devpac and vasm called these
   **ifne**, **ifeq** (etc.), and **endc**.
-o The tilde (~) character is an operator, and back-quote (`) is an illegal character.
+* The tilde (~) character is an operator, and back-quote (`) is an illegal character.
   AS68 permitted the tilde and back-quote characters in symbols.
-o There are no equivalents to org or section directives.
+* There are no equivalents to org or section directives.
   The **.xdef** and **.xref** directives are not implemented,
   but **.globl** makes these unnecessary anyway.
 
-  o The location counter cannot be manipulated with a statement of the form:
+* The location counter cannot be manipulated with a statement of the form:
 
   ::
 
                                 * = expression
 
-o The **ds** directive is not permitted in the text or data segments;
+* The **ds** directive is not permitted in the text or data segments;
   an error message is issued. Use **dcb** instead to reserve large blocks of
   initialized storage.
-o Back-slashes in strings are "electric" characters that are used to escape C-like
+* Back-slashes in strings are "electric" characters that are used to escape C-like
   character codes. Watch out for GEMDOS path names in ASCII constants -
   you will have to convert them to double-backslashes.
-o Expression evaluation is done left-to-right without operator precedence. Use parentheses to
+* Expression evaluation is done left-to-right without operator precedence. Use parentheses to
   force the expression evaluation as you wish.
-o Mark your segments across files.
+* Mark your segments across files.
   Branching to a code segment that could be identified as BSS will cause a "Error: cannot initialize non-storage (BSS) section"
-o rs.b/rs.w/rs.l/rscount/rsreset can be simulated in rmac using abs.
+* rs.b/rs.w/rs.l/rscount/rsreset can be simulated in rmac using abs.
   For example the following source:
 
   ::
@@ -408,7 +406,7 @@ o rs.b/rs.w/rs.l/rscount/rsreset can be simulated in rmac using abs.
    label4: ds.b 2
    
    size_so_far equ ^^abscount
-o A rare case: if your macro contains something like:
+* A rare case: if your macro contains something like:
 
   ::
 
@@ -433,14 +431,14 @@ o A rare case: if your macro contains something like:
 For those using editors other than the "Emacs" style ones (Micro-Emacs, Mince,
 etc.) this section documents the source file format that RMAC expects.
 
- o Files must contain characters with ASCII values less than 128; it is not per-
+ * Files must contain characters with ASCII values less than 128; it is not per-
    missable to have characters with their high bits set unless those characters are
    contained in strings (i.e. between single or double quotes) or in comments.
 
- o Lines of text are terminated with carriage-return/line-feed, linefeed alone, or
+ * Lines of text are terminated with carriage-return/line-feed, linefeed alone, or
    carriage-return alone.
 
- o The file is assumed to end with the last terminated line. If there is text beyond
+ * The file is assumed to end with the last terminated line. If there is text beyond
    the last line terminator (e.g. control-Z) it is ignored.
 
 `Source Format`_
@@ -750,9 +748,9 @@ Operator                            Description
 **^^abscount**                      Returns the size of current .abs section
 ================================    ========================================
 
- o The boolean operators generate the value 1 if the expression is true, and 0 if it is not.
+ * The boolean operators generate the value 1 if the expression is true, and 0 if it is not.
 
- o A symbol is referenced if it is involved in an expression.
+ * A symbol is referenced if it is involved in an expression.
      A symbol may have
      any combination of attributes: undefined and unreferenced, defined and unref-
      erenced (i.e. declared but never used), undefined and referenced (in the case
@@ -775,14 +773,14 @@ Operator     Description
 <>  !=       Boolean inequality.
 ===========  ==============================================
 
- o All binary operators have the same precedence:
+ * All binary operators have the same precedence:
    expressions are evaluated strictly left to right.
 
- o Division or modulo by zero yields an assembly error.
+ * Division or modulo by zero yields an assembly error.
 
-   o The "<>" and "!=" operators are synonyms.
+ * The "<>" and "!=" operators are synonyms.
 
-   o Note that the modulo operator (%) is also used to introduce binary constants
+ * Note that the modulo operator (%) is also used to introduce binary constants
      (see: `Constants`_). A percent sign should be followed by at least one space if
      it is meant to be a modulo operator, and is followed by a '0' or '1'.
 
@@ -796,12 +794,12 @@ Special Form    Description
 **^^time**      The current system time (Gemdos format).
 ============    =========================================
 
-   o The "**^^date**" special form expands to the current system date, in Gemdos
+   * The "**^^date**" special form expands to the current system date, in Gemdos
      format. The format is a 16-bit word with bits 0 ...4 indicating the day of the
      month (1...31), bits 5...8 indicating the month (1...12), and bits 9...15
      indicating the year since 1980, in the range 0...119.
 
-   o The "**^^time**" special form expands to the current system time, in Gemdos
+   * The "**^^time**" special form expands to the current system time, in Gemdos
      format. The format is a 16-bit word with bits 0...4 indicating the current
      second divided by 2, bits 5...10 indicating the current minute 0...59. and
      bits 11...15 indicating the current hour 0...23.
@@ -1041,9 +1039,7 @@ described in the chapter on `6502 Support`_.
 
    Reserve space in the current segment for the appropriate number of bytes,
    words or longwords. If no size is specified, the default size is .w. If the size
-   is word or long, the assembler will execute .even before reserving space. This
-   directive can only be used in the BSS or ABS sections (in text or data, use
-   .dcb to reserve large chunks of initialized storage.)
+   is word or long, the assembler will execute .even before reserving space.
 **.dsp**
 
    Switch to Jaguar DSP assembly mode. This directive must be used
@@ -1345,26 +1341,26 @@ dbns           dbne
 '''''''''''''''''''''''''''''''''
 The assembler provides "creature comforts" when it processes 68000 mnemonics:
 
- o **CLR.x An** will really generate **SUB.x An,An**.
+ * **CLR.x An** will really generate **SUB.x An,An**.
 
- o **ADD**, **SUB** and **CMP** with an address register will really generate **ADDA**,
+ * **ADD**, **SUB** and **CMP** with an address register will really generate **ADDA**,
  **SUBA** and **CMPA**.
 
- o The **ADD**, **AND**, **CMP**, **EOR**, **OR** and **SUB** mnemonics with immediate
+ * The **ADD**, **AND**, **CMP**, **EOR**, **OR** and **SUB** mnemonics with immediate
  first operands will generate the "I" forms of their instructions (**ADDI**, etc.) if
  the second operand is not register direct.
 
- o All shift instructions with no count value assume a count of one.
+ * All shift instructions with no count value assume a count of one.
 
- o **MOVE.L** is optimized to **MOVEQ** if the immediate operand is defined and
+ * **MOVE.L** is optimized to **MOVEQ** if the immediate operand is defined and
  in the range -128...127. However, **ADD** and **SUB** are never translated to
  their quick forms; **ADDQ** and **SUBQ** must be explicit.
 
- o In GPU/DSP code sections, you can use JUMP (Rx) in place of JUMP T, (Rx) and JR
+ * In GPU/DSP code sections, you can use JUMP (Rx) in place of JUMP T, (Rx) and JR
   (Rx) in place of JR T,(Rx).
- o RMAC tests all GPU/DSP restrictions and corrects them wherever possible (such as
+ * RMAC tests all GPU/DSP restrictions and corrects them wherever possible (such as
   inserting a NOP instruction when needed).
- o The “(Rx+N)” addressing mode for GPU/DSP instructions is optimized to “(Rx)”
+ * The “(Rx+N)” addressing mode for GPU/DSP instructions is optimized to “(Rx)”
   when “N” is zero.
 
 `Macros`_
@@ -1461,14 +1457,14 @@ a statement. Arguments may be specified following the macro name; each argument
 is seperated by a comma. Arguments may be empty. Arguments are stored for
 substitution in the macro body in the following manner:
 
-  o Numbers are converted to hexadecimal.
+  * Numbers are converted to hexadecimal.
 
-  o All spaces outside strings are removed.
+  * All spaces outside strings are removed.
 
-  o Keywords (such as register names, dot sizes and "^^" operators) are converted
+  * Keywords (such as register names, dot sizes and "^^" operators) are converted
     to lowercase.
 
-  o Strings are enclosed in double-quote marks (").
+  * Strings are enclosed in double-quote marks (").
 
 For example, a hypothetical call to the macro "``mymacro``", of the form:
        ``mymacro A0, , 'Zorch' / 32, "^^DEFINED foo, , , tick tock``

@@ -1,7 +1,7 @@
 //
-// RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
+// RMAC - Reboot's Macro Assembler for all Atari computers
 // DEBUG.H - Debugging Messages
-// Copyright (C) 199x Landon Dyer, 2017 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2017 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //

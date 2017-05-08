@@ -1,5 +1,9 @@
 //
-// 6502 Assembler
+// RMAC - Reboot's Macro Assembler for all Atari computers
+// 6502.C - 6502 Assembler
+// Copyright (C) 199x Landon Dyer, 2011-2017 Reboot and Friends
+// RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
+// Source utilised with the kind permission of Landon Dyer
 //
 //    Init6502	initialization
 //    d_6502    handle ".6502" directive
