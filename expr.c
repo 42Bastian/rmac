@@ -244,10 +244,10 @@ int expr2(void)
 		if (sy->sattre & EQUATEDREG)
 		{
 			if ((regbank == BANK_0) && (sy->sattre & BANK_1) && !altbankok)
-				warns("equated symbol \'%s\' cannot be used in register bank 0", sy->sname);
+				warn("equated symbol \'%s\' cannot be used in register bank 0", sy->sname);
 
 			if ((regbank == BANK_1) && (sy->sattre & BANK_0) && !altbankok)
-				warns("equated symbol \'%s\' cannot be used in register bank 1", sy->sname);
+				warn("equated symbol \'%s\' cannot be used in register bank 1", sy->sname);
 		}
 
 		*evalTokenBuffer++ = SYMBOL;
@@ -264,7 +264,7 @@ int expr2(void)
 			return ERROR;
 
 		if (*tok++ != ')')
-			return error("missing close parenthesis ')'");
+			return error("missing closing parenthesis ')'");
 
 		break;
 	case '[':
@@ -272,7 +272,7 @@ int expr2(void)
 			return ERROR;
 
 		if (*tok++ != ']')
-			return error("missing close parenthesis ']'");
+			return error("missing closing bracket ']'");
 
 		break;
 	case '$':
@@ -299,7 +299,7 @@ int expr2(void)
 			return ERROR;
 
 		if (*tok++ != '}')
-			return error("missing close bracket '}'");
+			return error("missing closing brace '}'");
 
 		break;
 	default:
@@ -400,7 +400,7 @@ if (symbol)
 			// means it will be fixed up later, and thus, not an error.
 			if ((symbol->sattre & UNDEF_EQUR) && !riscImmTokenSeen)
 			{
-				errors("undefined register equate '%s'", symbol->sname);
+				error("undefined register equate '%s'", symbol->sname);
 //if we return right away, it returns some spurious errors...
 //				return ERROR;
 			}
@@ -409,10 +409,10 @@ if (symbol)
 			if (symbol->sattre & EQUATEDREG)
 			{
 				if ((regbank == BANK_0) && (symbol->sattre & BANK_1) && !altbankok)
-					warns("equated symbol '%s' cannot be used in register bank 0", symbol->sname);
+					warn("equated symbol '%s' cannot be used in register bank 0", symbol->sname);
 
 				if ((regbank == BANK_1) && (symbol->sattre & BANK_0) && !altbankok)
-					warns("equated symbol '%s' cannot be used in register bank 1", symbol->sname);
+					warn("equated symbol '%s' cannot be used in register bank 1", symbol->sname);
 			}
 
 			*evalTokenBuffer++ = SYMBOL;
@@ -694,7 +694,7 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 				sattr--;					// Pop attrib
 
 				if (sval[1] == 0)
-					return error("divide by zero");
+					return error("division by zero");
 
 //printf("--> N/N: %i / %i = ", sval[0], sval[1]);
 				// Compiler is picky here: Without casting these, it discards

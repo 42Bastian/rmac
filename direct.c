@@ -165,7 +165,7 @@ int d_error(char *str)
 			return error(string[tok[1]]);
 			break;
 		default:
-			return error("error directive encountered - aborting assembling");
+			return error("error directive encountered--aborting assembly");
 		}
 	}
 }
@@ -428,14 +428,13 @@ int d_incbin(void)
 	int fd;
 	int bytes = 0;
 	long pos, size, bytesRead;
-	char msg[256];
 	char buf1[256];
 	int i;
 
 	// Check to see if we're in BSS, and, if so, throw an error
 	if (scattr & SBSS)
 	{
-		errors("cannot include binary file \"%s\" in BSS section", string[tok[1]]);
+		error("cannot include binary file \"%s\" in BSS section", string[tok[1]]);
 		return ERROR;
 	}
 
@@ -464,7 +463,7 @@ int d_incbin(void)
 				goto allright;
 		}
 
-		return errors("cannot open: \"%s\"", string[tok[1]]);
+		return error("cannot open: \"%s\"", string[tok[1]]);
 	}
 
 allright:
@@ -480,8 +479,7 @@ allright:
 
 	if (bytesRead != size)
 	{
-		sprintf(msg, "was only able to read %li bytes from binary file (%s, %li bytes)", bytesRead, string[tok[1]], size);
-		error(msg);
+		error("was only able to read %li bytes from binary file (%s, %li bytes)", bytesRead, string[tok[1]], size);
 		return ERROR;
 	}
 
@@ -741,7 +739,7 @@ int d_include(void)
 	// Make sure the user didn't try anything like:
 	// .include equates.s
 	if (*++tok != EOL)
-		return error("extra stuff after filename -- enclose it in quotes");
+		return error("extra stuff after filename--enclose it in quotes");
 
 	// Attempt to open the include file in the current directory, then (if that
 	// failed) try list of include files passed in the enviroment string or by
@@ -762,7 +760,7 @@ int d_include(void)
 				goto allright;
 		}
 
-		return errors("cannot open: \"%s\"", fn);
+		return error("cannot open: \"%s\"", fn);
 	}
 
 allright:
@@ -1064,10 +1062,7 @@ int d_dc(WORD siz)
 					return error("non-absolute byte value");
 
 				if (eval + 0x100 >= 0x200)
-				{
-					sprintf(buffer, "%s (value = $%X)", range_error, eval);
-					return error(buffer);
-				}
+					return error("%s (value = $%X)", range_error, eval);
 
 				D_byte(eval);
 			}
@@ -1590,7 +1585,7 @@ int d_cargs(void)
 				symbol->sattr = 0;
 			}
 			else if (symbol->sattr & DEFINED)
-				return errors("multiply-defined label '%s'", p);
+				return error("multiply-defined label '%s'", p);
 
 			// Put symbol in "order of definition" list
 			AddToSymbolDeclarationList(symbol);
@@ -1706,7 +1701,7 @@ int d_cstruct(void)
 				symbol->sattr = 0;
 			}
 			else if (symbol->sattr & DEFINED)
-				return errors("multiply-defined label '%s'", symbolName);
+				return error("multiply-defined label '%s'", symbolName);
 
 			// Put symbol in "order of definition" list
 			AddToSymbolDeclarationList(symbol);
@@ -1839,11 +1834,7 @@ int d_opt(void)
 			char * tmpstr = string[*tok++];
 
 			if (ParseOptimization(tmpstr) != OK)
-			{
-				char temperr[256];
-				sprintf(temperr, "unknown optimization flag '%s'", tmpstr);
-				return error(temperr);
-			}
+				return error("unknown optimization flag '%s'", tmpstr);
 		}
 		else
 			return error(".opt directive needs every switch enclosed inside quotation marks");

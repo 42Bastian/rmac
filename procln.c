@@ -150,7 +150,7 @@ loop:							// Line processing loop label
 	// Get another line of tokens
 	if (TokenizeLine() == TKEOF)
 	{
-if (debug) printf("Assemble: Found TKEOF flag...\n");
+DEBUG { printf("Assemble: Found TKEOF flag...\n"); }
 		if (list_flag && listflag)			// Flush last line of source
 			listeol();
 
@@ -160,7 +160,7 @@ if (debug) printf("Assemble: Found TKEOF flag...\n");
 		return;
 	}
 
-	DEBUG DumpTokenBuffer();
+	DEBUG { DumpTokenBuffer(); }
 
 	if (list_flag)
 	{
@@ -187,10 +187,11 @@ loop1:										// Internal line processing loop
 	// First token MUST be a symbol (Shamus: not sure why :-/)
 	if (*tok != SYMBOL)
 	{
-        if (*tok>=KW_D0 && *tok<=KW_R31)
-            error("cannot use reserved keyword as label name or .equ");
-        else
-		error("syntax error; expected symbol");
+		if ((*tok >= KW_D0) && (*tok <= KW_R31))
+			error("cannot use reserved keyword as label name or .equ");
+		else
+			error("syntax error; expected symbol");
+
 		goto loop;
 	}
 
@@ -408,7 +409,7 @@ normal:
 			}
 			else
 			{
-				errors("multiple equate to '%s'", sy->sname);
+				error("multiple equate to '%s'", sy->sname);
 				goto loop;
 			}
 		}
@@ -668,7 +669,7 @@ When checking to see if it's already been equated, issue a warning.
 		if ((sy = lookup(opname, MACRO, 0)) != NULL)
 			InvokeMacro(sy, siz);
 		else
-			errors("unknown op '%s'", opname);
+			error("unknown op '%s'", opname);
 
 		goto loop;
 	}
@@ -681,10 +682,10 @@ When checking to see if it's already been equated, issue a warning.
 	}
 
 	// Do mnemonics
-	// o  can't deposit instrs in BSS or ABS
-	// o  do automatic .EVEN for instrs
-	// o  allocate space for largest possible instr
-	// o  can't do ".b" operations with an address register
+	//  o  can't deposit instrs in BSS or ABS
+	//  o  do automatic .EVEN for instrs
+	//  o  allocate space for largest possible instr
+	//  o  can't do ".b" operations with an address register
 	if (scattr & SBSS)
 	{
 		error("cannot initialize non-storage (BSS) section");
@@ -756,7 +757,7 @@ int HandleLabel(char * label, int labelType)
 		symbol->sattre = 0;
 	}
 	else if (symbol->sattr & DEFINED)
-		return errors("multiply-defined label '%s'", label);
+		return error("multiply-defined label '%s'", label);
 
 	// Put symbol in "order of definition" list if it's not already in it
 	AddToSymbolDeclarationList(symbol);

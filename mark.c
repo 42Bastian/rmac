@@ -90,18 +90,13 @@ if (symbol)
 
 	//
 	// Complain about some things are not allowed in '-p' (PRG) mode:
-	//  o Marks that aren't to LONGs
-	//  o External references
+	//  o  Marks that aren't to LONGs
+	//  o  External references
 	//
 	if (prg_flag)
 	{
-#if 0
-		if ((flags & MLONG) == 0)
-			error("illegal word relocatable (in .PRG mode)");
-#endif
-
 		if (symbol != NULL)
-			errors("illegal external reference (in .PRG mode) to '%s'",
+			error("illegal external reference (in .PRG mode) to '%s'",
 				symbol->sname);
 	}
 

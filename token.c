@@ -55,7 +55,7 @@ static IMACRO * f_imacro;				// Ptr list of free IMACROs
 
 static TOKEN tokbuf[TOKBUFSIZE];		// Token buffer (stack-like, all files)
 
-char chrtab[] = {
+uint8_t chrtab[0x100] = {
 	ILLEG, ILLEG, ILLEG, ILLEG,			// NUL SOH STX ETX
 	ILLEG, ILLEG, ILLEG, ILLEG,			// EOT ENQ ACK BEL
 	ILLEG, WHITE, ILLEG, ILLEG,			// BS HT LF VT
@@ -79,29 +79,48 @@ char chrtab[] = {
 	MULTX, MULTX,								// : ;
 	MULTX, MULTX, MULTX, STSYM+CTSYM,			// < = > ?
 
-	MULTX, STSYM+CTSYM+HDIGIT,									// @ A
-	(char)((BYTE)DOT)+STSYM+CTSYM+HDIGIT, STSYM+CTSYM+HDIGIT,	// B C
-	(char)((BYTE)DOT)+STSYM+CTSYM+HDIGIT, STSYM+CTSYM+HDIGIT,						// D E
-	STSYM+CTSYM+HDIGIT, STSYM+CTSYM,							// F G
-	STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,			// H I J K
-	(char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,	// L M N O
+	MULTX, STSYM+CTSYM+HDIGIT,					// @ A
+	DOT+STSYM+CTSYM+HDIGIT, STSYM+CTSYM+HDIGIT,	// B C
+	DOT+STSYM+CTSYM+HDIGIT, STSYM+CTSYM+HDIGIT,	// D E
+	STSYM+CTSYM+HDIGIT, STSYM+CTSYM,			// F G
+	STSYM+CTSYM, DOT+STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,	// H I J K
+	DOT+STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,	// L M N O
 
-	(char)((BYTE)DOT)+STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM,	// P Q R S
-	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM,	// T U V W
-	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, SELF,				// X Y Z [
-	SELF, SELF, MULTX, STSYM+CTSYM,								// \ ] ^ _
+	DOT+STSYM+CTSYM, DOT+STSYM+CTSYM, STSYM+CTSYM, DOT+STSYM+CTSYM,	// P Q R S
+	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, DOT+STSYM+CTSYM,	// T U V W
+	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, SELF,// X Y Z [
+	SELF, SELF, MULTX, STSYM+CTSYM,				// \ ] ^ _
 
-	ILLEG, STSYM+CTSYM+HDIGIT,									// ` a
-	(char)((BYTE)DOT)+STSYM+CTSYM+HDIGIT, STSYM+CTSYM+HDIGIT,	// b c
-	(char)((BYTE)DOT)+STSYM+CTSYM+HDIGIT, STSYM+CTSYM+HDIGIT,						// d e
-	STSYM+CTSYM+HDIGIT, STSYM+CTSYM,							// f g
-	STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,			// h i j k
-	(char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,	// l m n o
+	ILLEG, STSYM+CTSYM+HDIGIT,					// ` a
+	DOT+STSYM+CTSYM+HDIGIT, STSYM+CTSYM+HDIGIT,	// b c
+	DOT+STSYM+CTSYM+HDIGIT, STSYM+CTSYM+HDIGIT,	// d e
+	STSYM+CTSYM+HDIGIT, STSYM+CTSYM,			// f g
+	STSYM+CTSYM, DOT+STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,	// h i j k
+	DOT+STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM,	// l m n o
 
-	(char)((BYTE)DOT)+STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM,	// p q r s
-	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, (char)((BYTE)DOT)+STSYM+CTSYM,	// t u v w
-	(char)((BYTE)DOT)+STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, SELF,				// x y z {
-	SELF, SELF, SELF, ILLEG										// | } ~ DEL
+	DOT+STSYM+CTSYM, DOT+STSYM+CTSYM, STSYM+CTSYM, DOT+STSYM+CTSYM,	// p q r s
+	STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, DOT+STSYM+CTSYM,	// t u v w
+	DOT+STSYM+CTSYM, STSYM+CTSYM, STSYM+CTSYM, SELF,		// x y z {
+	SELF, SELF, SELF, ILLEG,					// | } ~ DEL
+
+	// Anything above $7F is illegal (and yes, we need to check for this,
+	// otherwise you get strange and spurious errors that will lead you astray)
+	ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG,
+	ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG,
+	ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG,
+	ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG,
+	ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG,
+	ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG,
+	ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG,
+	ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG,
+	ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG,
+	ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG,
+	ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG,
+	ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG,
+	ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG,
+	ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG,
+	ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG,
+	ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG, ILLEG
 };
 
 // Names of registers
@@ -276,7 +295,7 @@ INOBJ * a_inobj(int typ)
 		break;
 	case SRC_IREPT:							// Alloc and init an IREPT
 		inobj->inobj.irept = malloc(sizeof(IREPT));
-		DEBUG printf("alloc IREPT\n");
+		DEBUG { printf("alloc IREPT\n"); }
 		break;
 	}
 
@@ -434,7 +453,7 @@ copy_d:
 					*d++ = *s++;
 
 				if (*s != '}')
-					return error("missing '}'");
+					return error("missing closing brace ('}')");
 				else
 					s++;
 			}
@@ -443,10 +462,10 @@ copy_d:
 
 			// Lookup the argument and copy its (string) value into the
 			// destination string
-			DEBUG printf("argument='%s'\n", mname);
+			DEBUG { printf("argument='%s'\n", mname); }
 
 			if ((arg = lookup(mname, MACARG, macnum)) == NULL)
-				return errors("undefined argument: '%s'", mname);
+				return error("undefined argument: '%s'", mname);
 			else
 			{
 				// Convert a string of tokens (terminated with EOL) back into
@@ -454,7 +473,7 @@ copy_d:
 				// macro invocation) then it is ignored.
 				i = (int)arg->svalue;
 arg_num:
-				DEBUG printf("~argnumber=%d (argBase=%u)\n", i, imacro->argBase);
+				DEBUG { printf("~argnumber=%d (argBase=%u)\n", i, imacro->argBase); }
 				tk = NULL;
 
 				if (i < imacro->im_nargs)
@@ -519,7 +538,7 @@ arg_num:
 #else
 								// This fix should be done for strings too
 								d = symbolString[*tk++];
-DEBUG printf("ExM: SYMBOL=\"%s\"", d);
+DEBUG { printf("ExM: SYMBOL=\"%s\"", d); }
 #endif
 								break;
 							case STRING:
@@ -649,7 +668,7 @@ skipcomments:
 
 overflow:
 	*dst = EOS;
-	DEBUG printf("*** OVERFLOW LINE ***\n%s\n", dest);
+	DEBUG { printf("*** OVERFLOW LINE ***\n%s\n", dest); }
 	return fatal("line too long as a result of macro expansion");
 }
 
@@ -685,12 +704,12 @@ char * GetNextRepeatLine(void)
 	// Do repeat at end of .rept block's string list
 	if (strp == NULL)
 	{
-		DEBUG printf("back-to-top-of-repeat-block count=%d\n", (int)irept->ir_count);
+		DEBUG { printf("back-to-top-of-repeat-block count=%d\n", (int)irept->ir_count); }
 		irept->ir_nextln = irept->ir_firstln;	// copy first line
 
 		if (irept->ir_count-- == 0)
 		{
-			DEBUG printf("end-repeat-block\n");
+			DEBUG { printf("end-repeat-block\n"); }
 			return NULL;
 		}
 
@@ -711,8 +730,7 @@ char * GetNextRepeatLine(void)
 int include(int handle, char * fname)
 {
 	// Debug mode
-	if (debug)
-		printf("[include: %s, cfileno=%u]\n", fname, cfileno);
+	DEBUG { printf("[include: %s, cfileno=%u]\n", fname, cfileno); }
 
 	// Alloc and initialize include-descriptors
 	INOBJ * inobj = a_inobj(SRC_IFILE);
@@ -740,7 +758,7 @@ int include(int handle, char * fname)
 		last_fr->frec_next = fr;			// Append to list of filerecs
 
 	last_fr = fr;
-	DEBUG printf("[include: curfname: %s, cfileno=%u]\n", curfname, cfileno);
+	DEBUG { printf("[include: curfname: %s, cfileno=%u]\n", curfname, cfileno); }
 
 	return OK;
 }
@@ -772,7 +790,7 @@ int fpop(void)
 
 		// Give a warning to the user that we had to wipe their bum for them
 		if (numUnmatched > 0)
-			warni("missing %d .endif(s)", numUnmatched);
+			warn("missing %d .endif(s)", numUnmatched);
 
 		tok = inobj->in_otok;		// Restore tok and otok
 		etok = inobj->in_etok;
@@ -780,21 +798,20 @@ int fpop(void)
 		switch (inobj->in_type)
 		{
 		case SRC_IFILE:				// Pop and release an IFILE
-			if (debug)
-				printf("[Leaving: %s]\n", curfname);
+			DEBUG { printf("[Leaving: %s]\n", curfname); }
 
 			ifile = inobj->inobj.ifile;
 			ifile->if_link = f_ifile;
 			f_ifile = ifile;
 			close(ifile->ifhandle);			// Close source file
-if (debug)	printf("[fpop (pre):  curfname=%s]\n", curfname);
+DEBUG { printf("[fpop (pre):  curfname=%s]\n", curfname); }
 			curfname = ifile->ifoldfname;	// Set current filename
-if (debug)	printf("[fpop (post): curfname=%s]\n", curfname);
-if (debug)	printf("[fpop: (pre)  cfileno=%d ifile->ifno=%d]\n", (int)cfileno, (int)ifile->ifno);
+DEBUG { printf("[fpop (post): curfname=%s]\n", curfname); }
+DEBUG { printf("[fpop: (pre)  cfileno=%d ifile->ifno=%d]\n", (int)cfileno, (int)ifile->ifno); }
 			curlineno = ifile->ifoldlineno;	// Set current line#
 			DEBUG printf("cfileno=%d ifile->ifno=%d\n", (int)cfileno, (int)ifile->ifno);
 			cfileno = ifile->ifno;			// Restore current file number
-if (debug)	printf("[fpop: (post) cfileno=%d ifile->ifno=%d]\n", (int)cfileno, (int)ifile->ifno);
+DEBUG { printf("[fpop: (post) cfileno=%d ifile->ifno=%d]\n", (int)cfileno, (int)ifile->ifno); }
 			break;
 		case SRC_IMACRO:					// Pop and release an IMACRO
 			imacro = inobj->inobj.imacro;
@@ -920,16 +937,16 @@ char * GetNextLine(void)
 //
 int TokenizeLine(void)
 {
-	char * ln = NULL;			// Ptr to current position in line
-	char * p;					// Random character ptr
+	uint8_t * ln = NULL;		// Ptr to current position in line
+	uint8_t * p;				// Random character ptr
 	TOKEN * tk;					// Token-deposit ptr
 	int state = 0;				// State for keyword detector
 	int j = 0;					// Var for keyword detector
-	char c;						// Random char
+	uint8_t c;					// Random char
 	VALUE v;					// Random value
-	char * nullspot = NULL;		// Spot to clobber for SYMBOL termination
+	uint8_t * nullspot = NULL;	// Spot to clobber for SYMBOL termination
 	int stuffnull;				// 1:terminate SYMBOL '\0' at *nullspot
-	char c1;
+	uint8_t c1;
 	int stringNum = 0;			// Pointer to string locations in tokenized line
 
 retry:
@@ -949,7 +966,7 @@ retry:
 	case SRC_IFILE:
 		if ((ln = GetNextLine()) == NULL)
 		{
-if (debug) printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n");
+DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 			if (fpop() == 0)				// Pop input level
 				goto retry;					// Try for more lines
 			else
@@ -1003,7 +1020,7 @@ if (debug) printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n");
 	case SRC_IREPT:
 		if ((ln = GetNextRepeatLine()) == NULL)
 		{
-if (debug) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
+DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n"); }
 			fpop();
 			goto retry;
 		}
@@ -1030,15 +1047,15 @@ if (debug) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 		goto goteol;
 
 	// Main tokenization loop;
-	// o  skip whitespace;
-	// o  handle end-of-line;
-	// o  handle symbols;
-	// o  handle single-character tokens (operators, etc.);
-	// o  handle multiple-character tokens (constants, strings, etc.).
+	//  o  skip whitespace;
+	//  o  handle end-of-line;
+	//  o  handle symbols;
+	//  o  handle single-character tokens (operators, etc.);
+	//  o  handle multiple-character tokens (constants, strings, etc.).
 	for(; *ln!=EOS;)
 	{
 		// Skip whitespace, handle EOL
-		while ((int)chrtab[*ln] & WHITE)
+		while (chrtab[*ln] & WHITE)
 			ln++;
 
 		// Handle EOL, comment with ';'
@@ -1101,7 +1118,7 @@ if (debug) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 				v = (VALUE)dotxtab[*ln++];
 
 				if (chrtab[*ln] & CTSYM)
-					return error("misuse of '.', not allowed in symbols");
+					return error("misuse of '.'; not allowed in symbols");
 			}
 
 			// If the symbol is small, check to see if it's really the name of
@@ -1192,7 +1209,6 @@ if (debug) printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n");
 		// Handle multiple-character tokens
 		if (c & MULTX)
 		{
-
 			switch (*ln++)
 			{
 			case '!':		// ! or !=
@@ -1542,7 +1558,7 @@ dostring:
 		}
 
 		// Handle illegal character
-		return error("illegal character");
+		return error("illegal character $%02X found", *ln);
 	}
 
 	// Terminate line of tokens and return "success."

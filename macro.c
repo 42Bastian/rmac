@@ -332,7 +332,7 @@ int lncatch(int (* lnfunc)(), char * dirlist)
 	{
 		if (TokenizeLine() == TKEOF)
 		{
-			errors("encountered end-of-file looking for '%s'", dirlist);
+			error("encountered end-of-file looking for '%s'", dirlist);
 			fatal("cannot continue");
 		}
 

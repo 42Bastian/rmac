@@ -18,12 +18,9 @@ extern int errcnt;
 extern char * err_fname;
 
 // Exported functions
-int error(const char *);
-int errors(const char *, char *);
+int error(const char *, ...);
+int warn(const char *, ...);
 int fatal(const char *);
-int warn(const char *);
-int warns(const char *, char *);
-int warni(const char *, unsigned);
 int interror(int);
 void cantcreat(const char *);
 void err_setup(void);

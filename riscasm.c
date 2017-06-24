@@ -127,10 +127,9 @@ void strtoupper(char * s)
 //
 static inline int MalformedOpcode(int signal)
 {
-	char buf[16];
-	sprintf(buf, "%02X", signal);
-	return errors("Malformed opcode [internal $%s]", buf);
+	return error("Malformed opcode [internal $%02X]", signal);
 }
+
 
 //
 // Function to return "Illegal Indexed Register" error
@@ -138,26 +137,19 @@ static inline int MalformedOpcode(int signal)
 //
 static inline int IllegalIndexedRegister(int reg)
 {
-    char buf[16];
-    sprintf(buf, "%d", reg - KW_R0);
-    return errors("Attempted index reference with non-indexable register (r%s)", buf);
+	return error("Attempted index reference with non-indexable register (r%d)", reg - KW_R0);
 }
+
 
 //
 // Function to return "Illegal Indexed Register" error for EQUR scenarios
 // Trying to use register value within EQUR that isn't 14 or 15
 //
-static inline int IllegalIndexedRegisterEqur(SYM *sy)
+static inline int IllegalIndexedRegisterEqur(SYM * sy)
 {
-    //char buf[160];
-    char *buf = NULL;
-    buf = (char *)malloc((strlen(sy->sname) + 7) * sizeof(char));
-    if (NULL != buf) {
-        sprintf(buf, "%s = r%d",sy->sname, sy->svalue);
-        return errors("Attempted index reference with non-indexable register within EQUR (%s)", buf);
-    }
-    return errors("Unable to allocate memory! (IllegalIndexRegisterEqur)", "OOPS");
+	return error("Attempted index reference with non-indexable register within EQUR (%s = r%d)", sy->sname, sy->svalue);
 }
+
 
 //
 // Build RISC instruction word
@@ -758,9 +750,7 @@ int GenerateRISCCode(int state)
 					ccsym = lookup(string[tok[1]], LABEL, 0);
 
 					if (ccsym && (ccsym->sattre & EQUATEDCC) && !(ccsym->sattre & UNDEF_CC))
-					{
 						val = ccsym->svalue;
-					}
 					else
 						return error("unknown condition code");
 				}
@@ -805,7 +795,7 @@ int GenerateRISCCode(int state)
 				reg2 = ((int)(eval - ((orgactive ? orgaddr : sloc) + 2))) / 2;
 
 				if ((reg2 < -16) || (reg2 > 15))
-					error("PC relative overflow");
+					error("PC relative overflow (outside of -16 to 15)");
 			}
 
 			BuildRISCIntructionWord(parm, reg2, reg1);

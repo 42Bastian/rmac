@@ -12,9 +12,9 @@
 #include "rmac.h"
 
 // Include Files and Macros
-#define SRC_IFILE       0					// Input source is IFILE
-#define SRC_IMACRO      1					// Input source is IMACRO
-#define SRC_IREPT       2					// Input source is IREPT
+#define SRC_IFILE       0			// Input source is IFILE
+#define SRC_IMACRO      1			// Input source is IMACRO
+#define SRC_IREPT       2			// Input source is IREPT
 
 // Macros
 #define INOBJ           struct _inobj
@@ -25,59 +25,64 @@
 #define IFENT           struct _ifent
 
 // Tunable definitions
-#define LNSIZ           1024				// Maximum size of a line of text
-#define TOKBUFSIZE      400					// Size of token-line buffer
-#define QUANTUM         4096L				// # bytes to eat at a time from a file
-#define LNBUFSIZ        (QUANTUM*2)			// Size of file's buffer
-#define KWSIZE          7					// Maximum size of keyword in kwtab.h
+#define LNSIZ           1024		// Maximum size of a line of text
+#define TOKBUFSIZE      400			// Size of token-line buffer
+#define QUANTUM         4096L		// # bytes to eat at a time from a file
+#define LNBUFSIZ        (QUANTUM*2)	// Size of file's buffer
+#define KWSIZE          7			// Maximum size of keyword in kwtab.h
 
 // (Normally) non-printable tokens
-#define COLON           ':'					// : (grumble: GNUmacs hates ':')
-#define CONST           'a'					// CONST <value>
-#define ACONST          'A'					// ACONST <value> <attrib>
-#define STRING          'b'					// STRING <address>
-#define SYMBOL          'c'					// SYMBOL <address>
-#define EOL             'e'					// End of line
-#define TKEOF           'f'					// End of file (or macro)
-#define DEQUALS         'g'					// ==
-#define SET             149					// Set
-#define REG             'R'					// Reg
-#define DCOLON          'h'					// ::
-#define GE              'i'					// >=
-#define LE              'j'					// <=
-#define NE              'k'					// <> or !=
-#define SHR             'l'					// >>
-#define SHL             'm'					// <<
-#define UNMINUS         'n'					// Unary '-'
-#define DOTB            'B'					// .b or .B or .s or .S
-#define DOTW            'W'					// .w or .W
-#define DOTL            'L'					// .l or .L
-#define DOTI            'I'					// .l or .L
-#define DOTX			'X'					// .x or .X
-#define DOTD			'D'					// .d or .D
-#define DOTP			'P'					// .p or .P
-#define DOTQ			'Q'					// .q or .Q (essentially an alias for P)
-#define ENDEXPR         'E'					// End of expression
+#define COLON           ':'			// : (grumble: GNUmacs hates ':')
+#define CONST           'a'			// CONST <value>
+#define ACONST          'A'			// ACONST <value> <attrib>
+#define STRING          'b'			// STRING <address>
+#define STRINGA8        'S'			// Atari 800 internal STRING <address>
+#define SYMBOL          'c'			// SYMBOL <address>
+#define EOL             'e'			// End of line
+#define TKEOF           'f'			// End of file (or macro)
+#define DEQUALS         'g'			// ==
+#define SET             0x95		// Set
+#define REG             'R'			// Reg
+#define EQUREG          0x94		// equreg
+#define CCDEF           0xB7		// ccdef
+#define DCOLON          'h'			// ::
+#define GE              'i'			// >=
+#define LE              'j'			// <=
+#define NE              'k'			// <> or !=
+#define SHR             'l'			// >>
+#define SHL             'm'			// <<
+#define UNMINUS         'n'			// Unary '-'
+#define DOTB            'B'			// .b or .B or .s or .S
+#define DOTW            'W'			// .w or .W
+#define DOTL            'L'			// .l or .L
+#define DOTI            'I'			// .l or .L
+#define DOTX            'X'			// .x or .X
+#define DOTD            'D'			// .d or .D
+#define DOTP            'P'			// .p or .P
+#define DOTQ            'Q'			// .q or .Q (essentially an alias for P)
+#define DOTS            'S'			// .s or .S (FPU Single)
+#define ENDEXPR         'E'			// End of expression
 
 // ^^ operators
-#define CR_DEFINED      'p'					// ^^defined - is symbol defined?
-#define CR_REFERENCED   'q'					// ^^referenced - was symbol referenced?
-#define CR_STREQ        'v'					// ^^streq - compare two strings
-#define CR_MACDEF       'w'					// ^^macdef - is macro defined?
-#define CR_TIME         'x'					// ^^time - DOS format time
-#define CR_DATE         'y'					// ^^date - DOS format date
-#define CR_ABSCOUNT     'z'					// ^^abscount - count the number of bytes defined in curent .abs section
+#define CR_DEFINED      'p'			// ^^defined - is symbol defined?
+#define CR_REFERENCED   'q'			// ^^referenced - was symbol referenced?
+#define CR_STREQ        'v'			// ^^streq - compare two strings
+#define CR_MACDEF       'w'			// ^^macdef - is macro defined?
+#define CR_TIME         'x'			// ^^time - DOS format time
+#define CR_DATE         'y'			// ^^date - DOS format date
+#define CR_ABSCOUNT     'z'			// ^^abscount - count the number of bytes
+									// defined in curent .abs section
 
 // Character Attributes
-#define ILLEG           0					// Illegal character (unused)
-#define DIGIT           1					// 0-9
-#define HDIGIT          2					// A-F, a-f
-#define STSYM           4					// A-Z, a-z, _~.
-#define CTSYM           8					// A-Z, a-z, 0-9, _~$?
-#define SELF            16					// Single-character tokens: ( ) [ ] etc
-#define WHITE           32					// Whitespace (space, tab, etc.)
-#define MULTX           64					// Multiple-character tokens
-#define DOT             128					// [bwlsBWSL] for what follows a `.'
+#define ILLEG           0			// Illegal character (unused)
+#define DIGIT           1			// 0-9
+#define HDIGIT          2			// A-F, a-f
+#define STSYM           4			// A-Z, a-z, _~.
+#define CTSYM           8			// A-Z, a-z, 0-9, _~$?
+#define SELF            16			// Single-character tokens: ( ) [ ] etc
+#define WHITE           32			// Whitespace (space, tab, etc.)
+#define MULTX           64			// Multiple-character tokens
+#define DOT             128			// [bwlsBWSL] for what follows a '.'
 
 // Conditional assembly structures
 IFENT {

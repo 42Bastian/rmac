@@ -7,13 +7,13 @@
 //
 
 #include "error.h"
-#include "token.h"
+#include <stdarg.h>
 #include "listing.h"
+#include "token.h"
 
 int errcnt;						// Error count
 char * err_fname;				// Name of error message file
 
-static const char nl[] = "\n";
 static long unused;				// For supressing 'write' warnings
 
 
@@ -22,13 +22,8 @@ static long unused;				// For supressing 'write' warnings
 //
 int at_eol(void)
 {
-	char msg[256];
-
 	if (*tok != EOL)
-	{
-		sprintf(msg, "syntax error. expected EOL, found $%X ('%c')", *tok, *tok);
-		error(msg);
-	}
+		error("syntax error. expected EOL, found $%X ('%c')", *tok, *tok);
 
 	return 0;
 }
@@ -46,16 +41,12 @@ void cantcreat(const char * fn)
 
 //
 // Setup for error message
-// o  Create error listing file (if necessary)
-// o  Set current filename
+//  o  Create error listing file (if necessary)
+//  o  Set current filename
 //
 void err_setup(void)
 {
 	char fnbuf[FNSIZ];
-
-// This seems like it's unnecessary, as token.c seems to take care of this all by itself.
-// Can restore if it's really needed. If not, into the bit bucket it goes. :-)
-//	setfnum(cfileno);
 
 	if (err_fname != NULL)
 	{
@@ -75,25 +66,29 @@ void err_setup(void)
 
 
 //
-// Display error message
+// Display error message (uses printf() style variable arguments)
 //
-int error(const char * s)
+int error(const char * text, ...)
 {
 	char buf[EBUFSIZ];
-	unsigned int length;
+	char buf1[EBUFSIZ];
 
 	err_setup();
 
-	if (listing > 0)
-		ship_ln(s);
+	va_list arg;
+	va_start(arg, text);
+	vsprintf(buf, text, arg);
+	va_end(arg);
 
-	sprintf(buf, "%s %d: Error: %s%s", curfname, curlineno, s, nl);
-	length = strlen(buf);
+	if (listing > 0)
+		ship_ln(buf);
+
+	sprintf(buf1, "%s %d: Error: %s\n", curfname, curlineno, buf);
 
 	if (err_flag)
-		unused = write(err_fd, buf, length);
+		unused = write(err_fd, buf1, (LONG)strlen(buf1));
 	else
-		printf("%s", buf);
+		printf("%s", buf1);
 
 	taglist('E');
 	errcnt++;
@@ -102,89 +97,24 @@ int error(const char * s)
 }
 
 
-int errors(const char * s, char * s1)
+//
+// Display warning message (uses printf() style variable arguments)
+//
+int warn(const char * text, ...)
 {
 	char buf[EBUFSIZ];
 	char buf1[EBUFSIZ];
 
 	err_setup();
-	sprintf(buf, s, s1);
+	va_list arg;
+	va_start(arg, text);
+	vsprintf(buf, text, arg);
+	va_end(arg);
 
 	if (listing > 0)
 		ship_ln(buf);
 
-	sprintf(buf1, "%s %d: Error: %s%s", curfname, curlineno, buf, nl);
-
-	if (err_flag)
-		unused = write(err_fd, buf1, (LONG)strlen(buf1));
-	else
-		printf("%s", buf1);
-
-	taglist('E');
-	++errcnt;
-
-	return ERROR;
-}
-
-
-int warn(const char * s)
-{
-	char buf[EBUFSIZ];
-
-	err_setup();
-
-	if (listing > 0)
-		ship_ln(s);
-
-	sprintf(buf, "%s %d: Warning: %s%s", curfname, curlineno, s, nl);
-
-	if (err_flag)
-		unused = write(err_fd, buf, (LONG)strlen(buf));
-	else
-		printf("%s", buf);
-
-	taglist('W');
-
-	return OK;
-}
-
-
-int warns(const char * s, char * s1)
-{
-	char buf[EBUFSIZ];
-	char buf1[EBUFSIZ];
-
-	err_setup();
-	sprintf(buf, s, s1);
-
-	if (listing > 0)
-		ship_ln(s);
-
-	sprintf(buf1, "%s %d: Warning: %s%s", curfname, curlineno, buf, nl);
-
-	if (err_flag)
-		unused = write(err_fd, buf1, (LONG)strlen(buf1));
-	else
-		printf("%s", buf1);
-
-	taglist('W');
-
-	return OK;
-}
-
-
-int warni(const char * s, unsigned i)
-{
-	char buf[EBUFSIZ];
-	char buf1[EBUFSIZ];
-
-	err_setup();
-	sprintf(buf, s, i);
-
-	if (listing > 0)
-		ship_ln(buf);
-
-	sprintf(buf1, "%s %d: Warning: %s%s", curfname, curlineno, buf, nl);
+	sprintf(buf1, "%s %d: Warning: %s\n", curfname, curlineno, buf);
 
 	if (err_flag)
 		unused = write(err_fd, buf1, (LONG)strlen(buf1));
@@ -206,7 +136,7 @@ int fatal(const char * s)
 	if (listing > 0)
 		ship_ln(s);
 
-	sprintf(buf, "%s %d: Fatal: %s%s", curfname, curlineno, s, nl);
+	sprintf(buf, "%s %d: Fatal: %s\n", curfname, curlineno, s);
 
 	if (err_flag)
 		unused = write(err_fd, buf, (LONG)strlen(buf));
@@ -222,7 +152,7 @@ int interror(int n)
 	char buf[EBUFSIZ];
 
 	err_setup();
-	sprintf(buf, "%s %d: Internal Error Number %d%s", curfname, curlineno, n, nl);
+	sprintf(buf, "%s %d: Internal error #%d\n", curfname, curlineno, n);
 
 	if (listing > 0)
 		ship_ln(buf);

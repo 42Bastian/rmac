@@ -163,38 +163,6 @@
 #define ERROUT       2			// Error output
 #define CREATMASK    0
 
-// (Normally) non-printable tokens
-#define COLON        ':'		// : (grumble: GNUmacs hates ':')
-#define CONST        'a'		// CONST <value>
-#define ACONST       'A'		// ACONST <value> <attrib>
-#define STRING       'b'		// STRING <address>
-#define STRINGA8     'S'		// Atari 800 internal STRING <address>
-#define SYMBOL       'c'		// SYMBOL <address>
-#define EOL          'e'		// End of line
-#define TKEOF        'f'		// End of file (or macro)
-#define DEQUALS      'g'		// ==
-#define SET          149		// set
-#define REG          'R'		// reg
-#define EQUREG       148		// equreg
-#define CCDEF        183		// ccdef
-#define DCOLON       'h'		// ::
-#define GE           'i'		// >=
-#define LE           'j'		// <=
-#define NE           'k'		// <> or !=
-#define SHR          'l'		// >>
-#define SHL          'm'		// <<
-#define UNMINUS      'n'		// Unary '-'
-#define DOTB         'B'		// .b or .B or .s or .S
-#define DOTW         'W'		// .w or .W
-#define DOTL         'L'		// .l or .L
-#define DOTI         'I'		// .i or .I
-#define DOTD         'D'		// .d or .D
-#define DOTS         'S'		// .s or .S (FPU Single)
-#define DOTQ         'Q'		// .q oe .Q (FPU Quad)
-#define DOTX         'X'		// .x or .X (FPU Extended)
-#define DOTP         'P'		// .p or .P (FPU Packed)
-#define ENDEXPR      'E'		// End of expression
-
 // Object code formats
 #define ALCYON       0			// Alcyon/DRI C object format
 #define MWC          1			// Mark Williams object format
@@ -256,12 +224,13 @@ PTR
 #define EQUATEDCC    0x0020
 #define UNDEF_CC     0x0040
 
-/* Construct binary constants at compile time
-Code by Tom Torfs */
+// Construct binary constants at compile time
+// Code by Tom Torfs
 
-/* Helper macros */
+// Helper macros
 #define HEX__(n) 0x##n##LU
-#define B8__(x) ((x&0x0000000FLU)?1:0) \
+#define B8__(x) \
+ ((x&0x0000000FLU)?1:0) \
 +((x&0x000000F0LU)?2:0) \
 +((x&0x00000F00LU)?4:0) \
 +((x&0x0000F000LU)?8:0) \
@@ -270,13 +239,12 @@ Code by Tom Torfs */
 +((x&0x0F000000LU)?64:0) \
 +((x&0xF0000000LU)?128:0)
 
-/* User macros */
-#define B8(d) ((unsigned char)B8__(HEX__(d)))
-#define B16(dmsb,dlsb) (((unsigned short)B8(dmsb)<<8) \
-+ B8(dlsb))
-#define B32(dmsb,db2,db3,dlsb) (((unsigned long)B8(dmsb)<<24) \
-+ ((unsigned long)B8(db2)<<16) \
-+ ((unsigned long)B8(db3)<<8) \
+// User macros
+#define B8(d) ((uint8_t)B8__(HEX__(d)))
+#define B16(dmsb,dlsb) (((uint16_t)B8(dmsb)<<8) + B8(dlsb))
+#define B32(dmsb,db2,db3,dlsb) (((uint32_t)B8(dmsb)<<24) \
++ ((uint32_t)B8(db2)<<16) \
++ ((uint32_t)B8(db3)<<8) \
 + B8(dlsb))
 
 // Optimisation defines
