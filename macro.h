@@ -19,9 +19,7 @@ extern TOKEN * argPtrs[];
 void InitMacro(void);
 int ExitMacro(void);
 int DefineMacro(void);
-int defrept(void);
-int lncatch(int (*)(), char *);
-int kwmatch(char *, char *);
+int DefineRept(void);
 int InvokeMacro(SYM *, WORD);
 
 #endif // __MACRO_H__

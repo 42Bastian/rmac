@@ -353,7 +353,7 @@ as68label:
 						goto loop;
 				}
 
-				defrept();
+				DefineRept();
 			}
 
 			goto loop;
