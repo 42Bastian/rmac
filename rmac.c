@@ -401,7 +401,7 @@ int Process(int argc, char ** argv)
 
 					default:
 						printf("-p: syntax error\n");
-						++errcnt;
+						errcnt++;
 						return errcnt;
 				}
 
@@ -449,7 +449,7 @@ int Process(int argc, char ** argv)
 				if (pagelen < 10)
 				{
 					printf("-y: bad page length\n");
-					++errcnt;
+					errcnt++;
 					return errcnt;
 				}
 

@@ -36,8 +36,8 @@
 
 IFENT * ifent;					// Current ifent
 static IFENT ifent0;			// Root ifent
-static IFENT * f_ifent;			// Freelist of ifents
-static int disabled;			// Assembly conditionally disabled
+IFENT * f_ifent;				// Freelist of ifents
+int disabled;					// Assembly conditionally disabled
 int just_bss;					// 1, ds.b in microprocessor mode
 VALUE pcloc;					// Value of "PC" at beginning of line
 SYM * lab_sym;					// Label on line (or NULL)
@@ -294,13 +294,16 @@ as68label:
 		{
 		case MN_IF:
 			d_if();
-		goto loop;
+			goto loop;
+
 		case MN_ELSE:
 			d_else();
 			goto loop;
+
 		case MN_ENDIF:
 			d_endif();
 			goto loop;
+
 		case MN_IIF:						// .iif --- immediate if
 			if (disabled || expr(exprbuf, &eval, &eattr, &esym) != OK)
 				goto loop;
@@ -321,6 +324,7 @@ as68label:
 				goto loop;
 
 			goto loop1;
+
 		case MN_MACRO:						// .macro --- macro definition
 			if (!disabled)
 			{
@@ -332,6 +336,7 @@ as68label:
 			}
 
 			goto loop;
+
 		case MN_EXITM:						// .exitm --- exit macro
 		case MN_ENDM:						// .endm --- same as .exitm
 			if (!disabled)
@@ -343,6 +348,7 @@ as68label:
 			}
 
 			goto loop;
+
 		case MN_REPT:
 			if (!disabled)
 			{
@@ -353,10 +359,11 @@ as68label:
 						goto loop;
 				}
 
-				DefineRept();
+				HandleRept();
 			}
 
 			goto loop;
+
 		case MN_ENDR:
 			if (!disabled)
 				error("mis-nested .endr");
@@ -775,6 +782,8 @@ int HandleLabel(char * label, int labelType)
 
 	lab_sym = symbol;
 
+	// Yes, our CS professors told us to write checks for equality this way,
+	// but damn, it hurts my brain every time I look at it. :-/
 	if (0 == environment)
 		curenv++;
 
@@ -790,78 +799,4 @@ int HandleLabel(char * label, int labelType)
 	return 0;
 }
 
-
-//
-// .if, Start conditional assembly
-//
-int d_if(void)
-{
-	IFENT * rif;
-	WORD eattr;
-	VALUE eval;
-	SYM * esym;
-
-	// Alloc an IFENTRY
-	if ((rif = f_ifent) == NULL)
-		rif = (IFENT *)malloc(sizeof(IFENT));
-	else
-		f_ifent = rif->if_prev;
-
-	rif->if_prev = ifent;
-	ifent = rif;
-
-	if (!disabled)
-	{
-		if (expr(exprbuf, &eval, &eattr, &esym) != OK)
-			return 0;
-
-		if ((eattr & DEFINED) == 0)
-			return error(undef_error);
-
-		disabled = !eval;
-	}
-
-	rif->if_state = (WORD)disabled;
-	return 0;
-}
-
-
-//
-// .else, Do alternate case for .if
-//
-int d_else(void)
-{
-	IFENT * rif = ifent;
-
-	if (rif->if_prev == NULL)
-		return error("mismatched .else");
-
-	if (disabled)
-		disabled = rif->if_prev->if_state;
-	else
-		disabled = 1;
-
-	rif->if_state = (WORD)disabled;
-	return 0;
-}
-
-
-//
-// .endif, End of conditional assembly block
-// This is also called by fpop() to pop levels of IFENTs in case a macro or
-// include file exits early with `exitm' or `end'.
-//
-int d_endif (void)
-{
-	IFENT * rif = ifent;
-
-	if (rif->if_prev == NULL)
-		return error("mismatched .endif");
-
-	ifent = rif->if_prev;
-	disabled = rif->if_prev->if_state;
-	rif->if_prev = f_ifent;
-	f_ifent = rif;
-	return 0;
-}
 

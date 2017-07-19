@@ -1843,3 +1843,78 @@ int d_opt(void)
 	return OK;
 }
 
+
+//
+// .if, Start conditional assembly
+//
+int d_if(void)
+{
+	WORD eattr;
+	VALUE eval;
+	SYM * esym;
+	IFENT * rif = f_ifent;
+
+	// Alloc an IFENTRY
+	if (rif == NULL)
+		rif = (IFENT *)malloc(sizeof(IFENT));
+	else
+		f_ifent = rif->if_prev;
+
+	rif->if_prev = ifent;
+	ifent = rif;
+
+	if (!disabled)
+	{
+		if (expr(exprbuf, &eval, &eattr, &esym) != OK)
+			return 0;
+
+		if ((eattr & DEFINED) == 0)
+			return error(undef_error);
+
+		disabled = !eval;
+	}
+
+	rif->if_state = (WORD)disabled;
+	return 0;
+}
+
+
+//
+// .else, Do alternate case for .if
+//
+int d_else(void)
+{
+	IFENT * rif = ifent;
+
+	if (rif->if_prev == NULL)
+		return error("mismatched .else");
+
+	if (disabled)
+		disabled = rif->if_prev->if_state;
+	else
+		disabled = 1;
+
+	rif->if_state = (WORD)disabled;
+	return 0;
+}
+
+
+//
+// .endif, End of conditional assembly block
+// This is also called by fpop() to pop levels of IFENTs in case a macro or
+// include file exits early with `exitm' or `end'.
+//
+int d_endif(void)
+{
+	IFENT * rif = ifent;
+
+	if (rif->if_prev == NULL)
+		return error("mismatched .endif");
+
+	ifent = rif->if_prev;
+	disabled = rif->if_prev->if_state;
+	rif->if_prev = f_ifent;
+	f_ifent = rif;
+	return 0;
+}
+

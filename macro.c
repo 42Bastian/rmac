@@ -26,8 +26,8 @@ static LONG macuniq;		// Unique-per-macro number
 static SYM * curmac;		// Macro currently being defined
 static VALUE argno;			// Formal argument count
 
-static LONG * firstrpt;		// First .rept line
-static LONG * nextrpt;		// Last .rept line
+static LLIST * firstrpt;	// First .rept line
+static LLIST * nextrpt;		// Last .rept line
 static int rptlevel;		// .rept nesting level
 
 // Function prototypes
@@ -55,7 +55,6 @@ void InitMacro(void)
 int ExitMacro(void)
 {
 WARNING(!!! Bad macro exiting !!!)
-
 /*
 This is a problem. Currently, the argument logic just keeps the current
 arguments and doesn't save anything if a new macro is called in the middle
@@ -91,12 +90,10 @@ of another (nested macros). Need to fix that somehow.
 //
 int defmac2(char * argname)
 {
-	SYM * arg;
-
 	if (lookup(argname, MACARG, (int)curmac->sattr) != NULL)
 		return error("multiple formal argument definition");
 
-	arg = NewSymbol(argname, MACARG, (int)curmac->sattr);
+	SYM * arg = NewSymbol(argname, MACARG, (int)curmac->sattr);
 	arg->svalue = argno++;
 
 	return OK;
@@ -154,14 +151,14 @@ safety features of the language. Seems like we can do better here.
 #else
 		if (curmac->lineList == NULL)
 		{
-			curmac->lineList = malloc(sizeof(struct LineList));
+			curmac->lineList = malloc(sizeof(LLIST));
 			curmac->lineList->next = NULL;
 			curmac->lineList->line = strdup(ln);
 			curmac->last = curmac->lineList;
 		}
 		else
 		{
-			curmac->last->next = malloc(sizeof(struct LineList));
+			curmac->last->next = malloc(sizeof(LLIST));
 			curmac->last->next->next = NULL;
 			curmac->last->next->line = strdup(ln);
 			curmac->last = curmac->last->next;
@@ -227,53 +224,63 @@ int DefineMacro(void)
 //
 // Add lines to a .rept definition
 //
-int defr1(char * ln, int kwno)
+int defr1(char * line, int kwno)
 {
 	if (list_flag)
 	{
-		listeol();				// Flush previous source line
-		lstout('#');			// Mark this a 'rept' block
+		listeol();			// Flush previous source line
+		lstout('#');		// Mark this a 'rept' block
 	}
 
-	switch (kwno)
+	if (kwno == 0)			// .endr
 	{
-	case 0:						// .endr
 		if (--rptlevel == 0)
 			return 0;
-
-		break;
-	case 1:						// .rept
-		rptlevel++;
 	}
+	else if (kwno == 1)		// .rept
+		rptlevel++;
 
+//DEBUG { printf("  defr1: line=\"%s\", kwno=%d, rptlevel=%d\n", line, kwno, rptlevel); }
+
+#if 0
 //MORE stupidity here...
 WARNING("!!! Casting (char *) as LONG !!!")
 	// Allocate length of line + 1('\0') + LONG
-	LONG len = strlen(ln) + 1 + sizeof(LONG);
-	LONG * p = (LONG *)malloc(len);
+	LONG * p = (LONG *)malloc(strlen(line) + 1 + sizeof(LONG));
 	*p = 0;
-
-	strcpy((char *)(p + 1), ln);
+	strcpy((char *)(p + 1), line);
 
 	if (nextrpt == NULL)
-	{
 		firstrpt = p;		// First line of rept statement
+	else
+		*nextrpt = (LONG)p;
+
+	nextrpt = p;
+#else
+	if (firstrpt == NULL)
+	{
+		firstrpt = malloc(sizeof(LLIST));
+		firstrpt->next = NULL;
+		firstrpt->line = strdup(line);
+		nextrpt = firstrpt;
 	}
 	else
 	{
-		*nextrpt = (LONG)p;
+		nextrpt->next = malloc(sizeof(LLIST));
+		nextrpt->next->next = NULL;
+		nextrpt->next->line = strdup(line);
+		nextrpt = nextrpt->next;
 	}
-
-	nextrpt = p;
+#endif
 
 	return rptlevel;
 }
 
 
 //
-// Define a .rept block, this gets hairy because they can be nested
+// Handle a .rept block; this gets hairy because they can be nested
 //
-int DefineRept(void)
+int HandleRept(void)
 {
 	VALUE eval;
 
@@ -287,6 +294,7 @@ int DefineRept(void)
 	rptlevel = 1;
 	LNCatch(defr1, "endr rept ");
 
+//DEBUG { printf("HandleRept: firstrpt=$%X\n", firstrpt); }
 	// Alloc and init input object
 	if (firstrpt)
 	{
@@ -303,12 +311,11 @@ int DefineRept(void)
 
 //
 // Hand off lines of text to the function 'lnfunc' until a line containing one
-// of the directives in 'dirlist' is encountered. Return the number of the
-// keywords encountered (0..n)
+// of the directives in 'dirlist' is encountered.
 //
-// 'dirlist' contains null-seperated terminated keywords.  A final null
-// terminates the list. Directives are compared to the keywords without regard
-// to case.
+// 'dirlist' contains space-separated terminated keywords. A final space
+// terminates the list. Directives are case-insensitively compared to the
+// keywords.
 //
 // If 'lnfunc' is NULL, then lines are simply skipped.
 // If 'lnfunc' returns an error, processing is stopped.
@@ -319,13 +326,10 @@ int DefineRept(void)
 //
 static int LNCatch(int (* lnfunc)(), char * dirlist)
 {
-	char * p;
-	int k;
-
 	if (lnfunc != NULL)
 		lnsave++;			// Tell tokenizer to keep lines
 
-	for(;;)
+	while (1)
 	{
 		if (TokenizeLine() == TKEOF)
 		{
@@ -336,25 +340,28 @@ static int LNCatch(int (* lnfunc)(), char * dirlist)
 		// Test for end condition.  Two cases to handle:
 		//            <directive>
 		//    symbol: <directive>
-		p = NULL;
-		k = -1;
+		char * p = NULL;
+		int k = -1;
 
 		if (*tok == SYMBOL)
 		{
+			// A string followed by a colon or double colon is a symbol and
+			// *not* a directive, see if we can find the directive after it
 			if ((tok[2] == ':' || tok[2] == DCOLON))
 			{
-				if (tok[3] == SYMBOL)	// label: symbol
+				if (tok[3] == SYMBOL)
 					p = string[tok[4]];
 			}
 			else
 			{
-				p = string[tok[1]];		// Symbol
+				// Otherwise, just grab the directive
+				p = string[tok[1]];
 			}
 		}
 
 		if (p != NULL)
 		{
-			if (*p == '.')		// ignore leading '.'s
+			if (*p == '.')		// Ignore leading periods
 				p++;
 
 			k = KWMatch(p, dirlist);
@@ -366,7 +373,7 @@ static int LNCatch(int (* lnfunc)(), char * dirlist)
 		if (lnfunc != NULL)
 			k = (*lnfunc)(lnbuf, k);
 
-		if (!k)
+		if (k == 0)
 			break;
 	}
 
@@ -378,8 +385,8 @@ static int LNCatch(int (* lnfunc)(), char * dirlist)
 
 
 //
-// See if the string `kw' matches one of the keywords in `kwlist'.  If so,
-// return the number of the keyword matched.  Return -1 if there was no match.
+// See if the string `kw' matches one of the keywords in `kwlist'. If so,
+// return the number of the keyword matched. Return -1 if there was no match.
 // Strings are compared without regard for case.
 //
 static int KWMatch(char * kw, char * kwlist)

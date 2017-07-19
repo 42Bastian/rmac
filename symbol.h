@@ -12,9 +12,10 @@
 #include <inttypes.h>
 
 // Line lists
-struct LineList
+#define LLIST struct _llist
+LLIST
 {
-	struct LineList * next;
+	LLIST * next;
 	uint8_t * line;
 };
 
@@ -22,18 +23,18 @@ struct LineList
 #define SYM struct _sym
 SYM
 {
-	SYM * snext;					// * -> Next symbol on hash-chain
-	SYM * sorder;					// * -> Next sym in order of reference
-	SYM * sdecl;					// * -> Next sym in order of declaration
-	uint8_t stype;					// Symbol type
-	uint16_t sattr;					// Attribute bits
-	uint32_t sattre;				// Extended attribute bits
-	uint16_t senv;					// Enviroment number
-	uint32_t svalue;				// Symbol value
-	uint8_t * sname;				// * -> Symbol's print-name
-	struct LineList * lineList;		// * -> Macro's linked list of lines
-	struct LineList * last;			// * -> end of macro linked list
-	uint32_t uid;					// Symbol's unique ID
+	SYM * snext;			// * -> Next symbol on hash-chain
+	SYM * sorder;			// * -> Next sym in order of reference
+	SYM * sdecl;			// * -> Next sym in order of declaration
+	uint8_t stype;			// Symbol type
+	uint16_t sattr;			// Attribute bits
+	uint32_t sattre;		// Extended attribute bits
+	uint16_t senv;			// Enviroment number
+	uint32_t svalue;		// Symbol value
+	uint8_t * sname;		// * -> Symbol's print-name
+	LLIST * lineList;		// * -> Macro's linked list of lines
+	LLIST * last;			// * -> end of macro linked list
+	uint32_t uid;			// Symbol's unique ID
 };
 
 // Exported variables

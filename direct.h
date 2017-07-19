@@ -29,5 +29,9 @@ int d_phrase(void);
 int d_dphrase(void);
 int d_qphrase(void);
 
+int d_if(void);
+int d_else(void);
+int d_endif(void);
+
 #endif // __DIRECT_H__
 

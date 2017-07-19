@@ -90,7 +90,7 @@ IFENT {
 	WORD if_state;			// 0:enabled, 1:disabled
 };
 
-// Pointer to IFILE or IMACRO
+// Pointer to IFILE or IMACRO or IREPT
 IUNION {
 	IFILE * ifile;
 	IMACRO * imacro;
@@ -99,12 +99,12 @@ IUNION {
 
 // Ptr to IFILEs, IMACROs, and so on; back-ptr to previous input objects
 INOBJ {
-	WORD in_type;			// 0=IFILE, 1=IMACRO ...
+	WORD in_type;			// 0=IFILE, 1=IMACRO, 2=IREPT
 	IFENT * in_ifent;		// Pointer to .if context on entry
 	INOBJ * in_link;		// Pointer to previous INOBJ
 	TOKEN * in_otok;		// Old `tok' value
 	TOKEN * in_etok;		// Old `etok' value
-	IUNION inobj;			// IFILE or IMACRO ...
+	IUNION inobj;			// IFILE or IMACRO or IREPT
 };
 
 // Information about a file
@@ -128,7 +128,7 @@ TOKENSTREAM {
 // Information about a macro invocation
 IMACRO {
 	IMACRO * im_link;		// Pointer to ancient IMACROs
-	struct LineList * im_nextln;	// Next line to include
+	LLIST * im_nextln;	// Next line to include
 	WORD im_nargs;			// # of arguments supplied on invocation
 	WORD im_siz;			// Size suffix supplied on invocation
 	LONG im_olduniq;		// Old value of 'macuniq'
@@ -140,8 +140,8 @@ IMACRO {
 
 // Information about a .rept invocation
 IREPT {
-	LONG * ir_firstln;		// Pointer to first line
-	LONG * ir_nextln;		// Pointer to next line
+	LLIST * ir_firstln;		// Pointer to first line
+	LLIST * ir_nextln;		// Pointer to next line
 	VALUE ir_count;			// Repeat count (decrements)
 };
 

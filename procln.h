@@ -13,7 +13,6 @@
 #include "token.h"
 
 // Exported variables
-extern IFENT * ifent;
 extern const char comma_error[];
 extern const char locgl_error[];
 extern const char syntax_error[];
@@ -22,13 +21,13 @@ extern int just_bss;
 extern VALUE pcloc;
 extern SYM * lab_sym;
 extern LONG amsktab[];
+extern IFENT * ifent;
+extern IFENT * f_ifent;
+extern int disabled;
 
 // Exported functions
 void InitLineProcessor(void);
 void Assemble(void);
-int d_if(void);
-int d_else(void);
-int d_endif(void);
 
 #endif // __PROCLN_H__
 

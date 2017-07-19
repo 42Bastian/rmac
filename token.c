@@ -282,6 +282,7 @@ INOBJ * a_inobj(int typ)
 
 		inobj->inobj.ifile = ifile;
 		break;
+
 	case SRC_IMACRO:						// Alloc and init an IMACRO
 		if (f_imacro == NULL)
 			imacro = malloc(sizeof(IMACRO));
@@ -293,6 +294,7 @@ INOBJ * a_inobj(int typ)
 
 		inobj->inobj.imacro = imacro;
 		break;
+
 	case SRC_IREPT:							// Alloc and init an IREPT
 		inobj->inobj.irept = malloc(sizeof(IREPT));
 		DEBUG { printf("alloc IREPT\n"); }
@@ -680,7 +682,7 @@ char * GetNextMacroLine(void)
 {
 	IMACRO * imacro = cur_inobj->inobj.imacro;
 //	LONG * strp = imacro->im_nextln;
-	struct LineList * strp = imacro->im_nextln;
+	LLIST * strp = imacro->im_nextln;
 
 	if (strp == NULL)						// End-of-macro
 		return NULL;
@@ -699,10 +701,11 @@ char * GetNextMacroLine(void)
 char * GetNextRepeatLine(void)
 {
 	IREPT * irept = cur_inobj->inobj.irept;
-	LONG * strp = irept->ir_nextln;			// initial null
+//	LONG * strp = irept->ir_nextln;			// initial null
 
 	// Do repeat at end of .rept block's string list
-	if (strp == NULL)
+//	if (strp == NULL)
+	if (irept->ir_nextln == NULL)
 	{
 		DEBUG { printf("back-to-top-of-repeat-block count=%d\n", (int)irept->ir_count); }
 		irept->ir_nextln = irept->ir_firstln;	// copy first line
@@ -713,12 +716,14 @@ char * GetNextRepeatLine(void)
 			return NULL;
 		}
 
-		strp = irept->ir_nextln;
+//		strp = irept->ir_nextln;
 	}
 
-	strcpy(irbuf, (char *)(irept->ir_nextln + 1));
-	DEBUG printf("repeat line='%s'\n", irbuf);
-	irept->ir_nextln = (LONG *)*strp;
+//	strcpy(irbuf, (char *)(irept->ir_nextln + 1));
+	strcpy(irbuf, irept->ir_nextln->line);
+	DEBUG { printf("repeat line='%s'\n", irbuf); }
+//	irept->ir_nextln = (LONG *)*strp;
+	irept->ir_nextln = irept->ir_nextln->next;
 
 	return irbuf;
 }
@@ -736,16 +741,16 @@ int include(int handle, char * fname)
 	INOBJ * inobj = a_inobj(SRC_IFILE);
 	IFILE * ifile = inobj->inobj.ifile;
 
-	ifile->ifhandle = handle;				// Setup file handle
-	ifile->ifind = ifile->ifcnt = 0;		// Setup buffer indices
-	ifile->ifoldlineno = curlineno;			// Save old line number
-	ifile->ifoldfname = curfname;			// Save old filename
-	ifile->ifno = cfileno;					// Save old file number
+	ifile->ifhandle = handle;			// Setup file handle
+	ifile->ifind = ifile->ifcnt = 0;	// Setup buffer indices
+	ifile->ifoldlineno = curlineno;		// Save old line number
+	ifile->ifoldfname = curfname;		// Save old filename
+	ifile->ifno = cfileno;				// Save old file number
 
 	// NB: This *must* be preincrement, we're adding one to the filecount here!
-	cfileno = ++filecount;					// Compute NEW file number
-	curfname = strdup(fname);				// Set current filename (alloc storage)
-	curlineno = 0;							// Start on line zero
+	cfileno = ++filecount;				// Compute NEW file number
+	curfname = strdup(fname);			// Set current filename (alloc storage)
+	curlineno = 0;						// Start on line zero
 
 	// Add another file to the file-record
 	FILEREC * fr = (FILEREC *)malloc(sizeof(FILEREC));
@@ -753,9 +758,9 @@ int include(int handle, char * fname)
 	fr->frec_name = curfname;
 
 	if (last_fr == NULL)
-		filerec = fr;						// Add first filerec
+		filerec = fr;					// Add first filerec
 	else
-		last_fr->frec_next = fr;			// Append to list of filerecs
+		last_fr->frec_next = fr;		// Append to list of filerecs
 
 	last_fr = fr;
 	DEBUG { printf("[include: curfname: %s, cfileno=%u]\n", curfname, cfileno); }
@@ -769,72 +774,84 @@ int include(int handle, char * fname)
 //
 int fpop(void)
 {
-	IFILE * ifile;
-	IMACRO * imacro;
-	LONG * p, * p1;
 	INOBJ * inobj = cur_inobj;
 
-	if (inobj != NULL)
+	if (inobj == NULL)
+		return 0;
+
+	// Pop IFENT levels until we reach the conditional assembly context we
+	// were at when the input object was entered.
+	int numUnmatched = 0;
+
+	while (ifent != inobj->in_ifent)
 	{
-		// Pop IFENT levels until we reach the conditional assembly context we
-		// were at when the input object was entered.
-		int numUnmatched = 0;
+		if (d_endif() != 0)	// Something bad happened during endif parsing?
+			return -1;		// If yes, bail instead of getting stuck in a loop
 
-		while (ifent != inobj->in_ifent)
-		{
-			if (d_endif() != 0)		// Something bad happened during endif parsing?
-				return -1;			// If yes, bail instead of getting stuck in a loop
+		numUnmatched++;
+	}
 
-			numUnmatched++;
-		}
+	// Give a warning to the user that we had to wipe their bum for them
+	if (numUnmatched > 0)
+		warn("missing %d .endif(s)", numUnmatched);
 
-		// Give a warning to the user that we had to wipe their bum for them
-		if (numUnmatched > 0)
-			warn("missing %d .endif(s)", numUnmatched);
+	tok = inobj->in_otok;	// Restore tok and otok
+	etok = inobj->in_etok;
 
-		tok = inobj->in_otok;		// Restore tok and otok
-		etok = inobj->in_etok;
+	switch (inobj->in_type)
+	{
+	case SRC_IFILE:			// Pop and release an IFILE
+	{
+		DEBUG { printf("[Leaving: %s]\n", curfname); }
 
-		switch (inobj->in_type)
-		{
-		case SRC_IFILE:				// Pop and release an IFILE
-			DEBUG { printf("[Leaving: %s]\n", curfname); }
-
-			ifile = inobj->inobj.ifile;
-			ifile->if_link = f_ifile;
-			f_ifile = ifile;
-			close(ifile->ifhandle);			// Close source file
+		IFILE * ifile = inobj->inobj.ifile;
+		ifile->if_link = f_ifile;
+		f_ifile = ifile;
+		close(ifile->ifhandle);			// Close source file
 DEBUG { printf("[fpop (pre):  curfname=%s]\n", curfname); }
-			curfname = ifile->ifoldfname;	// Set current filename
+		curfname = ifile->ifoldfname;	// Set current filename
 DEBUG { printf("[fpop (post): curfname=%s]\n", curfname); }
 DEBUG { printf("[fpop: (pre)  cfileno=%d ifile->ifno=%d]\n", (int)cfileno, (int)ifile->ifno); }
-			curlineno = ifile->ifoldlineno;	// Set current line#
-			DEBUG printf("cfileno=%d ifile->ifno=%d\n", (int)cfileno, (int)ifile->ifno);
-			cfileno = ifile->ifno;			// Restore current file number
+		curlineno = ifile->ifoldlineno;	// Set current line#
+		DEBUG { printf("cfileno=%d ifile->ifno=%d\n", (int)cfileno, (int)ifile->ifno); }
+		cfileno = ifile->ifno;			// Restore current file number
 DEBUG { printf("[fpop: (post) cfileno=%d ifile->ifno=%d]\n", (int)cfileno, (int)ifile->ifno); }
-			break;
-		case SRC_IMACRO:					// Pop and release an IMACRO
-			imacro = inobj->inobj.imacro;
-			imacro->im_link = f_imacro;
-			f_imacro = imacro;
-			break;
-		case SRC_IREPT:						// Pop and release an IREPT
-			DEBUG printf("dealloc IREPT\n");
-			p = inobj->inobj.irept->ir_firstln;
+		break;
+	}
 
-			while (p != NULL)
-			{
-				p1 = (LONG *)*p;
-				p = p1;
-			}
+	case SRC_IMACRO:					// Pop and release an IMACRO
+	{
+		IMACRO * imacro = inobj->inobj.imacro;
+		imacro->im_link = f_imacro;
+		f_imacro = imacro;
+		break;
+	}
 
-			break;
+	case SRC_IREPT:						// Pop and release an IREPT
+	{
+		DEBUG { printf("dealloc IREPT\n"); }
+//		LONG * p = inobj->inobj.irept->ir_firstln;
+		LLIST * p = inobj->inobj.irept->ir_firstln;
+
+		// Deallocate repeat lines
+		while (p != NULL)
+		{
+// Shamus: ggn confirmed that this will cause a segfault on 64-bit versions of
+//         RMAC. This is just stupid and wrong anyway, so we need to fix crapola
+//         like this...
+//			LONG * p1 = (LONG *)*p;
+//			p = p1;
+			free(p->line);
+			p = p->next;
 		}
 
-		cur_inobj = inobj->in_link;
-		inobj->in_link = f_inobj;
-		f_inobj = inobj;
+		break;
 	}
+	}
+
+	cur_inobj = inobj->in_link;
+	inobj->in_link = f_inobj;
+	f_inobj = inobj;
 
 	return 0;
 }
@@ -971,7 +988,7 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 				goto retry;					// Try for more lines
 			else
 			{
-				ifent->if_prev = (IFENT *) - 1;	//Signal Assemble() that we have reached EOF with unbalanced if/endifs
+				ifent->if_prev = (IFENT *)-1;	//Signal Assemble() that we have reached EOF with unbalanced if/endifs
 				return TKEOF;
 			}
 		}
@@ -1000,20 +1017,22 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 		}
 
 		break;
+
 	// Macro-block:
 	// o  Handle end-of-macro;
 	// o  tag the listing-line with an at (@) sign.
 	case SRC_IMACRO:
 		if ((ln = GetNextMacroLine()) == NULL)
 		{
-			if (ExitMacro() == 0)			// Exit macro (pop args, do fpop(), etc)
-				goto retry;					// Try for more lines...
+			if (ExitMacro() == 0)	// Exit macro (pop args, do fpop(), etc)
+				goto retry;			// Try for more lines...
 			else
-				return TKEOF;				// Oops, we got a non zero return code, signal EOF
+				return TKEOF;		// Oops, we got a non zero return code, signal EOF
 		}
 
 		lntag = '@';
 		break;
+
 	// Repeat-block:
 	// o  Handle end-of-repeat-block;
 	// o  tag the listing-line with a pound (#) sign.
@@ -1029,13 +1048,13 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n"); }
 		break;
 	}
 
-	// Save text of the line.  We only do this during listings and within
+	// Save text of the line. We only do this during listings and within
 	// macro-type blocks, since it is expensive to unconditionally copy every
 	// line.
 	if (lnsave)
 		strcpy(lnbuf, ln);
 
-	// General house-keeping
+	// General housekeeping
 	tok = tokeol;			// Set "tok" to EOL in case of error
 	tk = etok;				// Reset token ptr
 	stuffnull = 0;			// Don't stuff nulls
@@ -1603,7 +1622,7 @@ int d_goto(WORD unused)
 		return error("goto not in macro");
 
 	IMACRO * imacro = cur_inobj->inobj.imacro;
-	struct LineList * defln = imacro->im_macro->lineList;
+	LLIST * defln = imacro->im_macro->lineList;
 
 	// Attempt to find the label, starting with the first line.
 	for(; defln!=NULL; defln=defln->next)
