@@ -127,6 +127,7 @@
 				{
 					if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
 						return error("scale factor expression must evaluate");
+
 					switch (AnEXVAL)
 					{
 					case 1:
@@ -142,7 +143,7 @@
 						break;
 					default:
 						goto badmode;
-			}
+					}
 				}
 				else if (*tok++ != CONST || *tok > 8)
 					goto badmode;
@@ -228,13 +229,14 @@
 			}
 
 			if (*tok == '*')
-			{                                  // scale: *1, *2, *4, *8
+			{                        // scale: *1, *2, *4, *8
 				tok++;
 
 				if (*tok == SYMBOL)
 				{
 					if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
 						return error("scale factor expression must evaluate");
+
 					switch (AnEXVAL)
 					{
 					case 1:
@@ -307,12 +309,12 @@
 					AnEXTEN|=EXT_BDSIZE0;
 				}
 				else if (*tok==DOTL)
-				{						   // ([bd.l,...
+				{						// ([bd.l,...
 						AnEXTEN|=EXT_BDSIZEL;
 						tok++;
 				}
 				else
-				{						   // ([bd[.w],... or ([bd,...
+				{						// ([bd[.w],... or ([bd,...
 					// Is .W forced here?
 					if (*tok == DOTW)
 					{
@@ -488,8 +490,8 @@
 				{
 					//No index found, suppress it
 					AnEXTEN |= EXT_IS;
-					tok--;							// Rewind tok to point to the comma
-					goto IS_SUPPRESSEDn;			// https://xkcd.com/292/ - what does he know anyway?
+					tok--;					// Rewind tok to point to the comma
+					goto IS_SUPPRESSEDn;	// https://xkcd.com/292/ - what does he know anyway?
 				}
 
 				// Check for size
@@ -522,21 +524,22 @@
 					{
 						if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
 							return error("scale factor expression must evaluate");
+
 						switch (AnEXVAL)
-					{
-					case 1:
-						break;
-					case 2:
+						{
+						case 1:
+							break;
+						case 2:
 							AnIXSIZ |= TIMES2;
-						break;
-					case 4:
+							break;
+						case 4:
 							AnIXSIZ |= TIMES4;
-						break;
-					case 8:
+							break;
+						case 8:
 							AnIXSIZ |= TIMES8;
-						break;
-					default:
-						goto badmode;
+							break;
+						default:
+							goto badmode;
 						}
 					}
 					else if (*tok++ != CONST || *tok > 8)
@@ -911,7 +914,7 @@
 				}
 				else if (*tok == ')')
 				{
-					AMn = PCDISP;                                // expr(PC)
+					AMn = PCDISP;             // expr(PC)
 					tok++;
 					goto AnOK;
 				}
@@ -1052,6 +1055,7 @@ CHK_FOR_DISPn:
 			AMn = PCINDEXED;
 			goto AMn_IXN;
 		}
+
 		goto badmode;
 	}
 
