@@ -303,7 +303,7 @@
 			else
 			{
 				expr(AnBEXPR, &AnBEXVAL, &AnBEXATTR, &AnESYM);
-				if (optim_flags[OPT_BASE_DISP] && AnBEXVAL==0 && AnEXATTR!=0)
+				if (CHECK_OPTS(OPT_BASE_DISP) && AnBEXVAL==0 && AnEXATTR!=0)
 				{
 					// bd=0 so let's optimise it out
 					AnEXTEN|=EXT_BDSIZE0;
@@ -325,7 +325,7 @@
 					{
 						// Defined, absolute values from $FFFF8000..$00007FFF get optimized
 						// to absolute short
-						if (optim_flags[OPT_ABS_SHORT]
+						if (CHECK_OPTS(OPT_ABS_SHORT)
 							&& ((AnBEXATTR & (TDB | DEFINED)) == DEFINED)
 							&& ((AnBEXVAL + 0x8000) < 0x10000))
 						{
@@ -583,7 +583,7 @@
 				if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
 					goto badmode;
 
-				if (optim_flags[OPT_BASE_DISP] && (AnEXVAL == 0))
+				if (CHECK_OPTS(OPT_BASE_DISP) && (AnEXVAL == 0))
 				{
 					// od=0 so optimise it out
 					AMn = MEMPOST;		 // let's say it's ([bd,An],Xn,od) with od=0 then
@@ -601,7 +601,7 @@
 
 					// Defined, absolute values from $FFFF8000..$00007FFF get
 					// optimized to absolute short
-					if (optim_flags[OPT_ABS_SHORT]
+					if (CHECK_OPTS(OPT_ABS_SHORT)
 						&& ((AnEXATTR & (TDB | DEFINED)) == DEFINED)
 						&& ((AnEXVAL + 0x8000) < 0x10000))
 					{
@@ -654,7 +654,7 @@
 
 				expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM);
 
-				if (optim_flags[OPT_BASE_DISP] && (AnEXVAL == 0))
+				if (CHECK_OPTS(OPT_BASE_DISP) && (AnEXVAL == 0))
 				{
 					// od=0 so optimise it out
 					AMn = MEMPOST;		 // let's say it's ([bd,An],Xn,od) with od=0 then
@@ -685,7 +685,7 @@
 
 					// Defined, absolute values from $FFFF8000..$00007FFF get
 					// optimized to absolute short
-					else if (optim_flags[OPT_BASE_DISP]
+					else if (CHECK_OPTS(OPT_BASE_DISP)
 						&& ((AnEXATTR & (TDB | DEFINED)) == DEFINED)
 						&& ((AnEXVAL + 0x8000) < 0x10000))
 					{
@@ -814,7 +814,7 @@
 				if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
 					goto badmode;
 
-				if (optim_flags[OPT_BASE_DISP] && (AnEXVAL == 0))
+				if (CHECK_OPTS(OPT_BASE_DISP) && (AnEXVAL == 0))
 				{
 					// od=0 so optimise it out
 					AMn = MEMPRE;		 // let's say it's ([bd,An],Xn,od) with od=0 then
@@ -847,7 +847,7 @@
 
 					// Defined, absolute values from $FFFF8000..$00007FFF get optimized
 					// to absolute short
-					else if (optim_flags[OPT_BASE_DISP]
+					else if (CHECK_OPTS(OPT_BASE_DISP)
 						&& ((AnEXATTR & (TDB | DEFINED)) == DEFINED)
 						&& ((AnEXVAL + 0x8000) < 0x10000))
 					{
@@ -1007,7 +1007,7 @@ CHK_FOR_DISPn:
 
 			// Defined, absolute values from $FFFF8000..$00007FFF get optimized
 			// to absolute short
-			if (optim_flags[OPT_ABS_SHORT]
+			if (CHECK_OPTS(OPT_ABS_SHORT)
 				&& ((AnEXATTR & (TDB | DEFINED)) == DEFINED)
 				&& ((AnEXVAL + 0x8000) < 0x10000))
 			{

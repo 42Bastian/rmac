@@ -84,6 +84,9 @@
 #define MULTX           64			// Multiple-character tokens
 #define DOT             128			// [bwlsBWSL] for what follows a '.'
 
+// Macro to check for specific optimizations or override
+#define CHECK_OPTS(x)	(optim_flags[x] && !optimizeOff)
+
 // Conditional assembly structures
 IFENT {
 	IFENT * if_prev;		// Ptr prev .if state block (or NULL)
@@ -156,6 +159,7 @@ extern char tolowertab[];
 extern INOBJ * cur_inobj;
 extern int mjump_align;
 extern char * string[];
+int optimizeOff;
 
 // Exported functions
 int include(int, char *);

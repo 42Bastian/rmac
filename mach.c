@@ -13,7 +13,6 @@
 #include "error.h"
 #include "procln.h"
 #include "riscasm.h"
-//#include "rmac.h"
 #include "sect.h"
 #include "token.h"
 
@@ -469,7 +468,7 @@ int m_ea(WORD inst, WORD siz)
 //
 int m_lea(WORD inst, WORD siz)
 {
-	if (optim_flags[OPT_LEA_ADDQ]
+	if (CHECK_OPTS(OPT_LEA_ADDQ)
 		&& ((am0 == ADISP) && (a0reg == a1reg) && (a0exattr & DEFINED))
 		&& ((a0exval > 0) && (a0exval <= 8)))
 	{
@@ -820,7 +819,7 @@ int m_move(WORD inst, WORD size)
 	int siz = (int)size;
 
 	// Try to optimize to MOVEQ
-	if (optim_flags[OPT_MOVEL_MOVEQ]
+	if (CHECK_OPTS(OPT_MOVEL_MOVEQ)
 		&& (siz == SIZL) && (am0 == IMMED) && (am1 == DREG)
 		&& ((a0exattr & (TDB | DEFINED)) == DEFINED)
 		&& (a0exval + 0x80 < 0x100))
@@ -981,7 +980,7 @@ int m_br(WORD inst, WORD siz)
 		// Optimize branch instr. size
 		if (siz == SIZN)
 		{
-			if (optim_flags[OPT_BSR_BCC_S] && (v != 0) && ((v + 0x80) < 0x100))
+			if (CHECK_OPTS(OPT_BSR_BCC_S) && (v != 0) && ((v + 0x80) < 0x100))
 			{
 				// Fits in .B
 				inst |= v & 0xFF;

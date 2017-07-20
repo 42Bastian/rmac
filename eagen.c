@@ -14,6 +14,7 @@
 #include "mach.h"
 #include "riscasm.h"
 #include "sect.h"
+#include "token.h"
 
 #define eaNgen    ea0gen
 #define amN       am0

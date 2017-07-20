@@ -36,6 +36,7 @@ TOKEN * tok;				// Ptr to current token
 TOKEN * etok;				// Ptr past last token in tokbuf[]
 TOKEN tokeol[1] = {EOL};	// Bailout end-of-line token
 char * string[TOKBUFSIZE*2];	// Token buffer string pointer storage
+int optimizeOff;			// Optimization override flag
 
 // File record, used to maintain a list of every include file ever visited
 #define FILEREC struct _filerec
@@ -48,12 +49,12 @@ FILEREC
 FILEREC * filerec;
 FILEREC * last_fr;
 
-INOBJ * cur_inobj;						// Ptr current input obj (IFILE/IMACRO)
-static INOBJ * f_inobj;					// Ptr list of free INOBJs
-static IFILE * f_ifile;					// Ptr list of free IFILEs
-static IMACRO * f_imacro;				// Ptr list of free IMACROs
+INOBJ * cur_inobj;			// Ptr current input obj (IFILE/IMACRO)
+static INOBJ * f_inobj;		// Ptr list of free INOBJs
+static IFILE * f_ifile;		// Ptr list of free IFILEs
+static IMACRO * f_imacro;	// Ptr list of free IMACROs
 
-static TOKEN tokbuf[TOKBUFSIZE];		// Token buffer (stack-like, all files)
+static TOKEN tokbuf[TOKBUFSIZE];	// Token buffer (stack-like, all files)
 
 uint8_t chrtab[0x100] = {
 	ILLEG, ILLEG, ILLEG, ILLEG,			// NUL SOH STX ETX
@@ -824,17 +825,11 @@ DEBUG { printf("[fpop: (post) cfileno=%d ifile->ifno=%d]\n", (int)cfileno, (int)
 	case SRC_IREPT:						// Pop and release an IREPT
 	{
 		DEBUG { printf("dealloc IREPT\n"); }
-//		LONG * p = inobj->inobj.irept->ir_firstln;
 		LLIST * p = inobj->inobj.irept->ir_firstln;
 
 		// Deallocate repeat lines
 		while (p != NULL)
 		{
-// Shamus: ggn confirmed that this will cause a segfault on 64-bit versions of
-//         RMAC. This is just stupid and wrong anyway, so we need to fix crapola
-//         like this...
-//			LONG * p1 = (LONG *)*p;
-//			p = p1;
 			free(p->line);
 			p = p->next;
 		}
@@ -1033,7 +1028,7 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 	case SRC_IREPT:
 		if ((ln = GetNextRepeatLine()) == NULL)
 		{
-DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n"); }
+			DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n"); }
 			fpop();
 			goto retry;
 		}
@@ -1058,6 +1053,16 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IREPT...\n"); }
 	// puts in lots of comments
 	if (*ln == '*' || *ln == ';' || ((*ln == '/') && (*(ln + 1) == '/')))
 		goto goteol;
+
+	// And here we have a very ugly hack for signalling a single line 'turn off
+	// optimization'. There's really no nice way to do this, so hack it is!
+	optimizeOff = 0;		// Default is to take optimizations as they come
+
+	if (*ln == '!')
+	{
+		optimizeOff = 1;	// Signal that we don't want to optimize this line
+		ln++;				// & skip over the darned thing
+	}
 
 	// Main tokenization loop;
 	//  o  skip whitespace;
