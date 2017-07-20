@@ -402,7 +402,7 @@ fmod   NBWLSQXP C_ALL030     M_FREG          %1111001000eeeeee   m_fmod   +
 -      NX       M_FREG       M_AM_NONE       %1111001000eeeeee   m_fmod
 fmove  NBWLSQXP C_ALL030     M_FREG          %1111001000eeeeee   m_fmove +
 -      NBWLSQXP M_FREG       C_ALL030        %1111001000eeeeee   m_fmove +
--      NBWLSQXP M_FREG       M_FREG          %1111001000eeeeee   m_fmove +
+-      NX       M_FREG       M_FREG          %1111001000eeeeee   m_fmove +
 -      NL       M_FPSCR      C_ALL030        %1111001000eeeeee   m_fmovescr +
 -      NL       C_ALL030     M_FPSCR         %1111001000eeeeee   m_fmovescr +
 fsmove NBWLSQXP C_ALL030     M_FREG          %1111001000eeeeee   m_fsmove
@@ -502,7 +502,7 @@ ftentox NBWLSQXP C_ALL030    M_FREG          %1111001000eeeeee   m_ftentox   +
 -       NX       M_FREG      M_FREG          %1111001000eeeeee   m_ftentox   +
 -       NX       M_FREG      M_AM_NONE       %1111001000eeeeee   m_ftentox
 ftst  NBWLSQXP C_ALL030      M_AM_NONE       %1111001000eeeeee   m_ftst +
--      X          M_FREG      M_AM_NONE       %1111001000eeeeee  m_ftst
+-     NX         M_FREG      M_AM_NONE       %1111001000eeeeee   m_ftst
 ftwotox NBWLSQXP C_ALL030    M_FREG          %1111001000eeeeee   m_ftwotox   +
 -       NX       M_FREG      M_FREG          %1111001000eeeeee   m_ftwotox   +
 -       NX       M_FREG      M_AM_NONE       %1111001000eeeeee   m_ftwotox
@@ -583,7 +583,8 @@ illegal N    M_AM_NONE       M_AM_NONE       %0100101011111100   m_self
 jmp   N      C_CTRL          M_AM_NONE       %0100111011eee000   m_ea     +
 -     N      C_CTRL030       M_AM_NONE       %0100111011eee000   m_ea030
 
-jsr   N      C_CTRL          M_AM_NONE       %0100111010eee000   m_ea
+jsr   N      C_CTRL          M_AM_NONE       %0100111010eee000   m_ea     +
+-     N      C_CTRL030       M_AM_NONE       %0100111010eee000   m_ea030
 
 lea   NL     C_CTRL          M_AREG          %0100rrr111eR1000   m_lea
 

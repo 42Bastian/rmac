@@ -252,6 +252,12 @@ int eaNgen(WORD siz)
 		}
 
 		break;
+	case DINDW:
+		D_word(0x190|(aNixreg<<12));
+		break;
+	case DINDL:
+		D_word(0x990|(aNixreg<<12));
+		break;
 	case ABASE:
 	case MEMPOST:
 	case MEMPRE:
@@ -281,7 +287,7 @@ int eaNgen(WORD siz)
 			else
 			{
 				// Arrange for fixup later on
-				AddFixup(FU_WORD|FU_SEXT, sloc, aNexpr);
+				AddFixup(FU_WORD|FU_SEXT, sloc, aNbexpr);
 				D_word(0);
 			}
 		}
@@ -299,7 +305,7 @@ int eaNgen(WORD siz)
 			else
 			{
 				// Arrange for fixup later on
-				AddFixup(FU_LONG|FU_SEXT, sloc, aNexpr);
+				AddFixup(FU_LONG, sloc, aNbexpr);
 				D_long(0);
 			}
 		}
@@ -369,6 +375,7 @@ int eaNgen(WORD siz)
 #undef aNixreg
 #undef aNixsiz
 #undef aNexten
+#undef aNbexpr
 #undef aNbdexval
 #undef aNbdexattr
 #undef AnESYM

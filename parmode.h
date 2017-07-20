@@ -92,16 +92,16 @@
 			else if (*tok == 'L')
 			{
 				// TODO: does DINDL gets used at all?
-				//AMn=DINDL;                                     // (Dn.l)
-				//AnEXTEN = 1 << 1;   // Long index size
-				//tok++;
+				AMn=DINDL;                                     // (Dn.l)
+				AnEXTEN = 1 << 1;   // Long index size
+				tok++;
 			}
 			else if (*tok == 'W')                                // (Dn.w)
 			{
 				// TODO: does DINDW gets used at all?
-				//AMn=DINDW;
-				//AnEXTEN = 1 << 1;   // Word index size
-				//tok++;
+				AMn=DINDW;
+				AnEXTEN = 1 << 1;   // Word index size
+				tok++;
 			}
 			else if (*tok == ',')
 			{
@@ -115,7 +115,57 @@
 				goto CHECKODn;
 			}
 			else
+			{
 				return error("(Dn) error");
+			}
+
+			if (*tok == '*')
+			{                        // scale: *1, *2, *4, *8
+				tok++;
+
+				if (*tok == SYMBOL)
+				{
+					if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
+						return error("scale factor expression must evaluate");
+					switch (AnEXVAL)
+					{
+					case 1:
+						break;
+					case 2:
+						AnIXSIZ |= TIMES2;
+						break;
+					case 4:
+						AnIXSIZ |= TIMES4;
+						break;
+					case 8:
+						AnIXSIZ |= TIMES8;
+						break;
+					default:
+						goto badmode;
+			}
+				}
+				else if (*tok++ != CONST || *tok > 8)
+					goto badmode;
+				else
+				{
+					switch ((int)*tok++)
+					{
+					case 1:
+						break;
+					case 2:
+						AnIXSIZ |= TIMES2;
+						break;
+					case 4:
+						AnIXSIZ |= TIMES4;
+						break;
+					case 8:
+						AnIXSIZ |= TIMES8;
+						break;
+					default:
+						goto badmode;
+					}
+				}
+			}
 
 			if (*tok == ')')
 			{
@@ -127,6 +177,14 @@
 				AnREG = 6 << 3;		// stuff 110 to mode field
 				AMn = MEMPOST;
 				goto AnOK;
+			}
+			else if (*tok==',')
+			{
+				tok++;  // eat the comma
+				// It might be (Dn[.wl][*scale],od)
+				// Maybe this is wrong and we have to write some code here
+				// instead of reusing that path...
+				goto CHECKODn;
 			}
 			else
 				return error("unhandled so far");
@@ -170,30 +228,58 @@
 			}
 
 			if (*tok == '*')
-			{                        // scale: *1, *2, *4, *8
+			{                                  // scale: *1, *2, *4, *8
 				tok++;
 
-				if (*tok++ != CONST || *tok > 8)
-					goto badmode;
-
-				switch ((int)*tok++)
+				if (*tok == SYMBOL)
 				{
-				case 1:
-					break;
-				case 2:
-					AnIXSIZ |= TIMES2;
-					break;
-				case 4:
-					AnIXSIZ |= TIMES4;
-					break;
-				case 8:
-					AnIXSIZ |= TIMES8;
-					break;
-				default:
+					if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
+						return error("scale factor expression must evaluate");
+					switch (AnEXVAL)
+					{
+					case 1:
+						break;
+					case 2:
+						AnIXSIZ |= TIMES2;
+						break;
+					case 4:
+						AnIXSIZ |= TIMES4;
+						break;
+					case 8:
+						AnIXSIZ |= TIMES8;
+						break;
+					default:
+						goto badmode;
+					}
+				}
+				else if (*tok++ != CONST || *tok > 8)
 					goto badmode;
+				else
+				{
+					switch ((int)*tok++)
+					{
+					case 1:
+						break;
+					case 2:
+						AnIXSIZ |= TIMES2;
+						break;
+					case 4:
+						AnIXSIZ |= TIMES4;
+						break;
+					case 8:
+						AnIXSIZ |= TIMES8;
+						break;
+					default:
+						goto badmode;
+					}
 				}
 			}
 
+			if (*tok == ',')
+			{
+				tok++;
+				goto CHECKODn;
+			}
 			if (*tok++ != ')')         // final ")"
 				goto badmode;
 
@@ -302,30 +388,52 @@
 
 				// Check for scale
 				if (*tok == '*')			// ([bd,An/PC],Xn*...)
-				{
+				{                           // scale: *1, *2, *4, *8
 					tok++;
 
-					if (*tok == CONST)	// TODO: I suppose the scale is stored as a CONST and nothing else? So prolly the if is not needed?
-						tok++;
-
-					switch ((int)*tok++)
+					if (*tok == SYMBOL)
 					{
-					case 1:
-						break;
-					case 2:
-						AnEXTEN |= EXT_TIMES2;
-						break;
-					case 4:
-						AnEXTEN |= EXT_TIMES4;
-						break;
-					case 8:
-						AnEXTEN |= EXT_TIMES8;
-						break;
-					default:
+						if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
+							return error("scale factor expression must evaluate");
+						switch (AnEXVAL)
+						{
+						case 1:
+							break;
+						case 2:
+							AnIXSIZ |= TIMES2;
+							break;
+						case 4:
+							AnIXSIZ |= TIMES4;
+							break;
+						case 8:
+							AnIXSIZ |= TIMES8;
+							break;
+						default:
+							goto badmode;
+				}
+					}
+					else if (*tok++ != CONST || *tok > 8)
 						goto badmode;
+					else
+					{
+						switch ((int)*tok++)
+						{
+						case 1:
+							break;
+						case 2:
+							AnIXSIZ |= TIMES2;
+							break;
+						case 4:
+							AnIXSIZ |= TIMES4;
+							break;
+						case 8:
+							AnIXSIZ |= TIMES8;
+							break;
+						default:
+							goto badmode;
+						}
 					}
 				}
-
 				if (*tok == ']')  // ([bd,Dn]...
 				{
 					tok++;
@@ -354,9 +462,9 @@
 				if (*tok == ')')
 				{
 					//Xn and od are non existent, get out of jail free card
+					tok++;
 					AMn = MEMPRE;			// ([bc,An,Xn],od) with no Xn and od
 					AnEXTEN |= EXT_IS | EXT_IISPREN;	//Suppress Xn and od
-					tok++;
 					goto AnOK;
 				}
 				else if (*tok != ',')
@@ -406,29 +514,51 @@
 				}
 
 				// Check for scale
-				if (*tok == '*')
-				{
-					// ([bd,An/PC],Xn*...)
+				if (*tok == '*')                   // ([bd,An/PC],Xn*...)
+				{                                  // scale: *1, *2, *4, *8
 					tok++;
 
-					if (*tok == CONST)	// TODO: I suppose the scale is stored as a CONST and nothing else? So prolly the if is not needed?
-						tok++;
-
-					switch ((int)*tok++)
+					if (*tok == SYMBOL)
+					{
+						if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
+							return error("scale factor expression must evaluate");
+						switch (AnEXVAL)
 					{
 					case 1:
 						break;
 					case 2:
-						AnEXTEN |= EXT_TIMES2;
+							AnIXSIZ |= TIMES2;
 						break;
 					case 4:
-						AnEXTEN |= EXT_TIMES4;
+							AnIXSIZ |= TIMES4;
 						break;
 					case 8:
-						AnEXTEN |= EXT_TIMES8;
+							AnIXSIZ |= TIMES8;
 						break;
 					default:
 						goto badmode;
+						}
+					}
+					else if (*tok++ != CONST || *tok > 8)
+						goto badmode;
+					else
+					{
+						switch ((int)*tok++)
+						{
+						case 1:
+							break;
+						case 2:
+							AnIXSIZ |= TIMES2;
+							break;
+						case 4:
+							AnIXSIZ |= TIMES4;
+							break;
+						case 8:
+							AnIXSIZ |= TIMES8;
+							break;
+						default:
+							goto badmode;
+						}
 					}
 				}
 
@@ -447,7 +577,6 @@
 					tok++;	// eat the comma
 
 				CHECKODn:
-
 				if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
 					goto badmode;
 
@@ -459,13 +588,13 @@
 					tok++;
 					goto AnOK;
 				}
-
 				// ([bd,An/PC],Xn,od)
 				if (*tok == DOTL)
 				{
 					// expr.L
 					AnEXTEN |= EXT_IISPOSL; // Long outer displacement
 					AMn = MEMPOST;
+					tok++;
 
 					// Defined, absolute values from $FFFF8000..$00007FFF get
 					// optimized to absolute short
@@ -544,7 +673,6 @@
 					// expr[.W][]
 					AnEXTEN |= EXT_IISNOIW; // Word outer displacement with IS suppressed
 					AMn = MEMPRE;
-
 					if (*tok == DOTW)
 					{
 						//AnEXTEN|=EXT_IISNOIW; // Word outer displacement
@@ -613,34 +741,56 @@
 
 				// Check for scale
 				if (*tok == '*')			// ([bd,An/PC],Xn*...)
-				{
+				{                           // scale: *1, *2, *4, *8
 					tok++;
 
-					if (*tok == CONST)	// TODO: I suppose the scale is stored as a CONST and nothing else? So prolly the if is not needed?
-						tok++;
-
-					switch ((int)*tok++)
+					if (*tok == SYMBOL)
 					{
-					case 1:
-						break;
-					case 2:
-						AnEXTEN |= EXT_TIMES2;
-						break;
-					case 4:
-						AnEXTEN |= EXT_TIMES4;
-						break;
-					case 8:
-						AnEXTEN |= EXT_TIMES8;
-						break;
-					default:
+						if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
+							return error("scale factor expression must evaluate");
+						switch (AnEXVAL)
+						{
+						case 1:
+							break;
+						case 2:
+							AnIXSIZ |= TIMES2;
+							break;
+						case 4:
+							AnIXSIZ |= TIMES4;
+							break;
+						case 8:
+							AnIXSIZ |= TIMES8;
+							break;
+						default:
+							goto badmode;
+						}
+					}
+					else if (*tok++ != CONST || *tok > 8)
 						goto badmode;
+					else
+					{
+						switch ((int)*tok++)
+						{
+						case 1:
+							break;
+						case 2:
+							AnIXSIZ |= TIMES2;
+							break;
+						case 4:
+							AnIXSIZ |= TIMES4;
+							break;
+						case 8:
+							AnIXSIZ |= TIMES8;
+							break;
+						default:
+							goto badmode;
+						}
 					}
 				}
 
 				//Check for ]
 				if (*tok != ']')
 					return error("Expected closing bracket ]");
-
 				tok++;			// Eat the bracket
 
 				//Check for od
@@ -805,7 +955,6 @@
 		// After a cache keyword only a comma or EOL is allowed
 		if ((*tok != ',') && (*tok != EOL))
 			return ERROR;
-
 		goto AnOK;
 	}
 	else if ((*tok >= KW_SFC) && (*tok <= KW_CRP))

@@ -15,6 +15,8 @@
 #define DREG         000			// Dn
 #define AREG         010			// An
 #define AIND         020			// (An)
+#define DINDW        0112			// (Dn.w)
+#define DINDL        0113			// (Dn.l)
 #define APOSTINC     030			// (An)+
 #define APREDEC      040			// -(An)
 #define ADISP        050			// (d16,An) d16(An)

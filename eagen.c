@@ -24,6 +24,7 @@
 #define aNixsiz   a0ixsiz
 #define AnESYM    a0esym
 #define aNexten   a0extension
+#define aNbexpr   a0bexpr
 #define aNbdexval a0bexval
 #define aNbdexattr a0bexattr
 #include "eagen0.c"
@@ -37,6 +38,7 @@
 #define aNixsiz   a1ixsiz
 #define AnESYM    a1esym
 #define aNexten   a1extension
+#define aNbexpr   a1bexpr
 #define aNbdexval a1bexval
 #define aNbdexattr a1bexattr
 #include "eagen0.c"

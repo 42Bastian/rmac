@@ -1391,7 +1391,7 @@ int m_cas(WORD inst, WORD siz)
 	// Reject invalud ea modes
 	amsk = amsktab[am0];
 
-	if (amsk & (M_AIND | M_APOSTINC | M_APREDEC | M_ADISP | M_AINDEXED | M_ABSW | M_ABSL | M_ABASE | M_MEMPOST | M_MEMPRE) == 0)
+	if ((amsk & (M_AIND | M_APOSTINC | M_APREDEC | M_ADISP | M_AINDEXED | M_ABSW | M_ABSL | M_ABASE | M_MEMPOST | M_MEMPRE)) == 0)
 		return error("unsupported addressing mode");
 
 	inst |= am0 | a0reg;
@@ -1409,7 +1409,6 @@ int m_cas(WORD inst, WORD siz)
 int m_cas2(WORD inst, WORD siz)
 {
 	WORD inst2, inst3;
-	LONG amsk;
 
 	if ((activecpu & (CPU_68020 | CPU_68030 | CPU_68040)) == 0)
 		return error(unsupport);
@@ -1614,7 +1613,6 @@ int m_cpbr(WORD inst, WORD siz)
 			{
 				inst |= (1 << 6);
 				D_word(inst);
-				WARNING(check what s "optional coprocessor-defined extension words!")
 				D_long(v);
 				return OK;
 			}
@@ -1625,7 +1623,6 @@ int m_cpbr(WORD inst, WORD siz)
 				return error(range_error);
 
 			D_word(inst);
-			WARNING(check what s "optional coprocessor-defined extension words!")
 			D_word(v);
 		}
 
@@ -1753,6 +1750,11 @@ int m_muls(WORD inst, WORD siz)
 		inst |= am1 | a1reg;			// Get ea1 into instr
 		D_word(inst);					// Deposit instr
 
+										// Extension word
+		inst = a1reg + (a2reg << 12) + (1 << 11);
+		inst |= mulmode;  // add size bit
+		D_word(inst);
+
 		// Generate ea0 if requested
 		if (flg & 2)
 			ea0gen(siz);
@@ -1764,6 +1766,11 @@ int m_muls(WORD inst, WORD siz)
 		// Use am0
 		inst |= am0 | a0reg;			// Get ea0 into instr
 		D_word(inst);					// Deposit instr
+										// Extension word
+		inst = a1reg + (a2reg << 12) + (1 << 11);
+		inst |= mulmode;  // add size bit
+		D_word(inst);
+
 		ea0gen(siz);					// Generate ea0
 
 		// Generate ea1 if requested
@@ -1771,9 +1778,8 @@ int m_muls(WORD inst, WORD siz)
 			ea1gen(siz);
 	}
 
-	inst = a1reg + (a2reg << 12) + (1 << 11);
-	inst |= mulmode;  // add size bit
-	D_word(inst);
+	//D_word(inst);
+	//ea0gen(siz);
 
 	return OK;
 }
@@ -2419,6 +2425,7 @@ int m_pflushr(WORD inst, WORD siz)
 	}
 
 	D_word(B16(10100000, 00000000));
+	return OK;
 }
 
 
@@ -2934,6 +2941,7 @@ int m_fmove(WORD inst, WORD siz)
 	// EA to register
 	if ((am0 == FREG) && (am1 < AM_USP))
 	{
+		//fpx->ea
 		// EA
 		inst |= am1 | a1reg;
 		D_word(inst);
@@ -2982,6 +2990,8 @@ int m_fmove(WORD inst, WORD siz)
 	}
 	else if ((am0 < AM_USP) && (am1 == FREG))
 	{
+		//ea->fpx
+
 		// EA
 		inst |= am0 | a0reg;
 		D_word(inst);
@@ -3016,6 +3026,9 @@ int m_fmove(WORD inst, WORD siz)
 	}
 	else if ((am0 == FREG) && (am1 == FREG))
 	{
+		// register-to-register
+		// Essentially ea to register with R/0=0
+
 		// EA
 		D_word(inst);
 
@@ -3128,11 +3141,11 @@ int m_fmovem(WORD inst, WORD siz)
 	WORD regmask;
 	WORD datareg;
 
-	if (siz == SIZX)
+	if (siz == SIZX || siz==SIZN)
 	{
 		if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
 		{
-			// fmovem.x <rlist>,ea
+			//fmovem.x <rlist>,ea
 			if (fpu_reglist_left(&regmask) < 0)
 				return OK;
 
@@ -3210,7 +3223,7 @@ int m_fmovem(WORD inst, WORD siz)
 			}
 		}
 	}
-	else if ((siz == SIZL) || (siz==SIZN))
+	else if (siz == SIZL)
 	{
 		if ((*tok == KW_FPCR) || (*tok == KW_FPSR) || (*tok == KW_FPIAR))
 		{
