@@ -15,6 +15,8 @@
 int mudump(void);
 int mdump(char *, LONG, int, LONG);
 int dumptok(TOKEN *);
+void DumpTokens(TOKEN *);
 int dump_everything(void);
 
 #endif // __DEBUG_H__
+

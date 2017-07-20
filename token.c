@@ -475,24 +475,18 @@ copy_d:
 				// macro invocation) then it is ignored.
 				i = (int)arg->svalue;
 arg_num:
-				DEBUG { printf("~argnumber=%d (argBase=%u)\n", i, imacro->argBase); }
+				DEBUG { printf("~argnumber=%d\n", i); }
 				tk = NULL;
 
 				if (i < imacro->im_nargs)
 				{
-#if 0
-//					tk = argp[i];
-//					tk = argPtrs[i];
-					tk = argPtrs[imacro->argBase + i];
-#else
 					tk = imacro->argument[i].token;
 					symbolString = imacro->argument[i].string;
 //DEBUG
 //{
 //	printf("ExM: Preparing to parse argument #%u...\n", i);
-//	dumptok(tk);
+//	DumpTokens(tk);
 //}
-#endif
 				}
 
 				// \?arg yields:
@@ -1661,10 +1655,9 @@ int d_goto(WORD unused)
 
 void DumpTokenBuffer(void)
 {
-	TOKEN * t;
 	printf("Tokens [%X]: ", sloc);
 
-	for(t=tokbuf; *t!=EOL; t++)
+	for(TOKEN * t=tokbuf; *t!=EOL; t++)
 	{
 		if (*t == COLON)
 			printf("[COLON]");
@@ -1674,7 +1667,10 @@ void DumpTokenBuffer(void)
 			printf("[CONST: $%X]", (uint32_t)*t);
 		}
 		else if (*t == ACONST)
-			printf("[ACONST]");
+		{
+			printf("[ACONST: $%X, $%X]", (uint32_t)t[1], (uint32_t)t[2]);
+			t += 2;
+		}
 		else if (*t == STRING)
 		{
 			t++;

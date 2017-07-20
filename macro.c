@@ -19,8 +19,6 @@
 
 LONG curuniq;				// Current macro's unique number
 int macnum;					// Unique number for macro definition
-TOKEN * argPtrs[128];		// 128 arguments ought to be enough for anyone
-static int argp;
 
 static LONG macuniq;		// Unique-per-macro number
 static SYM * curmac;		// Macro currently being defined
@@ -42,7 +40,6 @@ void InitMacro(void)
 {
 	macuniq = 0;
 	macnum = 1;
-	argp = 0;
 }
 
 
@@ -59,6 +56,9 @@ WARNING(!!! Bad macro exiting !!!)
 This is a problem. Currently, the argument logic just keeps the current
 arguments and doesn't save anything if a new macro is called in the middle
 of another (nested macros). Need to fix that somehow.
+
+Is this still true, now that we have IMACROs with TOKENSTREAMs in them? Need to
+check it out for sure...!
 */
 	// Pop intervening include files and .rept blocks
 	while (cur_inobj != NULL && cur_inobj->in_type != SRC_IMACRO)
@@ -75,11 +75,7 @@ of another (nested macros). Need to fix that somehow.
 	IMACRO * imacro = cur_inobj->inobj.imacro;
 	curuniq = imacro->im_olduniq;
 
-//	/*TOKEN ** p = */argp--;
-//	argp = (TOKEN **)*argp;
-	DEBUG { printf("ExitMacro: argp: %d -> ", argp); }
-	argp -= imacro->im_nargs;
-	DEBUG { printf("%d (nargs = %d)\n", argp, imacro->im_nargs); }
+	DEBUG { printf("ExitMacro: nargs = %d\n", imacro->im_nargs); }
 
 	return fpop();
 }
@@ -110,45 +106,12 @@ int defmac1(char * ln, int notEndFlag)
 {
 	if (list_flag)
 	{
-		listeol();							// Flush previous source line
-		lstout('.');						// Mark macro definition with period
+		listeol();		// Flush previous source line
+		lstout('.');	// Mark macro definition with period
 	}
 
-	// This is just wrong, wrong, wrong. It makes up a weird kind of string with
-	// a pointer on front, and then uses a ** to manage them: This is a recipe
-	// for disaster.
-	// How to manage it then?
-	// Could use a linked list, like Landon uses everywhere else.
-/*
-How it works:
-Allocate a space big enough for the string + NULL + pointer.
-Set the pointer to NULL.
-Copy the string to the space after the pointer.
-If this is the 1st time through, set the SYM * "svalue" to the pointer.
-If this is the 2nd time through, derefence the ** to point to the memory you
-just allocated. Then, set the ** to the location of the memory you allocated
-for the next pass through.
-
-This is a really low level way to do a linked list, and by bypassing all the
-safety features of the language. Seems like we can do better here.
-*/
 	if (notEndFlag)
 	{
-#if 0
-		len = strlen(ln) + 1 + sizeof(LONG);
-		p.cp = malloc(len);
-		*p.lp = 0;
-		strcpy(p.cp + sizeof(LONG), ln);
-
-		// Link line of text onto end of list
-		if (curmln == NULL)
-			curmac->svalue = p.cp;
-		else
-			*curmln = p.cp;
-
-		curmln = (char **)p.cp;
-		return 1;							// Keep looking
-#else
 		if (curmac->lineList == NULL)
 		{
 			curmac->lineList = malloc(sizeof(LLIST));
@@ -164,11 +127,10 @@ safety features of the language. Seems like we can do better here.
 			curmac->last = curmac->last->next;
 		}
 
-		return 1;							// Keep looking
-#endif
+		return 1;		// Keep looking
 	}
 
-	return 0;								// Stop looking at the end
+	return 0;			// Stop looking; at the end
 }
 
 
@@ -337,6 +299,8 @@ static int LNCatch(int (* lnfunc)(), char * dirlist)
 			fatal("cannot continue");
 		}
 
+		DEBUG { DumpTokenBuffer(); }
+
 		// Test for end condition.  Two cases to handle:
 		//            <directive>
 		//    symbol: <directive>
@@ -421,157 +385,63 @@ static int KWMatch(char * kw, char * kwlist)
 
 
 //
-// Invoke a macro
-//  o  parse, count and copy arguments
-//  o  push macro's string-stream
+// Invoke a macro by creating a new IMACRO object & chopping up the arguments
 //
 int InvokeMacro(SYM * mac, WORD siz)
 {
-	TOKEN * p = NULL;
-	int dry_run;
-	WORD arg_siz = 0;
-//	TOKEN ** argptr = NULL;
-//Doesn't need to be global! (or does it???--it does)
-//	argp = 0;
-	DEBUG printf("InvokeMacro: argp: %d -> ", argp);
+	DEBUG { printf("InvokeMacro: arguments="); DumpTokens(tok); }
 
-	INOBJ * inobj = a_inobj(SRC_IMACRO);		// Alloc and init IMACRO
+	INOBJ * inobj = a_inobj(SRC_IMACRO);	// Alloc and init IMACRO
 	IMACRO * imacro = inobj->inobj.imacro;
-	imacro->im_siz = siz;
-	WORD nargs = 0;
-	TOKEN * beg_tok = tok;						// 'tok' comes from token.c
-	TOKEN * startOfArg;
-	TOKEN * dest;
-	int stringNum = 0;
-	int argumentNum = 0;
+	uint16_t nargs = 0;
 
-	for(dry_run=1; ; dry_run--)
+	// Chop up the arguments, if any (tok comes from token.c, which at this
+	// point points at the macro argument token stream)
+	if (*tok != EOL)
 	{
-		for(tok=beg_tok; *tok!=EOL;)
+		// Parse out the arguments and set them up correctly
+		TOKEN * p = imacro->argument[nargs].token;
+		int stringNum = 0;
+
+		while (*tok != EOL)
 		{
-			if (dry_run)
-				nargs++;
-			else
+			if (*tok == ACONST)
 			{
-#if 0
-				*argptr++ = p;
-#else
-				argPtrs[argp++] = p;
-				startOfArg = p;
-#endif
+				for(int i=0; i<3; i++)
+					*p++ = *tok++;
 			}
-
-			// Keep going while tok isn't pointing at a comma or EOL
-			while (*tok != ',' && *tok != EOL)
+			else if (*tok == CONST)
 			{
-				// Skip over backslash character, unless it's followed by an EOL
-				if (*tok == '\\' && tok[1] != EOL)
-					tok++;
-
-				switch (*tok)
-				{
-				case CONST:
-				case SYMBOL:
-//Shamus: Possible bug. ACONST has 2 tokens after it, not just 1
-				case ACONST:
-					if (dry_run)
-					{
-						arg_siz += sizeof(TOKEN);
-						tok++;
-					}
-					else
-					{
-						*p++ = *tok++;
-					}
-				// FALLTHROUGH (picks up the arg after a CONST, SYMBOL or ACONST)
-				default:
-					if (dry_run)
-					{
-						arg_siz += sizeof(TOKEN);
-						tok++;
-					}
-					else
-					{
-						*p++ = *tok++;
-					}
-
-					break;
-				}
+				*p++ = *tok++;
+				*p++ = *tok++;
 			}
-
-			// We hit the comma or EOL, so count/stuff it
-			if (dry_run)
-				arg_siz += sizeof(TOKEN);
-			else
+			else if ((*tok == STRING) || (*tok == SYMBOL))
+			{
+				*p++ = *tok++;
+				imacro->argument[nargs].string[stringNum] = strdup(string[*tok++]);
+				*p++ = stringNum++;
+			}
+			else if (*tok == ',')
+			{
+				// Comma delimiter was found, so set up for next argument
 				*p++ = EOL;
-
-			// If we hit the comma instead of an EOL, skip over it
-			if (*tok == ',')
 				tok++;
-
-			// Do our QnD token grabbing (this will be redone once we get all
-			// the data structures fixed as this is a really dirty hack)
-			if (!dry_run)
-			{
-				dest = imacro->argument[argumentNum].token;
 				stringNum = 0;
-
-				do
-				{
-					// Remap strings to point the IMACRO internal token storage
-					if (*startOfArg == SYMBOL || *startOfArg == STRING)
-					{
-						*dest++ = *startOfArg++;
-						imacro->argument[argumentNum].string[stringNum] = strdup(string[*startOfArg++]);
-						*dest++ = stringNum++;
-					}
-					else
-						*dest++ = *startOfArg++;
-				}
-				while (*startOfArg != EOL);
-
-				*dest = *startOfArg;		// Copy EOL...
-				argumentNum++;
+				nargs++;
+				p = imacro->argument[nargs].token;
+			}
+			else
+			{
+				*p++ = *tok++;
 			}
 		}
 
-		// Allocate space for argument ptrs and so on and then go back and
-		// construct the arg frame
-		if (dry_run)
-		{
-			if (nargs != 0)
-				p = (TOKEN *)malloc(arg_siz);
-//				p = (TOKEN *)malloc(arg_siz + sizeof(TOKEN));
-
-/*
-Shamus:
-This construct is meant to deal with nested macros, so the simple minded way
-we deal with them now won't work. :-/ Have to think about how to fix.
-What we could do is simply move the argp with each call, and move it back by
-the number of arguments in the macro that's ending. That would solve the
-problem nicely.
-[Which we do now. But that uncovered another problem: the token strings are all
-stale by the time a nested macro gets to the end. But they're supposed to be
-symbols, which means if we put symbol references into the argument token
-streams, we can alleviate this problem.]
-*/
-#if 0
-			argptr = (TOKEN **)malloc((nargs + 1) * sizeof(LONG));
-			*argptr++ = (TOKEN *)argp;
-			argp = argptr;
-#else
-			// We don't need to do anything here since we already advance argp
-			// when parsing the arguments.
-//			argp += nargs;
-#endif
-		}
-		else
-			break;
+		// Make sure to stuff the final EOL (otherwise, it will be skipped)
+		*p++ = EOL;
+		nargs++;
 	}
 
-	DEBUG { printf("%d\n", argp); }
-
-	// Setup imacro:
+	// Setup IMACRO:
 	//  o  # arguments;
 	//  o  -> macro symbol;
 	//  o  -> macro definition string list;
@@ -579,19 +449,19 @@ streams, we can alleviate this problem.]
 	//  o  bump `macuniq' counter and set 'curuniq' to it;
 	imacro->im_nargs = nargs;
 	imacro->im_macro = mac;
+	imacro->im_siz = siz;
 	imacro->im_nextln = mac->lineList;
 	imacro->im_olduniq = curuniq;
 	curuniq = macuniq++;
-	imacro->argBase = argp - nargs;	// Shamus: keep track of argument base
 
 	DEBUG
 	{
-		printf("nargs=%d\n", nargs);
+		printf("# args = %d\n", nargs);
 
-		for(nargs=0; nargs<imacro->im_nargs; nargs++)
+		for(uint16_t i=0; i<nargs; i++)
 		{
-			printf("arg%d=", nargs);
-			dumptok(argPtrs[(argp - imacro->im_nargs) + nargs]);
+			printf("arg%d=", i);
+			DumpTokens(imacro->argument[i].token);
 		}
 	}
 

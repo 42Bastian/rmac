@@ -327,6 +327,98 @@ int dumptok(TOKEN * tk)
 }
 
 
+void DumpTokens(TOKEN * tokenBuffer)
+{
+//	printf("Tokens [%X]: ", sloc);
+
+	for(TOKEN * t=tokenBuffer; *t!=EOL; t++)
+	{
+		if (*t == COLON)
+			printf("[COLON]");
+		else if (*t == CONST)
+		{
+			t++;
+			printf("[CONST: $%X]", (uint32_t)*t);
+		}
+		else if (*t == ACONST)
+		{
+			printf("[ACONST: $%X, $%X]", (uint32_t)t[1], (uint32_t)t[2]);
+			t += 2;
+		}
+		else if (*t == STRING)
+		{
+			t++;
+			printf("[STRING:\"%s\"]", string[*t]);
+		}
+		else if (*t == SYMBOL)
+		{
+			t++;
+			printf("[SYMBOL:\"%s\"]", string[*t]);
+		}
+		else if (*t == EOS)
+			printf("[EOS]");
+		else if (*t == TKEOF)
+			printf("[TKEOF]");
+		else if (*t == DEQUALS)
+			printf("[DEQUALS]");
+		else if (*t == SET)
+			printf("[SET]");
+		else if (*t == REG)
+			printf("[REG]");
+		else if (*t == DCOLON)
+			printf("[DCOLON]");
+		else if (*t == GE)
+			printf("[GE]");
+		else if (*t == LE)
+			printf("[LE]");
+		else if (*t == NE)
+			printf("[NE]");
+		else if (*t == SHR)
+			printf("[SHR]");
+		else if (*t == SHL)
+			printf("[SHL]");
+		else if (*t == UNMINUS)
+			printf("[UNMINUS]");
+		else if (*t == DOTB)
+			printf("[DOTB]");
+		else if (*t == DOTW)
+			printf("[DOTW]");
+		else if (*t == DOTL)
+			printf("[DOTL]");
+		else if (*t == DOTI)
+			printf("[DOTI]");
+		else if (*t == ENDEXPR)
+			printf("[ENDEXPR]");
+		else if (*t == CR_ABSCOUNT)
+			printf("[CR_ABSCOUNT]");
+		else if (*t == CR_DEFINED)
+			printf("[CR_DEFINED]");
+		else if (*t == CR_REFERENCED)
+			printf("[CR_REFERENCED]");
+		else if (*t == CR_STREQ)
+			printf("[CR_STREQ]");
+		else if (*t == CR_MACDEF)
+			printf("[CR_MACDEF]");
+		else if (*t == CR_TIME)
+			printf("[CR_TIME]");
+		else if (*t == CR_DATE)
+			printf("[CR_DATE]");
+		else if (*t >= 0x20 && *t <= 0x2F)
+			printf("[%c]", (char)*t);
+		else if (*t >= 0x3A && *t <= 0x3F)
+			printf("[%c]", (char)*t);
+		else if (*t >= 0x80 && *t <= 0x87)
+			printf("[D%u]", ((uint32_t)*t) - 0x80);
+		else if (*t >= 0x88 && *t <= 0x8F)
+			printf("[A%u]", ((uint32_t)*t) - 0x88);
+		else
+			printf("[%X:%c]", (uint32_t)*t, (char)*t);
+	}
+
+	printf("[EOL]\n");
+}
+
+
 //
 // Dump everything
 //

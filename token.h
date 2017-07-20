@@ -128,13 +128,12 @@ TOKENSTREAM {
 // Information about a macro invocation
 IMACRO {
 	IMACRO * im_link;		// Pointer to ancient IMACROs
-	LLIST * im_nextln;	// Next line to include
+	LLIST * im_nextln;		// Next line to include
 	WORD im_nargs;			// # of arguments supplied on invocation
 	WORD im_siz;			// Size suffix supplied on invocation
 	LONG im_olduniq;		// Old value of 'macuniq'
 	SYM * im_macro;			// Pointer to macro we're in
 	char im_lnbuf[LNSIZ];	// Line buffer
-	uint32_t argBase;		// Base in argPtrs[] for current macro
 	TOKENSTREAM argument[20];	// Assume no more than 20 arguments in an invocation
 };
 
