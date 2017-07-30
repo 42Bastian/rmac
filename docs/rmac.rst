@@ -660,7 +660,7 @@ mnemonic, as in this example:
        keeps   reg     d3-d7/d3-a6     ; registers to preserve
        allregs reg     d0-d7/a0-a7     ; all registers
                movem.l #temps,-(sp)    ; these two lines ...
-               movea.l d0-d2/a0-a2,-(sp) ; are identical
+               movem.l d0-d2/a0-a2,-(sp) ; are identical
                movem.l #keeps,-(sp)    ; save "keep" registers
                movem.l (sp)+,#keeps    ; restore "keep" registers
 

@@ -77,13 +77,14 @@ ss 278
 
 .equ	61
 equ	61
+.reg    82
+reg     82
 .equr  148
 equr   148
 .regequ  148
 regequ   148
 set	149
 
-reg	150
 r0	151
 r1	152
 r2	153
