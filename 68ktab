@@ -71,14 +71,15 @@ bclr  NL     M_DREG          M_DREG          %0000rrr110eeeeee   m_bitop  +
 -     NL     M_IMMED         M_DREG          %0000100010eeeeee   m_bitop  +
 -     NB     M_IMMED         C_ALTDATA       %0000100010eeeeee   m_bitop
 
-bfchg N      C_ALL030+M_BITFLD M_AM_NONE     %1110101011eeeeee   m_bfop
-bfclr N      C_ALL030+M_BITFLD M_AM_NONE     %1110110011eeeeee   m_bfop
-bfexts N     C_ALL030+M_BITFLD M_DREG        %1110101111eeeeee   m_bfop
-bfextu N     C_ALL030+M_BITFLD M_DREG        %1110100111eeeeee   m_bfop
-bfffo N      C_ALL030+M_BITFLD M_DREG        %1110110111eeeeee   m_bfop
-bfins N      M_DREG        C_ALL030+M_BITFLD %1110111111eeeeee   m_bfop
-bfset N      C_ALL030+M_BITFLD M_AM_NONE     %1110111011eeeeee   m_bfop
-bftst N      C_ALL030+M_BITFLD M_AM_NONE     %1110100011eeeeee   m_bfop
+bfchg N      C_BF1+M_BITFLD  M_AM_NONE       %1110101011eeeeee   m_bfop
+bfclr N      C_BF1+M_BITFLD  M_AM_NONE       %1110110011eeeeee   m_bfop
+bfexts N     C_BF2+M_BITFLD  M_DREG          %1110101111eeeeee   m_bfop
+bfextu N     C_BF2+M_BITFLD  M_DREG          %1110100111eeeeee   m_bfop
+bfffo N      C_BF2+M_BITFLD  M_DREG          %1110110111eeeeee   m_bfop
+bfins N      M_DREG          C_BF1+M_BITFLD  %1110111111eeeeee   m_bfop
+bfset N      C_BF1+M_BITFLD  M_AM_NONE       %1110111011eeeeee   m_bfop
+bftst N      C_BF2+M_BITFLD  M_AM_NONE       %1110100011eeeeee   m_bfop
+
 bkpt  N      M_IMMED         M_AM_NONE       %0100100001001bbb   m_bkpt
 
 bra   NBWS   C_LABEL         M_AM_NONE       %01100000bbbbbbbb   m_br +
@@ -106,9 +107,9 @@ cas2  !      M_AM_NONE       M_AM_NONE       %00001ss011111100   m_cas2
 chk   NW     C_DATA          M_DREG          %0100rrr110eR1000   m_ea +
 -     L      C_DATA030       M_DREG          %0100rrr100eeeeee   m_ea030
 
-cinvl N      CACHES          M_AIND          %11110100cc001rrr   m_cinv
-cinvp N      CACHES          M_AIND          %11110100cc010rrr   m_cinv
-cinva N      CACHES          M_AM_NONE       %11110100cc011rrr   m_cinv
+cinvl N      M_CACHE40       M_AIND          %11110100cc001rrr   m_cinv
+cinvp N      M_CACHE40       M_AIND          %11110100cc010rrr   m_cinv
+cinva N      M_CACHE40       M_AM_NONE       %11110100cc011rrr   m_cinv
 
 chk2  NBWL   C_DATA          M_DREG+M_AREG   %00000ss011eeeeee   m_chk2
 
@@ -159,7 +160,7 @@ cpbst NBW    C_LABEL         M_AM_NONE       %111100101s011111   m_cpbr
 cpbseq NBW   C_LABEL         M_AM_NONE       %111100101s010001   m_cpbr
 cpbsne NBW   C_LABEL         M_AM_NONE       %111100101s011110   m_cpbr
 
-cpdbeq NBW   M_DREG          C_LABEL         %111100101s000001   m_cpbr
+cpdbeq NBW   M_DREG          C_LABEL         %111100101s000001   m_cpdbr
 cpdbze
 cpdbz
 cpdbge NBW   M_DREG          C_LABEL         %111100101s010011   m_cpdbr
@@ -682,16 +683,18 @@ pdbic NWL    M_DREG          C_LABEL         %1111000001001ccc   m_cpdbr
 pdbgc NWL    M_DREG          C_LABEL         %1111000001001ccc   m_cpdbr
 pdbcc NWL    M_DREG          C_LABEL         %1111000001001ccc   m_cpdbr
 
+pflush !     M_AM_NONE       M_AM_NONE       %1111000000eeeeee   m_pflush
+pflushn !    M_AM_NONE       M_AM_NONE       %1111010100000111   m_pflush
+pflushan N   M_AM_NONE       M_AM_NONE       %1111010100010000   m_self
 pflusha N    M_AM_NONE       M_AM_NONE       %1111000000000000   m_pflusha
-pflush N     M_CREG+M_DREG+M_IMMED M_IMMED   %1111000000eeeeee   m_pflush
 pflushr N    C_ALL030        M_AM_NONE       %1111000000eeeeee   m_pflushr
 
-ploadr N     M_FC            C_ALL030        %1111000000eeeeee   m_pload
-ploadw N     M_FC            C_ALL030        %1111000000eeeeee   m_pload      
+ploadr N     M_FC            C_PMOVE         %1111000000eeeeee   m_ploadr
+ploadw N     M_FC            C_PMOVE         %1111000000eeeeee   m_ploadw     
 
-pmove NWLD   M_MRN           C_ALL030        %1111000000eeeeee   m_pmove +
--     NWLD   C_ALL030        M_MRN           %1111000000eeeeee   m_pmove
-pmovefd NWLD C_ALL030        M_MRN           %1111000000eeeeee   m_pmovefd
+pmove NWLD   M_MRN           C_PMOVE         %1111000000eeeeee   m_pmove +
+-     NWLD   C_PMOVE         M_MRN           %1111000000eeeeee   m_pmove
+pmovefd NWLD C_PMOVE         M_MRN           %1111000000eeeeee   m_pmovefd
 
 prestore N   C_ALL030        M_AM_NONE       %1111000101eeeeee   m_ea
 psave  N     C_ALL030        M_AM_NONE       %1111000100eeeeee   m_ea
@@ -840,4 +843,4 @@ trapv N      M_AM_NONE       M_AM_NONE       0x4e76              m_self
 tst   NBWL   C_ALTDATA       M_AM_NONE       %01001010sseeeS00   m_ea      +
 -     NBWL   C_ALL030        M_AM_NONE       %01001010sseeeS00   m_ea030
 unlk  N      M_AREG          M_AM_NONE       %0100111001011rrr   m_reg
-unpack !     M_AM_NONE       M_AM_NONE       %1000rrr11000mrrr   m_pack
+unpk  !      M_AM_NONE       M_AM_NONE       %1000rrr11000mrrr   m_pack

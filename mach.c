@@ -15,6 +15,7 @@
 #include "riscasm.h"
 #include "sect.h"
 #include "token.h"
+#include "expr.h"
 
 #define DEF_KW
 #include "kwtab.h"
@@ -83,7 +84,7 @@ int m_pbcc(WORD inst, WORD siz);
 int m_pflusha(WORD inst, WORD siz);
 int m_pflush(WORD inst, WORD siz);
 int m_pflushr(WORD inst, WORD siz);
-int m_pload(WORD inst, WORD siz);
+int m_pload(WORD inst, WORD siz, WORD extension);
 int m_pmove(WORD inst, WORD siz);
 int m_pmovefd(WORD inst, WORD siz);
 int m_ptest(WORD inst, WORD siz);
@@ -119,6 +120,8 @@ int m_ptrapgsn(WORD inst, WORD siz);
 int m_ptrapgcn(WORD inst, WORD siz);
 int m_ptrapcsn(WORD inst, WORD siz);
 int m_ptrapccn(WORD inst, WORD siz);
+int m_ploadr(WORD inst, WORD siz);
+int m_ploadw(WORD inst, WORD siz);
 
 //FPU
 int m_fabs(WORD inst, WORD siz);
@@ -866,9 +869,10 @@ int m_move(WORD inst, WORD size)
 //
 int m_move30(WORD inst, WORD size)
 {
-	// Cast the passed in value to an int
 	int siz = (int)size;
-	inst |= siz_12[siz] | reg_9[a1reg & 7] | a0reg | extra_addressing[am0 - ABASE];
+    // TODO: is extra_addressing necessary/correct?
+	//inst |= siz_12[siz] | reg_9[a1reg & 7] | a0reg | extra_addressing[am0 - ABASE];
+    inst |= siz_12[siz] | reg_9[a1reg & 7] | a0reg;
 
 	D_word(inst);
 
@@ -1247,23 +1251,44 @@ int m_br30(WORD inst, WORD siz)
 //
 int m_bfop(WORD inst, WORD siz)
 {
-	//TODO: is this needed or can we put that in the mask in 68ktab???
-	if (am0 == AREG || am0== APOSTINC || am0 == APREDEC || am0 == IMMED|| am0 == ABASE || am0 == MEMPOST || am0 == MEMPRE || am0 == PCBASE || am0 == PCMPOST || am0 == PCMPRE)
-		return m_badmode(inst, siz);
 
-	//First instruction word - just the opcode and first EA
-	//Note: both am1 is ORed because solely of bfins - maybe it's a good idea to make a dedicated function for it?
+    if ((bfval1 > 31) || (bfval1 < 0))
+        return error("bfxxx offset: immediate value must be between 0 and 31");
+
+	// First instruction word - just the opcode and first EA
+	// Note: both am1 is ORed because solely of bfins - maybe it's a good idea to make a dedicated function for it?
 	if (am1 == AM_NONE)
+    {
 		am1 = 0;
+    }
+    else
+    {
+        if (bfval2 > 31 || bfval2 < 0)
+            return error("bfxxx width: immediate value must be between 0 and 31");
+
+        // For Dw both immediate and register number are stuffed
+        // into the same field O_o
+        bfparam2 = (bfval2 << 0);
+    }
+
+    if (bfparam1 == 0)
+    {
+        bfparam1 = (bfval1 << 6);
+    }
+    else
+    {
+        bfparam1 = bfval1 << 12;
+    }
 
 	D_word((inst|am0|a0reg|am1|a1reg));
 	ea0gen(siz);	// Generate EA
 
-	//Second instruction word - Dest register (if exists), Do, Offset, Dw, Width
+	// Second instruction word - Dest register (if exists), Do, Offset, Dw, Width
+
 	inst = bfparam1 | bfparam2;
 
 	if (am1 == DREG)
-		inst |= a1reg << 12;
+		inst |= a1reg << 0;
 
 	if (am0 == DREG)
 		inst |= a0reg << 12;
@@ -1655,12 +1680,39 @@ int m_cpbr(WORD inst, WORD siz)
 //
 int m_cpdbr(WORD inst, WORD siz)
 {
-	if ((activecpu & (CPU_68020 | CPU_68030)) == 0)
-		return error(unsupport);
+    CHECK00;
 
-	return error("Not implemented yet.");
+    VALUE v;
+    WORD condition = inst & 0x1f; // Grab condition sneakily placed in the lower 5 bits of inst
+    inst &= 0xffe0;               // And then mask them out - you ain't seen me, roit?
 
-	//return OK;
+    inst |= (1 << 9);	// Bolt on FPU id
+    inst |= a0reg;
+
+    D_word(inst);
+
+    D_word(condition);
+
+    if (a1exattr & DEFINED)
+    {
+        if ((a1exattr & TDB) != cursect)
+            return error(rel_error);
+
+        v = a1exval - sloc;
+
+        if (v + 0x8000 > 0x10000)
+            return error(range_error);
+
+        D_word(v);
+    }
+    else
+    {
+        AddFixup(FU_WORD | FU_PCREL | FU_ISBRA, sloc, a1expr);
+        D_word(0);
+    }
+
+    return OK;
+
 }
 
 
@@ -2076,31 +2128,71 @@ int m_move16b(WORD inst, WORD siz)
 
 
 //
-// pack/unpack
+// pack/unpack (68020/68030/68040)
 //
 int m_pack(WORD inst, WORD siz)
 {
-	if ((activecpu & (CPU_68020 | CPU_68030 | CPU_68040)) == 0)
-		return error(unsupport);
+    CHECK00;
 
-	WARNING(Parsing stuff by hand here might be better)
+    if (siz != SIZN)
+        return error("bad size suffix");
 
-#if 0
-	if ((am0 == DREG) && (am1 == DREG))
-	{
-		inst |= (1 << 3) + (a0reg << 9) + (a1reg);
-	}
-	else if ((am0 == APREDEC) && (am1 == APREDEC))
-	{
-		inst |= (a0reg << 9) + (a1reg);
-	}
-	else
-		return error("Only allowed combinations for pack/unpack are -(ax),-(ay) and dx,dy.");
+    if (*tok >= KW_D0 && *tok <= KW_D7)
+    {
+        // Dx,Dy,#<adjustment>
+        inst |= (0 << 3);   // R/M
+        inst |= (*tok++ & 7);
+        if (*tok != ',' && tok[2] != ',')
+            return error("missing comma");
+        if (tok[1] < KW_D0 && tok[1] > KW_D7)
+            return error(syntax_error);
+        inst |= ((tok[1] & 7)<<9);
+        tok = tok + 3;
+        D_word(inst);
+        // Fall through for adjustment (common in both valid cases)
+    }
+    else if (*tok == '-')
+    {
+        // -(Ax),-(Ay),#<adjustment>
+        inst |= (1 << 3);   // R/M
+        tok++;  // eat the minus
+        if ((*tok != '(') && (tok[2]!=')') && (tok[3]!=',') && (tok[4] != '-') && (tok[5] != '(') && (tok[7] != ')') && (tok[8] != ','))
+            return error(syntax_error);
+        if (tok[1] < KW_A0 && tok[1] > KW_A7)
+            return error(syntax_error);
+        if (tok[5] < KW_A0 && tok[6] > KW_A7)
+            return error(syntax_error);
+        inst |= ((tok[1] & 7) << 0);
+        inst |= ((tok[6] & 7) << 9);
+        tok = tok + 9;
+        D_word(inst);
+        // Fall through for adjustment (common in both valid cases)
+    }
+    else
+        return error("invalid syntax");
 
-	D_word(inst);
-#endif
 
-	return OK;
+    if ((*tok != CONST) && (*tok != SYMBOL) && (*tok != '-'))
+        return error(syntax_error);
+
+    if (expr(a0expr, &a0exval, &a0exattr, &a0esym)==ERROR)
+        return ERROR;
+
+    if ((a0exattr & DEFINED) == 0)
+        return error(undef_error);
+
+    if (a0exval + 0x8000 > 0x10000)
+        return error("");   
+
+    if (*tok != EOL)
+        return error(extra_stuff);
+
+    D_word((a0exval & 0xffff));
+
+        
+
+    return OK;
+
 }
 
 
@@ -2192,21 +2284,26 @@ int m_trapcc(WORD inst, WORD siz)
 
 
 //
-// cinv (68040)
+// cinvl/p/a (68040)
 //
 int m_cinv(WORD inst, WORD siz)
 {
 	CHECKNO40;
-	WARNING("cinvl ,(an) / cinvp ,(an) / cinva should work!")
 
-	if (am0 == AM_NONE)
+	if (am1 == AM_NONE)
 		inst |= (0 << 6) | (a1reg);
-	else if (am0 == KW_IC40)
+    switch (a0reg)
+    {
+    case 0:     // KW_IC40
 		inst |= (2 << 6) | (a1reg);
-	else if (am0 == KW_DC40)
+        break;
+    case 1:     // KW_DC40
 		inst |= (1 << 6) | (a1reg);
-	else if (am0 == KW_BC40)
+        break;
+    case 2:     // KW_BC40
 		inst |= (3 << 6) | (a1reg);
+        break;
+    }
 
 	D_word(inst);
 	return OK;
@@ -2342,16 +2439,28 @@ int m_pbcc(WORD inst, WORD siz)
 
 
 //
-// pflusha (68030)
+// pflusha (68030, 68040)
 //
 int m_pflusha(WORD inst, WORD siz)
 {
-	CHECKNO30;
-
+    if (activecpu == CPU_68030)
+    {
 	D_word(inst);
 	inst = (1 << 13) | (1 << 10) | (0 << 5) | 0;
 	D_word(inst);
 	return OK;
+}
+    else if (activecpu == CPU_68040)
+    {
+        inst = B16(11110101, 00011000);
+        D_word(inst);
+        return OK;
+    }
+    else
+        return error(unsupport);
+
+    return OK;
+
 }
 
 
@@ -2362,12 +2471,116 @@ int m_pflush(WORD inst, WORD siz)
 {
 	if (activecpu == CPU_68030)
 	{
-		D_word(inst);
-		D_word((1 << 13) | (1 << 10) | (0 << 5) | 0);
+        // PFLUSH FC, MASK
+        // PFLUSH FC, MASK, < ea >
+        WORD mask, fc;
+        switch ((int)*tok)
+        {
+        case '#':
+            tok++;
+            if (*tok != CONST && *tok != SYMBOL)
+                return error("function code should be an expression");
+            if (expr(a0expr, &a0exval, &a0exattr, &a0esym) == ERROR)
+                return ERROR;
+            if ((a0exattr & DEFINED) == 0)
+                return error("function code immediate should be defined");
+            if (a0exval > 7 && a0exval < 0)
+                return error("function code out of range (0-7)");
+            fc = a0exval;
+            break;
+        case KW_D0:
+        case KW_D1:
+        case KW_D2:
+        case KW_D3:
+        case KW_D4:
+        case KW_D5:
+        case KW_D6:
+        case KW_D7:
+            fc = (1 << 4) | (*tok++ & 7);
+            break;
+        case KW_SFC:
+            fc = 0;
+            tok++;
+            break;
+        case KW_DFC:
+            fc = 1;
+            tok++;
+            break;
+        default:
+            return error(syntax_error);
+        }
+
+        if (*tok++ != ',')
+            return error("comma exptected");
+
+        if (*tok++ != '#')
+            return error("mask should be an immediate value");
+        if (*tok != CONST && *tok != SYMBOL)
+            return error("mask is supposed to be immediate");
+        if (expr(a0expr, &a0exval, &a0exattr, &a0esym) == ERROR)
+            return ERROR;
+        if ((a0exattr & DEFINED) == 0)
+            return error("mask immediate value should be defined");
+        if (a0exval > 7 && a0exval < 0)
+            return error("function code out of range (0-7)");
+        mask = a0exval << 5;
+
+        if (*tok == EOL)
+        {
+            // PFLUSH FC, MASK
+            D_word(inst);
+            inst = (1 << 13) | fc | mask | (4 << 10);
+            D_word(inst);
+            return OK;
+        }
+        else if (*tok == ',')
+        {
+            // PFLUSH FC, MASK, < ea >
+            tok++;
+            if (amode(0) == ERROR)
+                return ERROR;
+            if (*tok != EOL)
+                return error(extra_stuff);
+            if (am0 == AIND || am0 == ABSW || am0 == ABSL || am0 == ADISP || am0 == ADISP || am0 == AINDEXED || am0 == ABASE || am0 == MEMPOST || am0 == MEMPRE)
+            {
+                inst |= am0 | a0reg;
+                D_word(inst);
+                inst = (1 << 13) | fc | mask | (6 << 10);
+                D_word(inst);
+                ea0gen(siz);
+                return OK;
+            }
+            else
+                return error("unsupported addressing mode");
+
+        }
+        else
+            return error(syntax_error);
+
+        return OK;
+
 	}
 	else if (activecpu == CPU_68040 || activecpu == CPU_68060)
 	{
-		D_word(0xf918);
+        // PFLUSH(An)
+        // PFLUSHN(An)
+        if (*tok != '(' && tok[2] != ')')
+            return error(syntax_error);
+        if (tok[1] < KW_A0 && tok[1] > KW_A7)
+            return error("expected (An)");
+        if ((inst & 7) == 7)
+            // With pflushn/pflush there's no easy way to
+            // distinguish between the two in 68040 mode.
+            // Ideally the opcode bitfields would have been
+            // hardcoded in 68ktab but there is aliasing
+            // between 68030 and 68040 opcode. So we just
+            // set the 3 lower bits to 1 in pflushn inside
+            // 68ktab and detect it here. 
+            inst = (inst & 0xff8) | 8;
+        inst |= (tok[1] & 7) | (5 << 8);
+        if (tok[3] != EOL)
+            return error(extra_stuff);
+        D_word(inst);
 	}
 	else
 		return error(unsupport);
@@ -2431,21 +2644,73 @@ int m_pflushr(WORD inst, WORD siz)
 //
 // ploadr, ploadw (68030)
 //
-int m_pload(WORD inst, WORD siz)
+int m_pload(WORD inst, WORD siz, WORD extension)
 {
-	CHECKNO30;
-	return error("Not implemented yet.");
+    // TODO: 68551 support is not added yet.
+    // None of the ST series of computers had
+    // a 68020 + 68551 socket and since this is
+    // an Atari targetted assembler....
+    CHECKNO30;
+    
+		inst |= am1;
+
+    D_word(inst);
+
+    switch (am0)
+	{
+    case CREG:
+        if (a0reg == KW_SFC - KW_SFC)
+        {
+            inst = 0;
+        }
+        else if (a0reg == KW_DFC - KW_SFC)
+	{
+            inst = 1;
+        }
+        else
+            return error("illegal control register specified");
+        break;
+    case DREG:
+        inst = (1 << 3) | a0reg;
+        break;
+    case IMMED:
+        if ((a0exattr & DEFINED) == 0)
+            return error("constant value must be defined");
+        inst = (2 << 3) | a0exval;
+        break;
+    }
+
+    inst |= extension | (1 << 13);
+    D_word(inst);
+
+    ea1gen(siz);
+    
+    return OK;
 }
 
+int m_ploadr(WORD inst, WORD siz)
+{
+    return m_pload(inst, siz, 1 << 9);
+}
+
+int m_ploadw(WORD inst, WORD siz)
+{
+    return m_pload(inst, siz, 0 << 9);
+}
 
 //
-// pmove (68030)
+// pmove (68030/68551)
 //
 int m_pmove(WORD inst, WORD siz)
 {
 	int inst2,reg;
 
-	CHECKNO30;
+    // TODO: 68551 support is not added yet.
+    // None of the ST series of computers had
+    // a 68020 + 68551 socket and since this is
+    // an Atari targetted assembler....
+    // (same for 68EC030)
+    CHECKNO30;
 
 	inst2 = inst & (1 << 8); //Copy the flush bit over to inst2 in case we're called from m_pmovefd
 	inst &= ~(1 << 8);		//And mask it out
@@ -2463,6 +2728,12 @@ int m_pmove(WORD inst, WORD siz)
 	else
 		return error("pmove sez: Wut?");
 
+    // The instruction is a quad-word (8 byte) operation
+    // for the CPU root pointer and the supervisor root pointer.
+    // It is a long - word operation for the translation control register
+    // and the transparent translation registers(TT0 and TT1).
+    // It is a word operation for the MMU status register.
+
 	if (((reg == (KW_URP - KW_SFC)) || (reg == (KW_SRP - KW_SFC)))
 		&& ((siz != SIZD) && (siz != SIZN)))
 		return error(siz_error);
@@ -2474,40 +2745,51 @@ int m_pmove(WORD inst, WORD siz)
 	if ((reg == (KW_MMUSR - KW_SFC)) && ((siz != SIZW) && (siz != SIZN)))
 		return error(siz_error);
 
-	WARNING(Not all addressing modes are legal here!)
 
 	if (am0 == CREG)
 	{
-		inst |= am1;
+	inst |= am1 | a1reg;
 		D_word(inst);
-		ea1gen(siz);
 	}
 	else if (am1 == CREG)
 	{
-		inst |= am0;
+    	inst |= am0 | a0reg;
 		D_word(inst);
-		ea0gen(siz);
 	}
 
-	switch (reg)
+	switch (reg + KW_SFC)
 	{
-	case (KW_URP - KW_SFC):
-		inst2 |= (3 << 10) + (2 << 13); break;
-	case (KW_SRP - KW_SFC):
-		inst2 |= (2 << 10) + (2 << 13); break;
-	case (KW_TC - KW_SFC):
-		inst2 |= (0 << 10) + (2 << 13); break;
-	case (KW_TT0 - KW_SFC):
+    case KW_TC:
+        inst2 |= (0 << 10) + (1 << 14); break;
+    case KW_SRP:
+        inst2 |= (2 << 10) + (1 << 14); break;
+    case KW_CRP:
+        inst2 |= (3 << 10) + (1 << 14); break;
+    case KW_TT0:
 		inst2 |= (2 << 10) + (0 << 13); break;
-	case (KW_TT1 - KW_SFC):
+    case KW_TT1:
 		inst2 |= (3 << 10) + (0 << 13); break;
-	case (KW_MMUSR - KW_SFC):
-		inst2 |= (3 << 10) + (3 << 13); break;
-	case (KW_CRP - KW_SFC) :	//68851 only
-		inst2 |= (3 << 10) + (2 << 13); break;
+    case KW_MMUSR:
+        if (am0 == CREG)
+            inst2 |= (1 << 9) + (3 << 13);
+        else
+            inst2 |= (0 << 9) + (3 << 13);
+        break;
+    default:
+        return error("unsupported register");
+        break;
 	}
 
 	D_word(inst2);
+
+    if (am0 == CREG)
+    {
+        ea1gen(siz);
+    }
+    else if (am1 == CREG)
+    {
+        ea0gen(siz);
+    }
 
 	return OK;
 }
@@ -2527,38 +2809,82 @@ int m_pmovefd(WORD inst, WORD siz)
 //
 // ptrapcc (68851)
 //
-int m_ptrapbs(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00000000)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00000000)); D_long(a0exval); } return OK; }
-int m_ptrapbc(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00000001)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00000001)); D_long(a0exval); } return OK; }
-int m_ptrapls(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00000010)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00000010)); D_long(a0exval); } return OK; }
-int m_ptraplc(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00000011)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00000011)); D_long(a0exval); } return OK; }
-int m_ptrapss(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00000100)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00000100)); D_long(a0exval); } return OK; }
-int m_ptrapsc(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00000101)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00000101)); D_long(a0exval); } return OK; }
-int m_ptrapas(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00000110)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00000110)); D_long(a0exval); } return OK; }
-int m_ptrapac(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00000111)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00000111)); D_long(a0exval); } return OK; }
-int m_ptrapws(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00001000)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00001000)); D_long(a0exval); } return OK; }
-int m_ptrapwc(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00001001)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00001001)); D_long(a0exval); } return OK; }
-int m_ptrapis(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00001010)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00001010)); D_long(a0exval); } return OK; }
-int m_ptrapic(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00001011)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00001011)); D_long(a0exval); } return OK; }
-int m_ptrapgc(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00001100)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00001100)); D_long(a0exval); } return OK; }
-int m_ptrapgs(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00001101)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00001101)); D_long(a0exval); } return OK; }
-int m_ptrapcs(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00001110)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00001110)); D_long(a0exval); } return OK; }
-int m_ptrapcc(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00001111)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00001111)); D_long(a0exval); } return OK; }
-int m_ptrapbsn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00000000)); return OK; }
-int m_ptrapbcn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00000001)); return OK; }
-int m_ptraplsn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00000010)); return OK; }
-int m_ptraplcn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00000011)); return OK; }
-int m_ptrapssn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00000100)); return OK; }
-int m_ptrapscn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00000101)); return OK; }
-int m_ptrapasn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00000110)); return OK; }
-int m_ptrapacn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00000111)); return OK; }
-int m_ptrapwsn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00001000)); return OK; }
-int m_ptrapwcn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00001001)); return OK; }
-int m_ptrapisn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00001010)); return OK; }
-int m_ptrapicn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00001011)); return OK; }
-int m_ptrapgsn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00001100)); return OK; }
-int m_ptrapgcn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00001101)); return OK; }
-int m_ptrapcsn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00001110)); return OK; }
-int m_ptrapccn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00001111)); return OK; }
+#define gen_ptrapcc(name,opcode) \
+int m_##name(WORD inst, WORD siz) \
+{ \
+    CHECKNO20; \
+    if (siz == SIZW) \
+    { \
+        D_word(inst); \
+        D_word(B8(opcode)); \
+        D_word(a0exval); \
+    } \
+    else \
+    { \
+        inst |= 3; \
+        D_word(inst); \
+        D_word(B8(opcode)); \
+        D_long(a0exval); \
+    } \
+    return OK; \
+}\
+int m_##name##n(WORD inst, WORD siz) \
+{ \
+    CHECKNO20; \
+    D_word(inst); \
+    D_word(B8(opcode)); \
+    return OK; \
+}
+
+gen_ptrapcc(ptrapbs,00000000)
+gen_ptrapcc(ptrapbc,00000001)
+gen_ptrapcc(ptrapls,00000010)
+gen_ptrapcc(ptraplc,00000011)
+gen_ptrapcc(ptrapss,00000100)
+gen_ptrapcc(ptrapsc,00000101)
+gen_ptrapcc(ptrapas,00000110)
+gen_ptrapcc(ptrapac,00000111)
+gen_ptrapcc(ptrapws,00001000)
+gen_ptrapcc(ptrapwc,00001001)
+gen_ptrapcc(ptrapis,00001010)
+gen_ptrapcc(ptrapic,00001011)
+gen_ptrapcc(ptrapgc,00001100)
+gen_ptrapcc(ptrapgs,00001101)
+gen_ptrapcc(ptrapcs,00001110)
+gen_ptrapcc(ptrapcc,00001111)
+
+//int m_ptrapbs(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00000000)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00000000)); D_long(a0exval); } return OK; }
+//int m_ptrapbc(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00000001)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00000001)); D_long(a0exval); } return OK; }
+//int m_ptrapls(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00000010)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00000010)); D_long(a0exval); } return OK; }
+//int m_ptraplc(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00000011)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00000011)); D_long(a0exval); } return OK; }
+//int m_ptrapss(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00000100)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00000100)); D_long(a0exval); } return OK; }
+//int m_ptrapsc(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00000101)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00000101)); D_long(a0exval); } return OK; }
+//int m_ptrapas(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00000110)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00000110)); D_long(a0exval); } return OK; }
+//int m_ptrapac(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00000111)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00000111)); D_long(a0exval); } return OK; }
+//int m_ptrapws(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00001000)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00001000)); D_long(a0exval); } return OK; }
+//int m_ptrapwc(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00001001)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00001001)); D_long(a0exval); } return OK; }
+//int m_ptrapis(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00001010)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00001010)); D_long(a0exval); } return OK; }
+//int m_ptrapic(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00001011)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00001011)); D_long(a0exval); } return OK; }
+//int m_ptrapgc(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00001100)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00001100)); D_long(a0exval); } return OK; }
+//int m_ptrapgs(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00001101)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00001101)); D_long(a0exval); } return OK; }
+//int m_ptrapcs(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00001110)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00001110)); D_long(a0exval); } return OK; }
+//int m_ptrapcc(WORD inst, WORD siz) { CHECKNO20; if (siz == SIZW) { D_word(inst); D_word(B8(00001111)); D_word(a0exval); } else { inst |= 3; D_word(inst); D_word(B8(00001111)); D_long(a0exval); } return OK; }
+//int m_ptrapbsn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00000000)); return OK; }
+//int m_ptrapbcn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00000001)); return OK; }
+//int m_ptraplsn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00000010)); return OK; }
+//int m_ptraplcn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00000011)); return OK; }
+//int m_ptrapssn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00000100)); return OK; }
+//int m_ptrapscn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00000101)); return OK; }
+//int m_ptrapasn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00000110)); return OK; }
+//int m_ptrapacn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00000111)); return OK; }
+//int m_ptrapwsn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00001000)); return OK; }
+//int m_ptrapwcn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00001001)); return OK; }
+//int m_ptrapisn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00001010)); return OK; }
+//int m_ptrapicn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00001011)); return OK; }
+//int m_ptrapgsn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00001100)); return OK; }
+//int m_ptrapgcn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00001101)); return OK; }
+//int m_ptrapcsn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00001110)); return OK; }
+//int m_ptrapccn(WORD inst, WORD siz) { CHECKNO20; D_word(inst); D_word(B8(00001111)); return OK; }
 
 
 //
@@ -2948,8 +3274,6 @@ int m_fmove(WORD inst, WORD siz)
 		// R/M
 		inst = 3 << 13;
 
-		WARNING("K-factor logic is totally bogus - fix!")
-
 		// Source specifier
 		switch (siz)
 		{
@@ -2961,22 +3285,29 @@ int m_fmove(WORD inst, WORD siz)
 		case SIZD:	inst |= (5 << 10); break;
 		case SIZX:	inst |= (2 << 10); break;
 		case SIZP:  inst |= (3 << 10);
-			if (bfparam1)
-				inst |= 1 << 12;
+            // In P size we have 2 cases: {#k} where k is immediate
+            // and {Dn} where Dn=Data register
 
-			inst |= (bfparam1 & 0x7FF) >> 2;
+			if (bfparam1)
+            {
+                // Dn
+				inst |= 1 << 12;
+                inst |= bfval1 << 4;
+            }
+            else
+            {
+                // #k
+                if (bfval1>63 && bfval1<-64)
+                    return error("K-factor must be between -64 and 63");
+                inst |= bfval1 & 127;
+            }
+
 			break;
 		default:
 			return error("Something bad happened, possibly.");
 			break;
 		}
 
-		// Immediate {} value
-		if (bf0exval >= (1 << 6))
-			return error("K-factor must be between 0 and 31");
-
-		if (!bfparam1 && (siz == SIZP))
-            inst |= bf0exval;
 
 		// Destination specifier
 		inst |= (a0reg << 7);
@@ -3083,7 +3414,6 @@ int m_fmovescr(WORD inst, WORD siz)
 	else
 		return error("m_fmovescr says: wut?");
 }
-
 
 //
 // fsmove/fdmove (68040)
@@ -3408,109 +3738,199 @@ int m_fscale(WORD inst, WORD siz)
 //
 // FScc (6888X, 68040)
 //
-int m_fseq  (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00000001)); return OK;}
-int m_fsne  (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00001110)); return OK;}
-int m_fsgt  (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00010010)); return OK;}
-int m_fsngt (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00011101)); return OK;}
-int m_fsge  (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00010011)); return OK;}
-int m_fsnge (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00011100)); return OK;}
-int m_fslt  (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00010100)); return OK;}
-int m_fsnlt (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00011011)); return OK;}
-int m_fsle  (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00010101)); return OK;}
-int m_fsnle (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00011010)); return OK;}
-int m_fsgl  (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00010110)); return OK;}
-int m_fsngl (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00011001)); return OK;}
-int m_fsgle (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00010111)); return OK;}
-int m_fsngle(WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00011000)); return OK;}
-int m_fsogt (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00000010)); return OK;}
-int m_fsule (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00001101)); return OK;}
-int m_fsoge (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00000011)); return OK;}
-int m_fsult (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00001100)); return OK;}
-int m_fsolt (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00000100)); return OK;}
-int m_fsuge (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00001011)); return OK;}
-int m_fsole (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00000101)); return OK;}
-int m_fsugt (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00001010)); return OK;}
-int m_fsogl (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00000110)); return OK;}
-int m_fsueq (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00001001)); return OK;}
-int m_fsor  (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00000111)); return OK;}
-int m_fsun  (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00001000)); return OK;}
-int m_fsf   (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00000000)); return OK;}
-int m_fst   (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00001111)); return OK;}
-int m_fssf  (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00010000)); return OK;}
-int m_fsst  (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00011111)); return OK;}
-int m_fsseq (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00010001)); return OK;}
-int m_fssne (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00011110)); return OK;}
+//int m_fseq  (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00000001)); return OK;}
+//int m_fsne  (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00001110)); return OK;}
+//int m_fsgt  (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00010010)); return OK;}
+//int m_fsngt (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00011101)); return OK;}
+//int m_fsge  (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00010011)); return OK;}
+//int m_fsnge (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00011100)); return OK;}
+//int m_fslt  (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00010100)); return OK;}
+//int m_fsnlt (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00011011)); return OK;}
+//int m_fsle  (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00010101)); return OK;}
+//int m_fsnle (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00011010)); return OK;}
+//int m_fsgl  (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00010110)); return OK;}
+//int m_fsngl (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00011001)); return OK;}
+//int m_fsgle (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00010111)); return OK;}
+//int m_fsngle(WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00011000)); return OK;}
+//int m_fsogt (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00000010)); return OK;}
+//int m_fsule (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00001101)); return OK;}
+//int m_fsoge (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00000011)); return OK;}
+//int m_fsult (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00001100)); return OK;}
+//int m_fsolt (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00000100)); return OK;}
+//int m_fsuge (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00001011)); return OK;}
+//int m_fsole (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00000101)); return OK;}
+//int m_fsugt (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00001010)); return OK;}
+//int m_fsogl (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00000110)); return OK;}
+//int m_fsueq (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00001001)); return OK;}
+//int m_fsor  (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00000111)); return OK;}
+//int m_fsun  (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00001000)); return OK;}
+//int m_fsf   (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00000000)); return OK;}
+//int m_fst   (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00001111)); return OK;}
+//int m_fssf  (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00010000)); return OK;}
+//int m_fsst  (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00011111)); return OK;}
+//int m_fsseq (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00010001)); return OK;}
+//int m_fssne (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(00011110)); return OK;}
 
+#define gen_FScc(name, opcode) int m_##name  (WORD inst, WORD siz) { inst|=am0|a0reg; D_word(inst); ea0gen(siz); D_word(B8(opcode)); return OK;}
+gen_FScc(fseq  , 00000001);
+gen_FScc(fsne  , 00001110);
+gen_FScc(fsgt  , 00010010);
+gen_FScc(fsngt , 00011101);
+gen_FScc(fsge  , 00010011);
+gen_FScc(fsnge , 00011100);
+gen_FScc(fslt  , 00010100);
+gen_FScc(fsnlt , 00011011);
+gen_FScc(fsle  , 00010101);
+gen_FScc(fsnle , 00011010);
+gen_FScc(fsgl  , 00010110);
+gen_FScc(fsngl , 00011001);
+gen_FScc(fsgle , 00010111);
+gen_FScc(fsngle, 00011000);
+gen_FScc(fsogt , 00000010);
+gen_FScc(fsule , 00001101);
+gen_FScc(fsoge , 00000011);
+gen_FScc(fsult , 00001100);
+gen_FScc(fsolt , 00000100);
+gen_FScc(fsuge , 00001011);
+gen_FScc(fsole , 00000101);
+gen_FScc(fsugt , 00001010);
+gen_FScc(fsogl , 00000110);
+gen_FScc(fsueq , 00001001);
+gen_FScc(fsor  , 00000111);
+gen_FScc(fsun  , 00001000);
+gen_FScc(fsf   , 00000000);
+gen_FScc(fst   , 00001111);
+gen_FScc(fssf  , 00010000);
+gen_FScc(fsst  , 00011111);
+gen_FScc(fsseq , 00010001);
+gen_FScc(fssne , 00011110);
 
 //
 // FTRAPcc (6888X, 68040)
 //
-int m_ftrapeq  (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00000001)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00000001)); D_long(a0exval); } return OK;}
-int m_ftrapne  (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00001110)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00001110)); D_long(a0exval); } return OK;}
-int m_ftrapgt  (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00010010)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00010010)); D_long(a0exval); } return OK;}
-int m_ftrapngt (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00011101)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00011101)); D_long(a0exval); } return OK;}
-int m_ftrapge  (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00010011)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00010011)); D_long(a0exval); } return OK;}
-int m_ftrapnge (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00011100)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00011100)); D_long(a0exval); } return OK;}
-int m_ftraplt  (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00010100)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00010100)); D_long(a0exval); } return OK;}
-int m_ftrapnlt (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00011011)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00011011)); D_long(a0exval); } return OK;}
-int m_ftraple  (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00010101)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00010101)); D_long(a0exval); } return OK;}
-int m_ftrapnle (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00011010)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00011010)); D_long(a0exval); } return OK;}
-int m_ftrapgl  (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00010110)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00010110)); D_long(a0exval); } return OK;}
-int m_ftrapngl (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00011001)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00011001)); D_long(a0exval); } return OK;}
-int m_ftrapgle (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00010111)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00010111)); D_long(a0exval); } return OK;}
-int m_ftrapngle(WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00011000)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00011000)); D_long(a0exval); } return OK;}
-int m_ftrapogt (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00000010)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00000010)); D_long(a0exval); } return OK;}
-int m_ftrapule (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00001101)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00001101)); D_long(a0exval); } return OK;}
-int m_ftrapoge (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00000011)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00000011)); D_long(a0exval); } return OK;}
-int m_ftrapult (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00001100)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00001100)); D_long(a0exval); } return OK;}
-int m_ftrapolt (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00000100)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00000100)); D_long(a0exval); } return OK;}
-int m_ftrapuge (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00001011)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00001011)); D_long(a0exval); } return OK;}
-int m_ftrapole (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00000101)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00000101)); D_long(a0exval); } return OK;}
-int m_ftrapugt (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00001010)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00001010)); D_long(a0exval); } return OK;}
-int m_ftrapogl (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00000110)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00000110)); D_long(a0exval); } return OK;}
-int m_ftrapueq (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00001001)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00001001)); D_long(a0exval); } return OK;}
-int m_ftrapor  (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00000111)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00000111)); D_long(a0exval); } return OK;}
-int m_ftrapun  (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00001000)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00001000)); D_long(a0exval); } return OK;}
-int m_ftrapf   (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00000000)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00000000)); D_long(a0exval); } return OK;}
-int m_ftrapt   (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00001111)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00001111)); D_long(a0exval); } return OK;}
-int m_ftrapsf  (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00010000)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00010000)); D_long(a0exval); } return OK;}
-int m_ftrapst  (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00011111)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00011111)); D_long(a0exval); } return OK;}
-int m_ftrapseq (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00010001)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00010001)); D_long(a0exval); } return OK;}
-int m_ftrapsne (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00011110)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00011110)); D_long(a0exval); } return OK;}
+//int m_ftrapeq  (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00000001)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00000001)); D_long(a0exval); } return OK;}
+//int m_ftrapne  (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00001110)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00001110)); D_long(a0exval); } return OK;}
+//int m_ftrapgt  (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00010010)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00010010)); D_long(a0exval); } return OK;}
+//int m_ftrapngt (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00011101)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00011101)); D_long(a0exval); } return OK;}
+//int m_ftrapge  (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00010011)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00010011)); D_long(a0exval); } return OK;}
+//int m_ftrapnge (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00011100)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00011100)); D_long(a0exval); } return OK;}
+//int m_ftraplt  (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00010100)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00010100)); D_long(a0exval); } return OK;}
+//int m_ftrapnlt (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00011011)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00011011)); D_long(a0exval); } return OK;}
+//int m_ftraple  (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00010101)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00010101)); D_long(a0exval); } return OK;}
+//int m_ftrapnle (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00011010)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00011010)); D_long(a0exval); } return OK;}
+//int m_ftrapgl  (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00010110)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00010110)); D_long(a0exval); } return OK;}
+//int m_ftrapngl (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00011001)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00011001)); D_long(a0exval); } return OK;}
+//int m_ftrapgle (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00010111)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00010111)); D_long(a0exval); } return OK;}
+//int m_ftrapngle(WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00011000)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00011000)); D_long(a0exval); } return OK;}
+//int m_ftrapogt (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00000010)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00000010)); D_long(a0exval); } return OK;}
+//int m_ftrapule (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00001101)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00001101)); D_long(a0exval); } return OK;}
+//int m_ftrapoge (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00000011)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00000011)); D_long(a0exval); } return OK;}
+//int m_ftrapult (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00001100)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00001100)); D_long(a0exval); } return OK;}
+//int m_ftrapolt (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00000100)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00000100)); D_long(a0exval); } return OK;}
+//int m_ftrapuge (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00001011)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00001011)); D_long(a0exval); } return OK;}
+//int m_ftrapole (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00000101)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00000101)); D_long(a0exval); } return OK;}
+//int m_ftrapugt (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00001010)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00001010)); D_long(a0exval); } return OK;}
+//int m_ftrapogl (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00000110)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00000110)); D_long(a0exval); } return OK;}
+//int m_ftrapueq (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00001001)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00001001)); D_long(a0exval); } return OK;}
+//int m_ftrapor  (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00000111)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00000111)); D_long(a0exval); } return OK;}
+//int m_ftrapun  (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00001000)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00001000)); D_long(a0exval); } return OK;}
+//int m_ftrapf   (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00000000)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00000000)); D_long(a0exval); } return OK;}
+//int m_ftrapt   (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00001111)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00001111)); D_long(a0exval); } return OK;}
+//int m_ftrapsf  (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00010000)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00010000)); D_long(a0exval); } return OK;}
+//int m_ftrapst  (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00011111)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00011111)); D_long(a0exval); } return OK;}
+//int m_ftrapseq (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00010001)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00010001)); D_long(a0exval); } return OK;}
+//int m_ftrapsne (WORD inst, WORD siz) { if (siz==SIZW) { D_word(inst); D_word(B8(00011110)); D_word(a0exval); } else { inst|=3; D_word(inst); D_word(B8(00011110)); D_long(a0exval); } return OK;}
+//
+//int m_ftrapeqn  (WORD inst, WORD siz) { D_word(inst); D_word(B8(00000001)); return OK;}
+//int m_ftrapnen  (WORD inst, WORD siz) { D_word(inst); D_word(B8(00001110)); return OK;}
+//int m_ftrapgtn  (WORD inst, WORD siz) { D_word(inst); D_word(B8(00010010)); return OK;}
+//int m_ftrapngtn (WORD inst, WORD siz) { D_word(inst); D_word(B8(00011101)); return OK;}
+//int m_ftrapgen  (WORD inst, WORD siz) { D_word(inst); D_word(B8(00010011)); return OK;}
+//int m_ftrapngen (WORD inst, WORD siz) { D_word(inst); D_word(B8(00011100)); return OK;}
+//int m_ftrapltn  (WORD inst, WORD siz) { D_word(inst); D_word(B8(00010100)); return OK;}
+//int m_ftrapnltn (WORD inst, WORD siz) { D_word(inst); D_word(B8(00011011)); return OK;}
+//int m_ftraplen  (WORD inst, WORD siz) { D_word(inst); D_word(B8(00010101)); return OK;}
+//int m_ftrapnlen (WORD inst, WORD siz) { D_word(inst); D_word(B8(00011010)); return OK;}
+//int m_ftrapgln  (WORD inst, WORD siz) { D_word(inst); D_word(B8(00010110)); return OK;}
+//int m_ftrapngln (WORD inst, WORD siz) { D_word(inst); D_word(B8(00011001)); return OK;}
+//int m_ftrapglen (WORD inst, WORD siz) { D_word(inst); D_word(B8(00010111)); return OK;}
+//int m_ftrapnglen(WORD inst, WORD siz) { D_word(inst); D_word(B8(00011000)); return OK;}
+//int m_ftrapogtn (WORD inst, WORD siz) { D_word(inst); D_word(B8(00000010)); return OK;}
+//int m_ftrapulen (WORD inst, WORD siz) { D_word(inst); D_word(B8(00001101)); return OK;}
+//int m_ftrapogen (WORD inst, WORD siz) { D_word(inst); D_word(B8(00000011)); return OK;}
+//int m_ftrapultn (WORD inst, WORD siz) { D_word(inst); D_word(B8(00001100)); return OK;}
+//int m_ftrapoltn (WORD inst, WORD siz) { D_word(inst); D_word(B8(00000100)); return OK;}
+//int m_ftrapugen (WORD inst, WORD siz) { D_word(inst); D_word(B8(00001011)); return OK;}
+//int m_ftrapolen (WORD inst, WORD siz) { D_word(inst); D_word(B8(00000101)); return OK;}
+//int m_ftrapugtn (WORD inst, WORD siz) { D_word(inst); D_word(B8(00001010)); return OK;}
+//int m_ftrapogln (WORD inst, WORD siz) { D_word(inst); D_word(B8(00000110)); return OK;}
+//int m_ftrapueqn (WORD inst, WORD siz) { D_word(inst); D_word(B8(00001001)); return OK;}
+//int m_ftraporn  (WORD inst, WORD siz) { D_word(inst); D_word(B8(00000111)); return OK;}
+//int m_ftrapunn  (WORD inst, WORD siz) { D_word(inst); D_word(B8(00001000)); return OK;}
+//int m_ftrapfn   (WORD inst, WORD siz) { D_word(inst); D_word(B8(00000000)); return OK;}
+//int m_ftraptn   (WORD inst, WORD siz) { D_word(inst); D_word(B8(00001111)); return OK;}
+//int m_ftrapsfn  (WORD inst, WORD siz) { D_word(inst); D_word(B8(00010000)); return OK;}
+//int m_ftrapstn  (WORD inst, WORD siz) { D_word(inst); D_word(B8(00011111)); return OK;}
+//int m_ftrapseqn (WORD inst, WORD siz) { D_word(inst); D_word(B8(00010001)); return OK;}
+//int m_ftrapsnen (WORD inst, WORD siz) { D_word(inst); D_word(B8(00011110)); return OK;}
 
-int m_ftrapeqn  (WORD inst, WORD siz) { D_word(inst); D_word(B8(00000001)); return OK;}
-int m_ftrapnen  (WORD inst, WORD siz) { D_word(inst); D_word(B8(00001110)); return OK;}
-int m_ftrapgtn  (WORD inst, WORD siz) { D_word(inst); D_word(B8(00010010)); return OK;}
-int m_ftrapngtn (WORD inst, WORD siz) { D_word(inst); D_word(B8(00011101)); return OK;}
-int m_ftrapgen  (WORD inst, WORD siz) { D_word(inst); D_word(B8(00010011)); return OK;}
-int m_ftrapngen (WORD inst, WORD siz) { D_word(inst); D_word(B8(00011100)); return OK;}
-int m_ftrapltn  (WORD inst, WORD siz) { D_word(inst); D_word(B8(00010100)); return OK;}
-int m_ftrapnltn (WORD inst, WORD siz) { D_word(inst); D_word(B8(00011011)); return OK;}
-int m_ftraplen  (WORD inst, WORD siz) { D_word(inst); D_word(B8(00010101)); return OK;}
-int m_ftrapnlen (WORD inst, WORD siz) { D_word(inst); D_word(B8(00011010)); return OK;}
-int m_ftrapgln  (WORD inst, WORD siz) { D_word(inst); D_word(B8(00010110)); return OK;}
-int m_ftrapngln (WORD inst, WORD siz) { D_word(inst); D_word(B8(00011001)); return OK;}
-int m_ftrapglen (WORD inst, WORD siz) { D_word(inst); D_word(B8(00010111)); return OK;}
-int m_ftrapnglen(WORD inst, WORD siz) { D_word(inst); D_word(B8(00011000)); return OK;}
-int m_ftrapogtn (WORD inst, WORD siz) { D_word(inst); D_word(B8(00000010)); return OK;}
-int m_ftrapulen (WORD inst, WORD siz) { D_word(inst); D_word(B8(00001101)); return OK;}
-int m_ftrapogen (WORD inst, WORD siz) { D_word(inst); D_word(B8(00000011)); return OK;}
-int m_ftrapultn (WORD inst, WORD siz) { D_word(inst); D_word(B8(00001100)); return OK;}
-int m_ftrapoltn (WORD inst, WORD siz) { D_word(inst); D_word(B8(00000100)); return OK;}
-int m_ftrapugen (WORD inst, WORD siz) { D_word(inst); D_word(B8(00001011)); return OK;}
-int m_ftrapolen (WORD inst, WORD siz) { D_word(inst); D_word(B8(00000101)); return OK;}
-int m_ftrapugtn (WORD inst, WORD siz) { D_word(inst); D_word(B8(00001010)); return OK;}
-int m_ftrapogln (WORD inst, WORD siz) { D_word(inst); D_word(B8(00000110)); return OK;}
-int m_ftrapueqn (WORD inst, WORD siz) { D_word(inst); D_word(B8(00001001)); return OK;}
-int m_ftraporn  (WORD inst, WORD siz) { D_word(inst); D_word(B8(00000111)); return OK;}
-int m_ftrapunn  (WORD inst, WORD siz) { D_word(inst); D_word(B8(00001000)); return OK;}
-int m_ftrapfn   (WORD inst, WORD siz) { D_word(inst); D_word(B8(00000000)); return OK;}
-int m_ftraptn   (WORD inst, WORD siz) { D_word(inst); D_word(B8(00001111)); return OK;}
-int m_ftrapsfn  (WORD inst, WORD siz) { D_word(inst); D_word(B8(00010000)); return OK;}
-int m_ftrapstn  (WORD inst, WORD siz) { D_word(inst); D_word(B8(00011111)); return OK;}
-int m_ftrapseqn (WORD inst, WORD siz) { D_word(inst); D_word(B8(00010001)); return OK;}
-int m_ftrapsnen (WORD inst, WORD siz) { D_word(inst); D_word(B8(00011110)); return OK;}
+#define gen_FTRAPcc(name,opcode) \
+int m_##name  (WORD inst, WORD siz) \
+{ \
+    if (siz==SIZW) \
+    { \
+        D_word(inst); \
+        D_word(B8(opcode)); \
+        D_word(a0exval); \
+    } \
+    else \
+    { \
+        inst|=3; \
+        D_word(inst); \
+        D_word(B8(opcode)); \
+        D_long(a0exval); \
+    } \
+    return OK;\
+} \
+int m_##name##n  (WORD inst, WORD siz) \
+{ \
+    D_word(inst); \
+    D_word(B8(opcode)); \
+    return OK;\
+}
 
+gen_FTRAPcc(ftrapeq   ,00000001)
+gen_FTRAPcc(ftrapne   ,00001110)
+gen_FTRAPcc(ftrapgt   ,00010010)
+gen_FTRAPcc(ftrapngt  ,00011101)
+gen_FTRAPcc(ftrapge   ,00010011)
+gen_FTRAPcc(ftrapnge  ,00011100)
+gen_FTRAPcc(ftraplt   ,00010100)
+gen_FTRAPcc(ftrapnlt  ,00011011)
+gen_FTRAPcc(ftraple   ,00010101)
+gen_FTRAPcc(ftrapnle  ,00011010)
+gen_FTRAPcc(ftrapgl   ,00010110)
+gen_FTRAPcc(ftrapngl  ,00011001)
+gen_FTRAPcc(ftrapgle  ,00010111)
+gen_FTRAPcc(ftrapngle ,00011000)
+gen_FTRAPcc(ftrapogt  ,00000010)
+gen_FTRAPcc(ftrapule  ,00001101)
+gen_FTRAPcc(ftrapoge  ,00000011)
+gen_FTRAPcc(ftrapult  ,00001100)
+gen_FTRAPcc(ftrapolt  ,00000100)
+gen_FTRAPcc(ftrapuge  ,00001011)
+gen_FTRAPcc(ftrapole  ,00000101)
+gen_FTRAPcc(ftrapugt  ,00001010)
+gen_FTRAPcc(ftrapogl  ,00000110)
+gen_FTRAPcc(ftrapueq  ,00001001)
+gen_FTRAPcc(ftrapor   ,00000111)
+gen_FTRAPcc(ftrapun   ,00001000)
+gen_FTRAPcc(ftrapf    ,00000000)
+gen_FTRAPcc(ftrapt    ,00001111)
+gen_FTRAPcc(ftrapsf   ,00010000)
+gen_FTRAPcc(ftrapst   ,00011111)
+gen_FTRAPcc(ftrapseq  ,00010001)
+gen_FTRAPcc(ftrapsne  ,00011110)
 
 //
 // fsgldiv (6888X, 68040)

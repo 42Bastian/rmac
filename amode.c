@@ -20,6 +20,7 @@
 #define DEF_MN
 #include "mntab.h"
 
+extern char unsupport[];
 
 // Address-mode information
 int nmodes;					// Number of addr'ing modes found
@@ -60,10 +61,12 @@ WORD a1extension;			// 020+ extension address word
 WORD am1_030;				// ea bits for 020+ addressing modes
 
 int a2reg;					// Register for div.l (68020+)
-WORD mulmode;				// To distinguish between 32 and 64 bit multiplications (68020+)
+WORD mulmode;				// to distinguish between 32 and 64 bit multiplications (68020+)
 
-int bfparam1;				// bfxxx instruction parameter 1
-int bfparam2;				// bfxxx instruction parameter 2
+int bfparam1;				// bfxxx / fmove instruction parameter 1
+int bfparam2;				// bfxxx / fmove instruction parameter 2
+int bfval1;					//bfxxx / fmove value 1
+int bfval2;					//bfxxx / fmove value 2
 TOKEN bf0expr[EXPRSIZE];	// Expression
 VALUE bf0exval;				// Expression's value
 WORD bf0exattr;				// Expression's attribute
@@ -128,7 +131,8 @@ int amode(int acount)
 
 	// it's a bitfield instruction--check the parameters inside the {} block
 	// for validity
-	if ((*tok == '{') && (check030bf() == ERROR))
+	if (*tok == '{')
+        if (check030bf() == ERROR)
 		return ERROR;
 
 	if ((acount == 0) || (*tok != ','))
@@ -165,7 +169,8 @@ int amode(int acount)
 
 	// It's a bitfield instruction--check the parameters inside the {} block
 	// for validity
-	if ((*tok == '{') && (check030bf() == ERROR))
+	if (*tok == '{') 
+        if (check030bf() == ERROR)
 		return ERROR;
 
 	// At this point, it is legal for 020+ to have a ':'. For example divu.l
@@ -304,6 +309,7 @@ int fpu_reglist_left(WORD * a_rmask)
 		else
 			cnt = 0;
 
+                r = 0;
 		while (cnt-- >= 0)
 			rmask |= msktab_minus[r++];
 
@@ -376,23 +382,17 @@ int fpu_reglist_right(WORD * a_rmask)
 //
 int check030bf(void)
 {
-	WARNING(Add more strict checks as well as checks for non defined (yet) labels)
-
-	if ((activecpu & (CPU_68020 | CPU_68030 | CPU_68040)) == 0)
-		return error(unsupport);
+	CHECK00;
 
 	tok++;
 
 	if (*tok == CONST)
 	{
 		tok++;
-		bfparam1 = *(int *)tok;
-
-		if ((bfparam1 > 31) || (bfparam1 < 0))
-			return error("bfxxx offset: immediate value must be between 0 and 31");
+		bfval1 = *(int *)tok;
 
 		// Do=0, offset=immediate - shift it to place
-		bfparam1 = (bfparam1 << 6) | (0 << 11);
+		bfparam1 = (0 << 11);
 		tok++;
 	}
 	else if (*tok == SYMBOL)
@@ -400,18 +400,19 @@ int check030bf(void)
 		if (expr(bf0expr, &bf0exval, &bf0exattr, &bf0esym) != OK)
 			return ERROR;
 
-		bfparam1 = bf0exval;
+		if (!(bf0exattr & DEFINED))
+			return error("bfxxx offset: immediate value must evaluate");
 
-		if ((bfparam1 > 31) || (bfparam1 < 0))
-			return error("bfxxx offset: immediate value must be between 0 and 31");
+		bfval1 = bf0exval;
 
 		// Do=0, offset=immediate - shift it to place
-		bfparam1 = (bfparam1 << 6) | (0 << 11);
+		bfparam1 = (0 << 11);
 	}
 	else if ((*tok >= KW_D0) && (*tok <= KW_D7))
 	{
 		// Do=1, offset=data register - shift it to place
-		bfparam1 = ((*(int *)tok - 128) << 6) | (1 << 11);
+		bfparam1 = (1 << 11);
+		bfval1 = (*(int *)tok - 128);
 		tok++;
 	}
 	else
@@ -430,13 +431,10 @@ int check030bf(void)
 	if (*tok == CONST)
 	{
 		tok++;
-		bfparam2 = *(int *)tok;
-
-		if (bfparam2 > 31 || bfparam2 < 0)
-			return error("bfxxx width: immediate value must be between 0 and 31");
+		bfval2 = *(int *)tok;
 
 		// Do=0, offset=immediate - shift it to place
-		bfparam2 = (bfparam2 << 0) | (0 << 5);
+		bfparam2 = (0 << 5);
 		tok++;
 	}
 	else if (*tok == SYMBOL)
@@ -444,18 +442,19 @@ int check030bf(void)
 		if (expr(bf0expr, &bf0exval, &bf0exattr, &bf0esym) != OK)
 			return ERROR;
 
-		bfparam2 = bf0exval;
+		bfval2 = bf0exval;
 
-		if (bfparam2 > 31 || bfparam2 < 0)
-			return error("bfxxx width: immediate value must be between 0 and 31");
+		if (!(bf0exattr & DEFINED))
+			return error("bfxxx width: immediate value must evaluate");
 
 		// Do=0, offset=immediate - shift it to place
-		bfparam2 = (bfparam2 << 0) | (0 << 5);
+		bfparam2 = (0 << 5);
 	}
 	else if ((*tok >= KW_D0) && (*tok <= KW_D7))
 	{
 		// Do=1, offset=data register - shift it to place
-		bfparam2 = ((*(int *)tok - 128) << 0) | (1 << 5);
+		bfval2 = ((*(int *)tok - 128));
+		bfparam2 = (1 << 5);
 		tok++;
 	}
 	else

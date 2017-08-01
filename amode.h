@@ -37,7 +37,7 @@
 #define AM_CCR       0110
 #define AM_NONE      0111			// Nothing
 #define CACHES       0120			// Instruction/Data/Both Caches (IC/DC/BC)
-#define CREG         0121			// Control registers (see CREGlut in mach.h)
+#define CREG         0121				// Control registers (see CREGlut in mach.c)
 #define FREG         0122			// FPU registers (fp0-fp7)
 #define FPSCR        0123			// FPU system control registers (fpiar, fpsr, fpcr)
 
@@ -68,6 +68,7 @@
 #define M_CREG       0x00800000L	// Control registers
 #define M_FREG       0x01000000L	// FPn
 #define M_FPSCR      0x02000000L	// fpiar, fpsr, fpcr
+#define M_CACHE40    0x04000000L		// 68040 cache registers (IC40,DC40,BC40)
 
 // Addr mode categories
 #define C_ALL        0x00000FFFL
@@ -79,6 +80,9 @@
 #define C_CTRL030    0x0003F7E4L
 #define C_DATA030    0x0003FFFDL
 #define C_MOVES      (M_AIND | M_APOSTINC | M_APREDEC | M_ADISP | M_AINDEXED | M_ABSW | M_ABSL | M_ABASE | M_MEMPRE | M_MEMPOST)
+#define C_BF1        (M_DREG | M_AIND | M_AINDEXED | M_ADISP | M_ABSW | M_ABSL | M_ABASE | M_MEMPOST | M_MEMPRE)
+#define C_BF2        (C_BF1 | M_PCDISP | M_PCINDEXED | M_PCBASE | M_PCMPOST | M_PCMPRE )
+#define C_PMOVE      (M_AIND | M_ADISP | M_AINDEXED  | M_ABSW | M_ABSL | M_ABASE | M_MEMPRE | M_MEMPOST)
 
 #define C_ALTDATA    (C_DATA & C_ALT)
 #define C_ALTMEM     (C_MEM & C_ALT)
@@ -149,6 +153,8 @@ extern WORD a0extension, a1extension;
 extern WORD mulmode;
 extern int bfparam1;
 extern int bfparam2;
+extern int bfval1;
+extern int bfval2;
 extern VALUE bf0exval;
 
 // mnattr:

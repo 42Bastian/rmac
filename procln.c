@@ -95,7 +95,7 @@ LONG amsktab[0124] = {
 	0L,				// 0115
 	0L,				// 0116
 	0L,				// 0117
-	M_CREG,			// 0120 (caches - TODO: is this correct or does it need its own bitfield?)
+    M_CACHE40,									    // 0120
 	M_CREG,			// 0121
 	M_FREG,			// 0122
 	M_FPSCR			// 0123
@@ -269,22 +269,17 @@ as68label:
 	// Check for ".b" ".w" ".l" after directive, macro or mnemonic.
 	siz = SIZN;
 
-	if (*tok == DOTW)
-		siz = SIZW, tok++;
-	else if (*tok == DOTL)
-		siz = SIZL, tok++;
-	else if (*tok == DOTB)
-		siz = SIZB, tok++;
-	else if(*tok == DOTD)
-		siz = SIZD, tok++;
-	else if(*tok == DOTP)
-		siz = SIZP, tok++;
-	else if(*tok == DOTQ)
-		siz = SIZQ, tok++;
-	else if(*tok == DOTS)
-		siz = SIZS, tok++;
-	else if(*tok == DOTX)
-		siz = SIZX, tok++;
+    switch (*tok)
+    {
+    case DOTW: siz = SIZW, tok++; break;
+    case DOTL: siz = SIZL, tok++; break;
+    case DOTB: siz = SIZB, tok++; break;
+    case DOTD: siz = SIZD, tok++; break;
+    case DOTP: siz = SIZP, tok++; break;
+    case DOTQ: siz = SIZQ, tok++; break;
+    case DOTS: siz = SIZS, tok++; break;
+    case DOTX: siz = SIZX, tok++; break;
+    }
 
 
 	// Do special directives (500..999) (These must be handled in "real time")
