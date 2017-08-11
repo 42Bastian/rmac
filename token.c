@@ -1292,11 +1292,11 @@ dostring:
 						case '\\':
 							c = '\\';
 							break;
-                        case '!':
-                            // If we're evaluating a macro
-                            // this is valid and expands to
-                            // "dot-size"
-                            break;
+						case '!':
+							// If we're evaluating a macro
+							// this is valid and expands to
+							// "dot-size"
+							break;
 						default:
 							warn("bad backslash code in string");
 							ln--;
@@ -1562,31 +1562,31 @@ dostring:
 				{
 					v &= 0x000000FF;
 					ln += 2;
-                    *tk++ = CONST;
-                    *tk++ = v;
-                    *tk++ = DOTB;
+					*tk++ = CONST;
+					*tk++ = v;
+					*tk++ = DOTB;
 				}
 				else if ((*(ln + 1) == 'w') || (*(ln + 1) == 'W'))
 				{
 					v &= 0x0000FFFF;
 					ln += 2;
-                    *tk++ = CONST;
-                    *tk++ = v;
-                    *tk++ = DOTW;
+					*tk++ = CONST;
+					*tk++ = v;
+					*tk++ = DOTW;
 				}
 				else if ((*(ln + 1) == 'l') || (*(ln + 1) == 'L'))
 				{
 					ln += 2;
-                    *tk++ = CONST;
-                    *tk++ = v;
-                    *tk++ = DOTL;
-                }
-            }
-            else
-            {
-                *tk++ = CONST;
-                *tk++ = v;
-            }
+					*tk++ = CONST;
+					*tk++ = v;
+					*tk++ = DOTL;
+				}
+			}
+			else
+			{
+				*tk++ = CONST;
+				*tk++ = v;
+			}
 
 //printf("CONST: %i\n", v);
 			continue;

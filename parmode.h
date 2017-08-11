@@ -804,20 +804,20 @@
                 else if (*tok++ != ',')
 					return error("comma expected after ]");
 
-                if (*tok == SYMBOL || *tok == CONST)
-                {
-				if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
-					goto badmode;
-
-                    if (CHECK_OPTS(OPT_BASE_DISP) && (AnEXVAL == 0) && (AnEXATTR & DEFINED))
+				if (*tok == SYMBOL || *tok == CONST)
 				{
-					// od=0 so optimise it out
-					AMn = MEMPRE;		 // let's say it's ([bd,An],Xn,od) with od=0 then
-					AnEXTEN |= EXT_IISPRE0; // No outer displacement
-					tok++;
-					goto AnOK;
+					if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
+						goto badmode;
+
+					if (CHECK_OPTS(OPT_BASE_DISP) && (AnEXVAL == 0) && (AnEXATTR & DEFINED))
+					{
+						// od=0 so optimise it out
+						AMn = MEMPRE;		 // let's say it's ([bd,An],Xn,od) with od=0 then
+						AnEXTEN |= EXT_IISPRE0; // No outer displacement
+						tok++;
+						goto AnOK;
+					}
 				}
-                }
 
 				// ([bd,An/PC,Xn],od)
 				if (*tok == DOTL)
@@ -830,36 +830,35 @@
 				else
 				{
 					// expr.[W]
-                    int expr_size;
-
 					AMn = MEMPRE;
-                    expr_size = EXT_IISPREW; // Assume we have a .w value
+					int expr_size = EXT_IISPREW; // Assume we have a .w value
 
-                    if ((AnEXVAL + 0x8000) > 0x10000)
+					if ((AnEXVAL + 0x8000) > 0x10000)
 					{
-                        // Long value, so mark it as such for now
-                        expr_size = EXT_IISPREL;
-					// Defined, absolute values from $FFFF8000..$00007FFF get optimized
-					// to absolute short
+						// Long value, so mark it as such for now
+						expr_size = EXT_IISPREL;
+
+						// Defined, absolute values from $FFFF8000..$00007FFF
+						// get optimized to absolute short
                         if (CHECK_OPTS(OPT_BASE_DISP)
-						&& ((AnEXATTR & (TDB | DEFINED)) == DEFINED)
-						&& ((AnEXVAL + 0x8000) < 0x10000))
-					{
-                            expr_size = EXT_IISPREW;
-						warn("outer displacement absolute value from $FFFF8000..$00007FFF optimised to absolute short");
+							&& ((AnEXATTR & (TDB | DEFINED)) == DEFINED)
+							&& ((AnEXVAL + 0x8000) < 0x10000))
+						{
+							expr_size = EXT_IISPREW;
+							warn("outer displacement absolute value from $FFFF8000..$00007FFF optimised to absolute short");
+						}
 					}
-				}
 
-                    AnEXTEN |= expr_size; // Assume we have a .w value
+					AnEXTEN |= expr_size; // Assume we have a .w value
 
-                    // Is .W forced here?
+					// Is .W forced here?
 					if (*tok == DOTW)
 					{
 						tok++;
-                        if (expr_size == EXT_IISPREL)
-                            return error("outer displacement value does not fit in .w size");
-					}
 
+						if (expr_size == EXT_IISPREL)
+							return error("outer displacement value does not fit in .w size");
+					}
 				}
 
 				// Check for final closing parenthesis

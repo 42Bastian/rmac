@@ -132,8 +132,8 @@ int amode(int acount)
 	// it's a bitfield instruction--check the parameters inside the {} block
 	// for validity
 	if (*tok == '{')
-        if (check030bf() == ERROR)
-		return ERROR;
+		if (check030bf() == ERROR)
+			return ERROR;
 
 	if ((acount == 0) || (*tok != ','))
 		return 1;
@@ -169,7 +169,7 @@ int amode(int acount)
 
 	// It's a bitfield instruction--check the parameters inside the {} block
 	// for validity
-	if (*tok == '{') 
+	if (*tok == '{')
         if (check030bf() == ERROR)
 		return ERROR;
 
@@ -309,7 +309,8 @@ int fpu_reglist_left(WORD * a_rmask)
 		else
 			cnt = 0;
 
-                r = 0;
+		r = 0;
+
 		while (cnt-- >= 0)
 			rmask |= msktab_minus[r++];
 
@@ -383,7 +384,6 @@ int fpu_reglist_right(WORD * a_rmask)
 int check030bf(void)
 {
 	CHECK00;
-
 	tok++;
 
 	if (*tok == CONST)
