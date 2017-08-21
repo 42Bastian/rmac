@@ -178,6 +178,7 @@ uint8_t * AddBSDSymEntry(uint8_t * buf, SYM * sym, int globflag)
 uint8_t * AddELFSymEntry(uint8_t * buf, SYM * sym, int globflag)
 {
 	chptr = buf;
+	ch_size = 0;
 	D_long(strindx);		// st_name
 	D_long(sym->svalue);	// st_value
 	D_long(0);				// st_size
