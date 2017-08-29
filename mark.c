@@ -528,7 +528,7 @@ uint32_t CreateELFRelocationRecord(uint8_t * buf, uint8_t * secBuf, uint16_t sec
 
 				// Deposit the relocation record
 				D_long(r_offset);
-				D_long((r_sym << 8) | r_type);
+				D_long(((r_sym << 8) | r_type));
 				D_long(r_addend);
 				rsize += 0x0C;
 			}

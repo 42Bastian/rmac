@@ -13,7 +13,6 @@
 
 // Macros to deposit code in the current section
 // D_rword deposits a "6502" format (low, high) word (01).
-// D_rlong deposits a MWC "canonical byte order" longword (2301).
 #define D_byte(b)	{*chptr++=(uint8_t)(b); sloc++; ch_size++; \
 						if(orgactive) orgaddr++;}
 #define D_word(w)	{chcheck(2);*chptr++=(uint8_t)((w)>>8); \
@@ -24,11 +23,8 @@
 						*chptr++=(uint8_t)((lw)>>8); \
 						*chptr++=(uint8_t)(lw); \
 						sloc += 4; ch_size += 4; if(orgactive) orgaddr += 4;}
-#define D_rword(w)	{*chptr++=(uint8_t)w; *chptr++=(uint8_t)(w>>8); \
+#define D_rword(w)	{*chptr++=(uint8_t)(w); *chptr++=(uint8_t)((w)>>8); \
 						sloc+=2; ch_size+=2;if(orgactive) orgaddr += 2;}
-//#define D_rlong(lw)	{*chptr++=(uint8_t)(lw>>16);*chptr++=(uint8_t)(lw>>24);\
-//						*chptr++=(uint8_t)lw;*chptr++=(uint8_t)(lw>>8); \
-//						sloc+=4; ch_size += 4;if(orgactive) orgaddr += 4;}
 // Fill n bytes with zeroes
 #define D_ZEROFILL(n)	{memset(chptr, 0, n); chptr+=n; sloc+=n; ch_size+=n;\
 						if (orgactive) orgaddr+=n;}

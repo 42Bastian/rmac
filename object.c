@@ -229,6 +229,7 @@ uint8_t * AddELFSymEntry(uint8_t * buf, SYM * sym, int globflag)
 int DepositELFSectionHeader(uint8_t * ptr, uint32_t name, uint32_t type, uint32_t flags, uint32_t addr, uint32_t offset, uint32_t size, uint32_t link, uint32_t info, uint32_t addralign, uint32_t entsize)
 {
 	chptr = ptr;
+	ch_size = 0;
 	D_long(name);
 	D_long(type);
 	D_long(flags);
@@ -264,6 +265,7 @@ printf("DepositELFSHSTEntry: s = \"%s\"\n", s);
 uint32_t DepositELFSymbol(uint8_t * ptr, uint32_t name, uint32_t addr, uint32_t size, uint8_t info, uint8_t other, uint16_t shndx)
 {
 	chptr = ptr;
+	ch_size = 0;
 	D_long(name);
 	D_long(addr);
 	D_long(size);
