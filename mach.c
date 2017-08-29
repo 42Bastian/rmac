@@ -1280,7 +1280,7 @@ int m_bfop(WORD inst, WORD siz)
         bfparam1 = bfval1 << 12;
     }
 
-	D_word((inst|am0|a0reg|am1|a1reg));
+	D_word((inst | am0 | a0reg | am1 | a1reg));
 	ea0gen(siz);	// Generate EA
 
 	// Second instruction word - Dest register (if exists), Do, Offset, Dw, Width

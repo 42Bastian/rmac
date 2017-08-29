@@ -253,10 +253,10 @@ int eaNgen(WORD siz)
 
 		break;
 	case DINDW:
-		D_word(0x190|(aNixreg<<12));
+		D_word((0x190 | (aNixreg << 12)));
 		break;
 	case DINDL:
-		D_word(0x990|(aNixreg<<12));
+		D_word((0x990 | (aNixreg << 12)));
 		break;
 	case ABASE:
 	case MEMPOST:
@@ -266,11 +266,11 @@ int eaNgen(WORD siz)
 	case PCMPRE:
 		D_word(aNexten);
 		// Deposit bd (if not suppressed)
-		if ((aNexten&0x0030)==EXT_BDSIZE0)
+		if ((aNexten & 0x0030) == EXT_BDSIZE0)
 		{
 			// Don't deposit anything (suppressed)
 		}
-		else if ((aNexten&0x0030)==EXT_BDSIZEW)
+		else if ((aNexten & 0x0030) == EXT_BDSIZEW)
 		{
 			// Deposit word bd
 			if (wbd)
