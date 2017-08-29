@@ -308,7 +308,7 @@ int Process(int argc, char ** argv)
 				}
 
 				sy->sattr = DEFINED | EQUATED | ABS;
-				sy->svalue = (*s ? (VALUE)atoi(s) : 0);
+				sy->svalue = (*s ? (uint32_t)atoi(s) : 0);
 				break;
 			case 'e':				// Redirect error message output
 			case 'E':

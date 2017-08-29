@@ -5,7 +5,7 @@
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
-// Contributors: James Hammons, George Nakos, Graeme Hinchliffe, SCPCD
+// Contributors: James Hammons, George Nakos, Graeme Hinchliffe, SCPCD, SainT
 //
 
 #ifndef __VERSION_H__
@@ -15,7 +15,7 @@
 
 #define MAJOR   1		// Major version number
 #define MINOR   8		// Minor version number
-#define PATCH   4		// Patch release number
+#define PATCH   5		// Patch release number
 
 #endif // __VERSION_H__
 

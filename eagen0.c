@@ -9,7 +9,7 @@
 
 int eaNgen(WORD siz)
 {
-	VALUE vbd, v = aNexval;
+	uint32_t vbd, v = aNexval;
 	WORD wbd, w = (WORD)(aNexattr & DEFINED);
 	WORD tdbbd, tdb = (WORD)(aNexattr & TDB);
 	vbd = aNbdexval;
@@ -86,7 +86,7 @@ int eaNgen(WORD siz)
 		{
 			// Just deposit it
 			if ((aNexattr & TDB) == cursect)
-				v -= (VALUE)sloc;
+				v -= (uint32_t)sloc;
 			else if ((aNexattr & TDB) != ABS)
 				error(rel_error);
 
@@ -136,7 +136,7 @@ int eaNgen(WORD siz)
 		{
 			// Deposit a byte...
 			if ((aNexattr & TDB) == cursect)
-				v -= (VALUE)sloc;
+				v -= (uint32_t)sloc;
 			else if ((aNexattr & TDB) != ABS)
 				error(rel_error);
 

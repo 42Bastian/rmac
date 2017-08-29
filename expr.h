@@ -34,7 +34,7 @@
 void InitExpression(void);
 int expr1(void);
 int expr2(void);
-int expr(TOKEN *, VALUE *, WORD *, SYM **);
-int evexpr(TOKEN *, VALUE *, WORD *, SYM **);
+int expr(TOKEN *, uint32_t *, WORD *, SYM **);
+int evexpr(TOKEN *, uint32_t *, WORD *, SYM **);
 
 #endif // __EXPR_H__

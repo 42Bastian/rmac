@@ -247,7 +247,7 @@ void m6502cg(int op)
 {
 	register int amode;		// (Parsed) addressing mode
 	register int i;
-	VALUE eval;				// Expression value
+	uint32_t eval;			// Expression value
 	WORD eattr;				// Expression attributes
 	int zpreq;				// 1, optimize instr to zero-page form
 	register char * p;		// (Temp) string usage

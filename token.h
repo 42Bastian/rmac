@@ -144,7 +144,7 @@ IMACRO {
 IREPT {
 	LLIST * ir_firstln;		// Pointer to first line
 	LLIST * ir_nextln;		// Pointer to next line
-	VALUE ir_count;			// Repeat count (decrements)
+	uint32_t ir_count;		// Repeat count (decrements)
 };
 
 // Exported variables

@@ -23,7 +23,7 @@
 // N.B.: The size of tokenClass should be identical to the largest value of
 //       a token; we're assuming 256 but not 100% sure!
 static char tokenClass[256];		// Generated table of token classes
-static VALUE evstk[EVSTACKSIZE];	// Evaluator value stack
+static uint32_t evstk[EVSTACKSIZE];	// Evaluator value stack
 static WORD evattr[EVSTACKSIZE];	// Evaluator attribute stack
 
 // Token-class initialization list
@@ -61,9 +61,9 @@ static int symbolNum;				// Pointer to the entry in symbolPtr[]
 //
 // Obtain a string value
 //
-static VALUE str_value(char * p)
+static uint32_t str_value(char * p)
 {
-	VALUE v;
+	uint32_t v;
 
 	for(v=0; *p; p++)
 		v = (v << 8) | (*p & 0xFF);
@@ -313,7 +313,7 @@ int expr2(void)
 //
 // Recursive-descent expression analyzer (with some simple speed hacks)
 //
-int expr(TOKEN * otk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
+int expr(TOKEN * otk, uint32_t * a_value, WORD * a_attr, SYM ** a_esym)
 {
 	// Passed in values (once derefenced, that is) can all be zero. They are
 	// there so that the expression analyzer can fill them in as needed. The
@@ -476,11 +476,11 @@ thrown away right here. What the hell is it for?
 // UNDEFINED, but it's value includes everything but the symbol value, and
 // `a_esym' is set to the external symbol.
 //
-int evexpr(TOKEN * tk, VALUE * a_value, WORD * a_attr, SYM ** a_esym)
+int evexpr(TOKEN * tk, uint32_t * a_value, WORD * a_attr, SYM ** a_esym)
 {
 	WORD attr;
 	SYM * sy;
-	VALUE * sval = evstk;					// (Empty) initial stack
+	uint32_t * sval = evstk;				// (Empty) initial stack
 	WORD * sattr = evattr;
 	SYM * esym = NULL;						// No external symbol involved
 	WORD sym_seg = 0;
@@ -700,8 +700,8 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 				// Compiler is picky here: Without casting these, it discards
 				// the sign if dividing a negative # by a positive one,
 				// creating a bad result. :-/
-				// Probably a side effect of using VALUE intead of ints.
-				*sval = (int)sval[0] / (int)sval[1];
+				// Definitely a side effect of using uint32_ts intead of ints.
+				*sval = (int32_t)sval[0] / (int32_t)sval[1];
 //printf("%i\n", *sval);
 				break;
 			case '%':

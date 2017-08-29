@@ -388,7 +388,7 @@ int AddFixup(uint16_t attr, uint32_t loc, TOKEN * fexpr)
 int ResolveFixups(int sno)
 {
 	PTR fup;				// Current fixup
-	VALUE eval;				// Expression value
+	uint32_t eval;				// Expression value
 	SYM * sy;				// (Temp) pointer to a symbol
 	uint16_t i;				// (Temp) word
 	int reg2;
@@ -514,7 +514,7 @@ int ResolveFixups(int sno)
 				if (eattr & DEFINED)
 				{
 					if (tdb == sno)
-						eval -= (VALUE)loc;
+						eval -= (uint32_t)loc;
 					else if (tdb)
 					{
 						error("PC-relative expr across sections");
@@ -525,7 +525,7 @@ int ResolveFixups(int sno)
 						warn("unoptimized short branch");
 				}
 				else if (obj_format == MWC)
-					eval -= (VALUE)loc;
+					eval -= (uint32_t)loc;
 
 				tdb = 0;
 				eattr &= ~TDB;

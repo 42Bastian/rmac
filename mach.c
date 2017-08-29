@@ -705,7 +705,7 @@ int m_bitop(WORD inst, WORD siz)
 
 int m_dbra(WORD inst, WORD siz)
 {
-	VALUE v;
+	uint32_t v;
 
 	siz = siz;
 	inst |= a0reg;
@@ -969,7 +969,7 @@ int m_movep(WORD inst, WORD siz)
 //
 int m_br(WORD inst, WORD siz)
 {
-	VALUE v;
+	uint32_t v;
 
 	if (a0exattr & DEFINED)
 	{
@@ -1105,7 +1105,7 @@ int m_trap(WORD inst, WORD siz)
 //
 int m_movem(WORD inst, WORD siz)
 {
-	VALUE eval;
+	uint32_t eval;
 	WORD i;
 	WORD w;
 	WORD rmask;
@@ -1229,7 +1229,7 @@ int m_br30(WORD inst, WORD siz)
 		if ((a0exattr & TDB) != cursect)
 			return error(rel_error);
 
-		VALUE v = a0exval - (sloc + 2);
+		uint32_t v = a0exval - (sloc + 2);
 		D_word(inst);
 		D_long(v);
 
@@ -1628,7 +1628,7 @@ int m_cpbr(WORD inst, WORD siz)
 		if ((a0exattr & TDB) != cursect)
 			return error(rel_error);
 
-		VALUE v = a0exval - (sloc + 2);
+		uint32_t v = a0exval - (sloc + 2);
 
 		// Optimize branch instr. size
 		if (siz == SIZL)
@@ -1682,7 +1682,7 @@ int m_cpdbr(WORD inst, WORD siz)
 {
     CHECK00;
 
-    VALUE v;
+    uint32_t v;
     WORD condition = inst & 0x1f; // Grab condition sneakily placed in the lower 5 bits of inst
     inst &= 0xffe0;               // And then mask them out - you ain't seen me, roit?
 
@@ -2182,14 +2182,14 @@ int m_pack(WORD inst, WORD siz)
         return error(undef_error);
 
     if (a0exval + 0x8000 > 0x10000)
-        return error("");   
+        return error("");
 
     if (*tok != EOL)
         return error(extra_stuff);
 
     D_word((a0exval & 0xffff));
 
-        
+
 
     return OK;
 
@@ -2575,7 +2575,7 @@ int m_pflush(WORD inst, WORD siz)
             // hardcoded in 68ktab but there is aliasing
             // between 68030 and 68040 opcode. So we just
             // set the 3 lower bits to 1 in pflushn inside
-            // 68ktab and detect it here. 
+            // 68ktab and detect it here.
             inst = (inst & 0xff8) | 8;
         inst |= (tok[1] & 7) | (5 << 8);
         if (tok[3] != EOL)
@@ -2651,7 +2651,7 @@ int m_pload(WORD inst, WORD siz, WORD extension)
     // a 68020 + 68551 socket and since this is
     // an Atari targetted assembler....
     CHECKNO30;
-    
+
 		inst |= am1;
 
     D_word(inst);
@@ -2684,7 +2684,7 @@ int m_pload(WORD inst, WORD siz, WORD extension)
     D_word(inst);
 
     ea1gen(siz);
-    
+
     return OK;
 }
 
@@ -3106,7 +3106,7 @@ int m_fdbcc(WORD inst, WORD siz)
 		if ((a1exattr & TDB) != cursect)
 			return error(rel_error);
 
-		VALUE v = a1exval - sloc;
+		uint32_t v = a1exval - sloc;
 
 		if ((v + 0x8000) > 0x10000)
 			return error(range_error);

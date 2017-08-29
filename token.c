@@ -949,7 +949,7 @@ int TokenizeLine(void)
 	int state = 0;				// State for keyword detector
 	int j = 0;					// Var for keyword detector
 	uint8_t c;					// Random char
-	VALUE v;					// Random value
+	uint32_t v;					// Random value
 	uint8_t * nullspot = NULL;	// Spot to clobber for SYMBOL termination
 	int stuffnull;				// 1:terminate SYMBOL '\0' at *nullspot
 	uint8_t c1;
@@ -1133,7 +1133,7 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 				if (((chrtab[*ln] & DOT) == 0) || (dotxtab[*ln] == 0))
 					return error("[bwsl] must follow '.' in symbol");
 
-				v = (VALUE)dotxtab[*ln++];
+				v = (uint32_t)dotxtab[*ln++];
 
 				if (chrtab[*ln] & CTSYM)
 					return error("misuse of '.'; not allowed in symbols");

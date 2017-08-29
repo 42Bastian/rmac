@@ -39,7 +39,7 @@ static IFENT ifent0;			// Root ifent
 IFENT * f_ifent;				// Freelist of ifents
 int disabled;					// Assembly conditionally disabled
 int just_bss;					// 1, ds.b in microprocessor mode
-VALUE pcloc;					// Value of "PC" at beginning of line
+uint32_t pcloc;					// Value of "PC" at beginning of line
 SYM * lab_sym;					// Label on line (or NULL)
 
 const char extra_stuff[] = "extra (unexpected) text found after addressing mode";
@@ -131,7 +131,7 @@ void Assemble(void)
 	char * equate;				// Symbol (or NULL)
 	int labtyp = 0;				// Label type (':', DCOLON)
 	int equtyp = 0;				// Equ type ('=', DEQUALS)
-	VALUE eval;					// Expression value
+	uint32_t eval;					// Expression value
 	WORD eattr;					// Expression attributes
 	SYM * esym;					// External symbol involved in expr.
 	WORD siz = 0;				// Size suffix to mnem/diretve/macro
@@ -177,7 +177,7 @@ DEBUG { printf("Assemble: Found TKEOF flag...\n"); }
 	lab_sym = NULL;							// No (exported) label
 	equate = NULL;							// No equate
 	tk = tok;								// Save first token in line
-	pcloc = (VALUE)sloc;					// Set beginning-of-line PC
+	pcloc = (uint32_t)sloc;					// Set beginning-of-line PC
 
 loop1:										// Internal line processing loop
 
@@ -521,7 +521,7 @@ When checking to see if it's already been equated, issue a warning.
 			if (reglist(&rmask) < 0)
 				goto loop;
 
-			eval = (VALUE)rmask;
+			eval = (uint32_t)rmask;
 			eattr = ABS | DEFINED;
 		}
 		else if (equtyp == CCDEF)

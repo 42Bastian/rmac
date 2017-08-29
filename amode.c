@@ -27,16 +27,16 @@ int nmodes;					// Number of addr'ing modes found
 int am0;					// Addressing mode
 int a0reg;					// Register
 TOKEN a0expr[EXPRSIZE];		// Expression
-VALUE a0exval;				// Expression's value
+uint32_t a0exval;				// Expression's value
 WORD a0exattr;				// Expression's attribute
 int a0ixreg;				// Index register
 int a0ixsiz;				// Index register size (and scale)
 TOKEN a0oexpr[EXPRSIZE];	// Outer displacement expression
-VALUE a0oexval;				// Outer displacement value
+uint32_t a0oexval;				// Outer displacement value
 WORD a0oexattr;				// Outer displacement attribute
 SYM * a0esym;				// External symbol involved in expr
 TOKEN a0bexpr[EXPRSIZE];	// Base displacement expression
-VALUE a0bexval;				// Base displacement value
+uint32_t a0bexval;				// Base displacement value
 WORD a0bexattr;				// Base displacement attribute
 WORD a0bsize;				// Base displacement size
 WORD a0extension;			// 020+ extension address word
@@ -45,16 +45,16 @@ WORD am0_030;				// ea bits for 020+ addressing modes
 int am1;					// Addressing mode
 int a1reg;					// Register
 TOKEN a1expr[EXPRSIZE];		// Expression
-VALUE a1exval;				// Expression's value
+uint32_t a1exval;				// Expression's value
 WORD a1exattr;				// Expression's attribute
 int a1ixreg;				// Index register
 int a1ixsiz;				// Index register size (and scale)
 TOKEN a1oexpr[EXPRSIZE];	// Outer displacement expression
-VALUE a1oexval;				// Outer displacement value
+uint32_t a1oexval;				// Outer displacement value
 WORD a1oexattr;				// Outer displacement attribute
 SYM * a1esym;				// External symbol involved in expr
 TOKEN a1bexpr[EXPRSIZE];	// Base displacement expression
-VALUE a1bexval;				// Base displacement value
+uint32_t a1bexval;				// Base displacement value
 WORD a1bexattr;				// Base displacement attribute
 WORD a1bsize;				// Base displacement size
 WORD a1extension;			// 020+ extension address word
@@ -68,7 +68,7 @@ int bfparam2;				// bfxxx / fmove instruction parameter 2
 int bfval1;					//bfxxx / fmove value 1
 int bfval2;					//bfxxx / fmove value 2
 TOKEN bf0expr[EXPRSIZE];	// Expression
-VALUE bf0exval;				// Expression's value
+uint32_t bf0exval;				// Expression's value
 WORD bf0exattr;				// Expression's attribute
 SYM * bf0esym;				// External symbol involved in expr
 

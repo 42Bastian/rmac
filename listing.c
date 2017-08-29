@@ -66,9 +66,9 @@ int eject(void)
 //
 // Return GEMDOS format date
 //
-VALUE dos_date(void)
+uint32_t dos_date(void)
 {
-	VALUE v;
+	uint32_t v;
 	struct tm * tm;
 	time_t tloc;
 
@@ -83,9 +83,9 @@ VALUE dos_date(void)
 //
 // Return GEMDOS format time
 //
-VALUE dos_time(void)
+uint32_t dos_time(void)
 {
-	VALUE v;
+	uint32_t v;
 	struct tm * tm;
 	time_t tloc;
 
@@ -100,7 +100,7 @@ VALUE dos_time(void)
 //
 // Generate a time string
 //
-void time_string(char * buf, VALUE time)
+void time_string(char * buf, uint32_t time)
 {
 	int hour;
 	char * ampm;
@@ -123,7 +123,7 @@ void time_string(char * buf, VALUE time)
 //
 // Generate a date string
 //
-void date_string(char * buf, VALUE date)
+void date_string(char * buf, uint32_t date)
 {
 	sprintf(buf, "%d-%s-%d",
 		(int)(date & 0x1F), month[(date >> 5) & 0xF], (int)((date >> 9) + 1980));
@@ -410,7 +410,7 @@ void lstout(char tag)
 //
 // Output a value to listing
 //
-int listvalue(VALUE v)
+int listvalue(uint32_t v)
 {
 	sprintf(buf, "=%08X", v);
 	strncpy(lnimage + DATA_COL - 1, buf, 9);

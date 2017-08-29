@@ -18,7 +18,7 @@ extern const char locgl_error[];
 extern const char syntax_error[];
 extern const char extra_stuff[];
 extern int just_bss;
-extern VALUE pcloc;
+extern uint32_t pcloc;
 extern SYM * lab_sym;
 extern LONG amsktab[];
 extern IFENT * ifent;

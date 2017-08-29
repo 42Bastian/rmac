@@ -28,6 +28,7 @@ TOKEN exprbuf[128];			// Expression buffer
 SYM * symbolPtr[1000000];	// Symbol pointers table
 static long unused;			// For supressing 'write' warnings
 char buffer[256];			// Scratch buffer for messages
+int largestAlign[3] = { 2, 2, 2 };	// Largest alignment value seen per section
 
 // Function prototypes
 int d_unimpl(void);
@@ -77,6 +78,7 @@ int d_cstruct(void);
 int d_prgflags(void);
 int d_opt(void);
 int d_dsp(void);
+void SetLargestAlignment(int);
 
 // Directive handler table
 int (*dirtab[])() = {
@@ -151,6 +153,20 @@ int (*dirtab[])() = {
 
 
 //
+// Set the largest alignment seen in the current section
+//
+void SetLargestAlignment(int size)
+{
+	if ((scattr & TEXT) && (largestAlign[0] < size))
+		largestAlign[0] = size;
+	else if ((scattr & DATA) && (largestAlign[1] < size))
+		largestAlign[1] = size;
+	else if ((scattr & BSS) && (largestAlign[2] < size))
+		largestAlign[2] = size;
+}
+
+
+//
 // .error - Abort compilation, printing an error message
 //
 int d_error(char *str)
@@ -197,7 +213,7 @@ int d_warn(char *str)
 //
 int d_org(void)
 {
-	VALUE address;
+	uint32_t address;
 
 	if (!rgpu && !rdsp && !m6502)
 		return error(".org permitted only in gpu/dsp and 6502 sections");
@@ -250,7 +266,7 @@ int d_print(void)
 	int wordlong = 0;			// WORD = 0, LONG = 1
 	int outtype = 0;			// 0:hex, 1:decimal, 2:unsigned
 
-	VALUE eval;					// Expression value
+	uint32_t eval;					// Expression value
 	WORD eattr;					// Expression attributes
 	SYM * esym;					// External symbol involved in expr.
 	TOKEN r_expr[EXPRSIZE];
@@ -577,6 +593,7 @@ int d_long(void)
 	unsigned lower2Bits = (rgpu || rdsp ? orgaddr : sloc) & 0x03;
 	unsigned bytesToSkip = (0x04 - lower2Bits) & 0x03;
 	SkipBytes(bytesToSkip);
+	SetLargestAlignment(4);
 
 	return 0;
 }
@@ -599,6 +616,7 @@ int d_phrase(void)
 	unsigned lower3Bits = (rgpu || rdsp ? orgaddr : sloc) & 0x07;
 	unsigned bytesToSkip = (0x08 - lower3Bits) & 0x07;
 	SkipBytes(bytesToSkip);
+	SetLargestAlignment(8);
 
 	return 0;
 }
@@ -612,6 +630,7 @@ int d_dphrase(void)
 	unsigned lower4Bits = (rgpu || rdsp ? orgaddr : sloc) & 0x0F;
 	unsigned bytesToSkip = (0x10 - lower4Bits) & 0x0F;
 	SkipBytes(bytesToSkip);
+	SetLargestAlignment(16);
 
 	return 0;
 }
@@ -625,6 +644,7 @@ int d_qphrase(void)
 	unsigned lower5Bits = (rgpu || rdsp ? orgaddr : sloc) & 0x1F;
 	unsigned bytesToSkip = (0x20 - lower5Bits) & 0x1F;
 	SkipBytes(bytesToSkip);
+	SetLargestAlignment(32);
 
 	return 0;
 }
@@ -667,7 +687,7 @@ int d_unimpl(void)
 //
 // Return absolute (not TDB) and defined expression or return an error
 //
-int abs_expr(VALUE * a_eval)
+int abs_expr(uint32_t * a_eval)
 {
 	WORD eattr;
 
@@ -775,7 +795,7 @@ allright:
 int d_assert(void)
 {
 	WORD eattr;
-	VALUE eval;
+	uint32_t eval;
 
 	for(; expr(exprbuf, &eval, &eattr, NULL)==OK; ++tok)
 	{
@@ -833,7 +853,7 @@ int d_globl(void)
 //
 int d_prgflags(void)
 {
-	VALUE eval;
+	uint32_t eval;
 
 	if (*tok == EOL)
 		return error("PRGFLAGS requires value");
@@ -854,7 +874,7 @@ int d_prgflags(void)
 //
 int d_abs(void)
 {
-	VALUE eval;
+	uint32_t eval;
 
 	if (m6502)
 		return error(in_6502mode);
@@ -933,7 +953,7 @@ int d_ds(WORD siz)
 {
 	DEBUG { printf("Directive: .ds.[size] = %u, sloc = $%X\n", siz, sloc); }
 
-	VALUE eval;
+	uint32_t eval;
 
 	if (cursect != M6502)
 	{
@@ -946,7 +966,7 @@ int d_ds(WORD siz)
 
 	// Check to see if the value being passed in is negative (who the hell does
 	// that?--nobody does; it's the code gremlins, or rum, that does it)
-	// N.B.: Since VALUE is of type uint32_t, if it goes negative, it will have
+	// N.B.: Since 'eval' is of type uint32_t, if it goes negative, it will have
 	//       its high bit set.
 	if (eval & 0x80000000)
 		return error("negative sizes not allowed");
@@ -967,7 +987,7 @@ int d_ds(WORD siz)
 	}
 	else
 	{
-		dep_block(eval, siz, (VALUE)0, (WORD)(DEFINED | ABS), NULL);
+		dep_block(eval, siz, 0, (WORD)(DEFINED | ABS), NULL);
 	}
 
 	at_eol();
@@ -981,7 +1001,7 @@ int d_ds(WORD siz)
 int d_dc(WORD siz)
 {
 	WORD eattr;
-	VALUE eval;
+	uint32_t eval;
 	uint8_t * p;
 
 	if ((scattr & SBSS) != 0)
@@ -1132,7 +1152,7 @@ comma:
 //
 int d_dcb(WORD siz)
 {
-	VALUE evalc, eval;
+	uint32_t evalc, eval;
 	WORD eattr;
 
 	DEBUG { printf("dcb: section is %s%s%s (scattr=$%X)\n", (cursect & TEXT ? "TEXT" : ""), (cursect & DATA ? " DATA" : ""), (cursect & BSS ? "BSS" : ""), scattr); }
@@ -1169,8 +1189,8 @@ int d_dcb(WORD siz)
 //
 int d_init(WORD def_siz)
 {
-	VALUE count;
-	VALUE eval;
+	uint32_t count;
+	uint32_t eval;
 	WORD eattr;
 	WORD siz;
 
@@ -1230,7 +1250,7 @@ int d_init(WORD def_siz)
 //
 // Deposit 'count' values of size 'siz' in the current (non-BSS) segment
 //
-int dep_block(VALUE count, WORD siz, VALUE eval, WORD eattr, TOKEN * exprbuf)
+int dep_block(uint32_t count, WORD siz, uint32_t eval, WORD eattr, TOKEN * exprbuf)
 {
 	WORD tdb;
 	WORD defined;
@@ -1319,7 +1339,7 @@ int d_comm(void)
 {
 	SYM * sym;
 	char * p;
-	VALUE eval;
+	uint32_t eval;
 
 	if (m6502)
 		return error(in_6502mode);
@@ -1546,7 +1566,7 @@ int d_dsp(void)
 //
 int d_cargs(void)
 {
-	VALUE eval = 4;		// Default to 4 if no offset specified (to account for
+	uint32_t eval = 4;		// Default to 4 if no offset specified (to account for
 						// return address)
 	WORD rlist;
 	SYM * symbol;
@@ -1661,7 +1681,7 @@ int d_cargs(void)
 //
 int d_cstruct(void)
 {
-	VALUE eval = 0;		// Default, if no offset specified, is zero
+	uint32_t eval = 0;		// Default, if no offset specified, is zero
 	WORD rlist;
 	SYM * symbol;
 	char * symbolName;
@@ -1850,7 +1870,7 @@ int d_opt(void)
 int d_if(void)
 {
 	WORD eattr;
-	VALUE eval;
+	uint32_t eval;
 	SYM * esym;
 	IFENT * rif = f_ifent;
 

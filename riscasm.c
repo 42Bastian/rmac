@@ -174,7 +174,7 @@ void BuildRISCIntructionWord(unsigned short opcode, int reg1, int reg2)
 //
 int GetRegister(WORD rattr)
 {
-	VALUE eval;					// Expression value
+	uint32_t eval;					// Expression value
 	WORD eattr;					// Expression attributes
 	SYM * esym;					// External symbol involved in expr.
 	TOKEN r_expr[EXPRSIZE];		// Expression token list
@@ -217,7 +217,7 @@ int GenerateRISCCode(int state)
 	WORD attrflg;
 	int indexed;				// Indexed register flag
 
-	VALUE eval;					// Expression value
+	uint32_t eval;					// Expression value
 	WORD eattr;					// Expression attributes
 	SYM * esym;					// External symbol involved in expr.
 	TOKEN r_expr[EXPRSIZE];		// Expression token list

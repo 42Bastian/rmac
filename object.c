@@ -8,6 +8,7 @@
 
 #include "object.h"
 #include "6502.h"
+#include "direct.h"
 #include "error.h"
 #include "mark.h"
 #include "riscasm.h"
@@ -520,7 +521,7 @@ int WriteObject(int fd)
 		{
 			elfHdrNum[ES_TEXT] = shstIndex;
 			shstTab[ES_TEXT] = shstSize;
-			shstSize += DepositELFSHSTEntry(&shstPtr, "TEXT");
+			shstSize += DepositELFSHSTEntry(&shstPtr, ".text");
 			shstIndex++;
 			numEntries++;
 		}
@@ -529,7 +530,7 @@ int WriteObject(int fd)
 		{
 			elfHdrNum[ES_DATA] = shstIndex;
 			shstTab[ES_DATA] = shstSize;
-			shstSize += DepositELFSHSTEntry(&shstPtr, "DATA");
+			shstSize += DepositELFSHSTEntry(&shstPtr, ".data");
 			shstIndex++;
 			numEntries++;
 		}
@@ -538,7 +539,7 @@ int WriteObject(int fd)
 		{
 			elfHdrNum[ES_BSS] = shstIndex;
 			shstTab[ES_BSS] = shstSize;
-			shstSize += DepositELFSHSTEntry(&shstPtr, "BSS");
+			shstSize += DepositELFSHSTEntry(&shstPtr, ".bss");
 			shstIndex++;
 			numEntries++;
 		}
@@ -619,7 +620,7 @@ for(int j=0; j<i; j++)
 		// Construct TEXT section, if any
 		if (sect[TEXT].sloc > 0)
 		{
-			headerSize += DepositELFSectionHeader(headers + headerSize, shstTab[ES_TEXT], 1, 6, 0, elfSize, sect[TEXT].sloc, 0, 0, 2, 0);
+			headerSize += DepositELFSectionHeader(headers + headerSize, shstTab[ES_TEXT], 1, 6, 0, elfSize, sect[TEXT].sloc, 0, 0, largestAlign[0], 0);
 
 			for(CHUNK * cp=sect[TEXT].sfcode; cp!=NULL; cp=cp->chnext)
 			{
@@ -636,7 +637,7 @@ for(int j=0; j<i; j++)
 		// Construct DATA section, if any
 		if (sect[DATA].sloc > 0)
 		{
-			headerSize += DepositELFSectionHeader(headers + headerSize, shstTab[ES_DATA], 1, 3, 0, elfSize, sect[DATA].sloc, 0, 0, 1, 0);
+			headerSize += DepositELFSectionHeader(headers + headerSize, shstTab[ES_DATA], 1, 3, 0, elfSize, sect[DATA].sloc, 0, 0, largestAlign[1], 0);
 
 			for(CHUNK * cp=sect[DATA].sfcode; cp!=NULL; cp=cp->chnext)
 			{
@@ -651,7 +652,7 @@ for(int j=0; j<i; j++)
 		// Construct BSS section, if any
 		if (sect[BSS].sloc > 0)
 		{
-			headerSize += DepositELFSectionHeader(headers + headerSize, shstTab[ES_BSS], 8, 3, 0, elfSize, sect[BSS].sloc, 0, 0, 2, 0);
+			headerSize += DepositELFSectionHeader(headers + headerSize, shstTab[ES_BSS], 8, 3, 0, elfSize, sect[BSS].sloc, 0, 0, largestAlign[2], 0);
 		}
 
 		int textrelLoc = headerSize;

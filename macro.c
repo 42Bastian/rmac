@@ -22,7 +22,7 @@ int macnum;					// Unique number for macro definition
 
 static LONG macuniq;		// Unique-per-macro number
 static SYM * curmac;		// Macro currently being defined
-static VALUE argno;			// Formal argument count
+static uint32_t argno;			// Formal argument count
 
 static LLIST * firstrpt;	// First .rept line
 static LLIST * nextrpt;		// Last .rept line
@@ -244,7 +244,7 @@ WARNING("!!! Casting (char *) as LONG !!!")
 //
 int HandleRept(void)
 {
-	VALUE eval;
+	uint32_t eval;
 
 	// Evaluate repeat expression
 	if (abs_expr(&eval) != OK)

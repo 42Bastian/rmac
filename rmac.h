@@ -153,7 +153,6 @@
 #define SPACE        ' '		// ASCII space
 #define SLASHCHAR    '/'
 #define SLASHSTRING  "/"
-#define VALUE        uint32_t	// Assembler value
 #define TOKEN        uint32_t	// Assembler token
 #define FNSIZ        128		// Maximum size of a filename
 #define OK           0			// OK return

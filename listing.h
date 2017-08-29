@@ -32,15 +32,15 @@ extern uint8_t subttl[];
 
 // Exported functions
 int eject(void);
-VALUE dos_date(void);
-VALUE dos_time(void);
+uint32_t dos_date(void);
+uint32_t dos_time(void);
 void taglist(char);
 void println(const char *);
 void ship_ln(const char *);
 void InitListing(void);
 void listeol(void);
 void lstout(char);
-int listvalue(VALUE);
+int listvalue(uint32_t);
 int d_subttl(void);
 int d_title(void);
 
