@@ -1251,7 +1251,6 @@ int m_br30(WORD inst, WORD siz)
 //
 int m_bfop(WORD inst, WORD siz)
 {
-
     if ((bfval1 > 31) || (bfval1 < 0))
         return error("bfxxx offset: immediate value must be between 0 and 31");
 

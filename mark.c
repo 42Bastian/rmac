@@ -377,6 +377,12 @@ printf(" validsegment: raddr = $%08X\n", loc);
 			if (w & MMOVEI)
 				rflag |= 0x00000001;
 
+			// This tells the linker to do a WORD relocation (otherwise it
+			// defaults to doing a LONG, throwing things off for WORD sized
+			// fixups)
+			if (!(w & MLONG))
+				rflag |= 0x00000002;
+
 			if (symbol != NULL)
 			{
 				// Deposit external reference
@@ -414,7 +420,7 @@ printf("  validsegment(3): rflag = $%08X\n", rflag);
 					if (from == DATA)
 						dp += tsize;
 
-					uint32_t diff = GETBE32(dp, 0);
+					uint32_t diff = (rflag & 0x02 ? GETBE16(dp, 0) : GETBE32(dp, 0));
 					DEBUG printf("diff=%uX ==> ", diff);
 #ifdef DEBUG_IMAGE_MARKING
 printf("  validsegment(4): diff = $%08X --> ", diff);
@@ -430,7 +436,21 @@ printf("  validsegment(4): diff = $%08X --> ", diff);
 					if (rflag & 0x01)
 						diff = WORDSWAP32(diff);
 
-					SETBE32(dp, 0, diff);
+					// Make sure to deposit the correct size payload
+					// N.B.: The braces around the SETBExx macros are needed
+					//       because the macro supplies its own set of braces,
+					//       thus leaving a naked semicolon afterwards to
+					//       screw up the if/else structure. This is the price
+					//       you pay when using macros pretending to be code.
+					if (rflag & 0x02)
+					{
+						SETBE16(dp, 0, diff);
+					}
+					else
+					{
+						SETBE32(dp, 0, diff);
+					}
+
 					DEBUG printf("%uX\n", diff);
 #ifdef DEBUG_IMAGE_MARKING
 printf("$%08X\n", diff);
