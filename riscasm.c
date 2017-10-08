@@ -174,7 +174,7 @@ void BuildRISCIntructionWord(unsigned short opcode, int reg1, int reg2)
 //
 int GetRegister(WORD rattr)
 {
-	uint32_t eval;					// Expression value
+	uint64_t eval;				// Expression value
 	WORD eattr;					// Expression attributes
 	SYM * esym;					// External symbol involved in expr.
 	TOKEN r_expr[EXPRSIZE];		// Expression token list
@@ -217,7 +217,7 @@ int GenerateRISCCode(int state)
 	WORD attrflg;
 	int indexed;				// Indexed register flag
 
-	uint32_t eval;					// Expression value
+	uint64_t eval;				// Expression value
 	WORD eattr;					// Expression attributes
 	SYM * esym;					// External symbol involved in expr.
 	TOKEN r_expr[EXPRSIZE];		// Expression token list
@@ -722,7 +722,8 @@ int GenerateRISCCode(int state)
 			{
 				// CC using a constant number
 				tok++;
-				val = *tok;
+				tok++;		// Toss hi LONG, as most likely not 64-bit number
+				val = *tok;	// Use lo LONG
 				tok++;
 				CHECK_COMMA;
 			}

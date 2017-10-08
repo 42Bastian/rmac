@@ -47,7 +47,8 @@ TOKEN * printexpr(TOKEN * tp)
 				tp++;
 				break;
 			case CONST:
-				printf("$%X ", *tp++);
+				printf("$%lX ", ((uint64_t)tp[0] << 32) | (uint64_t)tp[1]);
+				tp += 2;
 				break;
 			case ACONST:
 				printf("ACONST=($%X,$%X) ", *tp, tp[1]);
@@ -280,7 +281,8 @@ int dumptok(TOKEN * tk)
 		switch ((int)*tk++)
 		{
 		case CONST:                                        // CONST <value>
-			printf("CONST=%u", *tk++);
+			printf("CONST=%lu", ((uint64_t)tk[0] << 32) | (uint64_t)tk[1]);
+			tk += 2;
 			break;
 		case STRING:                                       // STRING <address>
 			printf("STRING='%s'", string[*tk++]);
@@ -337,8 +339,8 @@ void DumpTokens(TOKEN * tokenBuffer)
 			printf("[COLON]");
 		else if (*t == CONST)
 		{
-			t++;
-			printf("[CONST: $%X]", (uint32_t)*t);
+			printf("[CONST: $%lX]", ((uint64_t)t[1] << 32) | (uint64_t)t[2]);
+			t += 2;
 		}
 		else if (*t == ACONST)
 		{

@@ -137,7 +137,7 @@ extern int nmodes;
 extern int am0, am1;
 extern int a0reg, a1reg, a2reg;
 extern TOKEN a0expr[], a1expr[];
-extern uint32_t a0exval, a1exval;
+extern uint64_t a0exval, a1exval;
 extern WORD a0exattr, a1exattr;
 extern int a0ixreg, a1ixreg;
 extern int a0ixsiz, a1ixsiz;
@@ -145,7 +145,7 @@ extern TOKEN a0oexpr[], a1oexpr[];
 extern uint32_t a0oexval, a1oexval;
 extern WORD a0oexattr, a1oexattr;
 extern SYM * a0esym, * a1esym;
-extern uint32_t a0bexval, a1bexval;
+extern uint64_t a0bexval, a1bexval;
 extern WORD a0bexattr, a1bexattr;
 extern WORD a0bsize, a1bsize;
 extern TOKEN a0bexpr[], a1bexpr[];
@@ -155,7 +155,7 @@ extern int bfparam1;
 extern int bfparam2;
 extern int bfval1;
 extern int bfval2;
-extern uint32_t bf0exval;
+extern uint64_t bf0exval;
 
 // mnattr:
 #define CGSPECIAL    0x8000			// Special (don't parse addr modes)

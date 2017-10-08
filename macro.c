@@ -244,7 +244,7 @@ WARNING("!!! Casting (char *) as LONG !!!")
 //
 int HandleRept(void)
 {
-	uint32_t eval;
+	uint64_t eval;
 
 	// Evaluate repeat expression
 	if (abs_expr(&eval) != OK)
@@ -410,10 +410,11 @@ int InvokeMacro(SYM * mac, WORD siz)
 				for(int i=0; i<3; i++)
 					*p++ = *tok++;
 			}
-			else if (*tok == CONST)
+			else if (*tok == CONST)		// Constants are 64-bits
 			{
-				*p++ = *tok++;
-				*p++ = *tok++;
+				*p++ = *tok++;			// Token
+				*p++ = *tok++;			// Hi LONG
+				*p++ = *tok++;			// Lo LONG
 			}
 			else if ((*tok == STRING) || (*tok == SYMBOL))
 			{

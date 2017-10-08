@@ -213,7 +213,7 @@ int d_warn(char *str)
 //
 int d_org(void)
 {
-	uint32_t address;
+	uint64_t address;
 
 	if (!rgpu && !rdsp && !m6502)
 		return error(".org permitted only in gpu/dsp and 6502 sections");
@@ -266,7 +266,7 @@ int d_print(void)
 	int wordlong = 0;			// WORD = 0, LONG = 1
 	int outtype = 0;			// 0:hex, 1:decimal, 2:unsigned
 
-	uint32_t eval;					// Expression value
+	uint64_t eval;				// Expression value
 	WORD eattr;					// Expression attributes
 	SYM * esym;					// External symbol involved in expr.
 	TOKEN r_expr[EXPRSIZE];
@@ -687,7 +687,7 @@ int d_unimpl(void)
 //
 // Return absolute (not TDB) and defined expression or return an error
 //
-int abs_expr(uint32_t * a_eval)
+int abs_expr(uint64_t * a_eval)
 {
 	WORD eattr;
 
@@ -795,7 +795,7 @@ allright:
 int d_assert(void)
 {
 	WORD eattr;
-	uint32_t eval;
+	uint64_t eval;
 
 	for(; expr(exprbuf, &eval, &eattr, NULL)==OK; ++tok)
 	{
@@ -853,7 +853,7 @@ int d_globl(void)
 //
 int d_prgflags(void)
 {
-	uint32_t eval;
+	uint64_t eval;
 
 	if (*tok == EOL)
 		return error("PRGFLAGS requires value");
@@ -874,7 +874,7 @@ int d_prgflags(void)
 //
 int d_abs(void)
 {
-	uint32_t eval;
+	uint64_t eval;
 
 	if (m6502)
 		return error(in_6502mode);
@@ -953,7 +953,7 @@ int d_ds(WORD siz)
 {
 	DEBUG { printf("Directive: .ds.[size] = %u, sloc = $%X\n", siz, sloc); }
 
-	uint32_t eval;
+	uint64_t eval;
 
 	if (cursect != M6502)
 	{
@@ -1001,7 +1001,7 @@ int d_ds(WORD siz)
 int d_dc(WORD siz)
 {
 	WORD eattr;
-	uint32_t eval;
+	uint64_t eval;
 	uint8_t * p;
 
 	if ((scattr & SBSS) != 0)
@@ -1112,6 +1112,7 @@ int d_dc(WORD siz)
 
 			break;
 		case SIZL:
+			// Shamus: Why can't we do longs in 6502 mode?
 			if (m6502)
 				return error(in_6502mode);
 
@@ -1135,6 +1136,13 @@ int d_dc(WORD siz)
 				D_long(eval);
 			}
 			break;
+		case SIZD:
+			// 64-bit size
+			// N.B.: May have to come up with section/fixup markers for this;
+			//       ATM it's only used in dc.d statements...
+			D_long(eval >> 32);
+			D_long(eval & 0xFFFFFFFF);
+			break;
 		}
 
 comma:
@@ -1152,7 +1160,7 @@ comma:
 //
 int d_dcb(WORD siz)
 {
-	uint32_t evalc, eval;
+	uint64_t evalc, eval;
 	WORD eattr;
 
 	DEBUG { printf("dcb: section is %s%s%s (scattr=$%X)\n", (cursect & TEXT ? "TEXT" : ""), (cursect & DATA ? " DATA" : ""), (cursect & BSS ? "BSS" : ""), scattr); }
@@ -1189,8 +1197,8 @@ int d_dcb(WORD siz)
 //
 int d_init(WORD def_siz)
 {
-	uint32_t count;
-	uint32_t eval;
+	uint64_t count;
+	uint64_t eval;
 	WORD eattr;
 	WORD siz;
 
@@ -1339,7 +1347,7 @@ int d_comm(void)
 {
 	SYM * sym;
 	char * p;
-	uint32_t eval;
+	uint64_t eval;
 
 	if (m6502)
 		return error(in_6502mode);
@@ -1566,7 +1574,7 @@ int d_dsp(void)
 //
 int d_cargs(void)
 {
-	uint32_t eval = 4;		// Default to 4 if no offset specified (to account for
+	uint64_t eval = 4;	// Default to 4 if no offset specified (to account for
 						// return address)
 	WORD rlist;
 	SYM * symbol;
@@ -1681,7 +1689,7 @@ int d_cargs(void)
 //
 int d_cstruct(void)
 {
-	uint32_t eval = 0;		// Default, if no offset specified, is zero
+	uint64_t eval = 0;	// Default, if no offset specified, is zero
 	WORD rlist;
 	SYM * symbol;
 	char * symbolName;
@@ -1870,7 +1878,7 @@ int d_opt(void)
 int d_if(void)
 {
 	WORD eattr;
-	uint32_t eval;
+	uint64_t eval;
 	SYM * esym;
 	IFENT * rif = f_ifent;
 

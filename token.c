@@ -568,7 +568,8 @@ DEBUG { printf("ExM: SYMBOL=\"%s\"", d); }
 //         to choke on legitimate code... Need to investigate this further
 //         before changing anything else here!
 							case CONST:
-								sprintf(numbuf, "$%lx", (long unsigned int)*tk++);
+								tk++;	// Skip the hi LONG...
+								sprintf(numbuf, "$%lx", (uint64_t)*tk++);
 								d = numbuf;
 								break;
 							case DEQUALS:
@@ -949,7 +950,7 @@ int TokenizeLine(void)
 	int state = 0;				// State for keyword detector
 	int j = 0;					// Var for keyword detector
 	uint8_t c;					// Random char
-	uint32_t v;					// Random value
+	uint64_t v;					// Random value
 	uint8_t * nullspot = NULL;	// Spot to clobber for SYMBOL termination
 	int stuffnull;				// 1:terminate SYMBOL '\0' at *nullspot
 	uint8_t c1;
@@ -1337,13 +1338,15 @@ dostring:
 							}
 							else if ((*(ln + 1) & 0xDF) == 'L')
 							{
+								v &= 0xFFFFFFFF;
 								ln += 2;
 							}
 						}
 					}
 
 					*tk++ = CONST;
-					*tk++ = v;
+					*tk++ = v >> 32;		// High LONG of 64-bit value
+					*tk++ = v & 0xFFFFFFFF;	// Low LONG of 64-bit value
 
 					if (obj_format == ALCYON)
 					{
@@ -1448,12 +1451,14 @@ dostring:
 
 					if ((*(ln + 1) == 'l') || (*(ln + 1) == 'L'))
 					{
+						v &= 0xFFFFFFFF;
 						ln += 2;
 					}
 				}
 
 				*tk++ = CONST;
-				*tk++ = v;
+				*tk++ = v >> 32;		// High LONG of 64-bit value
+				*tk++ = v & 0xFFFFFFFF;	// Low LONG of 64-bit value
 				continue;
 			case '@':		// @ or octal constant
 				if (*ln < '0' || *ln > '7')
@@ -1483,12 +1488,14 @@ dostring:
 
 					if ((*(ln+1) == 'l') || (*(ln+1) == 'L'))
 					{
+						v &= 0xFFFFFFFF;
 						ln += 2;
 					}
 				}
 
 				*tk++ = CONST;
-				*tk++ = v;
+				*tk++ = v >> 32;		// High LONG of 64-bit value
+				*tk++ = v & 0xFFFFFFFF;	// Low LONG of 64-bit value
 				continue;
 			case '^':		// ^ or ^^ <operator-name>
 				if (*ln != '^')
@@ -1563,6 +1570,7 @@ dostring:
 					v &= 0x000000FF;
 					ln += 2;
 					*tk++ = CONST;
+					*tk++ = 0;			// Hi LONG of 64-bits
 					*tk++ = v;
 					*tk++ = DOTB;
 				}
@@ -1571,13 +1579,16 @@ dostring:
 					v &= 0x0000FFFF;
 					ln += 2;
 					*tk++ = CONST;
+					*tk++ = 0;			// Hi LONG of 64-bits
 					*tk++ = v;
 					*tk++ = DOTW;
 				}
 				else if ((*(ln + 1) == 'l') || (*(ln + 1) == 'L'))
 				{
+					v &= 0xFFFFFFFF;
 					ln += 2;
 					*tk++ = CONST;
+					*tk++ = 0;			// Hi LONG of 64-bits
 					*tk++ = v;
 					*tk++ = DOTL;
 				}
@@ -1585,7 +1596,8 @@ dostring:
 			else
 			{
 				*tk++ = CONST;
-				*tk++ = v;
+				*tk++ = v >> 32;		// High LONG of 64-bit value
+				*tk++ = v & 0xFFFFFFFF;	// Low LONG of 64-bit value
 			}
 
 //printf("CONST: %i\n", v);
@@ -1685,8 +1697,8 @@ void DumpTokenBuffer(void)
 			printf("[COLON]");
 		else if (*t == CONST)
 		{
-			t++;
-			printf("[CONST: $%X]", (uint32_t)*t);
+			printf("[CONST: $%lX]", ((uint64_t)t[1] << 32) | (uint64_t)t[2]);
+			t += 2;
 		}
 		else if (*t == ACONST)
 		{

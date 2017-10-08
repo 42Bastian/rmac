@@ -78,6 +78,7 @@
 		{
 			//Since index register isn't used here, store register number in this field
 			AnIXREG = *tok++ & 7;                                // (Dn)
+
 			if (*tok == ')')
 			{
 				tok++;
@@ -85,21 +86,21 @@
 				AnEXTEN |= EXT_BS;          // Base register suppressed
 				AnEXTEN |= EXT_BDSIZE0;     // Base displacement null
 				AnEXTEN |= EXT_IISPOSN;     // Indirect Postindexed with Null Outer Displacement
-				AMn= MEMPOST;
+				AMn = MEMPOST;
 				AnREG = 6 << 3;		// stuff 110 to mode field
 				goto AnOK;
 			}
 			else if (*tok == 'L')
 			{
 				// TODO: does DINDL gets used at all?
-				AMn=DINDL;                                     // (Dn.l)
+				AMn = DINDL;                                     // (Dn.l)
 				AnEXTEN = 1 << 1;   // Long index size
 				tok++;
 			}
 			else if (*tok == 'W')                                // (Dn.w)
 			{
 				// TODO: does DINDW gets used at all?
-				AMn=DINDW;
+				AMn = DINDW;
 				AnEXTEN = 1 << 1;   // Word index size
 				tok++;
 			}
@@ -289,23 +290,24 @@
 		else if (*tok == '[')
 		{                              // ([...
 			tok++;
-			AnEXTEN|=EXT_FULLWORD;     //Definitely using full extension format, so set bit 8
+			AnEXTEN |= EXT_FULLWORD;     // Definitely using full extension format, so set bit 8
+
 			// Check to see if base displacement is present
-			if (*tok!=CONST && *tok !=SYMBOL)
+			if (*tok != CONST && *tok != SYMBOL)
 			{
-				AnEXTEN|=EXT_BDSIZE0;
+				AnEXTEN |= EXT_BDSIZE0;
 			}
 			else
 			{
 				expr(AnBEXPR, &AnBEXVAL, &AnBEXATTR, &AnESYM);
-				if (CHECK_OPTS(OPT_BASE_DISP) && AnBEXVAL==0 && AnEXATTR!=0)
+				if (CHECK_OPTS(OPT_BASE_DISP) && AnBEXVAL == 0 && AnEXATTR != 0)
 				{
 					// bd=0 so let's optimise it out
 					AnEXTEN|=EXT_BDSIZE0;
 				}
 				else if (*tok==DOTL)
 				{						// ([bd.l,...
-						AnEXTEN|=EXT_BDSIZEL;
+						AnEXTEN |= EXT_BDSIZEL;
 						tok++;
 				}
 				else
@@ -313,7 +315,7 @@
 					// Is .W forced here?
 					if (*tok == DOTW)
 					{
-    					AnEXTEN|=EXT_BDSIZEW;
+						AnEXTEN |= EXT_BDSIZEW;
 						tok++;
 					}
 					else
@@ -322,7 +324,7 @@
 						// to absolute short
 						if (CHECK_OPTS(OPT_ABS_SHORT)
 							&& ((AnBEXATTR & (TDB | DEFINED)) == DEFINED)
-							&& ((AnBEXVAL + 0x8000) < 0x10000))
+							&& (((uint32_t)AnBEXVAL + 0x8000) < 0x10000))
 						{
 							AnEXTEN |= EXT_BDSIZEW;
 							warn("absolute value in base displacement ranging $FFFF8000..$00007FFF optimised to absolute short");
@@ -350,7 +352,7 @@
 			}
 			else if ((*tok >= KW_A0) && (*tok <= KW_A7))
 			{					// ([bd,An,...
-				AnREG = (6<<3)|*tok & 7;
+				AnREG = (6 << 3) | *tok & 7;
 				tok++;
 			}
 			else if ((*tok >= KW_D0) && (*tok <= KW_D7))
@@ -363,24 +365,22 @@
 				tok++;
 
 				// Check for size
+				// ([bd,An/PC],Xn.W/L...)
+				switch ((int)*tok)
 				{
-					// ([bd,An/PC],Xn.W/L...)
-					switch ((int)*tok)
-					{
-					// Index reg size: <empty> | .W | .L
-					case DOTW:
-						tok++;
-						break;
-					default:
-						break;
-					case DOTL:
-						AnEXTEN |= EXT_L;
-						tok++;
-						break;
-					case DOTB:
-						// .B not allowed here...
-						goto badmode;
-					}
+				// Index reg size: <empty> | .W | .L
+				case DOTW:
+					tok++;
+					break;
+				default:
+					break;
+				case DOTL:
+					AnEXTEN |= EXT_L;
+					tok++;
+					break;
+				case DOTB:
+					// .B not allowed here...
+					goto badmode;
 				}
 
 				// Check for scale
@@ -392,6 +392,7 @@
 					{
 						if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
 							return error("scale factor expression must evaluate");
+
 						switch (AnEXVAL)
 						{
 						case 1:
@@ -569,7 +570,7 @@
 					tok++;
 					goto AnOK;
 				}
-				else if (*tok!=',')
+				else if (*tok != ',')
 					return error("comma expected");
 				else
 					tok++;	// eat the comma
@@ -586,6 +587,7 @@
 					tok++;
 					goto AnOK;
 				}
+
 				// ([bd,An/PC],Xn,od)
 				if (*tok == DOTL)
 				{
@@ -598,7 +600,7 @@
 					// optimized to absolute short
 					if (CHECK_OPTS(OPT_ABS_SHORT)
 						&& ((AnEXATTR & (TDB | DEFINED)) == DEFINED)
-						&& ((AnEXVAL + 0x8000) < 0x10000))
+						&& (((uint32_t)AnEXVAL + 0x8000) < 0x10000))
 					{
 						AnEXTEN |= EXT_IISPOSW; // Word outer displacement
 						AMn = MEMPOST;
@@ -614,9 +616,7 @@
 
 					// Is .W forced here?
 					if (*tok == DOTW)
-					{
 						tok++;
-					}
 				}
 
 				// Check for final closing parenthesis
@@ -628,7 +628,7 @@
 				else
 					return error("Closing parenthesis missing on addressing mode");
 
-				IS_SUPPRESSEDn:
+IS_SUPPRESSEDn:
 
 				// Check for od
 				if (*tok == ')')	// ([bd,An/PC],Xn)
@@ -671,18 +671,18 @@
 					// expr[.W][]
 					AnEXTEN |= EXT_IISNOIW; // Word outer displacement with IS suppressed
 					AMn = MEMPRE;
+
 					if (*tok == DOTW)
 					{
 						//AnEXTEN|=EXT_IISNOIW; // Word outer displacement
 						AMn = MEMPOST;
 						tok++;
 					}
-
 					// Defined, absolute values from $FFFF8000..$00007FFF get
 					// optimized to absolute short
 					else if (CHECK_OPTS(OPT_BASE_DISP)
 						&& ((AnEXATTR & (TDB | DEFINED)) == DEFINED)
-						&& ((AnEXVAL + 0x8000) < 0x10000))
+						&& (((uint32_t)AnEXVAL + 0x8000) < 0x10000))
 					{
 						//AnEXTEN|=EXT_IISNOIW; // Word outer displacement with IS suppressed
 						warn("outer displacement absolute value from $FFFF8000..$00007FFF optimised to absolute short");
@@ -717,24 +717,22 @@
 				}
 
 				// Check for size
+				// ([bd,An/PC],Xn.W/L...)
+				switch ((int)*tok)
 				{
-					// ([bd,An/PC],Xn.W/L...)
-					switch ((int)*tok)
-					{
-					// Index reg size: <empty> | .W | .L
-					case DOTW:
-						tok++;
-						break;
-					default:
-						break;
-					case DOTL:
-						tok++;
-						AnEXTEN |= EXT_L;
-						break;
-					case DOTB:
-						// .B not allowed here...
-						goto badmode;
-					}
+				// Index reg size: <empty> | .W | .L
+				case DOTW:
+					tok++;
+					break;
+				default:
+					break;
+				case DOTL:
+					tok++;
+					AnEXTEN |= EXT_L;
+					break;
+				case DOTB:
+					// .B not allowed here...
+					goto badmode;
 				}
 
 				// Check for scale
@@ -842,7 +840,7 @@
 						// get optimized to absolute short
                         if (CHECK_OPTS(OPT_BASE_DISP)
 							&& ((AnEXATTR & (TDB | DEFINED)) == DEFINED)
-							&& ((AnEXVAL + 0x8000) < 0x10000))
+							&& (((uint32_t)AnEXVAL + 0x8000) < 0x10000))
 						{
 							expr_size = EXT_IISPREW;
 							warn("outer displacement absolute value from $FFFF8000..$00007FFF optimised to absolute short");
@@ -1014,7 +1012,7 @@ CHK_FOR_DISPn:
 			// to absolute short
 			if (CHECK_OPTS(OPT_ABS_SHORT)
 				&& ((AnEXATTR & (TDB | DEFINED)) == DEFINED)
-				&& ((AnEXVAL + 0x8000) < 0x10000))
+				&& (((uint32_t)AnEXVAL + 0x8000) < 0x10000))
 			{
 				AMn = ABSW;
 

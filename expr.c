@@ -23,7 +23,7 @@
 // N.B.: The size of tokenClass should be identical to the largest value of
 //       a token; we're assuming 256 but not 100% sure!
 static char tokenClass[256];		// Generated table of token classes
-static uint32_t evstk[EVSTACKSIZE];	// Evaluator value stack
+static uint64_t evstk[EVSTACKSIZE];	// Evaluator value stack
 static WORD evattr[EVSTACKSIZE];	// Evaluator attribute stack
 
 // Token-class initialization list
@@ -154,14 +154,17 @@ int expr1(void)
 		{
 		case CR_ABSCOUNT:
 			*evalTokenBuffer++ = CONST;
+			*evalTokenBuffer++ = 0;		// Set HI LONG to zero
 			*evalTokenBuffer++ = (LONG)sect[ABS].sloc;
 			break;
 		case CR_TIME:
 			*evalTokenBuffer++ = CONST;
+			*evalTokenBuffer++ = 0;		// Set HI LONG to zero
 			*evalTokenBuffer++ = dos_time();
 			break;
 		case CR_DATE:
 			*evalTokenBuffer++ = CONST;
+			*evalTokenBuffer++ = 0;		// Set HI LONG to zero
 			*evalTokenBuffer++ = dos_date();
 			break;
 		case CR_MACDEF:                                    // ^^macdef <macro-name>
@@ -171,6 +174,7 @@ int expr1(void)
 			p = string[*tok++];
 			w = (lookup(p, MACRO, 0) == NULL ? 0 : 1);
 			*evalTokenBuffer++ = CONST;
+			*evalTokenBuffer++ = 0;		// Set HI LONG to zero
 			*evalTokenBuffer++ = (TOKEN)w;
 			break;
 		case CR_DEFINED:
@@ -186,6 +190,7 @@ getsym:
 			j = (*p == '.' ? curenv : 0);
 			w = ((sy = lookup(p, LABEL, j)) != NULL && (sy->sattr & w) ? 1 : 0);
 			*evalTokenBuffer++ = CONST;
+			*evalTokenBuffer++ = 0;		// Set HI LONG to zero
 			*evalTokenBuffer++ = (TOKEN)w;
 			break;
 		case CR_STREQ:
@@ -206,6 +211,7 @@ getsym:
 
 			w = (WORD)(!strcmp(p, p2));
 			*evalTokenBuffer++ = CONST;
+			*evalTokenBuffer++ = 0;		// Set HI LONG to zero
 			*evalTokenBuffer++ = (TOKEN)w;
 			break;
 		}
@@ -230,7 +236,8 @@ int expr2(void)
 	{
 	case CONST:
 		*evalTokenBuffer++ = CONST;
-		*evalTokenBuffer++ = *tok++;
+		*evalTokenBuffer++ = *tok++;	// HI LONG of constant
+		*evalTokenBuffer++ = *tok++;	// LO LONG of constant
 		break;
 	case SYMBOL:
 		p = string[*tok++];
@@ -257,6 +264,7 @@ int expr2(void)
 		break;
 	case STRING:
 		*evalTokenBuffer++ = CONST;
+		*evalTokenBuffer++ = 0;		// Set HI LONG to zero
 		*evalTokenBuffer++ = str_value(string[*tok++]);
 		break;
 	case '(':
@@ -313,7 +321,7 @@ int expr2(void)
 //
 // Recursive-descent expression analyzer (with some simple speed hacks)
 //
-int expr(TOKEN * otk, uint32_t * a_value, WORD * a_attr, SYM ** a_esym)
+int expr(TOKEN * otk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 {
 	// Passed in values (once derefenced, that is) can all be zero. They are
 	// there so that the expression analyzer can fill them in as needed. The
@@ -324,7 +332,8 @@ int expr(TOKEN * otk, uint32_t * a_value, WORD * a_attr, SYM ** a_esym)
 	int j;
 
 	evalTokenBuffer = otk;	// Set token pointer to 'exprbuf' (direct.c)
-							// Also set in various other places too (riscasm.c, e.g.)
+							// Also set in various other places too (riscasm.c,
+							// e.g.)
 
 //printf("expr(): tokens 0-2: %i %i %i (%c %c %c); tc[2] = %i\n", tok[0], tok[1], tok[2], tok[0], tok[1], tok[2], tokenClass[tok[2]]);
 	// Optimize for single constant or single symbol.
@@ -335,12 +344,17 @@ int expr(TOKEN * otk, uint32_t * a_value, WORD * a_attr, SYM ** a_esym)
 	//         Seems that even other tokens (SUNARY type) can fuck this up too.
 //	if ((tok[1] == EOL)
 	if ((tok[1] == EOL && (tok[0] != CONST && tokenClass[tok[0]] != SUNARY))
-		|| (((*tok == CONST || *tok == SYMBOL) || (*tok >= KW_R0 && *tok <= KW_R31))
-		&& (tokenClass[tok[2]] < UNARY)))
+//		|| (((*tok == CONST || *tok == SYMBOL) || (*tok >= KW_R0 && *tok <= KW_R31))
+//		&& (tokenClass[tok[2]] < UNARY)))
+		|| (((tok[0] == SYMBOL) || (tok[0] >= KW_R0 && tok[0] <= KW_R31))
+		&& (tokenClass[tok[2]] < UNARY))
+		|| ((tok[0] == CONST) && (tokenClass[tok[3]] < UNARY))
+		)
 	{
 		if (*tok >= KW_R0 && *tok <= KW_R31)
 		{
 			*evalTokenBuffer++ = CONST;
+			*evalTokenBuffer++ = 0;		// Set HI LONG to zero
 			*evalTokenBuffer++ = *a_value = (*tok - KW_R0);
 			*a_attr = ABS | DEFINED;
 
@@ -352,18 +366,21 @@ int expr(TOKEN * otk, uint32_t * a_value, WORD * a_attr, SYM ** a_esym)
 		else if (*tok == CONST)
 		{
 			*evalTokenBuffer++ = CONST;
-			*evalTokenBuffer++ = *a_value = tok[1];
+			*evalTokenBuffer++ = tok[1];
+			*evalTokenBuffer++ = tok[2];
+			*a_value = (((uint64_t)tok[1]) << 32) | tok[2];
 			*a_attr = ABS | DEFINED;
 
 			if (a_esym != NULL)
 				*a_esym = NULL;
 
-			tok += 2;
+			tok += 3;
 //printf("Quick eval in expr(): CONST = %i, tokenClass[tok[2]] = %i\n", *a_value, tokenClass[*tok]);
 		}
 		else if (*tok == '*')
 		{
 			*evalTokenBuffer++ = CONST;
+			*evalTokenBuffer++ = 0;		// Set HI LONG to zero
 
 			if (orgactive)
 				*evalTokenBuffer++ = *a_value = orgaddr;
@@ -476,11 +493,11 @@ thrown away right here. What the hell is it for?
 // UNDEFINED, but it's value includes everything but the symbol value, and
 // `a_esym' is set to the external symbol.
 //
-int evexpr(TOKEN * tk, uint32_t * a_value, WORD * a_attr, SYM ** a_esym)
+int evexpr(TOKEN * tk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 {
 	WORD attr;
 	SYM * sy;
-	uint32_t * sval = evstk;				// (Empty) initial stack
+	uint64_t * sval = evstk;				// (Empty) initial stack
 	WORD * sattr = evattr;
 	SYM * esym = NULL;						// No external symbol involved
 	WORD sym_seg = 0;
@@ -523,8 +540,9 @@ int evexpr(TOKEN * tk, uint32_t * a_value, WORD * a_attr, SYM ** a_esym)
 			sym_seg = (WORD)(sy->sattr & TDB);
 			break;
 		case CONST:
-//printf("evexpr(): CONST = %i\n", *tk);
-			*++sval = *tk++;				// Push value
+			*++sval = ((uint64_t)*tk++) << 32;			// Push value
+			*sval |= *tk++;		// & LO LONG (will this work???--should)
+//printf("evexpr(): CONST = %lX\n", *sval);
 			*++sattr = ABS | DEFINED;		// Push simple attribs
 			break;
 		case ACONST:

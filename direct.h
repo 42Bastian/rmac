@@ -21,7 +21,7 @@ extern int largestAlign[];
 void auto_even(void);
 int dep_block(uint32_t, WORD, uint32_t, WORD, TOKEN *);
 int eject(void);
-int abs_expr(uint32_t *);
+int abs_expr(uint64_t *);
 int symlist(int(*)());
 
 int d_even(void);

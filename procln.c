@@ -131,7 +131,7 @@ void Assemble(void)
 	char * equate;				// Symbol (or NULL)
 	int labtyp = 0;				// Label type (':', DCOLON)
 	int equtyp = 0;				// Equ type ('=', DEQUALS)
-	uint32_t eval;					// Expression value
+	uint64_t eval;				// Expression value
 	WORD eattr;					// Expression attributes
 	SYM * esym;					// External symbol involved in expr.
 	WORD siz = 0;				// Size suffix to mnem/diretve/macro
@@ -229,7 +229,7 @@ as68label:
 	if (*tok == EOL)
 		goto normal;
 
-	// Next token MUST be a symbol
+	// First token MUST be a symbol (if we get here, tok didn't advance)
 	if (*tok++ != SYMBOL)
 	{
 		error("syntax error; expected symbol");
@@ -465,6 +465,7 @@ When checking to see if it's already been equated, issue a warning.
 				{
 					// Advance token pointer to the constant
 					tok += 3;
+					tok++;		// Skip the hi LONG, so pointing at lo LONG
 
 					// Anything other than a 0 or a 1 will result in "No Bank"
 					if (*tok == 0)

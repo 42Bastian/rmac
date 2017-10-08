@@ -308,9 +308,11 @@ int AddFixup(uint16_t attr, uint32_t loc, TOKEN * fexpr)
 		// Count the # of tokens in the expression
 		for(len=0; fexpr[len]!=ENDEXPR; len++)
 		{
-			// Add one to len for 2X tokens
-			if (fexpr[len] == CONST || fexpr[len] == SYMBOL)
+			// Add one to len for 2X tokens, two for 3X tokens
+			if (fexpr[len] == SYMBOL)
 				len++;
+			else if (fexpr[len] == CONST)
+				len += 2;
 		}
 
 		// Add 1 for ENDEXPR
@@ -388,7 +390,7 @@ int AddFixup(uint16_t attr, uint32_t loc, TOKEN * fexpr)
 int ResolveFixups(int sno)
 {
 	PTR fup;				// Current fixup
-	uint32_t eval;				// Expression value
+	uint64_t eval;			// Expression value
 	SYM * sy;				// (Temp) pointer to a symbol
 	uint16_t i;				// (Temp) word
 	int reg2;

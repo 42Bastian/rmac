@@ -822,10 +822,12 @@ int m_move(WORD inst, WORD size)
 	int siz = (int)size;
 
 	// Try to optimize to MOVEQ
+	// N.B.: We can get away with casting the uint64_t to a 32-bit value
+	//       because it checks for a SIZL (i.e., a 32-bit value).
 	if (CHECK_OPTS(OPT_MOVEL_MOVEQ)
 		&& (siz == SIZL) && (am0 == IMMED) && (am1 == DREG)
 		&& ((a0exattr & (TDB | DEFINED)) == DEFINED)
-		&& (a0exval + 0x80 < 0x100))
+		&& ((uint32_t)a0exval + 0x80 < 0x100))
 	{
 		m_moveq((WORD)0x7000, (WORD)0);
 
@@ -979,7 +981,7 @@ int m_br(WORD inst, WORD siz)
 			return error(rel_error);
 //}
 
-		v = a0exval - (sloc + 2);
+		v = (uint32_t)a0exval - (sloc + 2);
 
 		// Optimize branch instr. size
 		if (siz == SIZN)
@@ -1105,7 +1107,7 @@ int m_trap(WORD inst, WORD siz)
 //
 int m_movem(WORD inst, WORD siz)
 {
-	uint32_t eval;
+	uint64_t eval;
 	WORD i;
 	WORD w;
 	WORD rmask;
