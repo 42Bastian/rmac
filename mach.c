@@ -705,8 +705,6 @@ int m_bitop(WORD inst, WORD siz)
 
 int m_dbra(WORD inst, WORD siz)
 {
-	uint32_t v;
-
 	siz = siz;
 	inst |= a0reg;
 	D_word(inst);
@@ -716,7 +714,7 @@ int m_dbra(WORD inst, WORD siz)
 		if ((a1exattr & TDB) != cursect)
 			return error(rel_error);
 
-		v = a1exval - sloc;
+		uint32_t v = a1exval - sloc;
 
 		if (v + 0x8000 > 0x10000)
 			return error(range_error);
@@ -919,7 +917,7 @@ int m_moveq(WORD inst, WORD siz)
 		AddFixup(FU_BYTE | FU_SEXT, sloc + 1, a0expr);
 		a0exval = 0;
 	}
-	else if (a0exval + 0x100 >= 0x200)
+	else if ((uint32_t)a0exval + 0x100 >= 0x200)
 		return error(range_error);
 
 	inst |= reg_9[a1reg] | (a0exval & 0xFF);
@@ -971,8 +969,6 @@ int m_movep(WORD inst, WORD siz)
 //
 int m_br(WORD inst, WORD siz)
 {
-	uint32_t v;
-
 	if (a0exattr & DEFINED)
 	{
 		if ((a0exattr & TDB) != cursect)
@@ -981,7 +977,7 @@ int m_br(WORD inst, WORD siz)
 			return error(rel_error);
 //}
 
-		v = (uint32_t)a0exval - (sloc + 2);
+		uint32_t v = (uint32_t)a0exval - (sloc + 2);
 
 		// Optimize branch instr. size
 		if (siz == SIZN)
