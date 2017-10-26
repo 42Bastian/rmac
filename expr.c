@@ -29,7 +29,7 @@ static WORD evattr[EVSTACKSIZE];	// Evaluator attribute stack
 // Token-class initialization list
 char itokcl[] = {
 	0,								// END
-	CONST, SYMBOL, 0,				// ID
+	CONST, FCONST, SYMBOL, 0,		// ID
 	'(', '[', '{', 0,				// OPAR
 	')', ']', '}', 0,				// CPAR
 	CR_DEFINED, CR_REFERENCED,		// SUNARY (special unary)
@@ -133,6 +133,7 @@ int expr1(void)
 	char * p, * p2;
 	WORD w;
 	int j;
+	uint64_t * evalTokenBuffer64;
 
 	class = tokenClass[*tok];
 
@@ -146,6 +147,10 @@ int expr1(void)
 		if (t == '-')
 			t = UNMINUS;
 
+		// With leading + we don't have to deposit
+		// anything to the buffer because there's
+		// no unary '+' nor we have to do anything about it
+		if (t != '+')
 		*evalTokenBuffer++ = t;
 	}
 	else if (class == SUNARY)
@@ -154,18 +159,21 @@ int expr1(void)
 		{
 		case CR_ABSCOUNT:
 			*evalTokenBuffer++ = CONST;
-			*evalTokenBuffer++ = 0;		// Set HI LONG to zero
-			*evalTokenBuffer++ = (LONG)sect[ABS].sloc;
+			evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
+			*evalTokenBuffer64++ = (LONG)sect[ABS].sloc;
+			evalTokenBuffer = (uint32_t *)evalTokenBuffer64;
 			break;
 		case CR_TIME:
 			*evalTokenBuffer++ = CONST;
-			*evalTokenBuffer++ = 0;		// Set HI LONG to zero
-			*evalTokenBuffer++ = dos_time();
+			evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
+			*evalTokenBuffer64++ = dos_time();
+			evalTokenBuffer = (uint32_t *)evalTokenBuffer64;
 			break;
 		case CR_DATE:
 			*evalTokenBuffer++ = CONST;
-			*evalTokenBuffer++ = 0;		// Set HI LONG to zero
-			*evalTokenBuffer++ = dos_date();
+			evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
+			*evalTokenBuffer64++ = dos_date();
+			evalTokenBuffer = (uint32_t *)evalTokenBuffer64;
 			break;
 		case CR_MACDEF:                                    // ^^macdef <macro-name>
 			if (*tok++ != SYMBOL)
@@ -173,8 +181,9 @@ int expr1(void)
 
 			p = string[*tok++];
 			w = (lookup(p, MACRO, 0) == NULL ? 0 : 1);
-			*evalTokenBuffer++ = CONST;
-			*evalTokenBuffer++ = 0;		// Set HI LONG to zero
+			evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
+			*evalTokenBuffer64++ = (TOKEN)w;
+			evalTokenBuffer = (uint32_t *)evalTokenBuffer64;
 			*evalTokenBuffer++ = (TOKEN)w;
 			break;
 		case CR_DEFINED:
@@ -190,8 +199,9 @@ getsym:
 			j = (*p == '.' ? curenv : 0);
 			w = ((sy = lookup(p, LABEL, j)) != NULL && (sy->sattr & w) ? 1 : 0);
 			*evalTokenBuffer++ = CONST;
-			*evalTokenBuffer++ = 0;		// Set HI LONG to zero
-			*evalTokenBuffer++ = (TOKEN)w;
+			uint64_t *evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
+			*evalTokenBuffer64++ = (TOKEN)w;
+			evalTokenBuffer = (uint32_t *)evalTokenBuffer64;
 			break;
 		case CR_STREQ:
 			if (*tok != SYMBOL && *tok != STRING)
@@ -211,8 +221,9 @@ getsym:
 
 			w = (WORD)(!strcmp(p, p2));
 			*evalTokenBuffer++ = CONST;
-			*evalTokenBuffer++ = 0;		// Set HI LONG to zero
-			*evalTokenBuffer++ = (TOKEN)w;
+			evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
+			*evalTokenBuffer64++ = (TOKEN)w;
+			evalTokenBuffer = (uint32_t *)evalTokenBuffer64;
 			break;
 		}
 	}
@@ -231,13 +242,26 @@ int expr2(void)
 	char * p;
 	SYM * sy;
 	int j;
+	uint64_t * evalTokenBuffer64;
+	uint64_t * tok64;
 
 	switch ((int)*tok++)
 	{
 	case CONST:
 		*evalTokenBuffer++ = CONST;
-		*evalTokenBuffer++ = *tok++;	// HI LONG of constant
-		*evalTokenBuffer++ = *tok++;	// LO LONG of constant
+		evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
+		tok64 = (uint64_t *)tok;
+		*evalTokenBuffer64++ = *tok64++;
+		tok = (TOKEN *)tok64;
+		evalTokenBuffer = (TOKEN *)evalTokenBuffer64;
+		break;
+	case FCONST:
+		*evalTokenBuffer++ = FCONST;
+		evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
+		tok64 = (uint64_t *)tok;
+		*evalTokenBuffer64++ = *tok64++;
+		tok = (TOKEN *)tok64;
+		evalTokenBuffer = (TOKEN *)evalTokenBuffer64;
 		break;
 	case SYMBOL:
 		p = string[*tok++];
@@ -264,8 +288,9 @@ int expr2(void)
 		break;
 	case STRING:
 		*evalTokenBuffer++ = CONST;
-		*evalTokenBuffer++ = 0;		// Set HI LONG to zero
-		*evalTokenBuffer++ = str_value(string[*tok++]);
+		uint64_t *evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
+		*evalTokenBuffer64++ = str_value(string[*tok++]);
+		evalTokenBuffer = (uint32_t *)evalTokenBuffer64;
 		break;
 	case '(':
 		if (expr0() != OK)
@@ -343,19 +368,20 @@ int expr(TOKEN * otk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 	//         (assuming tok[1] == EOL is a single token that is)
 	//         Seems that even other tokens (SUNARY type) can fuck this up too.
 //	if ((tok[1] == EOL)
-	if ((tok[1] == EOL && (tok[0] != CONST && tokenClass[tok[0]] != SUNARY))
-//		|| (((*tok == CONST || *tok == SYMBOL) || (*tok >= KW_R0 && *tok <= KW_R31))
+	if ((tok[1] == EOL && ((tok[0] != CONST || tok[0] != FCONST) && tokenClass[tok[0]] != SUNARY))
+//		|| (((*tok == CONST || *tok == FCONST || *tok == SYMBOL) || (*tok >= KW_R0 && *tok <= KW_R31))
 //		&& (tokenClass[tok[2]] < UNARY)))
 		|| (((tok[0] == SYMBOL) || (tok[0] >= KW_R0 && tok[0] <= KW_R31))
 		&& (tokenClass[tok[2]] < UNARY))
-		|| ((tok[0] == CONST) && (tokenClass[tok[3]] < UNARY))
+		|| ((tok[0] == CONST || tok[0] == FCONST) && (tokenClass[tok[3]] < UNARY))
 		)
 	{
 		if (*tok >= KW_R0 && *tok <= KW_R31)
 		{
 			*evalTokenBuffer++ = CONST;
-			*evalTokenBuffer++ = 0;		// Set HI LONG to zero
-			*evalTokenBuffer++ = *a_value = (*tok - KW_R0);
+			uint64_t *evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
+			*evalTokenBuffer64++ = *a_value = (*tok - KW_R0);
+			evalTokenBuffer = (uint32_t *)evalTokenBuffer64;
 			*a_attr = ABS | DEFINED;
 
 			if (a_esym != NULL)
@@ -366,10 +392,27 @@ int expr(TOKEN * otk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 		else if (*tok == CONST)
 		{
 			*evalTokenBuffer++ = CONST;
-			*evalTokenBuffer++ = tok[1];
-			*evalTokenBuffer++ = tok[2];
-			*a_value = (((uint64_t)tok[1]) << 32) | tok[2];
+			uint64_t *evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
+			uint64_t *tok64 = (uint64_t *)&tok[1];
+			*evalTokenBuffer64++ = *tok64++;
+			evalTokenBuffer = (TOKEN *)evalTokenBuffer64;
+			*a_value = tok[1];
 			*a_attr = ABS | DEFINED;
+
+			if (a_esym != NULL)
+				*a_esym = NULL;
+
+			tok += 3;
+//printf("Quick eval in expr(): CONST = %i, tokenClass[tok[2]] = %i\n", *a_value, tokenClass[*tok]);
+		}
+		else if (*tok == FCONST)
+		{
+			*evalTokenBuffer++ = FCONST;
+			*((double *)evalTokenBuffer) = *((double *)&tok[1]);
+			evalTokenBuffer += 2;
+			//*(double *)evalTokenBuffer++ = tok[2];
+			*a_value = *((uint64_t *)&tok[1]);
+			*a_attr = ABS | DEFINED | FLOAT;
 
 			if (a_esym != NULL)
 				*a_esym = NULL;
@@ -380,12 +423,13 @@ int expr(TOKEN * otk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 		else if (*tok == '*')
 		{
 			*evalTokenBuffer++ = CONST;
-			*evalTokenBuffer++ = 0;		// Set HI LONG to zero
+			uint64_t *evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
 
 			if (orgactive)
-				*evalTokenBuffer++ = *a_value = orgaddr;
+				*evalTokenBuffer64++ = *a_value = orgaddr;
 			else
-				*evalTokenBuffer++ = *a_value = pcloc;
+				*evalTokenBuffer64++ = *a_value = pcloc;
+			evalTokenBuffer = (uint32_t *)evalTokenBuffer64;
 
 			// '*' takes attributes of current section, not ABS!
 			*a_attr = cursect | DEFINED;
@@ -495,12 +539,13 @@ thrown away right here. What the hell is it for?
 //
 int evexpr(TOKEN * tk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 {
-	WORD attr;
+	WORD attr, attr2;
 	SYM * sy;
 	uint64_t * sval = evstk;				// (Empty) initial stack
 	WORD * sattr = evattr;
 	SYM * esym = NULL;						// No external symbol involved
 	WORD sym_seg = 0;
+    uint64_t *tk64;
 
 	while (*tk != ENDEXPR)
 	{
@@ -540,10 +585,17 @@ int evexpr(TOKEN * tk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 			sym_seg = (WORD)(sy->sattr & TDB);
 			break;
 		case CONST:
-			*++sval = ((uint64_t)*tk++) << 32;			// Push value
-			*sval |= *tk++;		// & LO LONG (will this work???--should)
+			tk64 = (uint64_t *)tk;
+			*++sval = *tk64++;
+			tk = (TOKEN *)tk64;
 //printf("evexpr(): CONST = %lX\n", *sval);
 			*++sattr = ABS | DEFINED;		// Push simple attribs
+			break;
+		case FCONST:
+//printf("evexpr(): CONST = %i\n", *tk);
+			*((double *)sval) = *((double *)tk);
+			tk += 2;
+			*++sattr = ABS | DEFINED | FLOAT; // Push simple attribs
 			break;
 		case ACONST:
 //printf("evexpr(): ACONST = %i\n", *tk);
@@ -567,11 +619,40 @@ int evexpr(TOKEN * tk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 			--sval;							// Pop value
 			--sattr;						// Pop attrib
 //printf("--> N+N: %i + %i = ", *sval, sval[1]);
+			// Extract float attributes from both terms and pack them
+			// into a single value
+			attr = sattr[0] & FLOAT | ((sattr[1] & FLOAT) >> 1);
+			attr2 = sattr[0] | sattr[1] & FLOAT; // Returns FLOAT if either of the two numbers are FLOAT
+
+			if (attr == (FLOAT | (FLOAT >> 1)))
+			{
+				// Float + Float
+				double * dst = (double *)sval;
+				double * src = (double *)(sval + 1);
+				*dst += *src;
+			}
+			else if (attr == FLOAT)
+			{
+				// Float + Int
+				double * dst = (double *)sval;
+				uint64_t * src = (uint64_t *)(sval + 1);
+				*dst += *src;
+			}
+			else if (attr == FLOAT >> 1)
+			{
+				// Int + Float
+				uint64_t * dst = (uint64_t *)sval;
+				double * src = (double *)(sval + 1);
+				*(double *)dst = *src + *dst;
+			}
+			else
+			{
 			*sval += sval[1];				// Compute value
+			}
 //printf("%i\n", *sval);
 
 			if (!(*sattr & TDB))
-				*sattr = sattr[1];
+				*sattr = sattr[1] | attr2;
 			else if (sattr[1] & TDB)
 				return error(seg_error);
 
@@ -581,13 +662,44 @@ int evexpr(TOKEN * tk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 			--sval;							// Pop value
 			--sattr;						// Pop attrib
 //printf("--> N-N: %i - %i = ", *sval, sval[1]);
+			// Extract float attributes from both terms and pack them
+			// into a single value
+			attr = sattr[0] & FLOAT | ((sattr[1] & FLOAT) >> 1);
+			attr2 = sattr[0] | sattr[1] & FLOAT; // Returns FLOAT if either of the two numbers are FLOAT
+
+			if (attr == (FLOAT | (FLOAT >> 1)))
+			{
+				// Float - Float
+				double * dst = (double *)sval;
+				double * src = (double *)(sval + 1);
+				*dst -= *src;
+			}
+			else if (attr == FLOAT)
+			{
+				// Float - Int
+				double * dst = (double *)sval;
+				uint64_t * src = (uint64_t *)(sval + 1);
+				*dst -= *src;
+			}
+			else if (attr == FLOAT >> 1)
+			{
+				// Int - Float
+				uint64_t * dst = (uint64_t *)sval;
+				double * src = (double *)(sval + 1);
+				*(double *)dst = *dst - *src;
+			}
+			else
+			{
 			*sval -= sval[1];				// Compute value
+			}
+
 //printf("%i\n", *sval);
 
 			attr = (WORD)(*sattr & TDB);
 #if 0
 printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 #endif
+			*sattr |= attr2;                // Inherit FLOAT attribute
 			// If symbol1 is ABS, take attributes from symbol2
 			if (!attr)
 				*sattr = sattr[1];
@@ -600,15 +712,27 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 		case UNMINUS:
 //printf("evexpr(): UNMINUS\n");
 			if (*sattr & TDB)
-				error(seg_error);
+				return error(seg_error);
 
+			if (*sattr & FLOAT)
+			{
+				double *dst = (double *)sval;
+				*dst = -*dst;
+				*sattr = ABS | DEFINED | FLOAT; // Expr becomes absolute
+			}
+			else
+			{
 			*sval = -(int)*sval;
 			*sattr = ABS | DEFINED;			// Expr becomes absolute
+			}
 			break;
 		case '!':
 //printf("evexpr(): !\n");
 			if (*sattr & TDB)
-				error(seg_error);
+				return error(seg_error);
+
+			if (*sattr & FLOAT)
+				return error("floating point numbers not allowed with operator '!'.");
 
 			*sval = !*sval;
 			*sattr = ABS | DEFINED;			// Expr becomes absolute
@@ -616,7 +740,10 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 		case '~':
 //printf("evexpr(): ~\n");
 			if (*sattr & TDB)
-				error(seg_error);
+				return error(seg_error);
+
+			if (*sattr & FLOAT)
+				return error("floating point numbers not allowed with operator '~'.");
 
 			*sval = ~*sval;
 			*sattr = ABS | DEFINED;			// Expr becomes absolute
@@ -629,10 +756,39 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			sval--;
 
 			if ((*sattr & TDB) != (sattr[1] & TDB))
-				error(seg_error);
+				return error(seg_error);
+
+			// Extract float attributes from both terms and pack them
+			// into a single value
+			attr = sattr[0] & FLOAT | ((sattr[1] & FLOAT) >> 1);
+
+			if (attr == (FLOAT | (FLOAT >> 1)))
+			{
+				// Float <= Float
+				double * dst = (double *)sval;
+				double * src = (double *)(sval + 1);
+				*sval = *dst <= *src;
+			}
+			else if (attr == FLOAT)
+			{
+				// Float <= Int
+				double * dst = (double *)sval;
+				uint64_t * src = (uint64_t *)(sval + 1);
+				*sval = *dst <= *src;
+			}
+			else if (attr == FLOAT >> 1)
+			{
+				// Int <= Float
+				uint64_t * dst = (uint64_t *)sval;
+				double * src = (double *)(sval + 1);
+				*sval = *dst <= *src;
+			}
+			else
+			{
+			*sval = *sval <= sval[1];
+			}
 
 			*sattr = ABS | DEFINED;
-			*sval = *sval <= sval[1];
 			break;
 		case GE:
 //printf("evexpr(): GE\n");
@@ -640,10 +796,41 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			sval--;
 
 			if ((*sattr & TDB) != (sattr[1] & TDB))
-				error(seg_error);
+				return error(seg_error);
+
+			// Extract float attributes from both terms and pack them
+			// into a single value
+			attr = sattr[0] & FLOAT | ((sattr[1] & FLOAT) >> 1);
+
+			if (attr == (FLOAT | (FLOAT >> 1)))
+			{
+				// Float >= Float
+				double * dst = (double *)sval;
+				double * src = (double *)(sval + 1);
+				*sval = *dst >= *src;
+			}
+			else if (attr == FLOAT)
+			{
+				// Float >= Int
+				double * dst = (double *)sval;
+				uint64_t * src = (uint64_t *)(sval + 1);
+				*sval = *dst >= *src;
+			}
+			else if (attr == FLOAT >> 1)
+			{
+				// Int >= Float
+				uint64_t * dst = (uint64_t *)sval;
+				double * src = (double *)(sval + 1);
+				*sval = *dst >= *src;
+			}
+			else if (attr == 0)
+			{
+			*sval = *sval >= sval[1];
+			}
+			else
 
 			*sattr = ABS | DEFINED;
-			*sval = *sval >= sval[1];
+
 			break;
 		case '>':
 //printf("evexpr(): >\n");
@@ -651,10 +838,40 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			sval--;
 
 			if ((*sattr & TDB) != (sattr[1] & TDB))
-				error(seg_error);
+				return error(seg_error);
+
+			// Extract float attributes from both terms and pack them
+			// into a single value
+			attr = sattr[0] & FLOAT | ((sattr[1] & FLOAT) >> 1);
+
+			if (attr == (FLOAT | (FLOAT >> 1)))
+			{
+				// Float > Float
+				double * dst = (double *)sval;
+				double * src = (double *)(sval + 1);
+				*sval = *dst > *src;
+			}
+			else if (attr == FLOAT)
+			{
+				// Float > Int
+				double * dst = (double *)sval;
+				uint64_t * src = (uint64_t *)(sval + 1);
+				*sval = *dst > *src;
+			}
+			else if (attr == FLOAT >> 1)
+			{
+				// Int > Float
+				uint64_t * dst = (uint64_t *)sval;
+				double * src = (double *)(sval + 1);
+				*sval = *dst > *src;
+			}
+			else
+=			{
+			*sval = *sval > sval[1];
+			}
 
 			*sattr = ABS | DEFINED;
-			*sval = *sval > sval[1];
+
 			break;
 		case '<':
 //printf("evexpr(): <\n");
@@ -662,10 +879,40 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			sval--;
 
 			if ((*sattr & TDB) != (sattr[1] & TDB))
-				error(seg_error);
+				return error(seg_error);
+
+			// Extract float attributes from both terms and pack them
+			// into a single value
+			attr = sattr[0] & FLOAT | ((sattr[1] & FLOAT) > >1);
+
+			if (attr == (FLOAT | (FLOAT >> 1)))
+			{
+				// Float < Float
+				double * dst = (double *)sval;
+				double * src = (double *)(sval + 1);
+				*sval = *dst < *src;
+			}
+			else if (attr == FLOAT)
+			{
+				// Float < Int
+				double * dst = (double *)sval;
+				uint64_t * src = (uint64_t *)(sval + 1);
+				*sval = *dst < *src;
+			}
+			else if (attr == FLOAT >> 1)
+			{
+				// Int < Float
+				uint64_t * dst = (uint64_t *)sval;
+				double * src = (double *)(sval + 1);
+				*sval = *dst < *src;
+			}
+			else
+			{
+			*sval = *sval < sval[1];
+			}
 
 			*sattr = ABS | DEFINED;
-			*sval = *sval < sval[1];
+
 			break;
 		case NE:
 //printf("evexpr(): NE\n");
@@ -673,10 +920,34 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			sval--;
 
 			if ((*sattr & TDB) != (sattr[1] & TDB))
-				error(seg_error);
+				return error(seg_error);
+
+			// Extract float attributes from both terms and pack them
+			// into a single value
+			attr = sattr[0] & FLOAT | ((sattr[1] & FLOAT) >> 1);
+
+			if (attr == (FLOAT | (FLOAT >> 1)))
+			{
+				// Float <> Float
+				return error("comparison for equality with float types not allowed.");
+			}
+			else if (attr == FLOAT)
+			{
+				// Float <> Int
+				return error("comparison for equality with float types not allowed.");
+			}
+			else if (attr == FLOAT >> 1)
+			{
+				// Int != Float
+				return error("comparison for equality with float types not allowed.");
+			}
+			else
+			{
+			*sval = *sval != sval[1];
+			}
 
 			*sattr = ABS | DEFINED;
-			*sval = *sval != sval[1];
+
 			break;
 		case '=':
 //printf("evexpr(): =\n");
@@ -684,10 +955,38 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			sval--;
 
 			if ((*sattr & TDB) != (sattr[1] & TDB))
-				error(seg_error);
+				return error(seg_error);
+
+			// Extract float attributes from both terms and pack them
+			// into a single value
+			attr = sattr[0] & FLOAT | ((sattr[1] & FLOAT) >> 1);
+
+			if (attr == (FLOAT | (FLOAT >> 1)))
+			{
+				// Float = Float
+				double * dst = (double *)sval;
+				double * src = (double *)(sval + 1);
+				*sval = *src == *dst;
+			}
+			else if (attr == FLOAT)
+			{
+				// Float = Int
+				return error("equality with float ");
+			}
+			else if (attr == FLOAT >> 1)
+			{
+				// Int == Float
+				uint64_t * dst = (uint64_t *)sval;
+				double * src = (double *)(sval + 1);
+				*sval = *src == *dst;
+			}
+			else
+			{
+			*sval = *sval == sval[1];
+			}
 
 			*sattr = ABS | DEFINED;
-			*sval = *sval == sval[1];
+
 			break;
 		// All other binary operators must have two ABS items
 		// to work with.  They all produce an ABS value.
@@ -696,7 +995,6 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			// GH - Removed for v1.0.15 as part of the fix for indexed loads.
 			//if ((*sattr & (TEXT|DATA|BSS)) || (*--sattr & (TEXT|DATA|BSS)))
 			//error(seg_error);
-			*sattr = ABS | DEFINED;			// Expr becomes absolute
 
 			switch ((int)tk[-1])
 			{
@@ -704,56 +1002,147 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 				sval--;
 				sattr--;					// Pop attrib
 //printf("--> NxN: %i x %i = ", *sval, sval[1]);
+				// Extract float attributes from both terms and pack them
+				// into a single value
+				attr = sattr[0] & FLOAT | ((sattr[1] & FLOAT) >> 1);
+				attr2 = sattr[0] | sattr[1] & FLOAT; // Returns FLOAT if either of the two numbers are FLOAT
+
+				if (attr == (FLOAT | (FLOAT >> 1)))
+				{
+					// Float * Float
+					double * dst = (double *)sval;
+					double * src = (double *)(sval + 1);
+					*dst *= *src;
+				}
+				else if (attr == FLOAT)
+				{
+					// Float * Int
+					double * dst = (double *)sval;
+					uint64_t * src = (uint64_t *)(sval + 1);
+					*dst *= *src;
+				}
+				else if (attr == FLOAT >> 1)
+				{
+					// Int * Float
+					uint64_t * dst = (uint64_t *)sval;
+					double * src = (double *)(sval + 1);
+					*(double *)dst = *src * *dst;
+				}
+				else
+				{
 				*sval *= sval[1];
+				}
 //printf("%i\n", *sval);
+
+				*sattr = ABS | DEFINED;			// Expr becomes absolute
+				*sattr |= attr2;
+
 				break;
 			case '/':
 				sval--;
 				sattr--;					// Pop attrib
 
-				if (sval[1] == 0)
-					return error("division by zero");
 
+//printf("--> N/N: %i / %i = ", sval[0], sval[1]);
+				// Extract float attributes from both terms and pack them
+				// into a single value
+				attr = sattr[0] & FLOAT | ((sattr[1] & FLOAT) >> 1);
+				attr2 = sattr[0] | sattr[1] & FLOAT; // Returns FLOAT if either of the two numbers are FLOAT
+
+				if (attr == (FLOAT | (FLOAT >> 1)))
+				{
+					// Float / Float
+					double * dst = (double *)sval;
+					double * src = (double *)(sval + 1);
+					if (*src == 0)
+						return error("divide by zero");
+					*dst = *dst / *src;
+				}
+				else if (attr == FLOAT)
+				{
+					// Float / Int
+					double * dst = (double *)sval;
+					uint64_t * src = (uint64_t *)(sval + 1);
+					if (*src == 0)
+						return error("divide by zero");
+					*dst = *dst / *src;
+				}
+				else if (attr == FLOAT >> 1)
+				{
+					// Int / Float
+					uint64_t * dst=(uint64_t *)sval;
+					double * src=(double *)(sval + 1);
+					if (*src == 0)
+						return error("divide by zero");
+					*(double *)dst = *dst / *src;
+				}
+				else
+				{
+					if (sval[1] == 0)
+						return error("divide by zero");
 //printf("--> N/N: %i / %i = ", sval[0], sval[1]);
 				// Compiler is picky here: Without casting these, it discards
 				// the sign if dividing a negative # by a positive one,
 				// creating a bad result. :-/
 				// Definitely a side effect of using uint32_ts intead of ints.
 				*sval = (int32_t)sval[0] / (int32_t)sval[1];
+				}
+
+				*sattr = ABS | DEFINED;			// Expr becomes absolute
+				*sattr |= attr2;
+
 //printf("%i\n", *sval);
 				break;
 			case '%':
 				sval--;
 				sattr--;					// Pop attrib
+				if ((*sattr | sattr[1]) & FLOAT)
+					return error("floating point numbers not allowed with operator '%'.");
 
 				if (sval[1] == 0)
 					return error("mod (%) by zero");
 
+				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				*sval %= sval[1];
 				break;
 			case SHL:
 				sval--;
 				sattr--;					// Pop attrib
+				if ((*sattr | sattr[1]) & FLOAT)
+					return error("floating point numbers not allowed with operator '<<'.");
+				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				*sval <<= sval[1];
 				break;
 			case SHR:
 				sval--;
 				sattr--;					// Pop attrib
+				if ((*sattr | sattr[1]) & FLOAT)
+					return error("floating point numbers not allowed with operator '>>'.");
+				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				*sval >>= sval[1];
 				break;
 			case '&':
 				sval--;
 				sattr--;					// Pop attrib
+				if ((*sattr | sattr[1]) & FLOAT)
+					return error("floating point numbers not allowed with operator '&'.");
+				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				*sval &= sval[1];
 				break;
 			case '^':
 				sval--;
 				sattr--;					// Pop attrib
+				if ((*sattr | sattr[1]) & FLOAT)
+					return error("floating point numbers not allowed with operator '^'.");
+				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				*sval ^= sval[1];
 				break;
 			case '|':
 				sval--;
 				sattr--;					// Pop attrib
+				if ((*sattr | sattr[1]) & FLOAT)
+					return error("floating point numbers not allowed with operator '|'.");
+				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				*sval |= sval[1];
 				break;
 			default:

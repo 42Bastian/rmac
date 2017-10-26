@@ -34,6 +34,7 @@
 // (Normally) non-printable tokens
 #define COLON           ':'			// : (grumble: GNUmacs hates ':')
 #define CONST           'a'			// CONST <value>
+#define FCONST          'r'			// Floating CONST <value>
 #define ACONST          'A'			// ACONST <value> <attrib>
 #define STRING          'b'			// STRING <address>
 #define STRINGA8        'S'			// Atari 800 internal STRING <address>

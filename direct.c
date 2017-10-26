@@ -20,6 +20,8 @@
 #include "sect.h"
 #include "symbol.h"
 #include "token.h"
+#include "math.h"
+#include "sect.h"
 
 #define DEF_KW
 #include "kwtab.h"
@@ -859,7 +861,7 @@ int d_prgflags(void)
 		return error("PRGFLAGS requires value");
 	else if (abs_expr(&eval) == OK)
 	{
-		PRGFLAGS=eval;
+		PRGFLAGS = (uint32_t)eval;
 		return 0;
 	}
 	else
@@ -887,7 +889,7 @@ int d_abs(void)
 		return 0;
 
 	SwitchSection(ABS);
-	sloc = eval;
+	sloc = (uint32_t)eval;
 	return 0;
 }
 
@@ -976,9 +978,9 @@ int d_ds(WORD siz)
 	// of zeroed memory....
 	if ((scattr & SBSS) || cursect == M6502)
 	{
-		listvalue(eval);
+		listvalue((uint32_t)eval);
 		eval *= siz;
-		sloc += eval;
+		sloc += (uint32_t)eval;
 
 		if (cursect == M6502)
 			chptr += eval;
@@ -1002,6 +1004,9 @@ int d_dc(WORD siz)
 {
 	WORD eattr;
 	uint64_t eval;
+	WORD tdb;
+	WORD defined;
+	uint64_t val64;
 	uint8_t * p;
 
 	if ((scattr & SBSS) != 0)
@@ -1056,14 +1061,26 @@ int d_dc(WORD siz)
 			siz = SIZL;
 		}
 
+		if (siz != SIZQ)
+		{
 		// dc.x <expression>
 		SYM * esym = 0;
 
 		if (expr(exprbuf, &eval, &eattr, &esym) != OK)
 			return 0;
+		}
+		else
+		{
+			val64 = *(uint64_t *)(tok);
+			tok = tok + 2;
+			D_long((uint32_t)(val64 >> 32));
+			D_long((uint32_t)val64);
 
-		uint16_t tdb = eattr & TDB;
-		uint16_t defined = eattr & DEFINED;
+            goto comma;
+        }
+
+		tdb = (WORD)(eattr & TDB);
+		defined = (WORD)(eattr & DEFINED);
 
 		if ((challoc - ch_size) < 4)
 			chcheck(4);
@@ -1136,14 +1153,69 @@ int d_dc(WORD siz)
 				D_long(eval);
 			}
 			break;
+		case SIZS:
+			if (m6502)
+				return error(in_6502mode);
+
+			if (!defined)
+			{
+				float vv = 0;
+				AddFixup(FU_FLOATSING, sloc, exprbuf);
+
+				D_single(vv);
+			}
+			else
+			{
+				if (tdb)
+					MarkRelocatable(cursect, sloc, tdb, MSINGLE, NULL);
+
+				D_single(eval);
+			}
+			break;
 		case SIZD:
-			// 64-bit size
-			// N.B.: May have to come up with section/fixup markers for this;
-			//       ATM it's only used in dc.d statements...
-			D_long(eval >> 32);
-			D_long(eval & 0xFFFFFFFF);
+			if (m6502)
+				return error(in_6502mode);
+
+			if (!defined)
+			{
+				double vv = 0;
+				AddFixup(FU_FLOATDOUB, sloc, exprbuf);
+
+				D_double(vv);
+			}
+			else
+			{
+				double vv;
+				if (tdb)
+					MarkRelocatable(cursect, sloc, tdb, MDOUBLE, NULL);
+
+				vv = *(double *)&eval;
+				D_double(vv);
+			}
+			break;
+		case SIZX:
+			if (m6502)
+				return error(in_6502mode);
+
+			if (!defined)
+			{
+				double vv = 0;
+				AddFixup(FU_FLOATEXT, sloc, exprbuf);
+
+				D_extend(vv);
+			}
+			else
+			{
+				float vv;
+				if (tdb)
+					MarkRelocatable(cursect, sloc, tdb, MEXTEND, NULL);
+
+				vv = *(double *)&eval;
+				D_extend(vv);
+			}
 			break;
 		}
+
 
 comma:
 		if (*tok != ',')
@@ -1180,7 +1252,7 @@ int d_dcb(WORD siz)
 	if (cursect != M6502 && (siz != SIZB) && (sloc & 1))
 		auto_even();
 
-	dep_block(evalc, siz, eval, eattr, exprbuf);
+	dep_block((uint32_t)evalc, siz, (uint32_t)eval, eattr, exprbuf);
 	return 0;
 }
 
@@ -1239,7 +1311,7 @@ int d_init(WORD def_siz)
 			break;
 		}
 
-		dep_block(count, siz, eval, eattr, exprbuf);
+		dep_block((uint32_t)count, siz, (uint32_t)eval, eattr, exprbuf);
 
 		switch ((int)*tok)
 		{
@@ -1377,7 +1449,7 @@ int d_comm(void)
 	if (abs_expr(&eval) != OK)				// Parse size of common region
 		return 0;
 
-	sym->svalue = eval;						// Install common symbol's size
+	sym->svalue = (uint32_t)eval;			// Install common symbol's size
 	at_eol();
 	return 0;
 }
@@ -1619,7 +1691,7 @@ int d_cargs(void)
 			AddToSymbolDeclarationList(symbol);
 
 			symbol->sattr |= (ABS | DEFINED | EQUATED);
-			symbol->svalue = eval;
+			symbol->svalue = (uint32_t)eval;
 			tok += 2;
 
 			// What this does is eat any dot suffixes attached to a symbol. If
@@ -1746,7 +1818,7 @@ int d_cstruct(void)
 			}
 
 			symbol->sattr |= (ABS | DEFINED | EQUATED);
-			symbol->svalue = eval;
+			symbol->svalue = (uint32_t)eval;
 
 			// Check for dot suffixes and adjust space accordingly (longs and
 			// words on an odd boundary get bumped to the next word aligned

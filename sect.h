@@ -25,6 +25,54 @@
 						sloc += 4; ch_size += 4; if(orgactive) orgaddr += 4;}
 #define D_rword(w)	{*chptr++=(uint8_t)(w); *chptr++=(uint8_t)((w)>>8); \
 						sloc+=2; ch_size+=2;if(orgactive) orgaddr += 2;}
+#define D_single(w) {chcheck(4);*chptr++ = ((char *)&w)[3]; \
+						*chptr++ = ((char *)&w)[2]; \
+						*chptr++ = ((char *)&w)[1]; \
+						*chptr++=((char *)&w)[0]; \
+						sloc+=4; ch_size += 4; if(orgactive) orgaddr += 4;}
+#define D_double(w) {chcheck(8);*chptr++=(char)((*(unsigned long long *)&w)); \
+						*chptr++=(char)((*(unsigned long long *)&w)>>8); \
+						*chptr++=(char)((*(unsigned long long *)&w)>>16); \
+						*chptr++=(char)((*(unsigned long long *)&w)>>24); \
+						*chptr++=(char)((*(unsigned long long *)&w)>>32); \
+						*chptr++=(char)((*(unsigned long long *)&w)>>40); \
+						*chptr++=(char)((*(unsigned long long *)&w)>>48); \
+						*chptr++=(char)((*(unsigned long long *)&w)>>56); \
+						sloc+=8; ch_size += 8; if(orgactive) orgaddr += 8;}
+#ifdef _MSC_VER
+#define D_extend(w) {chcheck(12); *chptr++ = (char)((*(unsigned long long *)&w) >> 56); \
+*chptr++ = (char)(((*(unsigned long long *)&w) >> (52)) & 0xf); \
+*chptr++ = (char)(0); \
+*chptr++ = (char)(0); \
+*chptr++ = (char)(((*(unsigned long long *)&w) >> (48 - 3))|0x80 /* assume that the number is normalised */); \
+*chptr++ = (char)((*(unsigned long long *)&w) >> (40 - 3)); \
+*chptr++ = (char)((*(unsigned long long *)&w) >> (32 - 3)); \
+*chptr++ = (char)((*(unsigned long long *)&w) >> (24 - 3)); \
+*chptr++ = (char)((*(unsigned long long *)&w) >> (16 - 3)); \
+*chptr++ = (char)((*(unsigned long long *)&w) >> (8 - 3)); \
+*chptr++ = (char)((*(unsigned long long *)&w << 3)); \
+*chptr++=(char)(0); \
+	sloc+=12; ch_size += 12; if(orgactive) orgaddr += 12;}
+#elif defined(LITTLE_ENDIAN)
+#define D_extend(w) {chcheck(12);*chptr++=((char *)&w)[0]; \
+						*chptr++=((char *)&w)[1]; \
+						*chptr++=((char *)&w)[2]; \
+						*chptr++=((char *)&w)[3]; \
+						*chptr++=((char *)&w)[4]; \
+						*chptr++=((char *)&w)[5]; \
+						*chptr++=((char *)&w)[6]; \
+						*chptr++=((char *)&w)[7]; \
+						*chptr++=((char *)&w)[8]; \
+						*chptr++=((char *)&w)[9]; \
+						*chptr++=((char *)&w)[10]; \
+						*chptr++=((char *)&w)[11]; \
+						sloc+=12; ch_size += 12; if(orgactive) orgaddr += 12;}
+
+#else
+
+#error Please implement a non-byte swapped D_extend!
+
+#endif
 // Fill n bytes with zeroes
 #define D_ZEROFILL(n)	{memset(chptr, 0, n); chptr+=n; sloc+=n; ch_size+=n;\
 						if (orgactive) orgaddr+=n;}
@@ -85,6 +133,12 @@
 #define FU_ISBRA     0x2000		// Word forward fixup is a BRA or DBRA
 #define FU_LBRA      0x4000		// Long branch, for short branch detect
 #define FU_DONE      0x8000		// Fixup has been done
+
+// FPU fixups
+// TODO: these are obviously bogus for now!
+#define FU_FLOATSING 0x0D0B		// Fixup 32-bit float
+#define FU_FLOATDOUB 0x0E0B		// Fixup 64-bit float
+#define FU_FLOATEXT  0x0F0B		// Fixup 96-bit float
 
 // Chunks are used to hold generated code and fixup records
 #define CHUNK  struct _chunk

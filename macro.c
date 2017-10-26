@@ -264,7 +264,7 @@ int HandleRept(void)
 		IREPT * irept = inobj->inobj.irept;
 		irept->ir_firstln = firstrpt;
 		irept->ir_nextln = NULL;
-		irept->ir_count = eval;
+		irept->ir_count = (uint32_t)eval;
 	}
 
 	return 0;
@@ -413,8 +413,11 @@ int InvokeMacro(SYM * mac, WORD siz)
 			else if (*tok == CONST)		// Constants are 64-bits
 			{
 				*p++ = *tok++;			// Token
-				*p++ = *tok++;			// Hi LONG
-				*p++ = *tok++;			// Lo LONG
+				uint64_t *p64 = (uint64_t *)p;
+				uint64_t *tok64 = (uint64_t *)tok;
+				*p64++ = *tok64++;
+				tok = (TOKEN *)tok64;
+				p = (uint32_t *)p64;
 			}
 			else if ((*tok == STRING) || (*tok == SYMBOL))
 			{

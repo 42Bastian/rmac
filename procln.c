@@ -465,12 +465,11 @@ When checking to see if it's already been equated, issue a warning.
 				{
 					// Advance token pointer to the constant
 					tok += 3;
-					tok++;		// Skip the hi LONG, so pointing at lo LONG
 
 					// Anything other than a 0 or a 1 will result in "No Bank"
-					if (*tok == 0)
+					if (*(uint64_t *)tok == 0)
 						registerbank = BANK_0;
-					else if (*tok == 1)
+					else if (*(uint64_t *)tok == 1)
 						registerbank = BANK_1;
 				}
 
@@ -577,10 +576,10 @@ When checking to see if it's already been equated, issue a warning.
 		}
 
 		sy->sattr |= eattr | EQUATED;	// Symbol inherits value and attributes
-		sy->svalue = eval;
+		sy->svalue = (uint32_t)eval;
 
 		if (list_flag)					// Put value in listing
-			listvalue(eval);
+			listvalue((uint32_t)eval);
 
 		at_eol();						// Must be at EOL now
 		goto loop;

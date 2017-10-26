@@ -477,7 +477,7 @@ int WriteObject(int fd)
 
 		if (buf == NULL)
 		{
-			error("cannot allocate object file memory (in BSD mode)");
+			error("cannot allocate object file memory (in ELF mode)");
 			return ERROR;
 		}
 
@@ -487,7 +487,7 @@ int WriteObject(int fd)
 
 		if (strtable == NULL)
 		{
-			error("cannot allocate string table memory (in BSD mode)");
+			error("cannot allocate string table memory (in ELF mode)");
 			return ERROR;
 		}
 

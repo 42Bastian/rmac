@@ -475,7 +475,7 @@ int m_lea(WORD inst, WORD siz)
 		&& ((am0 == ADISP) && (a0reg == a1reg) && (a0exattr & DEFINED))
 		&& ((a0exval > 0) && (a0exval <= 8)))
 	{
-		inst = B16(01010000, 01001000) | ((a0exval & 7) << 9) | (a0reg);
+		inst = B16(01010000, 01001000) | (((uint16_t)a0exval & 7) << 9) | (a0reg);
 		D_word(inst);
 		warn("lea size(An),An converted to addq #size,An");
 		return OK;
@@ -1227,7 +1227,7 @@ int m_br30(WORD inst, WORD siz)
 		if ((a0exattr & TDB) != cursect)
 			return error(rel_error);
 
-		uint32_t v = a0exval - (sloc + 2);
+		uint32_t v = (uint32_t)a0exval - (sloc + 2);
 		D_word(inst);
 		D_long(v);
 
@@ -1339,7 +1339,7 @@ int m_callm(WORD inst, WORD siz)
 		if (a0exval > 255)
 			return error(range_error);
 
-		inst = a0exval;
+		inst = (uint16_t)a0exval;
 		D_word(inst);
 	}
 	else
@@ -1625,7 +1625,7 @@ int m_cpbr(WORD inst, WORD siz)
 		if ((a0exattr & TDB) != cursect)
 			return error(rel_error);
 
-		uint32_t v = a0exval - (sloc + 2);
+		uint32_t v = (uint32_t)a0exval - (sloc + 2);
 
 		// Optimize branch instr. size
 		if (siz == SIZL)
@@ -1695,7 +1695,7 @@ int m_cpdbr(WORD inst, WORD siz)
         if ((a1exattr & TDB) != cursect)
             return error(rel_error);
 
-        v = a1exval - sloc;
+		v = (uint32_t)a1exval - sloc;
 
         if (v + 0x8000 > 0x10000)
             return error(range_error);
@@ -2092,7 +2092,7 @@ int m_move16b(WORD inst, WORD siz)
 		{
 			//move16 (ax)+,(xxx).L
 			inst |= 0 << 3;
-			v = a1exval;
+			v = (int)a1exval;
 		}
 	}
 	else if (am0 == ABSL)
@@ -2101,20 +2101,20 @@ int m_move16b(WORD inst, WORD siz)
 		{
 			//move16 (xxx).L,(ax)+
 			inst |= 1 << 3;
-			v = a0exval;
+			v = (int)a0exval;
 		}
 		else //APOSTINC
 		{
 			//move16 (xxx).L,(ax)
 			inst |= 3 << 3;
-			v = a0exval;
+			v = (int)a0exval;
 		}
 	}
 	else if (am0 == AIND)
 	{
 		//move16 (ax),(xxx).L
 		inst |= 2 << 3;
-		v = a1exval;
+		v = (int)a1exval;
 	}
 
 	D_word(inst);
@@ -2483,7 +2483,7 @@ int m_pflush(WORD inst, WORD siz)
                 return error("function code immediate should be defined");
             if (a0exval > 7 && a0exval < 0)
                 return error("function code out of range (0-7)");
-            fc = a0exval;
+			fc = (uint16_t)a0exval;
             break;
         case KW_D0:
         case KW_D1:
@@ -2520,7 +2520,7 @@ int m_pflush(WORD inst, WORD siz)
             return error("mask immediate value should be defined");
         if (a0exval > 7 && a0exval < 0)
             return error("function code out of range (0-7)");
-        mask = a0exval << 5;
+		mask = (uint16_t)a0exval << 5;
 
         if (*tok == EOL)
         {
@@ -2673,7 +2673,7 @@ int m_pload(WORD inst, WORD siz, WORD extension)
     case IMMED:
         if ((a0exattr & DEFINED) == 0)
             return error("constant value must be defined");
-        inst = (2 << 3) | a0exval;
+		inst = (2 << 3) | (uint16_t)a0exval;
         break;
     }
 
@@ -2801,7 +2801,6 @@ int m_pmovefd(WORD inst, WORD siz)
 
 	return m_pmove(inst | (1 << 8), siz);
 }
-
 
 //
 // ptrapcc (68851)
@@ -3103,7 +3102,7 @@ int m_fdbcc(WORD inst, WORD siz)
 		if ((a1exattr & TDB) != cursect)
 			return error(rel_error);
 
-		uint32_t v = a1exval - sloc;
+		uint32_t v = (uint32_t)a1exval - sloc;
 
 		if ((v + 0x8000) > 0x10000)
 			return error(range_error);

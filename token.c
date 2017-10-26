@@ -568,8 +568,8 @@ DEBUG { printf("ExM: SYMBOL=\"%s\"", d); }
 //         to choke on legitimate code... Need to investigate this further
 //         before changing anything else here!
 							case CONST:
-								tk++;	// Skip the hi LONG...
 								sprintf(numbuf, "$%lx", (uint64_t)*tk++);
+								tk++;
 								d = numbuf;
 								break;
 							case DEQUALS:
@@ -951,10 +951,13 @@ int TokenizeLine(void)
 	int j = 0;					// Var for keyword detector
 	uint8_t c;					// Random char
 	uint64_t v;					// Random value
+	uint32_t cursize = 0;		// Current line's size (.b, .w, .l, .s, .q, .d)
+	double f;					// Random float
 	uint8_t * nullspot = NULL;	// Spot to clobber for SYMBOL termination
 	int stuffnull;				// 1:terminate SYMBOL '\0' at *nullspot
 	uint8_t c1;
 	int stringNum = 0;			// Pointer to string locations in tokenized line
+	uint64_t * tk64;
 
 retry:
 
@@ -1135,6 +1138,7 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 					return error("[bwsl] must follow '.' in symbol");
 
 				v = (uint32_t)dotxtab[*ln++];
+				cursize = (uint32_t)v;
 
 				if (chrtab[*ln] & CTSYM)
 					return error("misuse of '.'; not allowed in symbols");
@@ -1316,6 +1320,19 @@ dostring:
 			case '$':		// $, hex constant
 				if (chrtab[*ln] & HDIGIT)
 				{
+					if (cursize == 'q' || cursize == 'Q')
+					{
+						// Parse 64-bit integer
+						uint64_t v64 = 0;
+
+						while (hextab[*ln] >= 0)
+							v64 = (v64 << 4) + (int)hextab[*ln++];
+
+						*(uint64_t *)tk = v64;
+						tk = tk + 2;
+
+						continue;
+					}
 					v = 0;
 
 					// Parse the hex value
@@ -1345,8 +1362,9 @@ dostring:
 					}
 
 					*tk++ = CONST;
-					*tk++ = v >> 32;		// High LONG of 64-bit value
-					*tk++ = v & 0xFFFFFFFF;	// Low LONG of 64-bit value
+					tk64 = (uint64_t *)tk;
+					*tk64++ = v;
+					tk = (TOKEN *)tk64;
 
 					if (obj_format == ALCYON)
 					{
@@ -1457,8 +1475,9 @@ dostring:
 				}
 
 				*tk++ = CONST;
-				*tk++ = v >> 32;		// High LONG of 64-bit value
-				*tk++ = v & 0xFFFFFFFF;	// Low LONG of 64-bit value
+				tk64 = (uint64_t *)tk;
+				*tk64++ = v;
+				tk = (TOKEN *)tk64;
 				continue;
 			case '@':		// @ or octal constant
 				if (*ln < '0' || *ln > '7')
@@ -1494,8 +1513,9 @@ dostring:
 				}
 
 				*tk++ = CONST;
-				*tk++ = v >> 32;		// High LONG of 64-bit value
-				*tk++ = v & 0xFFFFFFFF;	// Low LONG of 64-bit value
+				tk64 = (uint64_t *)tk;
+				*tk64++ = v;
+				tk = (TOKEN *)tk64;
 				continue;
 			case '^':		// ^ or ^^ <operator-name>
 				if (*ln != '^')
@@ -1570,8 +1590,9 @@ dostring:
 					v &= 0x000000FF;
 					ln += 2;
 					*tk++ = CONST;
-					*tk++ = 0;			// Hi LONG of 64-bits
-					*tk++ = v;
+					tk64 = (uint64_t *)tk;
+					*tk64++ = v;
+					tk = (uint32_t *)tk64;
 					*tk++ = DOTB;
 				}
 				else if ((*(ln + 1) == 'w') || (*(ln + 1) == 'W'))
@@ -1579,8 +1600,10 @@ dostring:
 					v &= 0x0000FFFF;
 					ln += 2;
 					*tk++ = CONST;
-					*tk++ = 0;			// Hi LONG of 64-bits
-					*tk++ = v;
+					tk64 = (uint64_t *)tk;
+					*tk64++ = v;
+					tk = (uint32_t *)tk64;
+
 					*tk++ = DOTW;
 				}
 				else if ((*(ln + 1) == 'l') || (*(ln + 1) == 'L'))
@@ -1588,16 +1611,38 @@ dostring:
 					v &= 0xFFFFFFFF;
 					ln += 2;
 					*tk++ = CONST;
-					*tk++ = 0;			// Hi LONG of 64-bits
-					*tk++ = v;
+					tk64 = (uint64_t *)tk;
+					*tk64++ = v;
+					tk = (uint32_t *)tk64;
+
 					*tk++ = DOTL;
+				}
+				else if ((int)chrtab[*(ln + 1)] & DIGIT)
+				{
+					// Hey, more digits after the dot, so assume it's a
+					// fractional number
+					double fract = 10;
+					ln++;
+					f = (double)v;
+
+					while ((int)chrtab[*ln] & DIGIT)
+					{
+						f = f + (double)(*ln++ - '0') / fract;
+						fract *= 10;
+					}
+
+					*tk++ = FCONST;
+					*((double *)tk) = f;
+					tk += 2;
+					continue;
 				}
 			}
 			else
 			{
 				*tk++ = CONST;
-				*tk++ = v >> 32;		// High LONG of 64-bit value
-				*tk++ = v & 0xFFFFFFFF;	// Low LONG of 64-bit value
+				tk64 = (uint64_t *)tk;
+				*tk64++ = v;
+				tk = (TOKEN *)tk64;
 			}
 
 //printf("CONST: %i\n", v);

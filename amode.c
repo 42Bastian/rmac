@@ -32,7 +32,7 @@ WORD a0exattr;				// Expression's attribute
 int a0ixreg;				// Index register
 int a0ixsiz;				// Index register size (and scale)
 TOKEN a0oexpr[EXPRSIZE];	// Outer displacement expression
-uint32_t a0oexval;			// Outer displacement value
+uint64_t a0oexval;			// Outer displacement value
 WORD a0oexattr;				// Outer displacement attribute
 SYM * a0esym;				// External symbol involved in expr
 TOKEN a0bexpr[EXPRSIZE];	// Base displacement expression
@@ -50,7 +50,7 @@ WORD a1exattr;				// Expression's attribute
 int a1ixreg;				// Index register
 int a1ixsiz;				// Index register size (and scale)
 TOKEN a1oexpr[EXPRSIZE];	// Outer displacement expression
-uint32_t a1oexval;			// Outer displacement value
+uint64_t a1oexval;			// Outer displacement value
 WORD a1oexattr;				// Outer displacement attribute
 SYM * a1esym;				// External symbol involved in expr
 TOKEN a1bexpr[EXPRSIZE];	// Base displacement expression
@@ -88,7 +88,8 @@ int amode(int acount)
 	a0exattr = a0oexattr = a1exattr = a1oexattr = 0;
 	a0esym = a1esym = NULL;
 	a0bexpr[0] = a1bexpr[0] = ENDEXPR;
-	a0bexval = a0bsize = a0extension = a1bexval = a1bsize = a1extension = 0;
+	a0bexval = a1bexval = 0;
+	a0bsize = a0extension = a1bsize = a1extension = 0;
 	am0_030 = am1_030 = 0;
 	bfparam1 = bfparam2 = 0;
 	bf0expr[0] = ENDEXPR;
@@ -388,12 +389,12 @@ int check030bf(void)
 
 	if (*tok == CONST)
 	{
-		tok++;	// Skip the HI LONG
 		tok++;
-		bfval1 = *(int *)tok;
+		bfval1 = (int)*(uint64_t *)tok;
 
 		// Do=0, offset=immediate - shift it to place
 		bfparam1 = (0 << 11);
+		tok++;
 		tok++;
 	}
 	else if (*tok == SYMBOL)
@@ -404,7 +405,7 @@ int check030bf(void)
 		if (!(bf0exattr & DEFINED))
 			return error("bfxxx offset: immediate value must evaluate");
 
-		bfval1 = bf0exval;
+		bfval1 = (int)bf0exval;
 
 		// Do=0, offset=immediate - shift it to place
 		bfparam1 = (0 << 11);
@@ -431,20 +432,20 @@ int check030bf(void)
 
 	if (*tok == CONST)
 	{
-		tok++;	// Skip the HI LONG
 		tok++;
-		bfval2 = *(int *)tok;
+		bfval2 = (int)*(uint64_t *)tok;
 
 		// Do=0, offset=immediate - shift it to place
 		bfparam2 = (0 << 5);
 		tok++;
+        tok++;
 	}
 	else if (*tok == SYMBOL)
 	{
 		if (expr(bf0expr, &bf0exval, &bf0exattr, &bf0esym) != OK)
 			return ERROR;
 
-		bfval2 = bf0exval;
+		bfval2 = (int)bf0exval;
 
 		if (!(bf0exattr & DEFINED))
 			return error("bfxxx width: immediate value must evaluate");

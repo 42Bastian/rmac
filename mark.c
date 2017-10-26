@@ -483,6 +483,7 @@ uint32_t CreateELFRelocationRecord(uint8_t * buf, uint8_t * secBuf, uint16_t sec
 
 	// Setup pointer for D_long/word/byte macros
 	chptr = buf;
+	ch_size = 0;
 
 	for(MCHUNK * mch=firstmch; mch!=NULL; mch=mch->mcnext)
 	{

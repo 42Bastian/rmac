@@ -194,7 +194,7 @@ int GetRegister(WORD rattr)
 
 	// If we got a register in range (0-31), return it
 	if ((eval >= 0) && (eval <= 31))
-		return eval;
+		return (int)eval;
 
 	// Otherwise, it's out of range & we flag an error
 	return error(reg_err);
@@ -321,11 +321,11 @@ int GenerateRISCCode(int state)
 				return error("constant out of range");
 
 			if (parm & SUB32)
-				reg1 = 32 - eval;
+				reg1 = 32 - (int)eval;
 			else if (type == RI_NUM_32)
-				reg1 = (reg1 == 32 ? 0 : eval);
+				reg1 = (reg1 == 32 ? 0 : (int)eval);
 			else
-				reg1 = eval;
+				reg1 = (int)eval;
 		}
 
 		CHECK_COMMA;
@@ -503,7 +503,7 @@ int GenerateRISCCode(int state)
 					if (!(eattr & DEFINED))
 						return error("constant expected after '+'");
 
-					reg1 = eval;
+					reg1 = (int)eval;
 
 					if (reg1 == 0)
 					{
@@ -626,7 +626,7 @@ int GenerateRISCCode(int state)
 					}
 					else
 					{
-						reg2 = eval;
+						reg2 = (int)eval;
 
 						if (reg2 == 0)
 						{
@@ -722,9 +722,9 @@ int GenerateRISCCode(int state)
 			{
 				// CC using a constant number
 				tok++;
-				tok++;		// Toss hi LONG, as most likely not 64-bit number
-				val = *tok;	// Use lo LONG
-				tok++;
+				uint64_t *tok64 = (uint64_t *)tok;
+				val = (int)*tok64++;
+				tok = (uint32_t *)tok64;
 				CHECK_COMMA;
 			}
 			else if (*tok == SYMBOL)

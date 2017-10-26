@@ -186,6 +186,7 @@
 				// It might be (Dn[.wl][*scale],od)
 				// Maybe this is wrong and we have to write some code here
 				// instead of reusing that path...
+				AnEXTEN |= EXT_BDSIZE0;     // Base displacement null - suppressed
 				goto CHECKODn;
 			}
 			else
@@ -279,7 +280,11 @@
 
 			if (*tok == ',')
 			{
+				// If we got here we didn't get any [] stuff
+				// so let's suppress base displacement before
+				// branching off
 				tok++;
+				AnEXTEN |= EXT_BDSIZE0;     // Base displacement null - suppressed
 				goto CHECKODn;
 			}
 			if (*tok++ != ')')         // final ")"
@@ -365,6 +370,7 @@
 				tok++;
 
 				// Check for size
+				{
 				// ([bd,An/PC],Xn.W/L...)
 				switch ((int)*tok)
 				{
@@ -381,6 +387,7 @@
 				case DOTB:
 					// .B not allowed here...
 					goto badmode;
+				}
 				}
 
 				// Check for scale
@@ -616,7 +623,9 @@
 
 					// Is .W forced here?
 					if (*tok == DOTW)
+					{
 						tok++;
+					}
 				}
 
 				// Check for final closing parenthesis
@@ -717,6 +726,7 @@ IS_SUPPRESSEDn:
 				}
 
 				// Check for size
+				{
 				// ([bd,An/PC],Xn.W/L...)
 				switch ((int)*tok)
 				{
@@ -733,6 +743,7 @@ IS_SUPPRESSEDn:
 				case DOTB:
 					// .B not allowed here...
 					goto badmode;
+				}
 				}
 
 				// Check for scale

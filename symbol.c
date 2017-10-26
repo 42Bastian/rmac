@@ -260,22 +260,6 @@ uint32_t sy_assign(uint8_t * buf, uint8_t *(* construct)())
 		}
 	}
 
-	// For ELF object mode run through all symbols in reference order
-	// and export all global-referenced labels. Not sure if this is
-	// required but it's here nonetheless
-/* why?? when you have sy_assign_ELF ???
-	if (obj_format == ELF)
-	{
-		for(sy=sdecl; sy!=NULL; sy=sy->sorder)
-		{
-			if ((sy->sattr == (GLOBAL | REFERENCED)) && (buf != NULL))
-			{
-				buf = (*construct)(buf, sy, 0);
-				scount++;
-			}
-		}
-	}*/
-
 	return scount;
 }
 
@@ -305,27 +289,12 @@ uint32_t sy_assign_ELF(uint8_t * buf, uint8_t *(* construct)())
 	// them. We also pick which symbols should be global or not here.
 	for(SYM * sy=sdecl; sy!=NULL; sy=sy->sdecl)
 	{
-		// Export or import external references, and export COMMON blocks.
-		//if ((sy->stype == LABEL)
-		//	&& ((sy->sattr & (GLOBAL | DEFINED)) == (GLOBAL | DEFINED)
-		//	|| (sy->sattr & (GLOBAL | REFERENCED)) == (GLOBAL | REFERENCED))
-		//	|| (sy->sattr & COMMON))
-		//{
-		//	sy->senv = (WORD)scount++;
-        //
-		//	if (buf != NULL)
-		//		buf = (*construct)(buf, sy, 1);
-		//}
 		// Export vanilla labels (but don't make them global). An exception is
 		// made for equates, which are not exported unless they are referenced.
 		if (sy->stype == LABEL && lsym_flag
 			&& (sy->sattr & (DEFINED | REFERENCED)) != 0
 			&& (*sy->sname != '.')
 			&& (sy->sattr & GLOBAL) == 0)
-		//if (sy->stype == 0)
-		//	if (lsym_flag)
-		//		if ((sy->sattr & (DEFINED | REFERENCED)) != 0)
-		//			if ((!as68_flag || *sy->sname != 'L'))
 		{
 			sy->senv = scount++;
 

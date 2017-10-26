@@ -142,7 +142,7 @@ extern WORD a0exattr, a1exattr;
 extern int a0ixreg, a1ixreg;
 extern int a0ixsiz, a1ixsiz;
 extern TOKEN a0oexpr[], a1oexpr[];
-extern uint32_t a0oexval, a1oexval;
+extern uint64_t a0oexval, a1oexval;
 extern WORD a0oexattr, a1oexattr;
 extern SYM * a0esym, * a1esym;
 extern uint64_t a0bexval, a1bexval;

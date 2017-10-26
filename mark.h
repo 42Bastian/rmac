@@ -27,6 +27,9 @@ MCHUNK {
 #define MWORD        0x0000		// Marked word
 #define MLONG        0x0100		// Marked long
 #define MMOVEI       0x0200		// Mark RISC MOVEI instruction
+#define MDOUBLE      0x0400		// Marked double float
+#define MEXTEND      0x0800		// Marked extended float
+#define MSINGLE      0x0880		// Marked single float (TODO: merge with MLONG?)
 #define MGLOBAL      0x0800		// Mark contains global
 #define MPCREL       0x1000		// Mark is PC-relative
 #define MCHEND       0x2000		// Indicates end of mark chunk

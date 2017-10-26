@@ -9,10 +9,10 @@
 
 int eaNgen(WORD siz)
 {
-	uint32_t vbd, v = aNexval;
+	uint32_t vbd, v = (uint32_t)aNexval;
 	WORD wbd, w = (WORD)(aNexattr & DEFINED);
 	WORD tdbbd, tdb = (WORD)(aNexattr & TDB);
-	vbd = aNbdexval;
+	vbd = (uint32_t)aNbdexval;
 	wbd = (WORD)(aNbdexattr & DEFINED);
 	tdbbd = (WORD)(aNbdexattr & TDB);
 
@@ -206,6 +206,80 @@ int eaNgen(WORD siz)
 			{
 				AddFixup(FU_LONG, sloc, aNexpr);
 				D_long(0);
+			}
+
+			break;
+		case SIZS:
+			// 68881/68882/68040 only
+			if (w)
+			{
+				float vv;
+				if (tdb)
+					MarkRelocatable(cursect, sloc, tdb, MSINGLE, NULL);
+
+				vv = (float)v;
+
+				D_single(vv);
+			}
+			else
+			{
+				float vv = 0;
+				AddFixup(FU_FLOATSING, sloc, aNexpr);
+
+				D_single(vv);
+			}
+
+    		break;
+		case SIZD:
+			// 68881/68882/68040 only
+			if (w)
+			{
+				double vv;
+				unsigned long long vvv;
+				if (tdb)
+					MarkRelocatable(cursect, sloc, tdb, MDOUBLE, NULL);
+
+				// We want to store the IEE754 float into ram from a generic
+				// 32-bit int. First, convert it to double float, then cast
+				// that to 64-bit, then convert to big endian (if needed)
+				// and then store it (phew!)
+				vv = *(float *)&aNexval;
+				vvv = BYTESWAP64(*(unsigned long long *)&vv);
+
+				D_double(vvv);
+			}
+			else
+			{
+				unsigned long long vvv = 0;
+				AddFixup(FU_FLOATDOUB, sloc, aNexpr);
+
+				D_double(vvv);
+			}
+
+			break;
+		case SIZX:
+			// 68881/68882/68040 only
+			if (w)
+			{
+				long double vv;
+				if (tdb)
+					MarkRelocatable(cursect, sloc, tdb, MEXTEND, NULL);
+
+				// We want to store the IEE754 float into ram from a generic
+				// 32-bit int. First, convert it to double float, then cast
+				// that to 96-bit, then convert to big endian (if needed)
+				// and then store it (phew!)
+				vv = (double)aNexval;
+
+				//*chptr++ = (char)((*(unsigned long long *)&vv) >> 32) | 0x80 /* assume that the number is normalised */;
+				D_extend(vv);
+			}
+			else
+			{
+				long double vvv = 0;
+				AddFixup(FU_FLOATDOUB, sloc, aNexpr);
+
+				D_extend(vvv);
 			}
 
 			break;

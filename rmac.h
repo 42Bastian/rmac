@@ -135,6 +135,7 @@
 // Byteswap crap
 #define BYTESWAP16(x) ((((x) & 0x00FF) << 8) | (((x) & 0xFF00) >> 8))
 #define BYTESWAP32(x) ((((x) & 0x000000FF) << 24) | (((x) & 0x0000FF00) << 8) | (((x) & 0x00FF0000) >> 8) | (((x) & 0xFF000000) >> 24))
+#define BYTESWAP64(x) (BYTESWAP32(x>>32)|BYTESWAP32((x&0xffffffff)<<32))
 #define WORDSWAP32(x) ((((x) & 0x0000FFFF) << 16) | (((x) & 0xFFFF0000) >> 16))
 
 //
@@ -163,11 +164,16 @@
 #define CREATMASK    0
 
 // Object code formats
-#define ALCYON       0			// Alcyon/DRI C object format
-#define MWC          1			// Mark Williams object format
-#define BSD          2			// BSD object format
-#define ELF          3			// ELF object format
-#define XEX          4			// COM/EXE/XEX/whatever a8 object format
+enum
+{
+ALCYON,			// Alcyon/DRI C object format
+MWC, 				// Mark Williams object format
+BSD, 				// BSD object format
+ELF, 				// ELF object format
+LOD,				// DSP 56001 object format
+P56,				// DSP 56001 object format
+XEX, 				// COM/EXE/XEX/whatever a8 object format
+};
 
 // Pointer type that can point to (almost) anything
 #define PTR union _ptr
@@ -194,6 +200,7 @@ PTR
 #define REFERENCED   0x1000		// Symbol has been referenced
 #define EQUATED      0x0800		// Symbol was equated
 #define SDECLLIST    0x0400		// Symbol is on 'sdecl'-order list
+#define FLOAT        0x0200		// Symbol is a floating point value
 
 // Expression spaces, ORed with symbol and expression attributes above
 #define ABS          0x0000		// In absolute space
@@ -212,7 +219,7 @@ PTR
 #define SIZS         0x0020		// .s (FPU single precision real)
 #define SIZX         0x0040		// .x (FPU extended precision real)
 #define SIZP         0x0080		// .p (FPU pakced decimal real)
-#define SIZQ         SIZD
+#define SIZQ         0x0100		// .q
 
 // RISC register bank definitions (used in extended symbol attributes also)
 #define BANK_N       0x0000		// No register bank specified
