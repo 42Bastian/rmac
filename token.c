@@ -32,10 +32,10 @@ char irbuf[LNSIZ];			// Text for .rept block line
 char lnbuf[LNSIZ];			// Text of current line
 WORD filecount;				// Unique file number counter
 WORD cfileno;				// Current file number
-TOKEN * tok;				// Ptr to current token
+TOKENPTR tok;				// Ptr to current token
 TOKEN * etok;				// Ptr past last token in tokbuf[]
 TOKEN tokeol[1] = {EOL};	// Bailout end-of-line token
-char * string[TOKBUFSIZE*2];	// Token buffer string pointer storage
+char * string[TOKBUFSIZE*2];// Token buffer string pointer storage
 int optimizeOff;			// Optimization override flag
 
 // File record, used to maintain a list of every include file ever visited
@@ -206,13 +206,13 @@ void InitTokenizer(void)
 	dotxtab['W'] = DOTW;
 	dotxtab['l'] = DOTL;					// .l .L
 	dotxtab['L'] = DOTL;
-	dotxtab['i'] = DOTI;					// .i .I (???)
+	dotxtab['i'] = DOTI;					// .i .I (WTF is this???)
 	dotxtab['I'] = DOTI;
-	dotxtab['D'] = DOTD;					// .d .D (quad word)
+	dotxtab['D'] = DOTD;					// .d .D (double)
 	dotxtab['d'] = DOTD;
 	dotxtab['S'] = DOTS;					// .s .S
 	dotxtab['s'] = DOTS;
-	dotxtab['Q'] = DOTQ;					// .q .Q
+	dotxtab['Q'] = DOTQ;					// .q .Q (quad word)
 	dotxtab['q'] = DOTQ;
 	dotxtab['X'] = DOTX;					// .x .x
 	dotxtab['x'] = DOTX;
@@ -305,7 +305,7 @@ INOBJ * a_inobj(int typ)
 	// Install INOBJ on top of input stack
 	inobj->in_ifent = ifent;				// Record .if context on entry
 	inobj->in_type = (WORD)typ;
-	inobj->in_otok = tok;
+	inobj->in_otok = tok.u32;
 	inobj->in_etok = etok;
 	inobj->in_link = cur_inobj;
 	cur_inobj = inobj;
@@ -390,7 +390,7 @@ int ExpandMacro(char * src, char * dest, int destsiz)
 				*dst++ = *s++;
 				continue;
 			case '?':						// \? <macro>  set `questmark' flag
-				++s;
+				s++;
 				questmark = 1;
 				break;
 			case '#':						// \#, number of arguments
@@ -791,7 +791,7 @@ int fpop(void)
 	if (numUnmatched > 0)
 		warn("missing %d .endif(s)", numUnmatched);
 
-	tok = inobj->in_otok;	// Restore tok and otok
+	tok.u32 = inobj->in_otok;	// Restore tok and otok
 	etok = inobj->in_etok;
 
 	switch (inobj->in_type)
@@ -946,7 +946,7 @@ int TokenizeLine(void)
 {
 	uint8_t * ln = NULL;		// Ptr to current position in line
 	uint8_t * p;				// Random character ptr
-	TOKEN * tk;					// Token-deposit ptr
+	TOKENPTR tk;				// Token-deposit ptr
 	int state = 0;				// State for keyword detector
 	int j = 0;					// Var for keyword detector
 	uint8_t c;					// Random char
@@ -957,11 +957,10 @@ int TokenizeLine(void)
 	int stuffnull;				// 1:terminate SYMBOL '\0' at *nullspot
 	uint8_t c1;
 	int stringNum = 0;			// Pointer to string locations in tokenized line
-	uint64_t * tk64;
 
 retry:
 
-	if (cur_inobj == NULL)					// Return EOF if input stack is empty
+	if (cur_inobj == NULL)			// Return EOF if input stack is empty
 		return TKEOF;
 
 	// Get another line of input from the current input source: a file, a
@@ -1048,8 +1047,8 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 		strcpy(lnbuf, ln);
 
 	// General housekeeping
-	tok = tokeol;			// Set "tok" to EOL in case of error
-	tk = etok;				// Reset token ptr
+	tok.u32 = tokeol;		// Set "tok" to EOL in case of error
+	tk.u32 = etok;			// Reset token ptr
 	stuffnull = 0;			// Don't stuff nulls
 	totlines++;				// Bump total #lines assembled
 
@@ -1112,7 +1111,7 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 					// token stream:
 					ln++;
 					stuffnull = 0;
-					*tk++ = (TOKEN)dotxtab[*ln++];
+					*tk.u32++ = (TOKEN)dotxtab[*ln++];
 					continue;
 				}
 			}
@@ -1130,7 +1129,7 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 				*ln++ = EOS;		// Terminate symbol
 				stuffnull = 0;		// And never try it again
 
-				// Character following the `.' must have a DOT attribute, and
+				// Character following the '.' must have a DOT attribute, and
 				// the chararacter after THAT one must not have a start-symbol
 				// attribute (to prevent symbols that look like, for example,
 				// "zingo.barf", which might be a good idea anyway....)
@@ -1195,7 +1194,7 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 			// If not tokenized keyword OR token was not found
 			if ((j < 0) || (state < 0))
 			{
-				*tk++ = SYMBOL;
+				*tk.u32++ = SYMBOL;
 //#warning
 //problem here: nullspot is a char * but TOKEN is a uint32_t. On a 64-bit
 //system, this will cause all kinds of mischief.
@@ -1203,18 +1202,18 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 				*tk++ = (TOKEN)nullspot;
 #else
 				string[stringNum] = nullspot;
-				*tk++ = stringNum;
+				*tk.u32++ = stringNum;
 				stringNum++;
 #endif
 			}
 			else
 			{
-				*tk++ = (TOKEN)j;
+				*tk.u32++ = (TOKEN)j;
 				stuffnull = 0;
 			}
 
 			if (v)							// Record attribute token (if any)
-				*tk++ = (TOKEN)v;
+				*tk.u32++ = (TOKEN)v;
 
 			if (stuffnull)					// Arrange for string termination on next pass
 				nullspot = ln;
@@ -1225,7 +1224,7 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 		// Handle identity tokens
 		if (c & SELF)
 		{
-			*tk++ = *ln++;
+			*tk.u32++ = *ln++;
 			continue;
 		}
 
@@ -1237,27 +1236,27 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 			case '!':		// ! or !=
 				if (*ln == '=')
 				{
-					*tk++ = NE;
-					++ln;
+					*tk.u32++ = NE;
+					ln++;
 				}
 				else
-					*tk++ = '!';
+					*tk.u32++ = '!';
 
 				continue;
 			case '\'':		// 'string'
 				if (m6502)
 				{
 					// Hardcoded for now, maybe this will change in the future
-					*tk++ = STRINGA8;
+					*tk.u32++ = STRINGA8;
 					goto dostring;
 				}
 				// Fall through
 			case '\"':		// "string"
-				*tk++ = STRING;
+				*tk.u32++ = STRING;
 dostring:
 				c1 = ln[-1];
 				string[stringNum] = ln;
-				*tk++ = stringNum;
+				*tk.u32++ = stringNum;
 				stringNum++;
 
 				for(p=ln; *ln!=EOS && *ln!=c1;)
@@ -1320,19 +1319,6 @@ dostring:
 			case '$':		// $, hex constant
 				if (chrtab[*ln] & HDIGIT)
 				{
-					if (cursize == 'q' || cursize == 'Q')
-					{
-						// Parse 64-bit integer
-						uint64_t v64 = 0;
-
-						while (hextab[*ln] >= 0)
-							v64 = (v64 << 4) + (int)hextab[*ln++];
-
-						*(uint64_t *)tk = v64;
-						tk = tk + 2;
-
-						continue;
-					}
 					v = 0;
 
 					// Parse the hex value
@@ -1361,10 +1347,8 @@ dostring:
 						}
 					}
 
-					*tk++ = CONST;
-					tk64 = (uint64_t *)tk;
-					*tk64++ = v;
-					tk = (TOKEN *)tk64;
+					*tk.u32++ = CONST;
+					*tk.u64++ = v;
 
 					if (obj_format == ALCYON)
 					{
@@ -1372,79 +1356,79 @@ dostring:
 						{
 							if ((*(ln + 1) == 'w') || (*(ln + 1) == 'W'))
 							{
-								*tk++ = DOTW;
+								*tk.u32++ = DOTW;
 								ln += 2;
 							}
 							else if ((*(ln + 1) == 'l') || (*(ln + 1) == 'L'))
 							{
-								*tk++ = DOTL;
+								*tk.u32++ = DOTL;
 								ln += 2;
 							}
 						}
 					}
 				}
 				else
-					*tk++ = '$';
+					*tk.u32++ = '$';
 
 				continue;
 			case '<':		// < or << or <> or <=
 				switch (*ln)
 				{
 				case '<':
-					*tk++ = SHL;
-					++ln;
+					*tk.u32++ = SHL;
+					ln++;
 					continue;
 				case '>':
-					*tk++ = NE;
-					++ln;
+					*tk.u32++ = NE;
+					ln++;
 					continue;
 				case '=':
-					*tk++ = LE;
-					++ln;
+					*tk.u32++ = LE;
+					ln++;
 					continue;
 				default:
-					*tk++ = '<';
+					*tk.u32++ = '<';
 					continue;
 				}
 			case ':':		// : or ::
 				if (*ln == ':')
 				{
-					*tk++ = DCOLON;
-					++ln;
+					*tk.u32++ = DCOLON;
+					ln++;
 				}
 				else
-					*tk++ = ':';
+					*tk.u32++ = ':';
 
 				continue;
 			case '=':		// = or ==
 				if (*ln == '=')
 				{
-					*tk++ = DEQUALS;
-					++ln;
+					*tk.u32++ = DEQUALS;
+					ln++;
 				}
 				else
-					*tk++ = '=';
+					*tk.u32++ = '=';
 
 				continue;
 			case '>':		// > or >> or >=
 				switch (*ln)
 				{
 				case '>':
-					*tk++ = SHR;
+					*tk.u32++ = SHR;
 					ln++;
 					continue;
 				case '=':
-					*tk++ = GE;
+					*tk.u32++ = GE;
 					ln++;
 					continue;
 				default:
-					*tk++ = '>';
+					*tk.u32++ = '>';
 					continue;
 				}
 			case '%':		// % or binary constant
 				if (*ln < '0' || *ln > '1')
 				{
-					*tk++ = '%';
+					*tk.u32++ = '%';
 					continue;
 				}
 
@@ -1474,15 +1458,13 @@ dostring:
 					}
 				}
 
-				*tk++ = CONST;
-				tk64 = (uint64_t *)tk;
-				*tk64++ = v;
-				tk = (TOKEN *)tk64;
+				*tk.u32++ = CONST;
+				*tk.u64++ = v;
 				continue;
 			case '@':		// @ or octal constant
 				if (*ln < '0' || *ln > '7')
 				{
-					*tk++ = '@';
+					*tk.u32++ = '@';
 					continue;
 				}
 
@@ -1493,34 +1475,32 @@ dostring:
 
 				if (*ln == '.')
 				{
-					if ((*(ln+1) == 'b') || (*(ln+1) == 'B'))
+					if ((*(ln + 1) == 'b') || (*(ln + 1) == 'B'))
 					{
 						v &= 0x000000FF;
 						ln += 2;
 					}
 
-					if ((*(ln+1) == 'w') || (*(ln+1) == 'W'))
+					if ((*(ln + 1) == 'w') || (*(ln + 1) == 'W'))
 					{
 						v &= 0x0000FFFF;
 						ln += 2;
 					}
 
-					if ((*(ln+1) == 'l') || (*(ln+1) == 'L'))
+					if ((*(ln + 1) == 'l') || (*(ln + 1) == 'L'))
 					{
 						v &= 0xFFFFFFFF;
 						ln += 2;
 					}
 				}
 
-				*tk++ = CONST;
-				tk64 = (uint64_t *)tk;
-				*tk64++ = v;
-				tk = (TOKEN *)tk64;
+				*tk.u32++ = CONST;
+				*tk.u64++ = v;
 				continue;
 			case '^':		// ^ or ^^ <operator-name>
 				if (*ln != '^')
 				{
-					*tk++ = '^';
+					*tk.u32++ = '^';
 					continue;
 				}
 
@@ -1566,7 +1546,7 @@ dostring:
 					continue;
 				}
 
-				*tk++ = (TOKEN)j;
+				*tk.u32++ = (TOKEN)j;
 				continue;
 			default:
 				interror(2);	// Bad MULTX entry in chrtab
@@ -1577,6 +1557,7 @@ dostring:
 		// Handle decimal constant
 		if (c & DIGIT)
 		{
+			uint8_t * numStart = ln;
 			v = 0;
 
 			while ((int)chrtab[*ln] & DIGIT)
@@ -1589,38 +1570,31 @@ dostring:
 				{
 					v &= 0x000000FF;
 					ln += 2;
-					*tk++ = CONST;
-					tk64 = (uint64_t *)tk;
-					*tk64++ = v;
-					tk = (uint32_t *)tk64;
-					*tk++ = DOTB;
+					*tk.u32++ = CONST;
+					*tk.u64++ = v;
+					*tk.u32++ = DOTB;
 				}
 				else if ((*(ln + 1) == 'w') || (*(ln + 1) == 'W'))
 				{
 					v &= 0x0000FFFF;
 					ln += 2;
-					*tk++ = CONST;
-					tk64 = (uint64_t *)tk;
-					*tk64++ = v;
-					tk = (uint32_t *)tk64;
-
-					*tk++ = DOTW;
+					*tk.u32++ = CONST;
+					*tk.u64++ = v;
+					*tk.u32++ = DOTW;
 				}
 				else if ((*(ln + 1) == 'l') || (*(ln + 1) == 'L'))
 				{
 					v &= 0xFFFFFFFF;
 					ln += 2;
-					*tk++ = CONST;
-					tk64 = (uint64_t *)tk;
-					*tk64++ = v;
-					tk = (uint32_t *)tk64;
-
-					*tk++ = DOTL;
+					*tk.u32++ = CONST;
+					*tk.u64++ = v;
+					*tk.u32++ = DOTL;
 				}
 				else if ((int)chrtab[*(ln + 1)] & DIGIT)
 				{
-					// Hey, more digits after the dot, so assume it's a
-					// fractional number
+					// Hey, more digits after the dot, so we assume it's a
+					// floating point number of some kind
+#if 0
 					double fract = 10;
 					ln++;
 					f = (double)v;
@@ -1630,19 +1604,28 @@ dostring:
 						f = f + (double)(*ln++ - '0') / fract;
 						fract *= 10;
 					}
+#else
+					// Here we parse the whole floating point number
+#include <errno.h>
+					char * numEnd;
+					errno = 0;
+					double f = strtod(numStart, &numEnd);
+					ln = (uint8_t *)numEnd;
 
-					*tk++ = FCONST;
-					*((double *)tk) = f;
-					tk += 2;
+					if (errno != 0)
+						return error("floating point parse error");
+#endif
+
+					*tk.u32++ = FCONST;
+// Shamus: Well, this is all kinds of icky--not the least of which is that unlike uintNN_t types, we have no guarantees of any kind when it comes to the size of floating point numbers in C (as far as I know of). If there is, we need to use those kinds here, or else figure out at runtime what sizes we're dealing with and act accordingly. To be fair, this is OK as long as the double type is less than 64 bits wide, but again, there's no guarantee that it isn't. :-/
+					*tk.u64++ = f;
 					continue;
 				}
 			}
 			else
 			{
-				*tk++ = CONST;
-				tk64 = (uint64_t *)tk;
-				*tk64++ = v;
-				tk = (TOKEN *)tk64;
+				*tk.u32++ = CONST;
+				*tk.u64++ = v;
 			}
 
 //printf("CONST: %i\n", v);
@@ -1656,12 +1639,12 @@ dostring:
 	// Terminate line of tokens and return "success."
 
 goteol:
-	tok = etok;								// Set tok to beginning of line
+	tok.u32 = etok;							// Set tok to beginning of line
 
 	if (stuffnull)							// Terminate last SYMBOL
 		*nullspot = EOS;
 
-	*tk++ = EOL;
+	*tk.u32++ = EOL;
 
 	return OK;
 }
@@ -1685,11 +1668,11 @@ goteol:
 int d_goto(WORD unused)
 {
 	// Setup for the search
-	if (*tok != SYMBOL)
+	if (*tok.u32 != SYMBOL)
 		return error("missing label");
 
-	char * sym = string[tok[1]];
-	tok += 2;
+	char * sym = string[tok.u32[1]];
+	tok.u32 += 2;
 
 	if (cur_inobj->in_type != SRC_IMACRO)
 		return error("goto not in macro");
@@ -1732,6 +1715,85 @@ int d_goto(WORD unused)
 }
 
 
+void DumpToken(TOKEN t)
+{
+	if (t == COLON)
+		printf("[COLON]");
+	else if (t == CONST)
+		printf("[CONST]");
+	else if (t == ACONST)
+		printf("[ACONST]");
+	else if (t == STRING)
+		printf("[STRING]");
+	else if (t == SYMBOL)
+		printf("[SYMBOL]");
+	else if (t == EOS)
+		printf("[EOS]");
+	else if (t == TKEOF)
+		printf("[TKEOF]");
+	else if (t == DEQUALS)
+		printf("[DEQUALS]");
+	else if (t == SET)
+		printf("[SET]");
+	else if (t == REG)
+		printf("[REG]");
+	else if (t == DCOLON)
+		printf("[DCOLON]");
+	else if (t == GE)
+		printf("[GE]");
+	else if (t == LE)
+		printf("[LE]");
+	else if (t == NE)
+		printf("[NE]");
+	else if (t == SHR)
+		printf("[SHR]");
+	else if (t == SHL)
+		printf("[SHL]");
+	else if (t == UNMINUS)
+		printf("[UNMINUS]");
+	else if (t == DOTB)
+		printf("[DOTB]");
+	else if (t == DOTW)
+		printf("[DOTW]");
+	else if (t == DOTL)
+		printf("[DOTL]");
+	else if (t == DOTQ)
+		printf("[DOTQ]");
+	else if (t == DOTS)
+		printf("[DOTS]");
+	else if (t == DOTD)
+		printf("[DOTD]");
+	else if (t == DOTI)
+		printf("[DOTI]");
+	else if (t == ENDEXPR)
+		printf("[ENDEXPR]");
+	else if (t == CR_ABSCOUNT)
+		printf("[CR_ABSCOUNT]");
+	else if (t == CR_DEFINED)
+		printf("[CR_DEFINED]");
+	else if (t == CR_REFERENCED)
+		printf("[CR_REFERENCED]");
+	else if (t == CR_STREQ)
+		printf("[CR_STREQ]");
+	else if (t == CR_MACDEF)
+		printf("[CR_MACDEF]");
+	else if (t == CR_TIME)
+		printf("[CR_TIME]");
+	else if (t == CR_DATE)
+		printf("[CR_DATE]");
+	else if (t >= 0x20 && t <= 0x2F)
+		printf("[%c]", (char)t);
+	else if (t >= 0x3A && t <= 0x3F)
+		printf("[%c]", (char)t);
+	else if (t >= 0x80 && t <= 0x87)
+		printf("[D%u]", ((uint32_t)t) - 0x80);
+	else if (t >= 0x88 && t <= 0x8F)
+		printf("[A%u]", ((uint32_t)t) - 0x88);
+	else
+		printf("[%X:%c]", (uint32_t)t, (char)t);
+}
+
+
 void DumpTokenBuffer(void)
 {
 	printf("Tokens [%X]: ", sloc);
@@ -1742,7 +1804,8 @@ void DumpTokenBuffer(void)
 			printf("[COLON]");
 		else if (*t == CONST)
 		{
-			printf("[CONST: $%lX]", ((uint64_t)t[1] << 32) | (uint64_t)t[2]);
+			TOKENPTR tp = (TOKENPTR)(t + 1);
+			printf("[CONST: $%lX]", (uint64_t)(*tp.u64));
 			t += 2;
 		}
 		else if (*t == ACONST)
@@ -1790,6 +1853,12 @@ void DumpTokenBuffer(void)
 			printf("[DOTW]");
 		else if (*t == DOTL)
 			printf("[DOTL]");
+		else if (*t == DOTQ)
+			printf("[DOTQ]");
+		else if (*t == DOTS)
+			printf("[DOTS]");
+		else if (*t == DOTD)
+			printf("[DOTD]");
 		else if (*t == DOTI)
 			printf("[DOTI]");
 		else if (*t == ENDEXPR)

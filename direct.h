@@ -10,16 +10,17 @@
 #define __DIRECT_H__
 
 #include "rmac.h"
+#include "token.h"
 
 // Exported variables
-extern TOKEN exprbuf[];
+extern TOKENPTR exprbuf;
 extern SYM * symbolPtr[];
 extern int (* dirtab[])();
 extern int largestAlign[];
 
 // Exported functions
 void auto_even(void);
-int dep_block(uint32_t, WORD, uint32_t, WORD, TOKEN *);
+int dep_block(uint32_t, WORD, uint32_t, WORD, TOKENPTR);
 int eject(void);
 int abs_expr(uint64_t *);
 int symlist(int(*)());

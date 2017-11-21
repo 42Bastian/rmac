@@ -153,7 +153,7 @@ extern int lnsave;
 extern uint16_t curlineno;
 extern char * curfname;
 extern WORD cfileno;
-extern TOKEN * tok;
+extern TOKENPTR tok;
 extern char lnbuf[];
 extern char lntag;
 extern char tolowertab[];
@@ -170,6 +170,7 @@ int TokenizeLine(void);
 int fpop(void);
 int d_goto(WORD);
 INOBJ * a_inobj(int);
+void DumpToken(TOKEN);
 void DumpTokenBuffer(void);
 
 #endif // __TOKEN_H__

@@ -432,19 +432,19 @@ int d_subttl(void)
 	int ejectok;
 	ejectok = 1;
 
-	if (*tok == '-')
+	if (*tok.u32 == '-')
 	{
 		ejectok = 0;
-		++tok;
+		++tok.u32;
 	}
 
-	if (*tok != STRING)
+	if (*tok.u32 != STRING)
 		return error("missing string");
 
-//	strcpy(subttl, (char *)tok[1]);
-	strcpy(subttl, string[tok[1]]);
+//	strcpy(subttl, (char *)tok.u32[1]);
+	strcpy(subttl, string[tok.u32[1]]);
 
-	tok += 2;
+	tok.u32 += 2;
 
 	// Always eject on pages 2+
 	if (ejectok && (subflag || pageno > 1))
@@ -462,12 +462,12 @@ int d_subttl(void)
 //
 int d_title(void)
 {
-	if (*tok != STRING)
+	if (*tok.u32 != STRING)
 		return error("missing string");
 
-//	strcpy(title, (char*)tok[1]);
-	strcpy(title, string[tok[1]]);
-	tok += 2;
+//	strcpy(title, (char*)tok.u32[1]);
+	strcpy(title, string[tok.u32[1]]);
+	tok.u32 += 2;
 
 	if (pageno > 1)
 	{

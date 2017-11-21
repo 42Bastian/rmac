@@ -34,7 +34,7 @@
 #define GPUONLY     0x4000		// Opcode is for the GPU Only
 #define DSPONLY     0x8000		// Opcode is for the DSP Only
 
-#define CHECK_COMMA  if(*tok++ != ',') { error(comma_error); return(ERROR); }
+#define CHECK_COMMA  if(*tok.u32++ != ',') { error(comma_error); return(ERROR); }
 
 // Opcode Specific Data
 struct opcoderecord {

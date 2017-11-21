@@ -23,6 +23,15 @@
 						*chptr++=(uint8_t)((lw)>>8); \
 						*chptr++=(uint8_t)(lw); \
 						sloc += 4; ch_size += 4; if(orgactive) orgaddr += 4;}
+#define D_quad(qw)	{*chptr++=(uint8_t)((qw)>>56); \
+						*chptr++=(uint8_t)((qw)>>48);\
+						*chptr++=(uint8_t)((qw)>>40);\
+						*chptr++=(uint8_t)((qw)>>32);\
+						*chptr++=(uint8_t)((qw)>>24);\
+						*chptr++=(uint8_t)((qw)>>16);\
+						*chptr++=(uint8_t)((qw)>>8); \
+						*chptr++=(uint8_t)(qw); \
+						sloc += 8; ch_size += 8; if(orgactive) orgaddr += 8;}
 #define D_rword(w)	{*chptr++=(uint8_t)(w); *chptr++=(uint8_t)((w)>>8); \
 						sloc+=2; ch_size+=2;if(orgactive) orgaddr += 2;}
 #define D_single(w) {chcheck(4);*chptr++ = ((char *)&w)[3]; \
@@ -204,7 +213,7 @@ void SwitchSection(int);
 void SaveSection(void);
 int fixtest(int, uint32_t);
 int chcheck(uint32_t);
-int AddFixup(uint16_t, uint32_t, TOKEN *);
+int AddFixup(uint16_t, uint32_t, TOKENPTR);
 int ResolveAllFixups(void);
 
 #endif // __SECT_H__

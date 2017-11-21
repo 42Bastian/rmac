@@ -660,7 +660,7 @@ int m_shi(WORD inst, WORD siz)
 	}
 	else
 	{
-		AddFixup(FU_QUICK, sloc, a0expr);
+		AddFixup(FU_QUICK, sloc, (TOKENPTR)a0expr);
 		D_word(inst);
 	}
 
@@ -723,7 +723,7 @@ int m_dbra(WORD inst, WORD siz)
 	}
 	else
 	{
-		AddFixup(FU_WORD | FU_PCREL | FU_ISBRA, sloc, a1expr);
+		AddFixup(FU_WORD | FU_PCREL | FU_ISBRA, sloc, (TOKENPTR)a1expr);
 		D_word(0);
 	}
 
@@ -741,14 +741,14 @@ int m_exg(WORD inst, WORD siz)
 	siz = siz;
 
 	if (am0 == DREG && am1 == DREG)
-		m = 0x0040;                                           // Dn,Dn
+		m = 0x0040;                      // Dn,Dn
 	else if (am0 == AREG && am1 == AREG)
-		m = 0x0048;                                           // An,An
+		m = 0x0048;                      // An,An
 	else
 	{
 		if (am0 == AREG)
-		{                                     // Dn,An or An,Dn
-			m = a1reg;                                         // Get AREG into a1reg
+		{                                // Dn,An or An,Dn
+			m = a1reg;                   // Get AREG into a1reg
 			a1reg = a0reg;
 			a0reg = m;
 		}
@@ -870,9 +870,9 @@ int m_move(WORD inst, WORD size)
 int m_move30(WORD inst, WORD size)
 {
 	int siz = (int)size;
-    // TODO: is extra_addressing necessary/correct?
+	// TODO: is extra_addressing necessary/correct?
 	//inst |= siz_12[siz] | reg_9[a1reg & 7] | a0reg | extra_addressing[am0 - ABASE];
-    inst |= siz_12[siz] | reg_9[a1reg & 7] | a0reg;
+	inst |= siz_12[siz] | reg_9[a1reg & 7] | a0reg;
 
 	D_word(inst);
 
@@ -914,7 +914,7 @@ int m_moveq(WORD inst, WORD siz)
 	// Arrange for future fixup
 	if (!(a0exattr & DEFINED))
 	{
-		AddFixup(FU_BYTE | FU_SEXT, sloc + 1, a0expr);
+		AddFixup(FU_BYTE | FU_SEXT, sloc + 1, (TOKENPTR)a0expr);
 		a0exval = 0;
 	}
 	else if ((uint32_t)a0exval + 0x100 >= 0x200)
@@ -933,7 +933,7 @@ int m_moveq(WORD inst, WORD siz)
 int m_movep(WORD inst, WORD siz)
 {
 	// Tell ea0gen to lay off the 0(a0) optimisations on this one
-    movep = 1;
+	movep = 1;
 
 	if (siz == SIZL)
 		inst |= 0x0040;
@@ -959,7 +959,7 @@ int m_movep(WORD inst, WORD siz)
 			ea0gen(siz);
 	}
 
-    movep = 0;
+	movep = 0;
 	return 0;
 }
 
@@ -1030,7 +1030,7 @@ int m_br(WORD inst, WORD siz)
 	if (siz == SIZB || siz == SIZS)
 	{
 		// .B
-		AddFixup(FU_BBRA | FU_PCREL | FU_SEXT, sloc, a0expr);
+		AddFixup(FU_BBRA | FU_PCREL | FU_SEXT, sloc, (TOKENPTR)a0expr);
 		D_word(inst);
 		return OK;
 	}
@@ -1038,7 +1038,7 @@ int m_br(WORD inst, WORD siz)
 	{
 		// .W
 		D_word(inst);
-		AddFixup(FU_WORD | FU_PCREL | FU_LBRA | FU_ISBRA, sloc, a0expr);
+		AddFixup(FU_WORD | FU_PCREL | FU_LBRA | FU_ISBRA, sloc, (TOKENPTR)a0expr);
 		D_word(0);
 	}
 
@@ -1063,7 +1063,7 @@ int m_addq(WORD inst, WORD siz)
 	}
 	else
 	{
-		AddFixup(FU_QUICK, sloc, a0expr);
+		AddFixup(FU_QUICK, sloc, (TOKENPTR)a0expr);
 		D_word(inst);
 	}
 
@@ -1114,10 +1114,10 @@ int m_movem(WORD inst, WORD siz)
 	if (siz == SIZL)
 		inst |= 0x0040;
 
-	if (*tok == '#')
+	if (*tok.u32 == '#')
 	{
 		// Handle #<expr>, ea
-		tok++;
+		tok.u32++;
 
 		if (abs_expr(&eval) != OK)
 			return OK;
@@ -1129,14 +1129,14 @@ int m_movem(WORD inst, WORD siz)
 		goto immed1;
 	}
 
-	if ((*tok >= KW_D0) && (*tok <= KW_A7))
+	if ((*tok.u32 >= KW_D0) && (*tok.u32 <= KW_A7))
 	{
 		// <rlist>, ea
 		if (reglist(&rmask) < 0)
 			return OK;
 
 immed1:
-		if (*tok++ != ',')
+		if (*tok.u32++ != ',')
 			return error("missing comma");
 
 		if (amode(0) < 0)
@@ -1165,16 +1165,16 @@ immed1:
 
 		inst |= 0x0400 | am0 | a0reg;
 
-		if (*tok++ != ',')
+		if (*tok.u32++ != ',')
 			return error("missing comma");
 
-		if (*tok == EOL)
+		if (*tok.u32 == EOL)
 			return error("missing register list");
 
-		if (*tok == '#')
+		if (*tok.u32 == '#')
 		{
 			// ea, #<expr>
-			tok++;
+			tok.u32++;
 
 			if (abs_expr(&eval) != OK)
 				return OK;
@@ -1236,7 +1236,7 @@ int m_br30(WORD inst, WORD siz)
 	else
 	{
 		// .L
-		AddFixup(FU_LONG | FU_PCREL | FU_SEXT, sloc, a0expr);
+		AddFixup(FU_LONG | FU_PCREL | FU_SEXT, sloc, (TOKENPTR)a0expr);
 		D_word(inst);
 		return OK;
 	}
@@ -1249,39 +1249,35 @@ int m_br30(WORD inst, WORD siz)
 //
 int m_bfop(WORD inst, WORD siz)
 {
-    if ((bfval1 > 31) || (bfval1 < 0))
-        return error("bfxxx offset: immediate value must be between 0 and 31");
+	if ((bfval1 > 31) || (bfval1 < 0))
+		return error("bfxxx offset: immediate value must be between 0 and 31");
 
 	// First instruction word - just the opcode and first EA
-	// Note: both am1 is ORed because solely of bfins - maybe it's a good idea to make a dedicated function for it?
+	// Note: both am1 is ORed because solely of bfins - maybe it's a good idea
+	// to make a dedicated function for it?
 	if (am1 == AM_NONE)
-    {
+	{
 		am1 = 0;
-    }
-    else
-    {
-        if (bfval2 > 31 || bfval2 < 0)
-            return error("bfxxx width: immediate value must be between 0 and 31");
+	}
+	else
+	{
+		if (bfval2 > 31 || bfval2 < 0)
+			return error("bfxxx width: immediate value must be between 0 and 31");
 
-        // For Dw both immediate and register number are stuffed
-        // into the same field O_o
-        bfparam2 = (bfval2 << 0);
-    }
+		// For Dw both immediate and register number are stuffed
+		// into the same field O_o
+		bfparam2 = (bfval2 << 0);
+	}
 
-    if (bfparam1 == 0)
-    {
-        bfparam1 = (bfval1 << 6);
-    }
-    else
-    {
-        bfparam1 = bfval1 << 12;
-    }
+	if (bfparam1 == 0)
+		bfparam1 = (bfval1 << 6);
+	else
+		bfparam1 = bfval1 << 12;
 
 	D_word((inst | am0 | a0reg | am1 | a1reg));
 	ea0gen(siz);	// Generate EA
 
 	// Second instruction word - Dest register (if exists), Do, Offset, Dw, Width
-
 	inst = bfparam1 | bfparam2;
 
 	if (am1 == DREG)
@@ -1345,7 +1341,7 @@ int m_callm(WORD inst, WORD siz)
 	else
 		return error(undef_error);
 
-    ea1gen(siz);
+	ea1gen(siz);
 
 	return OK;
 
@@ -1382,21 +1378,21 @@ int m_cas(WORD inst, WORD siz)
 	}
 
 	// Dc
-	if ((*tok < KW_D0) && (*tok > KW_D7))
+	if ((*tok.u32 < KW_D0) && (*tok.u32 > KW_D7))
 		return error("CAS accepts only data registers");
 
-	inst2 = (*tok++) & 7;
+	inst2 = (*tok.u32++) & 7;
 
-	if (*tok++ != ',')
+	if (*tok.u32++ != ',')
 		return error("missing comma");
 
 	// Du
-	if ((*tok < KW_D0) && (*tok > KW_D7))
+	if ((*tok.u32 < KW_D0) && (*tok.u32 > KW_D7))
 		return error("CAS accepts only data registers");
 
-	inst2 |= ((*tok++) & 7) << 6;
+	inst2 |= ((*tok.u32++) & 7) << 6;
 
-	if (*tok++ != ',')
+	if (*tok.u32++ != ',')
 		return error("missing comma");
 
 	// ea
@@ -1406,7 +1402,7 @@ int m_cas(WORD inst, WORD siz)
 	if (modes > 1)
 		return error("too many ea fields");
 
-	if (*tok!=EOL)
+	if (*tok.u32 != EOL)
 		return error("extra (unexpected) text found");
 
 	// Reject invalud ea modes
@@ -1452,71 +1448,71 @@ int m_cas2(WORD inst, WORD siz)
 	}
 
 	// Dc1
-	if ((*tok < KW_D0) && (*tok > KW_D7))
+	if ((*tok.u32 < KW_D0) && (*tok.u32 > KW_D7))
 		return error("CAS2 accepts only data registers for Dx1:Dx2 pairs");
 
-	inst2 = (*tok++) & 7;
+	inst2 = (*tok.u32++) & 7;
 
-	if (*tok++ != ':')
+	if (*tok.u32++ != ':')
 		return error("missing colon");
 
 	// Dc2
-	if ((*tok < KW_D0) && (*tok > KW_D7))
+	if ((*tok.u32 < KW_D0) && (*tok.u32 > KW_D7))
 		return error("CAS2 accepts only data registers for Dx1:Dx2 pairs");
 
-	inst3 = (*tok++) & 7;
+	inst3 = (*tok.u32++) & 7;
 
-	if (*tok++ != ',')
+	if (*tok.u32++ != ',')
 		return error("missing comma");
 
 	// Du1
-	if ((*tok < KW_D0) && (*tok > KW_D7))
+	if ((*tok.u32 < KW_D0) && (*tok.u32 > KW_D7))
 		return error("CAS2 accepts only data registers for Dx1:Dx2 pairs");
 
-	inst2 |= ((*tok++) & 7) << 6;
+	inst2 |= ((*tok.u32++) & 7) << 6;
 
-	if (*tok++ != ':')
+	if (*tok.u32++ != ':')
 		return error("missing colon");
 
 	// Du2
-	if ((*tok < KW_D0) && (*tok > KW_D7))
+	if ((*tok.u32 < KW_D0) && (*tok.u32 > KW_D7))
 		return error("CAS2 accepts only data registers for Dx1:Dx2 pairs");
 
-	inst3 |= ((*tok++) & 7) << 6;
+	inst3 |= ((*tok.u32++) & 7) << 6;
 
-	if (*tok++ != ',')
+	if (*tok.u32++ != ',')
 		return error("missing comma");
 
 	// Rn1
-	if (*tok++ != '(')
+	if (*tok.u32++ != '(')
 		return error("missing (");
-	if ((*tok >= KW_D0) && (*tok <= KW_D7))
-		inst2 |= (((*tok++) & 7) << 12) | (0 << 15);
-	else if ((*tok >= KW_A0) && (*tok <= KW_A7))
-		inst2 |= (((*tok++) & 7) << 12) | (1 << 15);
+	if ((*tok.u32 >= KW_D0) && (*tok.u32 <= KW_D7))
+		inst2 |= (((*tok.u32++) & 7) << 12) | (0 << 15);
+	else if ((*tok.u32 >= KW_A0) && (*tok.u32 <= KW_A7))
+		inst2 |= (((*tok.u32++) & 7) << 12) | (1 << 15);
 	else
 		return error("CAS accepts either data or address registers for Rn1:Rn2 pair");
 
-	if (*tok++ != ')')
+	if (*tok.u32++ != ')')
 		return error("missing (");
 
-	if (*tok++ != ':')
+	if (*tok.u32++ != ':')
 		return error("missing colon");
 
 	// Rn2
-	if (*tok++ != '(')
+	if (*tok.u32++ != '(')
 		return error("missing (");
-	if ((*tok >= KW_D0) && (*tok <= KW_D7))
-		inst3 |= (((*tok++) & 7) << 12) | (0 << 15);
-	else if ((*tok >= KW_A0) && (*tok <= KW_A7))
-		inst3 |= (((*tok++) & 7) << 12) | (1 << 15);
+	if ((*tok.u32 >= KW_D0) && (*tok.u32 <= KW_D7))
+		inst3 |= (((*tok.u32++) & 7) << 12) | (0 << 15);
+	else if ((*tok.u32 >= KW_A0) && (*tok.u32 <= KW_A7))
+		inst3 |= (((*tok.u32++) & 7) << 12) | (1 << 15);
 	else
 		return error("CAS accepts either data or address registers for Rn1:Rn2 pair");
 
-	if (*tok++ != ')')
+	if (*tok.u32++ != ')')
 		return error("missing (");
 
-	if (*tok != EOL)
+	if (*tok.u32 != EOL)
 		return error("extra (unexpected) text found");
 
 	D_word(inst);
@@ -1655,16 +1651,16 @@ int m_cpbr(WORD inst, WORD siz)
 	if (siz == SIZL)
 	{
 		// .L
-        D_word(inst);
-        AddFixup(FU_LONG | FU_PCREL | FU_SEXT, sloc, a0expr);
-        D_long(0);
+		D_word(inst);
+		AddFixup(FU_LONG | FU_PCREL | FU_SEXT, sloc, (TOKENPTR)a0expr);
+		D_long(0);
 		return OK;
 	}
 	else
 	{
 		// .W
 		D_word(inst);
-		AddFixup(FU_WORD | FU_PCREL | FU_SEXT, sloc, a0expr);
+		AddFixup(FU_WORD | FU_PCREL | FU_SEXT, sloc, (TOKENPTR)a0expr);
 		D_word(0);
 	}
 
@@ -1677,39 +1673,38 @@ int m_cpbr(WORD inst, WORD siz)
 //
 int m_cpdbr(WORD inst, WORD siz)
 {
-    CHECK00;
+	CHECK00;
 
-    uint32_t v;
-    WORD condition = inst & 0x1f; // Grab condition sneakily placed in the lower 5 bits of inst
-    inst &= 0xffe0;               // And then mask them out - you ain't seen me, roit?
+	uint32_t v;
+	WORD condition = inst & 0x1F; // Grab condition sneakily placed in the lower 5 bits of inst
+	inst &= 0xFFE0;               // And then mask them out - you ain't seen me, roit?
 
-    inst |= (1 << 9);	// Bolt on FPU id
-    inst |= a0reg;
+	inst |= (1 << 9);	// Bolt on FPU id
+	inst |= a0reg;
 
-    D_word(inst);
+	D_word(inst);
 
-    D_word(condition);
+	D_word(condition);
 
-    if (a1exattr & DEFINED)
-    {
-        if ((a1exattr & TDB) != cursect)
-            return error(rel_error);
+	if (a1exattr & DEFINED)
+	{
+		if ((a1exattr & TDB) != cursect)
+			return error(rel_error);
 
 		v = (uint32_t)a1exval - sloc;
 
-        if (v + 0x8000 > 0x10000)
-            return error(range_error);
+		if (v + 0x8000 > 0x10000)
+			return error(range_error);
 
-        D_word(v);
-    }
-    else
-    {
-        AddFixup(FU_WORD | FU_PCREL | FU_ISBRA, sloc, a1expr);
-        D_word(0);
-    }
+		D_word(v);
+	}
+	else
+	{
+		AddFixup(FU_WORD | FU_PCREL | FU_ISBRA, sloc, (TOKENPTR)a1expr);
+		D_word(0);
+	}
 
-    return OK;
-
+	return OK;
 }
 
 
@@ -2129,67 +2124,70 @@ int m_move16b(WORD inst, WORD siz)
 //
 int m_pack(WORD inst, WORD siz)
 {
-    CHECK00;
+	CHECK00;
 
-    if (siz != SIZN)
-        return error("bad size suffix");
+	if (siz != SIZN)
+		return error("bad size suffix");
 
-    if (*tok >= KW_D0 && *tok <= KW_D7)
-    {
-        // Dx,Dy,#<adjustment>
-        inst |= (0 << 3);   // R/M
-        inst |= (*tok++ & 7);
-        if (*tok != ',' && tok[2] != ',')
-            return error("missing comma");
-        if (tok[1] < KW_D0 && tok[1] > KW_D7)
-            return error(syntax_error);
-        inst |= ((tok[1] & 7)<<9);
-        tok = tok + 3;
-        D_word(inst);
-        // Fall through for adjustment (common in both valid cases)
-    }
-    else if (*tok == '-')
-    {
-        // -(Ax),-(Ay),#<adjustment>
-        inst |= (1 << 3);   // R/M
-        tok++;  // eat the minus
-        if ((*tok != '(') && (tok[2]!=')') && (tok[3]!=',') && (tok[4] != '-') && (tok[5] != '(') && (tok[7] != ')') && (tok[8] != ','))
-            return error(syntax_error);
-        if (tok[1] < KW_A0 && tok[1] > KW_A7)
-            return error(syntax_error);
-        if (tok[5] < KW_A0 && tok[6] > KW_A7)
-            return error(syntax_error);
-        inst |= ((tok[1] & 7) << 0);
-        inst |= ((tok[6] & 7) << 9);
-        tok = tok + 9;
-        D_word(inst);
-        // Fall through for adjustment (common in both valid cases)
-    }
-    else
-        return error("invalid syntax");
+	if (*tok.u32 >= KW_D0 && *tok.u32 <= KW_D7)
+	{
+		// Dx,Dy,#<adjustment>
+		inst |= (0 << 3);   // R/M
+		inst |= (*tok.u32++ & 7);
 
+		if (*tok.u32 != ',' && tok.u32[2] != ',')
+			return error("missing comma");
 
-    if ((*tok != CONST) && (*tok != SYMBOL) && (*tok != '-'))
-        return error(syntax_error);
+		if (tok.u32[1] < KW_D0 && tok.u32[1] > KW_D7)
+			return error(syntax_error);
 
-    if (expr(a0expr, &a0exval, &a0exattr, &a0esym)==ERROR)
-        return ERROR;
+		inst |= ((tok.u32[1] & 7)<<9);
+		tok.u32 = tok.u32 + 3;
+		D_word(inst);
+		// Fall through for adjustment (common in both valid cases)
+	}
+	else if (*tok.u32 == '-')
+	{
+		// -(Ax),-(Ay),#<adjustment>
+		inst |= (1 << 3);   // R/M
+		tok.u32++;  // eat the minus
 
-    if ((a0exattr & DEFINED) == 0)
-        return error(undef_error);
+		if ((*tok.u32 != '(') && (tok.u32[2]!=')') && (tok.u32[3]!=',') && (tok.u32[4] != '-') && (tok.u32[5] != '(') && (tok.u32[7] != ')') && (tok.u32[8] != ','))
+			return error(syntax_error);
 
-    if (a0exval + 0x8000 > 0x10000)
-        return error("");
+		if (tok.u32[1] < KW_A0 && tok.u32[1] > KW_A7)
+			return error(syntax_error);
 
-    if (*tok != EOL)
-        return error(extra_stuff);
+		if (tok.u32[5] < KW_A0 && tok.u32[6] > KW_A7)
+			return error(syntax_error);
 
-    D_word((a0exval & 0xffff));
+		inst |= ((tok.u32[1] & 7) << 0);
+		inst |= ((tok.u32[6] & 7) << 9);
+		tok.u32 = tok.u32 + 9;
+		D_word(inst);
+		// Fall through for adjustment (common in both valid cases)
+	}
+	else
+		return error("invalid syntax");
 
+	if ((*tok.u32 != CONST) && (*tok.u32 != SYMBOL) && (*tok.u32 != '-'))
+		return error(syntax_error);
 
+	if (expr((TOKENPTR)a0expr, &a0exval, &a0exattr, &a0esym) == ERROR)
+		return ERROR;
 
-    return OK;
+	if ((a0exattr & DEFINED) == 0)
+		return error(undef_error);
 
+	if (a0exval + 0x8000 > 0x10000)
+		return error("");
+
+	if (*tok.u32 != EOL)
+		return error(extra_stuff);
+
+	D_word((a0exval & 0xFFFF));
+
+	return OK;
 }
 
 
@@ -2289,18 +2287,18 @@ int m_cinv(WORD inst, WORD siz)
 
 	if (am1 == AM_NONE)
 		inst |= (0 << 6) | (a1reg);
-    switch (a0reg)
-    {
-    case 0:     // KW_IC40
+	switch (a0reg)
+	{
+	case 0:     // KW_IC40
 		inst |= (2 << 6) | (a1reg);
-        break;
-    case 1:     // KW_DC40
+		break;
+	case 1:     // KW_DC40
 		inst |= (1 << 6) | (a1reg);
-        break;
-    case 2:     // KW_BC40
+		break;
+	case 2:     // KW_BC40
 		inst |= (3 << 6) | (a1reg);
-        break;
-    }
+		break;
+	}
 
 	D_word(inst);
 	return OK;
@@ -2377,17 +2375,11 @@ int m_moves(WORD inst, WORD siz)
 		return error(unsupport);
 
 	if (siz == SIZB)
-	{
 		inst |= 0 << 6;
-	}
 	else if (siz == SIZL)
-	{
 		inst |= 2 << 6;
-	}
 	else // SIZW/SIZN
-	{
 		inst |= 1 << 6;
-	}
 
 	if (am0 == DREG)
 	{
@@ -2440,24 +2432,23 @@ int m_pbcc(WORD inst, WORD siz)
 //
 int m_pflusha(WORD inst, WORD siz)
 {
-    if (activecpu == CPU_68030)
-    {
-	D_word(inst);
-	inst = (1 << 13) | (1 << 10) | (0 << 5) | 0;
-	D_word(inst);
+	if (activecpu == CPU_68030)
+	{
+		D_word(inst);
+		inst = (1 << 13) | (1 << 10) | (0 << 5) | 0;
+		D_word(inst);
+		return OK;
+	}
+	else if (activecpu == CPU_68040)
+	{
+		inst = B16(11110101, 00011000);
+		D_word(inst);
+		return OK;
+	}
+	else
+		return error(unsupport);
+
 	return OK;
-}
-    else if (activecpu == CPU_68040)
-    {
-        inst = B16(11110101, 00011000);
-        D_word(inst);
-        return OK;
-    }
-    else
-        return error(unsupport);
-
-    return OK;
-
 }
 
 
@@ -2468,116 +2459,132 @@ int m_pflush(WORD inst, WORD siz)
 {
 	if (activecpu == CPU_68030)
 	{
-        // PFLUSH FC, MASK
-        // PFLUSH FC, MASK, < ea >
-        WORD mask, fc;
-        switch ((int)*tok)
-        {
-        case '#':
-            tok++;
-            if (*tok != CONST && *tok != SYMBOL)
-                return error("function code should be an expression");
-            if (expr(a0expr, &a0exval, &a0exattr, &a0esym) == ERROR)
-                return ERROR;
-            if ((a0exattr & DEFINED) == 0)
-                return error("function code immediate should be defined");
-            if (a0exval > 7 && a0exval < 0)
-                return error("function code out of range (0-7)");
+		// PFLUSH FC, MASK
+		// PFLUSH FC, MASK, < ea >
+		WORD mask, fc;
+
+		switch ((int)*tok.u32)
+		{
+		case '#':
+			tok.u32++;
+
+			if (*tok.u32 != CONST && *tok.u32 != SYMBOL)
+				return error("function code should be an expression");
+
+			if (expr((TOKENPTR)a0expr, &a0exval, &a0exattr, &a0esym) == ERROR)
+				return ERROR;
+
+			if ((a0exattr & DEFINED) == 0)
+				return error("function code immediate should be defined");
+
+			if (a0exval > 7 && a0exval < 0)
+				return error("function code out of range (0-7)");
+
 			fc = (uint16_t)a0exval;
-            break;
-        case KW_D0:
-        case KW_D1:
-        case KW_D2:
-        case KW_D3:
-        case KW_D4:
-        case KW_D5:
-        case KW_D6:
-        case KW_D7:
-            fc = (1 << 4) | (*tok++ & 7);
-            break;
-        case KW_SFC:
-            fc = 0;
-            tok++;
-            break;
-        case KW_DFC:
-            fc = 1;
-            tok++;
-            break;
-        default:
-            return error(syntax_error);
-        }
+			break;
+		case KW_D0:
+		case KW_D1:
+		case KW_D2:
+		case KW_D3:
+		case KW_D4:
+		case KW_D5:
+		case KW_D6:
+		case KW_D7:
+			fc = (1 << 4) | (*tok.u32++ & 7);
+			break;
+		case KW_SFC:
+			fc = 0;
+			tok.u32++;
+			break;
+		case KW_DFC:
+			fc = 1;
+			tok.u32++;
+			break;
+		default:
+			return error(syntax_error);
+		}
 
-        if (*tok++ != ',')
-            return error("comma exptected");
+		if (*tok.u32++ != ',')
+			return error("comma exptected");
 
-        if (*tok++ != '#')
-            return error("mask should be an immediate value");
-        if (*tok != CONST && *tok != SYMBOL)
-            return error("mask is supposed to be immediate");
-        if (expr(a0expr, &a0exval, &a0exattr, &a0esym) == ERROR)
-            return ERROR;
-        if ((a0exattr & DEFINED) == 0)
-            return error("mask immediate value should be defined");
-        if (a0exval > 7 && a0exval < 0)
-            return error("function code out of range (0-7)");
+		if (*tok.u32++ != '#')
+			return error("mask should be an immediate value");
+
+		if (*tok.u32 != CONST && *tok.u32 != SYMBOL)
+			return error("mask is supposed to be immediate");
+
+		if (expr((TOKENPTR)a0expr, &a0exval, &a0exattr, &a0esym) == ERROR)
+			return ERROR;
+
+		if ((a0exattr & DEFINED) == 0)
+			return error("mask immediate value should be defined");
+
+		if (a0exval > 7 && a0exval < 0)
+			return error("function code out of range (0-7)");
+
 		mask = (uint16_t)a0exval << 5;
 
-        if (*tok == EOL)
-        {
-            // PFLUSH FC, MASK
-            D_word(inst);
-            inst = (1 << 13) | fc | mask | (4 << 10);
-            D_word(inst);
-            return OK;
-        }
-        else if (*tok == ',')
-        {
-            // PFLUSH FC, MASK, < ea >
-            tok++;
-            if (amode(0) == ERROR)
-                return ERROR;
-            if (*tok != EOL)
-                return error(extra_stuff);
-            if (am0 == AIND || am0 == ABSW || am0 == ABSL || am0 == ADISP || am0 == ADISP || am0 == AINDEXED || am0 == ABASE || am0 == MEMPOST || am0 == MEMPRE)
-            {
-                inst |= am0 | a0reg;
-                D_word(inst);
-                inst = (1 << 13) | fc | mask | (6 << 10);
-                D_word(inst);
-                ea0gen(siz);
-                return OK;
-            }
-            else
-                return error("unsupported addressing mode");
+		if (*tok.u32 == EOL)
+		{
+			// PFLUSH FC, MASK
+			D_word(inst);
+			inst = (1 << 13) | fc | mask | (4 << 10);
+			D_word(inst);
+			return OK;
+		}
+		else if (*tok.u32 == ',')
+		{
+			// PFLUSH FC, MASK, < ea >
+			tok.u32++;
 
-        }
-        else
-            return error(syntax_error);
+			if (amode(0) == ERROR)
+				return ERROR;
 
-        return OK;
+			if (*tok.u32 != EOL)
+				return error(extra_stuff);
 
+			if (am0 == AIND || am0 == ABSW || am0 == ABSL || am0 == ADISP || am0 == ADISP || am0 == AINDEXED || am0 == ABASE || am0 == MEMPOST || am0 == MEMPRE)
+			{
+				inst |= am0 | a0reg;
+				D_word(inst);
+				inst = (1 << 13) | fc | mask | (6 << 10);
+				D_word(inst);
+				ea0gen(siz);
+				return OK;
+			}
+			else
+				return error("unsupported addressing mode");
+
+		}
+		else
+			return error(syntax_error);
+
+		return OK;
 	}
 	else if (activecpu == CPU_68040 || activecpu == CPU_68060)
 	{
-        // PFLUSH(An)
-        // PFLUSHN(An)
-        if (*tok != '(' && tok[2] != ')')
-            return error(syntax_error);
-        if (tok[1] < KW_A0 && tok[1] > KW_A7)
-            return error("expected (An)");
-        if ((inst & 7) == 7)
-            // With pflushn/pflush there's no easy way to
-            // distinguish between the two in 68040 mode.
-            // Ideally the opcode bitfields would have been
-            // hardcoded in 68ktab but there is aliasing
-            // between 68030 and 68040 opcode. So we just
-            // set the 3 lower bits to 1 in pflushn inside
-            // 68ktab and detect it here.
-            inst = (inst & 0xff8) | 8;
-        inst |= (tok[1] & 7) | (5 << 8);
-        if (tok[3] != EOL)
-            return error(extra_stuff);
-        D_word(inst);
+		// PFLUSH(An)
+		// PFLUSHN(An)
+		if (*tok.u32 != '(' && tok.u32[2] != ')')
+			return error(syntax_error);
+
+		if (tok.u32[1] < KW_A0 && tok.u32[1] > KW_A7)
+			return error("expected (An)");
+
+		if ((inst & 7) == 7)
+			// With pflushn/pflush there's no easy way to distinguish between
+			// the two in 68040 mode. Ideally the opcode bitfields would have
+			// been hardcoded in 68ktab but there is aliasing between 68030
+			// and 68040 opcode. So we just set the 3 lower bits to 1 in
+			// pflushn inside 68ktab and detect it here.
+			inst = (inst & 0xff8) | 8;
+
+		inst |= (tok.u32[1] & 7) | (5 << 8);
+
+		if (tok.u32[3] != EOL)
+			return error(extra_stuff);
+
+		D_word(inst);
 	}
 	else
 		return error(unsupport);
@@ -2643,56 +2650,53 @@ int m_pflushr(WORD inst, WORD siz)
 //
 int m_pload(WORD inst, WORD siz, WORD extension)
 {
-    // TODO: 68551 support is not added yet.
-    // None of the ST series of computers had
-    // a 68020 + 68551 socket and since this is
-    // an Atari targetted assembler....
-    CHECKNO30;
+	// TODO: 68551 support is not added yet.
+	// None of the ST series of computers had a 68020 + 68551 socket and since
+	// this is an Atari targetted assembler...
+	CHECKNO30;
 
-		inst |= am1;
+	inst |= am1;
 
-    D_word(inst);
+	D_word(inst);
 
-    switch (am0)
+	switch (am0)
 	{
-    case CREG:
-        if (a0reg == KW_SFC - KW_SFC)
-        {
-            inst = 0;
-        }
-        else if (a0reg == KW_DFC - KW_SFC)
-	{
-            inst = 1;
-        }
-        else
-            return error("illegal control register specified");
-        break;
-    case DREG:
-        inst = (1 << 3) | a0reg;
-        break;
-    case IMMED:
-        if ((a0exattr & DEFINED) == 0)
-            return error("constant value must be defined");
+	case CREG:
+		if (a0reg == KW_SFC - KW_SFC)
+			inst = 0;
+		else if (a0reg == KW_DFC - KW_SFC)
+			inst = 1;
+		else
+			return error("illegal control register specified");
+
+		break;
+	case DREG:
+		inst = (1 << 3) | a0reg;
+		break;
+	case IMMED:
+		if ((a0exattr & DEFINED) == 0)
+			return error("constant value must be defined");
+
 		inst = (2 << 3) | (uint16_t)a0exval;
-        break;
-    }
+		break;
+	}
 
-    inst |= extension | (1 << 13);
-    D_word(inst);
+	inst |= extension | (1 << 13);
+	D_word(inst);
 
-    ea1gen(siz);
+	ea1gen(siz);
 
-    return OK;
+	return OK;
 }
 
 int m_ploadr(WORD inst, WORD siz)
 {
-    return m_pload(inst, siz, 1 << 9);
+	return m_pload(inst, siz, 1 << 9);
 }
 
 int m_ploadw(WORD inst, WORD siz)
 {
-    return m_pload(inst, siz, 0 << 9);
+	return m_pload(inst, siz, 0 << 9);
 }
 
 //
@@ -2702,12 +2706,12 @@ int m_pmove(WORD inst, WORD siz)
 {
 	int inst2,reg;
 
-    // TODO: 68551 support is not added yet.
-    // None of the ST series of computers had
-    // a 68020 + 68551 socket and since this is
-    // an Atari targetted assembler....
-    // (same for 68EC030)
-    CHECKNO30;
+	// TODO: 68551 support is not added yet.
+	// None of the ST series of computers had
+	// a 68020 + 68551 socket and since this is
+	// an Atari targetted assembler....
+	// (same for 68EC030)
+	CHECKNO30;
 
 	inst2 = inst & (1 << 8); //Copy the flush bit over to inst2 in case we're called from m_pmovefd
 	inst &= ~(1 << 8);		//And mask it out
@@ -2725,11 +2729,11 @@ int m_pmove(WORD inst, WORD siz)
 	else
 		return error("pmove sez: Wut?");
 
-    // The instruction is a quad-word (8 byte) operation
-    // for the CPU root pointer and the supervisor root pointer.
-    // It is a long - word operation for the translation control register
-    // and the transparent translation registers(TT0 and TT1).
-    // It is a word operation for the MMU status register.
+	// The instruction is a quad-word (8 byte) operation
+	// for the CPU root pointer and the supervisor root pointer.
+	// It is a long - word operation for the translation control register
+	// and the transparent translation registers(TT0 and TT1).
+	// It is a word operation for the MMU status register.
 
 	if (((reg == (KW_URP - KW_SFC)) || (reg == (KW_SRP - KW_SFC)))
 		&& ((siz != SIZD) && (siz != SIZN)))
@@ -2745,7 +2749,7 @@ int m_pmove(WORD inst, WORD siz)
 
 	if (am0 == CREG)
 	{
-	inst |= am1 | a1reg;
+		inst |= am1 | a1reg;
 		D_word(inst);
 	}
 	else if (am1 == CREG)
@@ -2756,37 +2760,33 @@ int m_pmove(WORD inst, WORD siz)
 
 	switch (reg + KW_SFC)
 	{
-    case KW_TC:
-        inst2 |= (0 << 10) + (1 << 14); break;
-    case KW_SRP:
-        inst2 |= (2 << 10) + (1 << 14); break;
-    case KW_CRP:
-        inst2 |= (3 << 10) + (1 << 14); break;
-    case KW_TT0:
+	case KW_TC:
+		inst2 |= (0 << 10) + (1 << 14); break;
+	case KW_SRP:
+		inst2 |= (2 << 10) + (1 << 14); break;
+	case KW_CRP:
+		inst2 |= (3 << 10) + (1 << 14); break;
+	case KW_TT0:
 		inst2 |= (2 << 10) + (0 << 13); break;
-    case KW_TT1:
+	case KW_TT1:
 		inst2 |= (3 << 10) + (0 << 13); break;
-    case KW_MMUSR:
-        if (am0 == CREG)
-            inst2 |= (1 << 9) + (3 << 13);
-        else
-            inst2 |= (0 << 9) + (3 << 13);
-        break;
-    default:
-        return error("unsupported register");
-        break;
+	case KW_MMUSR:
+		if (am0 == CREG)
+			inst2 |= (1 << 9) + (3 << 13);
+		else
+			inst2 |= (0 << 9) + (3 << 13);
+		break;
+	default:
+		return error("unsupported register");
+		break;
 	}
 
 	D_word(inst2);
 
-    if (am0 == CREG)
-    {
-        ea1gen(siz);
-    }
-    else if (am1 == CREG)
-    {
-        ea0gen(siz);
-    }
+	if (am0 == CREG)
+		ea1gen(siz);
+	else if (am1 == CREG)
+		ea0gen(siz);
 
 	return OK;
 }
@@ -2808,28 +2808,28 @@ int m_pmovefd(WORD inst, WORD siz)
 #define gen_ptrapcc(name,opcode) \
 int m_##name(WORD inst, WORD siz) \
 { \
-    CHECKNO20; \
-    if (siz == SIZW) \
-    { \
-        D_word(inst); \
-        D_word(B8(opcode)); \
-        D_word(a0exval); \
-    } \
-    else \
-    { \
-        inst |= 3; \
-        D_word(inst); \
-        D_word(B8(opcode)); \
-        D_long(a0exval); \
-    } \
-    return OK; \
+	CHECKNO20; \
+	if (siz == SIZW) \
+	{ \
+		D_word(inst); \
+		D_word(B8(opcode)); \
+		D_word(a0exval); \
+	} \
+	else \
+	{ \
+		inst |= 3; \
+		D_word(inst); \
+		D_word(B8(opcode)); \
+		D_long(a0exval); \
+	} \
+	return OK; \
 }\
 int m_##name##n(WORD inst, WORD siz) \
 { \
-    CHECKNO20; \
-    D_word(inst); \
-    D_word(B8(opcode)); \
-    return OK; \
+	CHECKNO20; \
+	D_word(inst); \
+	D_word(B8(opcode)); \
+	return OK; \
 }
 
 gen_ptrapcc(ptrapbs,00000000)
@@ -2923,7 +2923,7 @@ static inline int gen_fpu(WORD inst, WORD siz, WORD opmode, WORD emul)
 
 		switch (siz)
 		{
-		case SIZB: 	inst |= (6 << 10); break;
+		case SIZB:	inst |= (6 << 10); break;
 		case SIZW:	inst |= (4 << 10); break;
 		case SIZL:	inst |= (0 << 10); break;
 		case SIZN:
@@ -3111,7 +3111,7 @@ int m_fdbcc(WORD inst, WORD siz)
 	}
 	else
 	{
-		AddFixup(FU_WORD | FU_PCREL | FU_ISBRA, sloc, a1expr);
+		AddFixup(FU_WORD | FU_PCREL | FU_ISBRA, sloc, (TOKENPTR)a1expr);
 		D_word(0);
 	}
 
@@ -3273,30 +3273,31 @@ int m_fmove(WORD inst, WORD siz)
 		// Source specifier
 		switch (siz)
 		{
-		case SIZB: 	inst |= (6 << 10); break;
+		case SIZB:	inst |= (6 << 10); break;
 		case SIZW:	inst |= (4 << 10); break;
 		case SIZL:	inst |= (0 << 10); break;
 		case SIZN:
 		case SIZS:	inst |= (1 << 10); break;
 		case SIZD:	inst |= (5 << 10); break;
 		case SIZX:	inst |= (2 << 10); break;
-		case SIZP:  inst |= (3 << 10);
-            // In P size we have 2 cases: {#k} where k is immediate
-            // and {Dn} where Dn=Data register
+		case SIZP:	inst |= (3 << 10);
+			// In P size we have 2 cases: {#k} where k is immediate
+			// and {Dn} where Dn=Data register
 
 			if (bfparam1)
-            {
-                // Dn
+			{
+				// Dn
 				inst |= 1 << 12;
-                inst |= bfval1 << 4;
-            }
-            else
-            {
-                // #k
-                if (bfval1>63 && bfval1<-64)
-                    return error("K-factor must be between -64 and 63");
-                inst |= bfval1 & 127;
-            }
+				inst |= bfval1 << 4;
+			}
+			else
+			{
+				// #k
+				if (bfval1 > 63 && bfval1 < -64)
+					return error("K-factor must be between -64 and 63");
+
+				inst |= bfval1 & 127;
+			}
 
 			break;
 		default:
@@ -3328,14 +3329,14 @@ int m_fmove(WORD inst, WORD siz)
 		// Source specifier
 		switch (siz)
 		{
-		case SIZB: 	inst |= (6 << 10); break;
+		case SIZB:	inst |= (6 << 10); break;
 		case SIZW:	inst |= (4 << 10); break;
 		case SIZL:	inst |= (0 << 10); break;
 		case SIZN:
 		case SIZS:	inst |= (1 << 10); break;
 		case SIZD:	inst |= (5 << 10); break;
 		case SIZX:	inst |= (2 << 10); break;
-		case SIZP:  inst |= (3 << 10); break;
+		case SIZP:	inst |= (3 << 10); break;
 		default:
 			return error("Something bad happened, possibly.");
 			break;
@@ -3468,13 +3469,13 @@ int m_fmovem(WORD inst, WORD siz)
 
 	if (siz == SIZX || siz==SIZN)
 	{
-		if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
+		if ((*tok.u32 >= KW_FP0) && (*tok.u32 <= KW_FP7))
 		{
 			//fmovem.x <rlist>,ea
 			if (fpu_reglist_left(&regmask) < 0)
 				return OK;
 
-			if (*tok++ != ',')
+			if (*tok.u32++ != ',')
 				return error("missing comma");
 
 			if (amode(0) < 0)
@@ -3491,12 +3492,12 @@ int m_fmovem(WORD inst, WORD siz)
 			ea0gen(siz);
 			return OK;
 		}
-		else if ((*tok >= KW_D0) && (*tok <= KW_D7))
+		else if ((*tok.u32 >= KW_D0) && (*tok.u32 <= KW_D7))
 		{
 			// fmovem.x Dn,ea
-			datareg = (*tok++ & 7) << 10;
+			datareg = (*tok.u32++ & 7) << 10;
 
-			if (*tok++ != ',')
+			if (*tok.u32++ != ',')
 				return error("missing comma");
 
 			if (amode(0) < 0)
@@ -3521,10 +3522,10 @@ int m_fmovem(WORD inst, WORD siz)
 
 			inst |= am0 | a0reg;
 
-			if (*tok++ != ',')
+			if (*tok.u32++ != ',')
 				return error("missing comma");
 
-			if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
+			if ((*tok.u32 >= KW_FP0) && (*tok.u32 <= KW_FP7))
 			{
 				//fmovem.x ea,<rlist>
 				if (fpu_reglist_right(&regmask) < 0)
@@ -3539,7 +3540,7 @@ int m_fmovem(WORD inst, WORD siz)
 			else
 			{
 				// fmovem.x ea,Dn
-				datareg = (*tok++ & 7) << 10;
+				datareg = (*tok.u32++ & 7) << 10;
 				D_word(inst);
 				inst = (1 << 15) | (1 << 14) | (0 << 13) | (3 << 11) | (datareg << 4);
 				D_word(inst);
@@ -3550,39 +3551,39 @@ int m_fmovem(WORD inst, WORD siz)
 	}
 	else if (siz == SIZL)
 	{
-		if ((*tok == KW_FPCR) || (*tok == KW_FPSR) || (*tok == KW_FPIAR))
+		if ((*tok.u32 == KW_FPCR) || (*tok.u32 == KW_FPSR) || (*tok.u32 == KW_FPIAR))
 		{
 			//fmovem.l <rlist>,ea
 			regmask = (1 << 15) | (1 << 13);
 fmovem_loop_1:
-			if (*tok == KW_FPCR)
+			if (*tok.u32 == KW_FPCR)
 			{
 				regmask |= (1 << 12);
-				tok++;
+				tok.u32++;
 				goto fmovem_loop_1;
 			}
 
-			if (*tok == KW_FPSR)
+			if (*tok.u32 == KW_FPSR)
 			{
 				regmask |= (1 << 11);
-				tok++;
+				tok.u32++;
 				goto fmovem_loop_1;
 			}
 
-			if (*tok == KW_FPIAR)
+			if (*tok.u32 == KW_FPIAR)
 			{
 				regmask |= (1 << 10);
-				tok++;
+				tok.u32++;
 				goto fmovem_loop_1;
 			}
 
-			if ((*tok == '/') || (*tok == '-'))
+			if ((*tok.u32 == '/') || (*tok.u32 == '-'))
 			{
-				tok++;
+				tok.u32++;
 				goto fmovem_loop_1;
 			}
 
-			if (*tok++ != ',')
+			if (*tok.u32++ != ',')
 				return error("missing comma");
 
 			if (amode(0) < 0)
@@ -3601,40 +3602,40 @@ fmovem_loop_1:
 
 			inst |= am0 | a0reg;
 
-			if (*tok++ != ',')
+			if (*tok.u32++ != ',')
 				return error("missing comma");
 
 			regmask = (1 << 15) | (0 << 13);
 
 fmovem_loop_2:
-			if (*tok == KW_FPCR)
+			if (*tok.u32 == KW_FPCR)
 			{
 				regmask |= (1 << 12);
-				tok++;
+				tok.u32++;
 				goto fmovem_loop_2;
 			}
 
-			if (*tok == KW_FPSR)
+			if (*tok.u32 == KW_FPSR)
 			{
 				regmask |= (1 << 11);
-				tok++;
+				tok.u32++;
 				goto fmovem_loop_2;
 			}
 
-			if (*tok == KW_FPIAR)
+			if (*tok.u32 == KW_FPIAR)
 			{
 				regmask |= (1 << 10);
-				tok++;
+				tok.u32++;
 				goto fmovem_loop_2;
 			}
 
-			if ((*tok == '/') || (*tok == '-'))
+			if ((*tok.u32 == '/') || (*tok.u32 == '-'))
 			{
-				tok++;
+				tok.u32++;
 				goto fmovem_loop_2;
 			}
 
-			if (*tok!=EOL)
+			if (*tok.u32 != EOL)
 				return error("extra (unexpected) text found");
 
 			inst |= am0 | a0reg;
@@ -3873,26 +3874,26 @@ gen_FScc(fssne , 00011110);
 #define gen_FTRAPcc(name,opcode) \
 int m_##name  (WORD inst, WORD siz) \
 { \
-    if (siz==SIZW) \
-    { \
-        D_word(inst); \
-        D_word(B8(opcode)); \
-        D_word(a0exval); \
-    } \
-    else \
-    { \
-        inst|=3; \
-        D_word(inst); \
-        D_word(B8(opcode)); \
-        D_long(a0exval); \
-    } \
-    return OK;\
+	if (siz==SIZW) \
+	{ \
+		D_word(inst); \
+		D_word(B8(opcode)); \
+		D_word(a0exval); \
+	} \
+	else \
+	{ \
+		inst|=3; \
+		D_word(inst); \
+		D_word(B8(opcode)); \
+		D_long(a0exval); \
+	} \
+	return OK;\
 } \
 int m_##name##n  (WORD inst, WORD siz) \
 { \
-    D_word(inst); \
-    D_word(B8(opcode)); \
-    return OK;\
+	D_word(inst); \
+	D_word(B8(opcode)); \
+	return OK;\
 }
 
 gen_FTRAPcc(ftrapeq   ,00000001)

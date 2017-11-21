@@ -106,7 +106,7 @@ int fudump(CHUNK * ch)
 			{
 				uint16_t esiz = *p.wp++;
 				printf("(%d long) ", (int)esiz);
-				p.tk = printexpr(p.tk);
+				p.tk.u32 = printexpr(p.tk.u32);
 			}
 			else
 			{

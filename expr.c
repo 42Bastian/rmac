@@ -51,7 +51,7 @@ const char missym_error[] = "missing symbol";
 const char str_error[] = "missing symbol or string";
 
 // Convert expression to postfix
-static TOKEN * evalTokenBuffer;		// Deposit tokens here (this is really a
+static TOKENPTR evalTokenBuffer;	// Deposit tokens here (this is really a
 									// pointer to exprbuf from direct.c)
 									// (Can also be from others, like
 									// riscasm.c)
@@ -105,14 +105,14 @@ int expr0(void)
 	if (expr1() != OK)
 		return ERROR;
 
-	while (tokenClass[*tok] >= MULT)
+	while (tokenClass[*tok.u32] >= MULT)
 	{
-		t = *tok++;
+		t = *tok.u32++;
 
 		if (expr1() != OK)
 			return ERROR;
 
-		*evalTokenBuffer++ = t;
+		*evalTokenBuffer.u32++ = t;
 	}
 
 	return OK;
@@ -121,9 +121,9 @@ int expr0(void)
 
 //
 // Unary operators (detect unary '-')
-// ggn: If expression starts with a plus then also eat it up.
-//      For some reason the parser gets confused when this happens and
-//      emits a "bad expression".
+// ggn: If expression starts with a plus then also eat it up. For some reason
+//      the parser gets confused when this happens and emits a "bad
+//      expression".
 //
 int expr1(void)
 {
@@ -133,13 +133,12 @@ int expr1(void)
 	char * p, * p2;
 	WORD w;
 	int j;
-	uint64_t * evalTokenBuffer64;
 
-	class = tokenClass[*tok];
+	class = tokenClass[*tok.u32];
 
-	if (*tok == '-' || *tok == '+' || class == UNARY)
+	if (*tok.u32 == '-' || *tok.u32 == '+' || class == UNARY)
 	{
-		t = *tok++;
+		t = *tok.u32++;
 
 		if (expr2() != OK)
 			return ERROR;
@@ -147,44 +146,35 @@ int expr1(void)
 		if (t == '-')
 			t = UNMINUS;
 
-		// With leading + we don't have to deposit
-		// anything to the buffer because there's
-		// no unary '+' nor we have to do anything about it
+		// With leading + we don't have to deposit anything to the buffer
+		// because there's no unary '+' nor we have to do anything about it
 		if (t != '+')
-		*evalTokenBuffer++ = t;
+			*evalTokenBuffer.u32++ = t;
 	}
 	else if (class == SUNARY)
 	{
-		switch ((int)*tok++)
+		switch (*tok.u32++)
 		{
 		case CR_ABSCOUNT:
-			*evalTokenBuffer++ = CONST;
-			evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
-			*evalTokenBuffer64++ = (LONG)sect[ABS].sloc;
-			evalTokenBuffer = (uint32_t *)evalTokenBuffer64;
+			*evalTokenBuffer.u32++ = CONST;
+			*evalTokenBuffer.u64++ = (uint64_t)sect[ABS].sloc;
 			break;
 		case CR_TIME:
-			*evalTokenBuffer++ = CONST;
-			evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
-			*evalTokenBuffer64++ = dos_time();
-			evalTokenBuffer = (uint32_t *)evalTokenBuffer64;
+			*evalTokenBuffer.u32++ = CONST;
+			*evalTokenBuffer.u64++ = dos_time();
 			break;
 		case CR_DATE:
-			*evalTokenBuffer++ = CONST;
-			evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
-			*evalTokenBuffer64++ = dos_date();
-			evalTokenBuffer = (uint32_t *)evalTokenBuffer64;
+			*evalTokenBuffer.u32++ = CONST;
+			*evalTokenBuffer.u64++ = dos_date();
 			break;
-		case CR_MACDEF:                                    // ^^macdef <macro-name>
-			if (*tok++ != SYMBOL)
+		case CR_MACDEF: // ^^macdef <macro-name>
+			if (*tok.u32++ != SYMBOL)
 				return error(missym_error);
 
-			p = string[*tok++];
+			p = string[*tok.u32++];
 			w = (lookup(p, MACRO, 0) == NULL ? 0 : 1);
-			evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
-			*evalTokenBuffer64++ = (TOKEN)w;
-			evalTokenBuffer = (uint32_t *)evalTokenBuffer64;
-			*evalTokenBuffer++ = (TOKEN)w;
+			*evalTokenBuffer.u32++ = CONST;
+			*evalTokenBuffer.u64++ = (uint64_t)w;
 			break;
 		case CR_DEFINED:
 			w = DEFINED;
@@ -192,38 +182,34 @@ int expr1(void)
 		case CR_REFERENCED:
 			w = REFERENCED;
 getsym:
-			if (*tok++ != SYMBOL)
+			if (*tok.u32++ != SYMBOL)
 				return error(missym_error);
 
-			p = string[*tok++];
+			p = string[*tok.u32++];
 			j = (*p == '.' ? curenv : 0);
 			w = ((sy = lookup(p, LABEL, j)) != NULL && (sy->sattr & w) ? 1 : 0);
-			*evalTokenBuffer++ = CONST;
-			uint64_t *evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
-			*evalTokenBuffer64++ = (TOKEN)w;
-			evalTokenBuffer = (uint32_t *)evalTokenBuffer64;
+			*evalTokenBuffer.u32++ = CONST;
+			*evalTokenBuffer.u64++ = (uint64_t)w;
 			break;
 		case CR_STREQ:
-			if (*tok != SYMBOL && *tok != STRING)
+			if (*tok.u32 != SYMBOL && *tok.u32 != STRING)
 				return error(str_error);
 
-			p = string[tok[1]];
-			tok +=2;
+			p = string[tok.u32[1]];
+			tok.u32 +=2;
 
-			if (*tok++ != ',')
+			if (*tok.u32++ != ',')
 				return error(comma_error);
 
-			if (*tok != SYMBOL && *tok != STRING)
+			if (*tok.u32 != SYMBOL && *tok.u32 != STRING)
 				return error(str_error);
 
-			p2 = string[tok[1]];
-			tok += 2;
+			p2 = string[tok.u32[1]];
+			tok.u32 += 2;
 
 			w = (WORD)(!strcmp(p, p2));
-			*evalTokenBuffer++ = CONST;
-			evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
-			*evalTokenBuffer64++ = (TOKEN)w;
-			evalTokenBuffer = (uint32_t *)evalTokenBuffer64;
+			*evalTokenBuffer.u32++ = CONST;
+			*evalTokenBuffer.u64++ = (uint64_t)w;
 			break;
 		}
 	}
@@ -242,29 +228,19 @@ int expr2(void)
 	char * p;
 	SYM * sy;
 	int j;
-	uint64_t * evalTokenBuffer64;
-	uint64_t * tok64;
 
-	switch ((int)*tok++)
+	switch (*tok.u32++)
 	{
 	case CONST:
-		*evalTokenBuffer++ = CONST;
-		evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
-		tok64 = (uint64_t *)tok;
-		*evalTokenBuffer64++ = *tok64++;
-		tok = (TOKEN *)tok64;
-		evalTokenBuffer = (TOKEN *)evalTokenBuffer64;
+		*evalTokenBuffer.u32++ = CONST;
+		*evalTokenBuffer.u64++ = *tok.u64++;
 		break;
 	case FCONST:
-		*evalTokenBuffer++ = FCONST;
-		evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
-		tok64 = (uint64_t *)tok;
-		*evalTokenBuffer64++ = *tok64++;
-		tok = (TOKEN *)tok64;
-		evalTokenBuffer = (TOKEN *)evalTokenBuffer64;
+		*evalTokenBuffer.u32++ = FCONST;
+		*evalTokenBuffer.u64++ =  *tok.u64++;
 		break;
 	case SYMBOL:
-		p = string[*tok++];
+		p = string[*tok.u32++];
 		j = (*p == '.' ? curenv : 0);
 		sy = lookup(p, LABEL, j);
 
@@ -281,22 +257,20 @@ int expr2(void)
 				warn("equated symbol \'%s\' cannot be used in register bank 1", sy->sname);
 		}
 
-		*evalTokenBuffer++ = SYMBOL;
-		*evalTokenBuffer++ = symbolNum;
+		*evalTokenBuffer.u32++ = SYMBOL;
+		*evalTokenBuffer.u32++ = symbolNum;
 		symbolPtr[symbolNum] = sy;
 		symbolNum++;
 		break;
 	case STRING:
-		*evalTokenBuffer++ = CONST;
-		uint64_t *evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
-		*evalTokenBuffer64++ = str_value(string[*tok++]);
-		evalTokenBuffer = (uint32_t *)evalTokenBuffer64;
+		*evalTokenBuffer.u32++ = CONST;
+		*evalTokenBuffer.u64++ = str_value(string[*tok.u32++]);
 		break;
 	case '(':
 		if (expr0() != OK)
 			return ERROR;
 
-		if (*tok++ != ')')
+		if (*tok.u32++ != ')')
 			return error("missing closing parenthesis ')'");
 
 		break;
@@ -304,34 +278,34 @@ int expr2(void)
 		if (expr0() != OK)
 			return ERROR;
 
-		if (*tok++ != ']')
+		if (*tok.u32++ != ']')
 			return error("missing closing bracket ']'");
 
 		break;
 	case '$':
-		*evalTokenBuffer++ = ACONST;				// Attributed const
-		*evalTokenBuffer++ = sloc;					// Current location
-		*evalTokenBuffer++ = cursect | DEFINED;		// Store attribs
+		*evalTokenBuffer.u32++ = ACONST;			// Attributed const
+		*evalTokenBuffer.u32++ = sloc;				// Current location
+		*evalTokenBuffer.u32++ = cursect | DEFINED;	// Store attribs
 		break;
 	case '*':
-		*evalTokenBuffer++ = ACONST;				// Attributed const
+		*evalTokenBuffer.u32++ = ACONST;			// Attributed const
 
 		// pcloc == location at start of line
-		*evalTokenBuffer++ = (orgactive ? orgaddr : pcloc);
+		*evalTokenBuffer.u32++ = (orgactive ? orgaddr : pcloc);
 		// '*' takes attributes of current section, not ABS!
-		*evalTokenBuffer++ = cursect | DEFINED;
+		*evalTokenBuffer.u32++ = cursect | DEFINED;
 		break;
 	case '{':
 		if (expr0() != OK)							// Eat up first parameter (register or immediate)
 			return ERROR;
 
-		if (*tok++ != ':')							// Demand a ':' there
+		if (*tok.u32++ != ':')						// Demand a ':' there
 			return error("missing colon ':'");
 
 		if (expr0() != OK)							// Eat up second parameter (register or immediate)
 			return ERROR;
 
-		if (*tok++ != '}')
+		if (*tok.u32++ != '}')
 			return error("missing closing brace '}'");
 
 		break;
@@ -346,7 +320,7 @@ int expr2(void)
 //
 // Recursive-descent expression analyzer (with some simple speed hacks)
 //
-int expr(TOKEN * otk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
+int expr(TOKENPTR otk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 {
 	// Passed in values (once derefenced, that is) can all be zero. They are
 	// there so that the expression analyzer can fill them in as needed. The
@@ -360,76 +334,81 @@ int expr(TOKEN * otk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 							// Also set in various other places too (riscasm.c,
 							// e.g.)
 
-//printf("expr(): tokens 0-2: %i %i %i (%c %c %c); tc[2] = %i\n", tok[0], tok[1], tok[2], tok[0], tok[1], tok[2], tokenClass[tok[2]]);
+//printf("expr(): tokens 0-2: %i %i %i (%c %c %c); tc[2] = %i\n", tok.u32[0], tok.u32[1], tok.u32[2], tok.u32[0], tok.u32[1], tok.u32[2], tokenClass[tok.u32[2]]);
 	// Optimize for single constant or single symbol.
 	// Shamus: Subtle bug here. EOL token is 101; if you have a constant token
 	//         followed by the value 101, it will trigger a bad evaluation here.
 	//         This is probably a really bad assumption to be making here...!
-	//         (assuming tok[1] == EOL is a single token that is)
+	//         (assuming tok.u32[1] == EOL is a single token that is)
 	//         Seems that even other tokens (SUNARY type) can fuck this up too.
-//	if ((tok[1] == EOL)
-	if ((tok[1] == EOL && ((tok[0] != CONST || tok[0] != FCONST) && tokenClass[tok[0]] != SUNARY))
-//		|| (((*tok == CONST || *tok == FCONST || *tok == SYMBOL) || (*tok >= KW_R0 && *tok <= KW_R31))
-//		&& (tokenClass[tok[2]] < UNARY)))
-		|| (((tok[0] == SYMBOL) || (tok[0] >= KW_R0 && tok[0] <= KW_R31))
-		&& (tokenClass[tok[2]] < UNARY))
-		|| ((tok[0] == CONST || tok[0] == FCONST) && (tokenClass[tok[3]] < UNARY))
+#if 0
+//	if ((tok.u32[1] == EOL)
+	if ((tok.u32[1] == EOL && ((tok.u32[0] != CONST || tok.u32[0] != FCONST) && tokenClass[tok.u32[0]] != SUNARY))
+//		|| (((*tok.u32 == CONST || *tok.u32 == FCONST || *tok.u32 == SYMBOL) || (*tok.u32 >= KW_R0 && *tok.u32 <= KW_R31))
+//		&& (tokenClass[tok.u32[2]] < UNARY)))
+		|| (((tok.u32[0] == SYMBOL) || (tok.u32[0] >= KW_R0 && tok.u32[0] <= KW_R31))
+			&& (tokenClass[tok.u32[2]] < UNARY))
+		|| ((tok.u32[0] == CONST || tok.u32[0] == FCONST) && (tokenClass[tok.u32[3]] < UNARY))
 		)
+#else
+// Shamus: Seems to me that this could be greatly simplified by 1st checking if the first token is a multibyte token, *then* checking if there's an EOL after it depending on the actual length of the token (multiple vs. single). Otherwise, we have the horror show that is the following:
+	if ((tok.u32[1] == EOL
+			&& (tok.u32[0] != CONST && tokenClass[tok.u32[0]] != SUNARY))
+		|| (((tok.u32[0] == SYMBOL)
+				|| (tok.u32[0] >= KW_R0 && tok.u32[0] <= KW_R31))
+			&& (tokenClass[tok.u32[2]] < UNARY))
+		|| ((tok.u32[0] == CONST) && (tokenClass[tok.u32[3]] < UNARY))
+		)
+// Shamus: Yes, you can parse that out and make some kind of sense of it, but damn, it takes a while to get it and understand the subtle bugs that result from not being careful about what you're checking; especially vis-a-vis niavely checking tok.u32[1] for an EOL. O_o
+#endif
 	{
-		if (*tok >= KW_R0 && *tok <= KW_R31)
+		if (*tok.u32 >= KW_R0 && *tok.u32 <= KW_R31)
 		{
-			*evalTokenBuffer++ = CONST;
-			uint64_t *evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
-			*evalTokenBuffer64++ = *a_value = (*tok - KW_R0);
-			evalTokenBuffer = (uint32_t *)evalTokenBuffer64;
+			*evalTokenBuffer.u32++ = CONST;
+			*evalTokenBuffer.u64++ = *a_value = (*tok.u32 - KW_R0);
 			*a_attr = ABS | DEFINED;
 
 			if (a_esym != NULL)
 				*a_esym = NULL;
 
-			tok++;
+			tok.u32++;
 		}
-		else if (*tok == CONST)
+		else if (*tok.u32 == CONST)
 		{
-			*evalTokenBuffer++ = CONST;
-			uint64_t *evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
-			uint64_t *tok64 = (uint64_t *)&tok[1];
-			*evalTokenBuffer64++ = *tok64++;
-			evalTokenBuffer = (TOKEN *)evalTokenBuffer64;
-			*a_value = tok[1];
+			*evalTokenBuffer.u32++ = *tok.u32++;
+			*evalTokenBuffer.u64++ = *a_value = *tok.u64++;
 			*a_attr = ABS | DEFINED;
 
 			if (a_esym != NULL)
 				*a_esym = NULL;
 
-			tok += 3;
-//printf("Quick eval in expr(): CONST = %i, tokenClass[tok[2]] = %i\n", *a_value, tokenClass[*tok]);
+//printf("Quick eval in expr(): CONST = %i, tokenClass[tok.u32[2]] = %i\n", *a_value, tokenClass[*tok.u32]);
 		}
-		else if (*tok == FCONST)
+// Not sure that removing float constant here is going to break anything and/or
+// make things significantly slower, but having this here seems to cause the
+// complexity of the check to get to this part of the parse to go through the
+// roof, and dammit, I just don't feel like fighting that fight ATM. :-P
+#if 0
+		else if (*tok.u32 == FCONST)
 		{
-			*evalTokenBuffer++ = FCONST;
-			*((double *)evalTokenBuffer) = *((double *)&tok[1]);
-			evalTokenBuffer += 2;
-			//*(double *)evalTokenBuffer++ = tok[2];
-			*a_value = *((uint64_t *)&tok[1]);
+			*evalTokenBuffer.u32++ = *tok.u32++;
+			*evalTokenBuffer.u64++ = *a_value = *tok.u64++;
 			*a_attr = ABS | DEFINED | FLOAT;
 
 			if (a_esym != NULL)
 				*a_esym = NULL;
 
-			tok += 3;
-//printf("Quick eval in expr(): CONST = %i, tokenClass[tok[2]] = %i\n", *a_value, tokenClass[*tok]);
+//printf("Quick eval in expr(): CONST = %i, tokenClass[tok.u32[2]] = %i\n", *a_value, tokenClass[*tok.u32]);
 		}
-		else if (*tok == '*')
+#endif
+		else if (*tok.u32 == '*')
 		{
-			*evalTokenBuffer++ = CONST;
-			uint64_t *evalTokenBuffer64 = (uint64_t *)evalTokenBuffer;
+			*evalTokenBuffer.u32++ = CONST;
 
 			if (orgactive)
-				*evalTokenBuffer64++ = *a_value = orgaddr;
+				*evalTokenBuffer.u64++ = *a_value = orgaddr;
 			else
-				*evalTokenBuffer64++ = *a_value = pcloc;
-			evalTokenBuffer = (uint32_t *)evalTokenBuffer64;
+				*evalTokenBuffer.u64++ = *a_value = pcloc;
 
 			// '*' takes attributes of current section, not ABS!
 			*a_attr = cursect | DEFINED;
@@ -437,11 +416,11 @@ int expr(TOKEN * otk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 			if (a_esym != NULL)
 				*a_esym = NULL;
 
-			tok++;
+			tok.u32++;
 		}
-		else if (*tok == STRING || *tok == SYMBOL)
+		else if (*tok.u32 == STRING || *tok.u32 == SYMBOL)
 		{
-			p = string[tok[1]];
+			p = string[tok.u32[1]];
 			j = (*p == '.' ? curenv : 0);
 			symbol = lookup(p, LABEL, j);
 #if 0
@@ -476,7 +455,7 @@ if (symbol)
 					warn("equated symbol '%s' cannot be used in register bank 1", symbol->sname);
 			}
 
-			*evalTokenBuffer++ = SYMBOL;
+			*evalTokenBuffer.u32++ = SYMBOL;
 #if 0
 			*evalTokenBuffer++ = (TOKEN)symbol;
 #else
@@ -485,7 +464,7 @@ While this approach works, it's wasteful. It would be better to use something
 that's already available, like the symbol "order defined" table (which needs to
 be converted from a linked list into an array).
 */
-			*evalTokenBuffer++ = symbolNum;
+			*evalTokenBuffer.u32++ = symbolNum;
 			symbolPtr[symbolNum] = symbol;
 			symbolNum++;
 #endif
@@ -508,25 +487,25 @@ thrown away right here. What the hell is it for?
 				&& a_esym != NULL)
 				*a_esym = symbol;
 
-			tok += 2;
+			tok.u32 += 2;
 		}
 		else
 		{
 			// Unknown type here... Alert the user!,
 			error("undefined RISC register in expression");
 			// Prevent spurious error reporting...
-			tok++;
+			tok.u32++;
 			return ERROR;
 		}
 
-		*evalTokenBuffer++ = ENDEXPR;
+		*evalTokenBuffer.u32++ = ENDEXPR;
 		return OK;
 	}
 
 	if (expr0() != OK)
 		return ERROR;
 
-	*evalTokenBuffer++ = ENDEXPR;
+	*evalTokenBuffer.u32++ = ENDEXPR;
 	return evexpr(otk, a_value, a_attr, a_esym);
 }
 
@@ -535,9 +514,9 @@ thrown away right here. What the hell is it for?
 // Evaluate expression.
 // If the expression involves only ONE external symbol, the expression is
 // UNDEFINED, but it's value includes everything but the symbol value, and
-// `a_esym' is set to the external symbol.
+// 'a_esym' is set to the external symbol.
 //
-int evexpr(TOKEN * tk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
+int evexpr(TOKENPTR tk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 {
 	WORD attr, attr2;
 	SYM * sy;
@@ -545,15 +524,14 @@ int evexpr(TOKEN * tk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 	WORD * sattr = evattr;
 	SYM * esym = NULL;						// No external symbol involved
 	WORD sym_seg = 0;
-    uint64_t *tk64;
 
-	while (*tk != ENDEXPR)
+	while (*tk.u32 != ENDEXPR)
 	{
-		switch ((int)*tk++)
+		switch ((int)*tk.u32++)
 		{
 		case SYMBOL:
 //printf("evexpr(): SYMBOL\n");
-			sy = symbolPtr[*tk++];
+			sy = symbolPtr[*tk.u32++];
 			sy->sattr |= REFERENCED;		// Set "referenced" bit
 
 			if (!(sy->sattr & DEFINED))
@@ -585,22 +563,20 @@ int evexpr(TOKEN * tk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 			sym_seg = (WORD)(sy->sattr & TDB);
 			break;
 		case CONST:
-			tk64 = (uint64_t *)tk;
-			*++sval = *tk64++;
-			tk = (TOKEN *)tk64;
+			*++sval = *tk.u64++;
 //printf("evexpr(): CONST = %lX\n", *sval);
 			*++sattr = ABS | DEFINED;		// Push simple attribs
 			break;
 		case FCONST:
-//printf("evexpr(): CONST = %i\n", *tk);
-			*((double *)sval) = *((double *)tk);
-			tk += 2;
+//printf("evexpr(): FCONST = %i\n", *tk.u32);
+			*((double *)sval) = *((double *)tk.u32);
+			tk.u32 += 2;
 			*++sattr = ABS | DEFINED | FLOAT; // Push simple attribs
 			break;
 		case ACONST:
-//printf("evexpr(): ACONST = %i\n", *tk);
-			*++sval = *tk++;				// Push value
-			*++sattr = (WORD)*tk++;			// Push attribs
+//printf("evexpr(): ACONST = %i\n", *tk.u32);
+			*++sval = *tk.u32++;				// Push value
+			*++sattr = (WORD)*tk.u32++;			// Push attribs
 			break;
 
 			// Binary "+" and "-" matrix:
@@ -647,7 +623,7 @@ int evexpr(TOKEN * tk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 			}
 			else
 			{
-			*sval += sval[1];				// Compute value
+				*sval += sval[1];				// Compute value
 			}
 //printf("%i\n", *sval);
 
@@ -690,7 +666,7 @@ int evexpr(TOKEN * tk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 			}
 			else
 			{
-			*sval -= sval[1];				// Compute value
+				*sval -= sval[1];				// Compute value
 			}
 
 //printf("%i\n", *sval);
@@ -722,8 +698,8 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			}
 			else
 			{
-			*sval = -(int)*sval;
-			*sattr = ABS | DEFINED;			// Expr becomes absolute
+				*sval = -(int)*sval;
+				*sattr = ABS | DEFINED;			// Expr becomes absolute
 			}
 			break;
 		case '!':
@@ -785,7 +761,7 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			}
 			else
 			{
-			*sval = *sval <= sval[1];
+				*sval = *sval <= sval[1];
 			}
 
 			*sattr = ABS | DEFINED;
@@ -825,11 +801,10 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			}
 			else if (attr == 0)
 			{
-			*sval = *sval >= sval[1];
+				*sval = *sval >= sval[1];
 			}
 			else
-
-			*sattr = ABS | DEFINED;
+				*sattr = ABS | DEFINED;
 
 			break;
 		case '>':
@@ -866,8 +841,8 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 				*sval = *dst > *src;
 			}
 			else
-=			{
-			*sval = *sval > sval[1];
+			{
+				*sval = *sval > sval[1];
 			}
 
 			*sattr = ABS | DEFINED;
@@ -883,7 +858,7 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 
 			// Extract float attributes from both terms and pack them
 			// into a single value
-			attr = sattr[0] & FLOAT | ((sattr[1] & FLOAT) > >1);
+			attr = sattr[0] & FLOAT | ((sattr[1] & FLOAT) >> 1);
 
 			if (attr == (FLOAT | (FLOAT >> 1)))
 			{
@@ -908,7 +883,7 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			}
 			else
 			{
-			*sval = *sval < sval[1];
+				*sval = *sval < sval[1];
 			}
 
 			*sattr = ABS | DEFINED;
@@ -943,7 +918,7 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			}
 			else
 			{
-			*sval = *sval != sval[1];
+				*sval = *sval != sval[1];
 			}
 
 			*sattr = ABS | DEFINED;
@@ -982,21 +957,21 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			}
 			else
 			{
-			*sval = *sval == sval[1];
+				*sval = *sval == sval[1];
 			}
 
 			*sattr = ABS | DEFINED;
 
 			break;
-		// All other binary operators must have two ABS items
-		// to work with.  They all produce an ABS value.
+		// All other binary operators must have two ABS items to work with.
+		// They all produce an ABS value.
 		default:
 //printf("evexpr(): default\n");
 			// GH - Removed for v1.0.15 as part of the fix for indexed loads.
 			//if ((*sattr & (TEXT|DATA|BSS)) || (*--sattr & (TEXT|DATA|BSS)))
 			//error(seg_error);
 
-			switch ((int)tk[-1])
+			switch ((int)tk.u32[-1])
 			{
 			case '*':
 				sval--;
@@ -1030,7 +1005,7 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 				}
 				else
 				{
-				*sval *= sval[1];
+					*sval *= sval[1];
 				}
 //printf("%i\n", *sval);
 
@@ -1054,8 +1029,10 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 					// Float / Float
 					double * dst = (double *)sval;
 					double * src = (double *)(sval + 1);
+
 					if (*src == 0)
 						return error("divide by zero");
+
 					*dst = *dst / *src;
 				}
 				else if (attr == FLOAT)
@@ -1063,8 +1040,10 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 					// Float / Int
 					double * dst = (double *)sval;
 					uint64_t * src = (uint64_t *)(sval + 1);
+
 					if (*src == 0)
 						return error("divide by zero");
+
 					*dst = *dst / *src;
 				}
 				else if (attr == FLOAT >> 1)
@@ -1072,8 +1051,10 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 					// Int / Float
 					uint64_t * dst=(uint64_t *)sval;
 					double * src=(double *)(sval + 1);
+
 					if (*src == 0)
 						return error("divide by zero");
+
 					*(double *)dst = *dst / *src;
 				}
 				else
@@ -1081,11 +1062,13 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 					if (sval[1] == 0)
 						return error("divide by zero");
 //printf("--> N/N: %i / %i = ", sval[0], sval[1]);
-				// Compiler is picky here: Without casting these, it discards
-				// the sign if dividing a negative # by a positive one,
-				// creating a bad result. :-/
-				// Definitely a side effect of using uint32_ts intead of ints.
-				*sval = (int32_t)sval[0] / (int32_t)sval[1];
+
+					// Compiler is picky here: Without casting these, it
+					// discards the sign if dividing a negative # by a
+					// positive one, creating a bad result. :-/
+					// Definitely a side effect of using uint32_ts intead of
+					// ints.
+					*sval = (int32_t)sval[0] / (int32_t)sval[1];
 				}
 
 				*sattr = ABS | DEFINED;			// Expr becomes absolute
@@ -1096,6 +1079,7 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			case '%':
 				sval--;
 				sattr--;					// Pop attrib
+
 				if ((*sattr | sattr[1]) & FLOAT)
 					return error("floating point numbers not allowed with operator '%'.");
 
@@ -1108,40 +1092,50 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			case SHL:
 				sval--;
 				sattr--;					// Pop attrib
+
 				if ((*sattr | sattr[1]) & FLOAT)
 					return error("floating point numbers not allowed with operator '<<'.");
+
 				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				*sval <<= sval[1];
 				break;
 			case SHR:
 				sval--;
 				sattr--;					// Pop attrib
+
 				if ((*sattr | sattr[1]) & FLOAT)
 					return error("floating point numbers not allowed with operator '>>'.");
+
 				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				*sval >>= sval[1];
 				break;
 			case '&':
 				sval--;
 				sattr--;					// Pop attrib
+
 				if ((*sattr | sattr[1]) & FLOAT)
 					return error("floating point numbers not allowed with operator '&'.");
+
 				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				*sval &= sval[1];
 				break;
 			case '^':
 				sval--;
 				sattr--;					// Pop attrib
+
 				if ((*sattr | sattr[1]) & FLOAT)
 					return error("floating point numbers not allowed with operator '^'.");
+
 				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				*sval ^= sval[1];
 				break;
 			case '|':
 				sval--;
 				sattr--;					// Pop attrib
+
 				if ((*sattr | sattr[1]) & FLOAT)
 					return error("floating point numbers not allowed with operator '|'.");
+
 				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				*sval |= sval[1];
 				break;

@@ -154,7 +154,6 @@
 #define SPACE        ' '		// ASCII space
 #define SLASHCHAR    '/'
 #define SLASHSTRING  "/"
-#define TOKEN        uint32_t	// Assembler token
 #define FNSIZ        128		// Maximum size of a filename
 #define OK           0			// OK return
 #define DEBUG        if (debug)	// Debug conditional
@@ -166,7 +165,7 @@
 // Object code formats
 enum
 {
-ALCYON,			// Alcyon/DRI C object format
+ALCYON,				// Alcyon/DRI C object format
 MWC, 				// Mark Williams object format
 BSD, 				// BSD object format
 ELF, 				// ELF object format
@@ -175,16 +174,27 @@ P56,				// DSP 56001 object format
 XEX, 				// COM/EXE/XEX/whatever a8 object format
 };
 
+// Assembler token
+#define TOKEN	uint32_t
+
+// Token pointer type is a union because we have 64-bit sized tokens now :-P
+#define TOKENPTR union _tokenptr
+TOKENPTR
+{
+	uint32_t * u32;
+	uint64_t * u64;
+};
+
 // Pointer type that can point to (almost) anything
 #define PTR union _ptr
 PTR
 {
-	uint8_t * cp;				// Char
+	uint8_t *  cp;				// Char
 	uint16_t * wp;				// WORD
 	uint32_t * lp;				// LONG
-	uint32_t lw;				// LONG
-	SYM ** sy;					// SYM
-	TOKEN * tk;					// TOKEN
+	uint32_t   lw;				// LONG
+	SYM **     sy;				// SYM
+	TOKENPTR   tk;				// TOKEN
 };
 
 // Symbol spaces
@@ -215,11 +225,11 @@ PTR
 #define SIZW         0x0002		// .w
 #define SIZL         0x0004		// .l
 #define SIZN         0x0008		// no .(size) specifier
-#define SIZD         0x0010		// .d (quad word or FPU double precision real)
+#define SIZD         0x0010		// .d (FPU double precision real)
 #define SIZS         0x0020		// .s (FPU single precision real)
 #define SIZX         0x0040		// .x (FPU extended precision real)
 #define SIZP         0x0080		// .p (FPU pakced decimal real)
-#define SIZQ         0x0100		// .q
+#define SIZQ         0x0100		// .q (quad word)
 
 // RISC register bank definitions (used in extended symbol attributes also)
 #define BANK_N       0x0000		// No register bank specified

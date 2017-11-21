@@ -26,6 +26,10 @@ MCHUNK {
 
 #define MWORD        0x0000		// Marked word
 #define MLONG        0x0100		// Marked long
+//This will have to be defined eventually. Might have to overhaul the mark
+//system as 8-bits doesn't seem to be enough, at least for a bitfield (which it
+//might not have to be, in which case it would be big enough...)
+//#define MQUAD        0x		// Marked quad word (TODO: merge with MDOUBLE?)
 #define MMOVEI       0x0200		// Mark RISC MOVEI instruction
 #define MDOUBLE      0x0400		// Marked double float
 #define MEXTEND      0x0800		// Marked extended float

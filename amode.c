@@ -65,8 +65,8 @@ WORD mulmode;				// to distinguish between 32 and 64 bit multiplications (68020+
 
 int bfparam1;				// bfxxx / fmove instruction parameter 1
 int bfparam2;				// bfxxx / fmove instruction parameter 2
-int bfval1;					//bfxxx / fmove value 1
-int bfval2;					//bfxxx / fmove value 2
+int bfval1;					// bfxxx / fmove value 1
+int bfval2;					// bfxxx / fmove value 2
 TOKEN bf0expr[EXPRSIZE];	// Expression
 uint64_t bf0exval;			// Expression's value
 WORD bf0exattr;				// Expression's attribute
@@ -97,7 +97,7 @@ int amode(int acount)
 	bf0esym = NULL;
 
 	// If at EOL, then no addr modes at all
-	if (*tok == EOL)
+	if (*tok.u32 == EOL)
 		return 0;
 
 	// Parse first addressing mode
@@ -106,17 +106,17 @@ int amode(int acount)
 	#define AnREG     a0reg
 	#define AnIXREG   a0ixreg
 	#define AnIXSIZ   a0ixsiz
-	#define AnEXPR    a0expr
+	#define AnEXPR    (TOKENPTR)a0expr
 	#define AnEXVAL   a0exval
 	#define AnEXATTR  a0exattr
-	#define AnOEXPR   a0oexpr
+	#define AnOEXPR   (TOKENPTR)a0oexpr
 	#define AnOEXVAL  a0oexval
 	#define AnOEXATTR a0oexattr
 	#define AnESYM    a0esym
 	#define AMn_IX0   am0_ix0
 	#define AMn_IXN   am0_ixn
 	#define CHK_FOR_DISPn CheckForDisp0
-	#define AnBEXPR   a0bexpr
+	#define AnBEXPR   (TOKENPTR)a0bexpr
 	#define AnBEXVAL  a0bexval
 	#define AnBEXATTR a0bexattr
 	#define AnBZISE   a0bsize
@@ -132,15 +132,15 @@ int amode(int acount)
 
 	// it's a bitfield instruction--check the parameters inside the {} block
 	// for validity
-	if (*tok == '{')
+	if (*tok.u32 == '{')
 		if (check030bf() == ERROR)
 			return ERROR;
 
-	if ((acount == 0) || (*tok != ','))
+	if ((acount == 0) || (*tok.u32 != ','))
 		return 1;
 
 	// Eat the comma
-	tok++;
+	tok.u32++;
 
 	// Parse second addressing mode
 	#define AnOK      a1ok
@@ -148,17 +148,17 @@ int amode(int acount)
 	#define AnREG     a1reg
 	#define AnIXREG   a1ixreg
 	#define AnIXSIZ   a1ixsiz
-	#define AnEXPR    a1expr
+	#define AnEXPR    (TOKENPTR)a1expr
 	#define AnEXVAL   a1exval
 	#define AnEXATTR  a1exattr
-	#define AnOEXPR   a1oexpr
+	#define AnOEXPR   (TOKENPTR)a1oexpr
 	#define AnOEXVAL  a1oexval
 	#define AnOEXATTR a1oexattr
 	#define AnESYM    a1esym
 	#define AMn_IX0   am1_ix0
 	#define AMn_IXN   am1_ixn
 	#define CHK_FOR_DISPn CheckForDisp1
-	#define AnBEXPR   a1bexpr
+	#define AnBEXPR   (TOKENPTR)a1bexpr
 	#define AnBEXVAL  a1bexval
 	#define AnBEXATTR a1bexattr
 	#define AnBZISE   a1bsize
@@ -170,34 +170,34 @@ int amode(int acount)
 
 	// It's a bitfield instruction--check the parameters inside the {} block
 	// for validity
-	if (*tok == '{')
+	if (*tok.u32 == '{')
         if (check030bf() == ERROR)
 		return ERROR;
 
 	// At this point, it is legal for 020+ to have a ':'. For example divu.l
 	// d0,d2:d3
-	if (*tok == ':')
+	if (*tok.u32 == ':')
 	{
 		if ((activecpu & (CPU_68020 | CPU_68030 | CPU_68040)) == 0)
 			return error(unsupport);
 
 		// TODO: protect this from combinations like Dx:FPx etc :)
-		tok++;  //eat the colon
+		tok.u32++;  //eat the colon
 
-		if ((*tok >= KW_D0) && (*tok <= KW_D7))
+		if ((*tok.u32 >= KW_D0) && (*tok.u32 <= KW_D7))
 		{
-			a2reg = (*tok - KW_D0);
+			a2reg = (*tok.u32 - KW_D0);
 			mulmode = 1 << 10;
 		}
-		else if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
+		else if ((*tok.u32 >= KW_FP0) && (*tok.u32 <= KW_FP7))
 		{
-			a2reg = (*tok - KW_FP0);
+			a2reg = (*tok.u32 - KW_FP0);
 			mulmode = 1 << 10;
 		}
 		else
 			return error("a data or FPU register must follow a :");
 
-		*tok++;
+		*tok.u32++;
 	}
 	else
 	{
@@ -236,17 +236,17 @@ int reglist(WORD * a_rmask)
 
 	for(;;)
 	{
-		if ((*tok >= KW_D0) && (*tok <= KW_A7))
-			r = *tok++ & 0x0F;
+		if ((*tok.u32 >= KW_D0) && (*tok.u32 <= KW_A7))
+			r = *tok.u32++ & 0x0F;
 		else
 			break;
 
-		if (*tok == '-')
+		if (*tok.u32 == '-')
 		{
-			tok++;
+			tok.u32++;
 
-			if ((*tok >= KW_D0) && (*tok <= KW_A7))
-				cnt = *tok++ & 0x0F;
+			if ((*tok.u32 >= KW_D0) && (*tok.u32 <= KW_A7))
+				cnt = *tok.u32++ & 0x0F;
 			else
 				return error("register list syntax");
 
@@ -261,10 +261,10 @@ int reglist(WORD * a_rmask)
 		while (cnt-- >= 0)
 			rmask |= msktab[r++];
 
-		if (*tok != '/')
+		if (*tok.u32 != '/')
 			break;
 
-		tok++;
+		tok.u32++;
 	}
 
 	*a_rmask = rmask;
@@ -288,17 +288,17 @@ int fpu_reglist_left(WORD * a_rmask)
 
 	for(;;)
 	{
-		if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
-			r = *tok++ & 0x07;
+		if ((*tok.u32 >= KW_FP0) && (*tok.u32 <= KW_FP7))
+			r = *tok.u32++ & 0x07;
 		else
 			break;
 
-		if (*tok == '-')
+		if (*tok.u32 == '-')
 		{
-			tok++;
+			tok.u32++;
 
-			if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
-				cnt = *tok++ & 0x07;
+			if ((*tok.u32 >= KW_FP0) && (*tok.u32 <= KW_FP7))
+				cnt = *tok.u32++ & 0x07;
 			else
 				return error("register list syntax");
 
@@ -315,10 +315,10 @@ int fpu_reglist_left(WORD * a_rmask)
 		while (cnt-- >= 0)
 			rmask |= msktab_minus[r++];
 
-		if (*tok != '/')
+		if (*tok.u32 != '/')
 			break;
 
-		tok++;
+		tok.u32++;
 	}
 
 	*a_rmask = rmask;
@@ -339,17 +339,17 @@ int fpu_reglist_right(WORD * a_rmask)
 
 	for(;;)
 	{
-		if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
-			r = *tok++ & 0x07;
+		if ((*tok.u32 >= KW_FP0) && (*tok.u32 <= KW_FP7))
+			r = *tok.u32++ & 0x07;
 		else
 			break;
 
-		if (*tok == '-')
+		if (*tok.u32 == '-')
 		{
-			tok++;
+			tok.u32++;
 
-			if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
-				cnt = *tok++ & 0x07;
+			if ((*tok.u32 >= KW_FP0) && (*tok.u32 <= KW_FP7))
+				cnt = *tok.u32++ & 0x07;
 			else
 				return error("register list syntax");
 
@@ -364,10 +364,10 @@ int fpu_reglist_right(WORD * a_rmask)
 		while (cnt-- >= 0)
 			rmask |= msktab_plus[r++];
 
-		if (*tok != '/')
+		if (*tok.u32 != '/')
 			break;
 
-		tok++;
+		tok.u32++;
 	}
 
 	*a_rmask = rmask;
@@ -385,21 +385,23 @@ int fpu_reglist_right(WORD * a_rmask)
 int check030bf(void)
 {
 	CHECK00;
-	tok++;
+	tok.u32++;
 
-	if (*tok == CONST)
+	if (*tok.u32 == CONST)
 	{
-		tok++;
-		bfval1 = (int)*(uint64_t *)tok;
+		tok.u32++;
+//		bfval1 = (int)*(uint64_t *)tok.u32;
+		bfval1 = (int)*tok.u64;
 
 		// Do=0, offset=immediate - shift it to place
 		bfparam1 = (0 << 11);
-		tok++;
-		tok++;
+//		tok.u32++;
+//		tok.u32++;
+		tok.u64++;
 	}
-	else if (*tok == SYMBOL)
+	else if (*tok.u32 == SYMBOL)
 	{
-		if (expr(bf0expr, &bf0exval, &bf0exattr, &bf0esym) != OK)
+		if (expr((TOKENPTR)bf0expr, &bf0exval, &bf0exattr, &bf0esym) != OK)
 			return ERROR;
 
 		if (!(bf0exattr & DEFINED))
@@ -410,39 +412,42 @@ int check030bf(void)
 		// Do=0, offset=immediate - shift it to place
 		bfparam1 = (0 << 11);
 	}
-	else if ((*tok >= KW_D0) && (*tok <= KW_D7))
+	else if ((*tok.u32 >= KW_D0) && (*tok.u32 <= KW_D7))
 	{
 		// Do=1, offset=data register - shift it to place
 		bfparam1 = (1 << 11);
-		bfval1 = (*(int *)tok - 128);
-		tok++;
+		bfval1 = (*(int *)tok.u32 - 128);
+		tok.u32++;
 	}
 	else
 		return ERROR;
 
-	if (*tok==':')
-		tok++;	//eat the ':'
+	// Eat the ':', if any
+	if (*tok.u32 == ':')
+		tok.u32++;
 
-	if (*tok == '}' && tok[1] == EOL)
+	if (*tok.u32 == '}' && tok.u32[1] == EOL)
 	{
 		// It is ok to have }, EOL here - it might be "fmove fpn,<ea> {dx}"
-		tok++;
+		tok.u32++;
 		return OK;
 	}
 
-	if (*tok == CONST)
+	if (*tok.u32 == CONST)
 	{
-		tok++;
-		bfval2 = (int)*(uint64_t *)tok;
+		tok.u32++;
+//		bfval2 = (int)*(uint64_t *)tok.u32;
+		bfval2 = (int)*tok.u64;
 
 		// Do=0, offset=immediate - shift it to place
 		bfparam2 = (0 << 5);
-		tok++;
-        tok++;
+//		tok.u32++;
+//		tok.u32++;
+		tok.u64++;
 	}
-	else if (*tok == SYMBOL)
+	else if (*tok.u32 == SYMBOL)
 	{
-		if (expr(bf0expr, &bf0exval, &bf0exattr, &bf0esym) != OK)
+		if (expr((TOKENPTR)bf0expr, &bf0exval, &bf0exattr, &bf0esym) != OK)
 			return ERROR;
 
 		bfval2 = (int)bf0exval;
@@ -453,17 +458,17 @@ int check030bf(void)
 		// Do=0, offset=immediate - shift it to place
 		bfparam2 = (0 << 5);
 	}
-	else if ((*tok >= KW_D0) && (*tok <= KW_D7))
+	else if ((*tok.u32 >= KW_D0) && (*tok.u32 <= KW_D7))
 	{
 		// Do=1, offset=data register - shift it to place
-		bfval2 = ((*(int *)tok - 128));
+		bfval2 = ((*(int *)tok.u32 - 128));
 		bfparam2 = (1 << 5);
-		tok++;
+		tok.u32++;
 	}
 	else
 		return ERROR;
 
-	tok++;	// Eat the '}'
+	tok.u32++;	// Eat the '}'
 
 	return OK;
 }

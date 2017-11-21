@@ -153,10 +153,10 @@ int DefineMacro(void)
 	// Setup entry in symbol table, make sure the macro isn't a duplicate
 	// entry, and that it doesn't override any processor mnemonic or assembler
 	// directive.
-	if (*tok++ != SYMBOL)
+	if (*tok.u32++ != SYMBOL)
 		return error("missing symbol");
 
-	char * name = string[*tok++];
+	char * name = string[*tok.u32++];
 
 	if (lookup(name, MACRO, 0) != NULL)
 		return error("duplicate macro definition");
@@ -166,7 +166,7 @@ int DefineMacro(void)
 	curmac->sattr = (WORD)(macnum++);
 
 	// Parse and define formal arguments in symbol table
-	if (*tok != EOL)
+	if (*tok.u32 != EOL)
 	{
 		argno = 0;
 		symlist(defmac2);
@@ -307,19 +307,19 @@ static int LNCatch(int (* lnfunc)(), char * dirlist)
 		char * p = NULL;
 		int k = -1;
 
-		if (*tok == SYMBOL)
+		if (*tok.u32 == SYMBOL)
 		{
 			// A string followed by a colon or double colon is a symbol and
 			// *not* a directive, see if we can find the directive after it
-			if ((tok[2] == ':' || tok[2] == DCOLON))
+			if ((tok.u32[2] == ':' || tok.u32[2] == DCOLON))
 			{
-				if (tok[3] == SYMBOL)
-					p = string[tok[4]];
+				if (tok.u32[3] == SYMBOL)
+					p = string[tok.u32[4]];
 			}
 			else
 			{
 				// Otherwise, just grab the directive
-				p = string[tok[1]];
+				p = string[tok.u32[1]];
 			}
 		}
 
@@ -389,7 +389,7 @@ static int KWMatch(char * kw, char * kwlist)
 //
 int InvokeMacro(SYM * mac, WORD siz)
 {
-	DEBUG { printf("InvokeMacro: arguments="); DumpTokens(tok); }
+	DEBUG { printf("InvokeMacro: arguments="); DumpTokens(tok.u32); }
 
 	INOBJ * inobj = a_inobj(SRC_IMACRO);	// Alloc and init IMACRO
 	IMACRO * imacro = inobj->inobj.imacro;
@@ -397,46 +397,46 @@ int InvokeMacro(SYM * mac, WORD siz)
 
 	// Chop up the arguments, if any (tok comes from token.c, which at this
 	// point points at the macro argument token stream)
-	if (*tok != EOL)
+	if (*tok.u32 != EOL)
 	{
 		// Parse out the arguments and set them up correctly
 		TOKEN * p = imacro->argument[nargs].token;
 		int stringNum = 0;
 
-		while (*tok != EOL)
+		while (*tok.u32 != EOL)
 		{
-			if (*tok == ACONST)
+			if (*tok.u32 == ACONST)
 			{
 				for(int i=0; i<3; i++)
-					*p++ = *tok++;
+					*p++ = *tok.u32++;
 			}
-			else if (*tok == CONST)		// Constants are 64-bits
+			else if (*tok.u32 == CONST)		// Constants are 64-bits
 			{
-				*p++ = *tok++;			// Token
+				*p++ = *tok.u32++;			// Token
 				uint64_t *p64 = (uint64_t *)p;
-				uint64_t *tok64 = (uint64_t *)tok;
+				uint64_t *tok64 = (uint64_t *)tok.u32;
 				*p64++ = *tok64++;
-				tok = (TOKEN *)tok64;
+				tok.u32 = (TOKEN *)tok64;
 				p = (uint32_t *)p64;
 			}
-			else if ((*tok == STRING) || (*tok == SYMBOL))
+			else if ((*tok.u32 == STRING) || (*tok.u32 == SYMBOL))
 			{
-				*p++ = *tok++;
-				imacro->argument[nargs].string[stringNum] = strdup(string[*tok++]);
+				*p++ = *tok.u32++;
+				imacro->argument[nargs].string[stringNum] = strdup(string[*tok.u32++]);
 				*p++ = stringNum++;
 			}
-			else if (*tok == ',')
+			else if (*tok.u32 == ',')
 			{
 				// Comma delimiter was found, so set up for next argument
 				*p++ = EOL;
-				tok++;
+				tok.u32++;
 				stringNum = 0;
 				nargs++;
 				p = imacro->argument[nargs].token;
 			}
 			else
 			{
-				*p++ = *tok++;
+				*p++ = *tok.u32++;
 			}
 		}
 

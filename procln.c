@@ -176,18 +176,18 @@ DEBUG { printf("Assemble: Found TKEOF flag...\n"); }
 	label = NULL;							// No label
 	lab_sym = NULL;							// No (exported) label
 	equate = NULL;							// No equate
-	tk = tok;								// Save first token in line
+	tk = tok.u32;								// Save first token in line
 	pcloc = (uint32_t)sloc;					// Set beginning-of-line PC
 
 loop1:										// Internal line processing loop
 
-	if (*tok == EOL)						// Restart loop if end-of-line
+	if (*tok.u32 == EOL)						// Restart loop if end-of-line
 		goto loop;
 
 	// First token MUST be a symbol (Shamus: not sure why :-/)
-	if (*tok != SYMBOL)
+	if (*tok.u32 != SYMBOL)
 	{
-		if ((*tok >= KW_D0) && (*tok <= KW_R31))
+		if ((*tok.u32 >= KW_D0) && (*tok.u32 <= KW_R31))
 			error("cannot use reserved keyword as label name or .equ");
 		else
 			error("syntax error; expected symbol");
@@ -195,13 +195,13 @@ loop1:										// Internal line processing loop
 		goto loop;
 	}
 
-	j = (int)tok[2];						// Skip equates (normal statements)
+	j = (int)tok.u32[2];						// Skip equates (normal statements)
 
 	if (j == '=' || j == DEQUALS || j == SET || j == REG || j == EQUREG || j == CCDEF)
 	{
-		equate = string[tok[1]];
+		equate = string[tok.u32[1]];
 		equtyp = j;
-		tok += 3;
+		tok.u32 += 3;
 		goto normal;
 	}
 
@@ -209,14 +209,14 @@ loop1:										// Internal line processing loop
 	if (j == ':' || j == DCOLON)
 	{
 as68label:
-		label = string[tok[1]];				// Get label name
-		labtyp = tok[2];					// Get label type
-		tok += 3;							// Go to next line token
+		label = string[tok.u32[1]];				// Get label name
+		labtyp = tok.u32[2];					// Get label type
+		tok.u32 += 3;							// Go to next line token
 
 		// AS68 MODE:
 		// Looks like another label follows the previous one, so handle
 		// the previous one until there aren't any more
-		if (as68_flag && (*tok == SYMBOL && tok[2] == ':'))
+		if (as68_flag && (*tok.u32 == SYMBOL && tok.u32[2] == ':'))
 		{
 			if (HandleLabel(label, labtyp) != 0)
 				goto loop;
@@ -226,17 +226,17 @@ as68label:
 	}
 
 	// EOL is legal here...
-	if (*tok == EOL)
+	if (*tok.u32 == EOL)
 		goto normal;
 
 	// First token MUST be a symbol (if we get here, tok didn't advance)
-	if (*tok++ != SYMBOL)
+	if (*tok.u32++ != SYMBOL)
 	{
 		error("syntax error; expected symbol");
 		goto loop;
 	}
 
-	opname = p = string[*tok++];
+	opname = p = string[*tok.u32++];
 
 	// Check to see if the SYMBOL is a keyword (a mnemonic or directive).
 	// On output, `state' will have one of the values:
@@ -269,18 +269,17 @@ as68label:
 	// Check for ".b" ".w" ".l" after directive, macro or mnemonic.
 	siz = SIZN;
 
-	switch (*tok)
+	switch (*tok.u32)
 	{
-	case DOTW: siz = SIZW, tok++; break;
-	case DOTL: siz = SIZL, tok++; break;
-	case DOTB: siz = SIZB, tok++; break;
-	case DOTD: siz = SIZD, tok++; break;
-	case DOTP: siz = SIZP, tok++; break;
-	case DOTQ: siz = SIZQ, tok++; break;
-	case DOTS: siz = SIZS, tok++; break;
-	case DOTX: siz = SIZX, tok++; break;
+	case DOTW: siz = SIZW, tok.u32++; break;
+	case DOTL: siz = SIZL, tok.u32++; break;
+	case DOTB: siz = SIZB, tok.u32++; break;
+	case DOTD: siz = SIZD, tok.u32++; break;
+	case DOTP: siz = SIZP, tok.u32++; break;
+	case DOTQ: siz = SIZQ, tok.u32++; break;
+	case DOTS: siz = SIZS, tok.u32++; break;
+	case DOTX: siz = SIZX, tok.u32++; break;
 	}
-
 
 	// Do special directives (500..999) (These must be handled in "real time")
 	if (state >= 500 && state < 1000)
@@ -309,7 +308,7 @@ as68label:
 				goto loop;
 			}
 
-			if (*tok++ != ',')
+			if (*tok.u32++ != ',')
 			{
 				error(comma_error);
 				goto loop;
@@ -441,11 +440,11 @@ When checking to see if it's already been equated, issue a warning.
 			}
 
 			// Check for register to equate to
-			if ((*tok >= KW_R0) && (*tok <= KW_R31))
+			if ((*tok.u32 >= KW_R0) && (*tok.u32 <= KW_R31))
 			{
 //				sy->sattre  = EQUATEDREG | RISCSYM;	// Mark as equated register
 				sy->sattre  = EQUATEDREG;	// Mark as equated register
-				riscreg = (*tok - KW_R0);
+				riscreg = (*tok.u32 - KW_R0);
 //is there any reason to do this, since we're putting this in svalue?
 //i'm thinking, no. Let's test that out! :-D
 //				sy->sattre |= (riscreg << 8);		// Store register number
@@ -461,15 +460,15 @@ When checking to see if it's already been equated, issue a warning.
 #endif
 
 				// Check for ",<bank #>" override notation
-				if ((tok[1] == ',') && (tok[2] == CONST))
+				if ((tok.u32[1] == ',') && (tok.u32[2] == CONST))
 				{
 					// Advance token pointer to the constant
-					tok += 3;
+					tok.u32 += 3;
 
 					// Anything other than a 0 or a 1 will result in "No Bank"
-					if (*(uint64_t *)tok == 0)
+					if (*(uint64_t *)tok.u32 == 0)
 						registerbank = BANK_0;
-					else if (*(uint64_t *)tok == 1)
+					else if (*(uint64_t *)tok.u32 == 1)
 						registerbank = BANK_1;
 				}
 
@@ -489,12 +488,12 @@ When checking to see if it's already been equated, issue a warning.
 // & what does this $80000080 constant mean???
 //				eval = 0x80000080 + (riscreg) + (registerbank << 8);
 				eval = riscreg;
-				tok++;
+				tok.u32++;
 			}
 			// Checking for a register symbol
-			else if (tok[0] == SYMBOL)
+			else if (tok.u32[0] == SYMBOL)
 			{
-				sy2 = lookup(string[tok[1]], LABEL, j);
+				sy2 = lookup(string[tok.u32[1]], LABEL, j);
 
 				// Make sure symbol is a valid equreg
 				if (!sy2 || !(sy2->sattre & EQUATEDREG))
@@ -507,7 +506,7 @@ When checking to see if it's already been equated, issue a warning.
 					eattr = ABS | DEFINED | GLOBAL;	// Copy symbols attributes
 					sy->sattre = sy2->sattre;
 					eval = (sy2->svalue & 0xFFFFF0FF);
-					tok += 2;
+					tok.u32 += 2;
 				}
 			}
 			else
@@ -529,9 +528,9 @@ When checking to see if it's already been equated, issue a warning.
 			sy->sattre |= EQUATEDCC;
 			eattr = ABS | DEFINED | GLOBAL;
 
-			if (tok[0] == SYMBOL)
+			if (tok.u32[0] == SYMBOL)
 			{
-				sy2 = lookup(string[tok[1]], LABEL, j);
+				sy2 = lookup(string[tok.u32[1]], LABEL, j);
 
 				if (!sy2 || !(sy2->sattre & EQUATEDCC))
 				{
@@ -543,16 +542,16 @@ When checking to see if it's already been equated, issue a warning.
 					eattr = ABS | DEFINED | GLOBAL;
 					sy->sattre = sy2->sattre;
 					eval = sy2->svalue;
-					tok += 2;
+					tok.u32 += 2;
 				}
 			}
 			else if (expr(exprbuf, &eval, &eattr, &esym) != OK)
 				goto loop;
 		}
 		//equ a equr
-		else if (*tok == SYMBOL)
+		else if (*tok.u32 == SYMBOL)
 		{
-			sy2 = lookup(string[tok[1]], LABEL, j);
+			sy2 = lookup(string[tok.u32[1]], LABEL, j);
 
 			if (sy2 && (sy2->sattre & EQUATEDREG))
 			{
@@ -712,7 +711,7 @@ When checking to see if it's already been equated, issue a warning.
 	if (amode(1) < 0)				// Parse 0, 1 or 2 addr modes
 		goto loop;
 
-	if (*tok != EOL)
+	if (*tok.u32 != EOL)
 		error(extra_stuff);
 
 	amsk0 = amsktab[am0];

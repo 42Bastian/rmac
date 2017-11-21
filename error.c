@@ -19,11 +19,19 @@ static long unused;				// For supressing 'write' warnings
 
 //
 // Report error if not at EOL
+// N.B.: Since this should *never* happen, we can feel free to add whatever
+//       diagnostics that will help in tracking down a problem to this function.
 //
 int at_eol(void)
 {
-	if (*tok != EOL)
-		error("syntax error. expected EOL, found $%X ('%c')", *tok, *tok);
+	if (*tok.u32 != EOL)
+	{
+		error("syntax error. expected EOL, found $%X ('%c')", *tok.u32, *tok.u32);
+		printf("Token = ");
+		DumpToken(*tok.u32);
+		printf("\n");
+		DumpTokenBuffer();
+	}
 
 	return 0;
 }

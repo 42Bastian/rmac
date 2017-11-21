@@ -26,7 +26,10 @@
 #define DEF_KW
 #include "kwtab.h"
 
-TOKEN exprbuf[128];			// Expression buffer
+// N.B.: It's perfectly fine to keep exprbuf as an array of TOKENS and to cast
+//       to a TOKENPTR where needed. But this works too. :-P
+TOKEN _exprbuf[128];		// Expression buffer
+TOKENPTR exprbuf = (TOKENPTR)_exprbuf;	// Expression buffer point
 SYM * symbolPtr[1000000];	// Symbol pointers table
 static long unused;			// For supressing 'write' warnings
 char buffer[256];			// Scratch buffer for messages
@@ -173,14 +176,14 @@ void SetLargestAlignment(int size)
 //
 int d_error(char *str)
 {
-	if (*tok == EOL)
+	if (*tok.u32 == EOL)
 		return error("error directive encountered - aborting assembling");
 	else
 	{
-		switch(*tok)
+		switch(*tok.u32)
 		{
 		case STRING:
-			return error(string[tok[1]]);
+			return error(string[tok.u32[1]]);
 			break;
 		default:
 			return error("error directive encountered--aborting assembly");
@@ -194,14 +197,14 @@ int d_error(char *str)
 //
 int d_warn(char *str)
 {
-	if (*tok == EOL)
+	if (*tok.u32 == EOL)
 		return warn("WARNING WARNING WARNING");
 	else
 	{
-		switch(*tok)
+		switch(*tok.u32)
 		{
 		case STRING:
-			return warn(string[tok[1]]);
+			return warn(string[tok.u32[1]]);
 			break;
 		default:
 			return warn("WARNING WARNING WARNING");
@@ -273,27 +276,27 @@ int d_print(void)
 	SYM * esym;					// External symbol involved in expr.
 	TOKEN r_expr[EXPRSIZE];
 
-	while (*tok != EOL)
+	while (*tok.u32 != EOL)
 	{
-		switch(*tok)
+		switch(*tok.u32)
 		{
 		case STRING:
-			sprintf(prntstr, "%s", string[tok[1]]);
+			sprintf(prntstr, "%s", string[tok.u32[1]]);
 			printf("%s", prntstr);
 
 			if (list_fd)
 				unused = write(list_fd, prntstr, (LONG)strlen(prntstr));
 
-			tok += 2;
+			tok.u32 += 2;
 			break;
 		case '/':
 			formatting = 1;
 
-			if (tok[1] != SYMBOL)
+			if (tok.u32[1] != SYMBOL)
 				goto token_err;
 
-//			strcpy(prntstr, (char *)tok[2]);
-			strcpy(prntstr, string[tok[2]]);
+//			strcpy(prntstr, (char *)tok.u32[2]);
+			strcpy(prntstr, string[tok.u32[2]]);
 
 			switch(prntstr[0])
 			{
@@ -307,13 +310,13 @@ int d_print(void)
 				return ERROR;
 			}
 
-			tok += 3;
+			tok.u32 += 3;
 			break;
 		case ',':
-			tok++;
+			tok.u32++;
 			break;
 		default:
-			if (expr(r_expr, &eval, &eattr, &esym) != OK)
+			if (expr((TOKENPTR)r_expr, &eval, &eattr, &esym) != OK)
 				goto token_err;
 			else
 			{
@@ -367,13 +370,13 @@ int d_ccundef(void)
 		return ERROR;
 	}
 
-	if (*tok != SYMBOL)
+	if (*tok.u32 != SYMBOL)
 	{
 		error("syntax error; expected symbol");
 		return ERROR;
 	}
 
-	ccname = lookup(string[tok[1]], LABEL, 0);
+	ccname = lookup(string[tok.u32[1]], LABEL, 0);
 
 	// Make sure symbol is a valid ccdef
 	if (!ccname || !(ccname->sattre & EQUATEDCC))
@@ -399,18 +402,18 @@ int d_equrundef(void)
 	if (!rgpu && !rdsp)
 		return error(".equrundef/.regundef must be defined in .gpu/.dsp section");
 
-	while (*tok != EOL)
+	while (*tok.u32 != EOL)
 	{
 		// Skip preceeding or seperating commas (if any)
-		if (*tok == ',')
-			tok++;
+		if (*tok.u32 == ',')
+			tok.u32++;
 
 		// Check we are dealing with a symbol
-		if (*tok != SYMBOL)
+		if (*tok.u32 != SYMBOL)
 			return error("syntax error; expected symbol");
 
 		// Lookup and undef if equated register
-		regname = lookup(string[tok[1]], LABEL, 0);
+		regname = lookup(string[tok.u32[1]], LABEL, 0);
 
 		if (regname && (regname->sattre & EQUATEDREG))
 		{
@@ -421,7 +424,7 @@ int d_equrundef(void)
 		}
 
 		// Skip over symbol token and address
-		tok += 2;
+		tok.u32 += 2;
 	}
 
 	return 0;
@@ -452,11 +455,11 @@ int d_incbin(void)
 	// Check to see if we're in BSS, and, if so, throw an error
 	if (scattr & SBSS)
 	{
-		error("cannot include binary file \"%s\" in BSS section", string[tok[1]]);
+		error("cannot include binary file \"%s\" in BSS section", string[tok.u32[1]]);
 		return ERROR;
 	}
 
-	if (*tok != STRING)
+	if (*tok.u32 != STRING)
 	{
 		error("syntax error; string missing");
 		return ERROR;
@@ -465,7 +468,7 @@ int d_incbin(void)
 	// Attempt to open the include file in the current directory, then (if that
 	// failed) try list of include files passed in the enviroment string or by
 	// the "-d" option.
-	if ((fd = open(string[tok[1]], _OPEN_INC)) < 0)
+	if ((fd = open(string[tok.u32[1]], _OPEN_INC)) < 0)
 	{
 		for(i=0; nthpath("RMACPATH", i, buf1)!=0; i++)
 		{
@@ -475,13 +478,13 @@ int d_incbin(void)
 			if (fd > 0 && buf1[fd - 1] != SLASHCHAR)
 				strcat(buf1, SLASHSTRING);
 
-			strcat(buf1, string[tok[1]]);
+			strcat(buf1, string[tok.u32[1]]);
 
 			if ((fd = open(buf1, _OPEN_INC)) >= 0)
 				goto allright;
 		}
 
-		return error("cannot open: \"%s\"", string[tok[1]]);
+		return error("cannot open: \"%s\"", string[tok.u32[1]]);
 	}
 
 allright:
@@ -490,14 +493,14 @@ allright:
 	pos = lseek(fd, 0L, SEEK_SET);
 	chcheck(size);
 
-	DEBUG { printf("INCBIN: File '%s' is %li bytes.\n", string[tok[1]], size); }
+	DEBUG { printf("INCBIN: File '%s' is %li bytes.\n", string[tok.u32[1]], size); }
 
 	char * fileBuffer = (char *)malloc(size);
 	bytesRead = read(fd, fileBuffer, size);
 
 	if (bytesRead != size)
 	{
-		error("was only able to read %li bytes from binary file (%s, %li bytes)", bytesRead, string[tok[1]], size);
+		error("was only able to read %li bytes from binary file (%s, %li bytes)", bytesRead, string[tok.u32[1]], size);
 		return ERROR;
 	}
 
@@ -715,21 +718,21 @@ int symlist(int(* func)())
 
 	for(;;)
 	{
-		if (*tok != SYMBOL)
+		if (*tok.u32 != SYMBOL)
 			return error(em);
 
-		if ((*func)(string[tok[1]]) != OK)
+		if ((*func)(string[tok.u32[1]]) != OK)
 			break;
 
-		tok += 2;
+		tok.u32 += 2;
 
-		if (*tok == EOL)
+		if (*tok.u32 == EOL)
 			break;
 
-		if (*tok != ',')
+		if (*tok.u32 != ',')
 			return error(em);
 
-		tok++;
+		tok.u32++;
 	}
 
 	return 0;
@@ -747,11 +750,11 @@ int d_include(void)
 	char buf[128];
 	char buf1[128];
 
-	if (*tok == STRING)			// Leave strings ALONE
-		fn = string[*++tok];
-	else if (*tok == SYMBOL)	// Try to append ".s" to symbols
+	if (*tok.u32 == STRING)			// Leave strings ALONE
+		fn = string[*++tok.u32];
+	else if (*tok.u32 == SYMBOL)	// Try to append ".s" to symbols
 	{
-		strcpy(buf, string[*++tok]);
+		strcpy(buf, string[*++tok.u32]);
 		fext(buf, ".s", 0);
 		fn = &buf[0];
 	}
@@ -760,7 +763,7 @@ int d_include(void)
 
 	// Make sure the user didn't try anything like:
 	// .include equates.s
-	if (*++tok != EOL)
+	if (*++tok.u32 != EOL)
 		return error("extra stuff after filename--enclose it in quotes");
 
 	// Attempt to open the include file in the current directory, then (if that
@@ -799,7 +802,7 @@ int d_assert(void)
 	WORD eattr;
 	uint64_t eval;
 
-	for(; expr(exprbuf, &eval, &eattr, NULL)==OK; ++tok)
+	for(; expr(exprbuf, &eval, &eattr, NULL)==OK; ++tok.u32)
 	{
 		if (!(eattr & DEFINED))
 			return error("forward or undefined .assert");
@@ -807,7 +810,7 @@ int d_assert(void)
 		if (!eval)
 			return error("assert failure");
 
-		if (*tok != ',')
+		if (*tok.u32 != ',')
 			break;
 	}
 
@@ -857,7 +860,7 @@ int d_prgflags(void)
 {
 	uint64_t eval;
 
-	if (*tok == EOL)
+	if (*tok.u32 == EOL)
 		return error("PRGFLAGS requires value");
 	else if (abs_expr(&eval) == OK)
 	{
@@ -883,7 +886,7 @@ int d_abs(void)
 
 	SaveSection();
 
-	if (*tok == EOL)
+	if (*tok.u32 == EOL)
 		eval = 0;
 	else if (abs_expr(&eval) != OK)
 		return 0;
@@ -989,7 +992,7 @@ int d_ds(WORD siz)
 	}
 	else
 	{
-		dep_block(eval, siz, 0, (WORD)(DEFINED | ABS), NULL);
+		dep_block(eval, siz, 0, (WORD)(DEFINED | ABS), (TOKENPTR){NULL});
 	}
 
 	at_eol();
@@ -998,15 +1001,12 @@ int d_ds(WORD siz)
 
 
 //
-// dc.b, dc.w / dc, dc.l, dc.i
+// dc.b, dc.w / dc, dc.l, dc.i, dc.q, dc.d
 //
 int d_dc(WORD siz)
 {
 	WORD eattr;
 	uint64_t eval;
-	WORD tdb;
-	WORD defined;
-	uint64_t val64;
 	uint8_t * p;
 
 	if ((scattr & SBSS) != 0)
@@ -1023,24 +1023,24 @@ int d_dc(WORD siz)
 		|| (rdsp && (orgaddr >= 0xF1B000) && (orgaddr <= 0xF1CFFFF))))
 		warn("depositing LONGs on a non-long address in local RAM");
 
-	for(;; tok++)
+	for(;; tok.u32++)
 	{
 		// dc.b 'string' [,] ...
-		if (siz == SIZB && (*tok == STRING || *tok == STRINGA8) && (tok[2] == ',' || tok[2] == EOL))
+		if (siz == SIZB && (*tok.u32 == STRING || *tok.u32 == STRINGA8) && (tok.u32[2] == ',' || tok.u32[2] == EOL))
 		{
-			uint32_t i = strlen(string[tok[1]]);
+			uint32_t i = strlen(string[tok.u32[1]]);
 
 			if ((challoc - ch_size) < i)
 				chcheck(i);
 
-			if (*tok == STRING)
+			if (*tok.u32 == STRING)
 			{
-				for(p=string[tok[1]]; *p!=EOS; p++)
+				for(p=string[tok.u32[1]]; *p!=EOS; p++)
 					D_byte(*p);
 			}
-			else if(*tok == STRINGA8)
+			else if(*tok.u32 == STRINGA8)
 			{
-				for(p=string[tok[1]]; *p!=EOS; p++)
+				for(p=string[tok.u32[1]]; *p!=EOS; p++)
 					D_byte(strtoa8[*p]);
 			}
 			else
@@ -1048,39 +1048,27 @@ int d_dc(WORD siz)
 				error("String format not supported... yet");
 			}
 
-			tok += 2;
+			tok.u32 += 2;
 			goto comma;
 		}
 
 		int movei = 0; // MOVEI flag for dc.i
 
-		if (*tok == DOTI)
+		if (*tok.u32 == DOTI)
 		{
 			movei = 1;
-			tok++;
+			tok.u32++;
 			siz = SIZL;
 		}
 
-		if (siz != SIZQ)
-		{
 		// dc.x <expression>
 		SYM * esym = 0;
 
 		if (expr(exprbuf, &eval, &eattr, &esym) != OK)
 			return 0;
-		}
-		else
-		{
-			val64 = *(uint64_t *)(tok);
-			tok = tok + 2;
-			D_long((uint32_t)(val64 >> 32));
-			D_long((uint32_t)val64);
 
-            goto comma;
-        }
-
-		tdb = (WORD)(eattr & TDB);
-		defined = (WORD)(eattr & DEFINED);
+		uint16_t tdb = eattr & TDB;
+		uint16_t defined = eattr & DEFINED;
 
 		if ((challoc - ch_size) < 4)
 			chcheck(4);
@@ -1153,6 +1141,15 @@ int d_dc(WORD siz)
 				D_long(eval);
 			}
 			break;
+		case SIZQ:
+			// 64-bit size
+			if (m6502)
+				return error(in_6502mode);
+
+			// Shamus: We only handle DC.Q type stuff, will have to add fixups
+			//         and stuff later (maybe... might not be needed...)
+			D_quad(eval);
+			break;
 		case SIZS:
 			if (m6502)
 				return error(in_6502mode);
@@ -1171,6 +1168,7 @@ int d_dc(WORD siz)
 
 				D_single(eval);
 			}
+
 			break;
 		case SIZD:
 			if (m6502)
@@ -1185,13 +1183,13 @@ int d_dc(WORD siz)
 			}
 			else
 			{
-				double vv;
 				if (tdb)
 					MarkRelocatable(cursect, sloc, tdb, MDOUBLE, NULL);
 
-				vv = *(double *)&eval;
+				double vv = *(double *)&eval;
 				D_double(vv);
 			}
+
 			break;
 		case SIZX:
 			if (m6502)
@@ -1206,19 +1204,18 @@ int d_dc(WORD siz)
 			}
 			else
 			{
-				float vv;
 				if (tdb)
 					MarkRelocatable(cursect, sloc, tdb, MEXTEND, NULL);
 
-				vv = *(double *)&eval;
+				float vv = *(double *)&eval;
 				D_extend(vv);
 			}
+
 			break;
 		}
 
-
 comma:
-		if (*tok != ',')
+		if (*tok.u32 != ',')
 			break;
 	}
 
@@ -1243,7 +1240,7 @@ int d_dcb(WORD siz)
 	if (abs_expr(&evalc) != OK)
 		return 0;
 
-	if (*tok++ != ',')
+	if (*tok.u32++ != ',')
 		return error("missing comma");
 
 	if (expr(exprbuf, &eval, &eattr, NULL) < 0)
@@ -1283,14 +1280,14 @@ int d_init(WORD def_siz)
 	for(;;)
 	{
 		// Get repeat count (defaults to 1)
-		if (*tok == '#')
+		if (*tok.u32 == '#')
 		{
-			++tok;
+			tok.u32++;
 
 			if (abs_expr(&count) != OK)
 				return 0;
 
-			if (*tok++ != ',')
+			if (*tok.u32++ != ',')
 				return error(comma_error);
 		}
 		else
@@ -1300,25 +1297,25 @@ int d_init(WORD def_siz)
 		if (expr(exprbuf, &eval, &eattr, NULL) < 0)
 			return 0;
 
-		switch ((int)*tok++)
+		switch (*tok.u32++)
 		{                                 // Determine size of object to deposit
 		case DOTB: siz = SIZB; break;
 		case DOTW: siz = SIZB; break;
 		case DOTL: siz = SIZL; break;
 		default:
 			siz = def_siz;
-			tok--;
+			tok.u32--;
 			break;
 		}
 
 		dep_block((uint32_t)count, siz, (uint32_t)eval, eattr, exprbuf);
 
-		switch ((int)*tok)
+		switch (*tok.u32)
 		{
 		case EOL:
 			return 0;
 		case ',':
-			tok++;
+			tok.u32++;
 			continue;
 		default:
 			return error(comma_error);
@@ -1330,7 +1327,7 @@ int d_init(WORD def_siz)
 //
 // Deposit 'count' values of size 'siz' in the current (non-BSS) segment
 //
-int dep_block(uint32_t count, WORD siz, uint32_t eval, WORD eattr, TOKEN * exprbuf)
+int dep_block(uint32_t count, WORD siz, uint32_t eval, WORD eattr, TOKENPTR exprbuf)
 {
 	WORD tdb;
 	WORD defined;
@@ -1424,11 +1421,11 @@ int d_comm(void)
 	if (m6502)
 		return error(in_6502mode);
 
-	if (*tok != SYMBOL)
+	if (*tok.u32 != SYMBOL)
 		return error("missing symbol");
 
-	p = string[tok[1]];
-	tok += 2;
+	p = string[tok.u32[1]];
+	tok.u32 += 2;
 
 	if (*p == '.')							// Cannot .comm a local symbol
 		return error(locgl_error);
@@ -1443,7 +1440,7 @@ int d_comm(void)
 
 	sym->sattr = GLOBAL | COMMON | BSS;
 
-	if (*tok++ != ',')
+	if (*tok.u32++ != ',')
 		return error(comma_error);
 
 	if (abs_expr(&eval) != OK)				// Parse size of common region
@@ -1593,14 +1590,12 @@ int d_gpu(void)
 		return ERROR;
 	}
 
-	// If previous section was dsp or 68000 then we need to reset ORG'd Addresses
+	// If previous section was DSP or 68000 then we need to reset ORG'd Addresses
 	if (!rgpu)
 	{
-//printf("Resetting ORG...\n");
 		orgactive = 0;
 		orgwarning = 0;
 	}
-//else printf("NOT resetting ORG!\n");
 
 	rgpu = 1;			// Set GPU assembly
 	rdsp = 0;			// Unset DSP assembly
@@ -1657,23 +1652,23 @@ int d_cargs(void)
 	if (rgpu || rdsp)
 		return error("directive forbidden in gpu/dsp mode");
 
-	if (*tok == '#')
+	if (*tok.u32 == '#')
 	{
-		tok++;
+		tok.u32++;
 
 		if (abs_expr(&eval) != OK)
 			return 0;
 
 		// Eat the comma, if it's there
-		if (*tok == ',')
-			tok++;
+		if (*tok.u32 == ',')
+			tok.u32++;
 	}
 
 	for(;;)
 	{
-		if (*tok == SYMBOL)
+		if (*tok.u32 == SYMBOL)
 		{
-			p = string[tok[1]];
+			p = string[tok.u32[1]];
 
 			// Set env to either local (dot prefixed) or global scope
 			env = (*p == '.' ? curenv : 0);
@@ -1692,23 +1687,23 @@ int d_cargs(void)
 
 			symbol->sattr |= (ABS | DEFINED | EQUATED);
 			symbol->svalue = (uint32_t)eval;
-			tok += 2;
+			tok.u32 += 2;
 
 			// What this does is eat any dot suffixes attached to a symbol. If
 			// it's a .L, it adds 4 to eval; if it's .W or .B, it adds 2. If
 			// there is no dot suffix, it assumes a size of 2.
-			switch ((int)*tok)
+			switch ((int)*tok.u32)
 			{
 			case DOTL:
 				eval += 2;
 			case DOTB:
 			case DOTW:
-				tok++;
+				tok.u32++;
 			}
 
 			eval += 2;
 		}
-		else if (*tok >= KW_D0 && *tok <= KW_A7)
+		else if (*tok.u32 >= KW_D0 && *tok.u32 <= KW_A7)
 		{
 			if (reglist(&rlist) < 0)
 				return 0;
@@ -1721,7 +1716,7 @@ int d_cargs(void)
 		}
 		else
 		{
-			switch ((int)*tok)
+			switch ((int)*tok.u32)
 			{
 			case KW_USP:
 			case KW_SSP:
@@ -1731,7 +1726,7 @@ int d_cargs(void)
 			case KW_SR:
 			case KW_CCR:
 				eval += 2;
-				tok++;
+				tok.u32++;
 				break;
 			case EOL:
 				return 0;
@@ -1741,8 +1736,8 @@ int d_cargs(void)
 		}
 
 		// Eat commas in between each argument, if they exist
-		if (*tok == ',')
-			tok++;
+		if (*tok.u32 == ',')
+			tok.u32++;
 	}
 }
 
@@ -1771,23 +1766,23 @@ int d_cstruct(void)
 	if (rgpu || rdsp)
 		return error("directive forbidden in gpu/dsp mode");
 
-	if (*tok == '#')
+	if (*tok.u32 == '#')
 	{
-		tok++;
+		tok.u32++;
 
 		if (abs_expr(&eval) != OK)
 			return 0;
 
 		// Eat the comma, if it's there
-		if (*tok == ',')
-			tok++;
+		if (*tok.u32 == ',')
+			tok.u32++;
 	}
 
 	for(;;)
 	{
-		if (*tok == SYMBOL)
+		if (*tok.u32 == SYMBOL)
 		{
-			symbolName = string[tok[1]];
+			symbolName = string[tok.u32[1]];
 
 			// Set env to either local (dot prefixed) or global scope
 			env = (symbolName[0] == '.' ? curenv : 0);
@@ -1806,11 +1801,11 @@ int d_cstruct(void)
 			// Put symbol in "order of definition" list
 			AddToSymbolDeclarationList(symbol);
 
-			tok += 2;
+			tok.u32 += 2;
 
 			// Adjust label start address if it's a word or a long, as a byte
 			// label might have left us on an odd address.
-			switch ((int)*tok)
+			switch ((int)*tok.u32)
 			{
 			case DOTW:
 			case DOTL:
@@ -1823,7 +1818,7 @@ int d_cstruct(void)
 			// Check for dot suffixes and adjust space accordingly (longs and
 			// words on an odd boundary get bumped to the next word aligned
 			// address). If no suffix, then throw an error.
-			switch ((int)*tok)
+			switch ((int)*tok.u32)
 			{
 			case DOTL:
 				eval += 4;
@@ -1838,9 +1833,9 @@ int d_cstruct(void)
 				return error("Symbol missing dot suffix in .cstruct construct");
 			}
 
-			tok++;
+			tok.u32++;
 		}
-		else if (*tok >= KW_D0 && *tok <= KW_A7)
+		else if (*tok.u32 >= KW_D0 && *tok.u32 <= KW_A7)
 		{
 			if (reglist(&rlist) < 0)
 				return 0;
@@ -1853,7 +1848,7 @@ int d_cstruct(void)
 		}
 		else
 		{
-			switch ((int)*tok)
+			switch ((int)*tok.u32)
 			{
 			case KW_USP:
 			case KW_SSP:
@@ -1863,7 +1858,7 @@ int d_cstruct(void)
 			case KW_SR:
 			case KW_CCR:
 				eval += 2;
-				tok++;
+				tok.u32++;
 				break;
 			case EOL:
 				return 0;
@@ -1873,8 +1868,8 @@ int d_cstruct(void)
 		}
 
 		// Eat commas in between each argument, if they exist
-		if (*tok == ',')
-			tok++;
+		if (*tok.u32 == ',')
+			tok.u32++;
 	}
 }
 
@@ -1926,12 +1921,12 @@ int d_gpumain(void)
 //
 int d_opt(void)
 {
-	while (*tok != EOL)
+	while (*tok.u32 != EOL)
 	{
-		if (*tok == STRING)
+		if (*tok.u32 == STRING)
 		{
-			tok++;
-			char * tmpstr = string[*tok++];
+			tok.u32++;
+			char * tmpstr = string[*tok.u32++];
 
 			if (ParseOptimization(tmpstr) != OK)
 				return error("unknown optimization flag '%s'", tmpstr);
