@@ -35,5 +35,17 @@ int d_if(void);
 int d_else(void);
 int d_endif(void);
 
+int d_68000(void);
+int d_68000(void);
+int d_68020(void);
+int d_68030(void);
+int d_68040(void);
+int d_68060(void);
+int d_68881(void);
+int d_68882(void);
+int d_56001(void);
+int d_gpu(void);
+int d_dsp(void);
+
 #endif // __DIRECT_H__
 

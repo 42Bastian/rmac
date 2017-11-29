@@ -140,6 +140,15 @@ void DisplayHelp(void)
 		"  -i[path]          Directory to search for include files\n"
 		"  -l[filename]      Create an output listing file\n"
 		"  -l*[filename]     Create an output listing file without pagination\n"
+		"  -m[cpu]           Select default CPU. Available options:\n"
+		"                    68000\n"
+		"                    68020\n"
+		"                    68030\n"
+		"                    68040\n"
+		"                    68060\n"
+		"                    6502\n"
+		"                    tom\n"
+		"                    jerry\n"
 		"  -n                Don't do things behind your back in RISC assembler\n"
 		"  -o file           Output file name\n"
 		"  +o[value]         Turn a specific optimisation on\n"
@@ -150,6 +159,8 @@ void DisplayHelp(void)
 		"                    o3: Outer displacement 0(an) to (an)        (off)\n"
 		"                    o4: lea size(An),An to addq #size,An        (off)\n"
 		"                    o5: Absolute long base displacement to word (off)\n"
+		"                    o6: Null branches to NOP                    (off)\n"
+		"                    o7: clr.l Dx to moveq #0,Dx                 (off)\n"
 		"  ~o[value]         Turn a specific optimisation off\n"
 		"  +oall             Turn all optimisations on\n"
 		"  ~oall             Turn all optimisations off\n"
@@ -364,6 +375,37 @@ int Process(int argc, char ** argv)
 				listing = 1;
 				list_flag = 1;
 				lnsave++;
+				break;
+			case 'm':
+			case 'M':
+				if ((*(argv[argno] + 2) == '6') && (*(argv[argno] + 3) == '8') && (*(argv[argno] + 4) == '0') && (*(argv[argno] + 5) == '0') && (*(argv[argno] + 6) == '0'))
+					d_68000();
+				else if ((*(argv[argno] + 2) == '6')&&(*(argv[argno] + 3) == '8')&&(*(argv[argno] + 4) == '0')&&(*(argv[argno] + 5) == '2')&&(*(argv[argno] + 6) == '0'))
+					d_68020();
+				else if ((*(argv[argno] + 2) == '6')&&(*(argv[argno] + 3) == '8')&&(*(argv[argno] + 4) == '0')&&(*(argv[argno] + 5) == '3')&&(*(argv[argno] + 6) == '0'))
+					d_68030();
+				else if ((*(argv[argno] + 2) == '6')&&(*(argv[argno] + 3) == '8')&&(*(argv[argno] + 4) == '0')&&(*(argv[argno] + 5) == '4')&&(*(argv[argno] + 6) == '0'))
+					d_68040();
+				else if ((*(argv[argno] + 2) == '6')&&(*(argv[argno] + 3) == '8')&&(*(argv[argno] + 4) == '0')&&(*(argv[argno] + 5) == '6')&&(*(argv[argno] + 6) == '0'))
+					d_68060();
+				else if ((*(argv[argno] + 2) == '6')&&(*(argv[argno] + 3) == '8')&&(*(argv[argno] + 4) == '8')&&(*(argv[argno] + 5) == '8')&&(*(argv[argno] + 6) == '1'))
+					d_68881();
+				else if ((*(argv[argno] + 2) == '6')&&(*(argv[argno] + 3) == '8')&&(*(argv[argno] + 4) == '8')&&(*(argv[argno] + 5) == '8')&&(*(argv[argno] + 6) == '2'))
+					d_68882();
+				else if ((*(argv[argno] + 2) == '5')&&(*(argv[argno] + 3) == '6')&&(*(argv[argno] + 4) == '0')&&(*(argv[argno] + 5) == '0')&&(*(argv[argno] + 6) == '1'))
+					d_56001();
+				else if ((*(argv[argno] + 2) == '6')&&(*(argv[argno] + 3) == '5')&&(*(argv[argno] + 4) == '0')&&(*(argv[argno] + 5) == '2'))
+					d_6502();
+				else if ((*(argv[argno] + 2) == 't')&&(*(argv[argno] + 3) == 'o')&&(*(argv[argno] + 4) == 'm'))
+					d_gpu();
+				else if ((*(argv[argno] + 2) == 'j')&&(*(argv[argno] + 3) == 'e')&&(*(argv[argno] + 4) == 'r')&&(*(argv[argno] + 5) == 'r')&&(*(argv[argno] + 6) == 'y'))
+					d_dsp();
+				else
+				{
+					printf("Unrecognised CPU");
+					errcnt++;
+					return errcnt;
+				}
 				break;
 			case 'o':				// Direct object file output
 			case 'O':

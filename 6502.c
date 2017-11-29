@@ -364,7 +364,7 @@ void m6502cg(int op)
 			else
 				goto badmode;
 
-			tok += 3;	// Past SYMBOL <string> ')' EOL
+			tok += 3;		// Past SYMBOL <string> ')' EOL
 			zpreq = 1;		// Request zeropage optimization
 		}
 		else if (*tok == EOL)

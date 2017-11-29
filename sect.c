@@ -551,10 +551,19 @@ int ResolveFixups(int sno)
 
 				if (eval == 0)
 				{
-					error("illegal bra.s with zero offset");
-					continue;
+					if (CHECK_OPTS(OPT_NULL_BRA))
+					{
+						// just output a nop
+						*locp++ = 0x4E;
+						*locp = 0x71;
+						continue;
+					}
+					else
+					{
+						error("illegal bra.s with zero offset");
+						continue;
+					}
 				}
-
 				*++locp = (uint8_t)eval;
 				break;
 			// Fixup one-byte value at locp + 1.

@@ -135,7 +135,7 @@
 // Byteswap crap
 #define BYTESWAP16(x) ((((x) & 0x00FF) << 8) | (((x) & 0xFF00) >> 8))
 #define BYTESWAP32(x) ((((x) & 0x000000FF) << 24) | (((x) & 0x0000FF00) << 8) | (((x) & 0x00FF0000) >> 8) | (((x) & 0xFF000000) >> 24))
-#define BYTESWAP64(x) (BYTESWAP32(x>>32)|BYTESWAP32((x&0xffffffff)<<32))
+#define BYTESWAP64(x) ((BYTESWAP32(x >> 32) | (BYTESWAP32(x & 0xFFFFFFFF) << 32)))
 #define WORDSWAP32(x) ((((x) & 0x0000FFFF) << 16) | (((x) & 0xFFFF0000) >> 16))
 
 //
@@ -266,6 +266,8 @@ enum
 	OPT_INDIRECT_DISP = 3,
 	OPT_LEA_ADDQ      = 4,
 	OPT_BASE_DISP     = 5,
+	OPT_NULL_BRA      = 6,
+	OPT_CLR_DX        = 7,
 	OPT_COUNT   // Dummy, used to count number of optimisation switches
 };
 
