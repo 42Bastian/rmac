@@ -13,14 +13,14 @@
 #include "token.h"
 
 // Exported variables
-extern TOKENPTR exprbuf;
+extern TOKEN exprbuf[];
 extern SYM * symbolPtr[];
 extern int (* dirtab[])();
 extern int largestAlign[];
 
 // Exported functions
 void auto_even(void);
-int dep_block(uint32_t, WORD, uint32_t, WORD, TOKENPTR);
+int dep_block(uint32_t, WORD, uint32_t, WORD, TOKEN *);
 int eject(void);
 int abs_expr(uint64_t *);
 int symlist(int(*)());

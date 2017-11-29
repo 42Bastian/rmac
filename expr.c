@@ -51,11 +51,11 @@ const char missym_error[] = "missing symbol";
 const char str_error[] = "missing symbol or string";
 
 // Convert expression to postfix
-static TOKENPTR evalTokenBuffer;	// Deposit tokens here (this is really a
-									// pointer to exprbuf from direct.c)
-									// (Can also be from others, like
-									// riscasm.c)
-static int symbolNum;				// Pointer to the entry in symbolPtr[]
+static PTR evalTokenBuffer;		// Deposit tokens here (this is really a
+								// pointer to exprbuf from direct.c)
+								// (Can also be from others, like
+								// riscasm.c)
+static int symbolNum;			// Pointer to the entry in symbolPtr[]
 
 
 //
@@ -100,14 +100,12 @@ void InitExpression(void)
 //
 int expr0(void)
 {
-	TOKEN t;
-
 	if (expr1() != OK)
 		return ERROR;
 
-	while (tokenClass[*tok.u32] >= MULT)
+	while (tokenClass[*tok] >= MULT)
 	{
-		t = *tok.u32++;
+		TOKEN t = *tok++;
 
 		if (expr1() != OK)
 			return ERROR;
@@ -127,18 +125,17 @@ int expr0(void)
 //
 int expr1(void)
 {
-	int class;
 	TOKEN t;
 	SYM * sy;
 	char * p, * p2;
 	WORD w;
 	int j;
 
-	class = tokenClass[*tok.u32];
+	int class = tokenClass[*tok];
 
-	if (*tok.u32 == '-' || *tok.u32 == '+' || class == UNARY)
+	if (*tok == '-' || *tok == '+' || class == UNARY)
 	{
-		t = *tok.u32++;
+		t = *tok++;
 
 		if (expr2() != OK)
 			return ERROR;
@@ -153,7 +150,7 @@ int expr1(void)
 	}
 	else if (class == SUNARY)
 	{
-		switch (*tok.u32++)
+		switch (*tok++)
 		{
 		case CR_ABSCOUNT:
 			*evalTokenBuffer.u32++ = CONST;
@@ -168,10 +165,10 @@ int expr1(void)
 			*evalTokenBuffer.u64++ = dos_date();
 			break;
 		case CR_MACDEF: // ^^macdef <macro-name>
-			if (*tok.u32++ != SYMBOL)
+			if (*tok++ != SYMBOL)
 				return error(missym_error);
 
-			p = string[*tok.u32++];
+			p = string[*tok++];
 			w = (lookup(p, MACRO, 0) == NULL ? 0 : 1);
 			*evalTokenBuffer.u32++ = CONST;
 			*evalTokenBuffer.u64++ = (uint64_t)w;
@@ -182,30 +179,30 @@ int expr1(void)
 		case CR_REFERENCED:
 			w = REFERENCED;
 getsym:
-			if (*tok.u32++ != SYMBOL)
+			if (*tok++ != SYMBOL)
 				return error(missym_error);
 
-			p = string[*tok.u32++];
+			p = string[*tok++];
 			j = (*p == '.' ? curenv : 0);
 			w = ((sy = lookup(p, LABEL, j)) != NULL && (sy->sattr & w) ? 1 : 0);
 			*evalTokenBuffer.u32++ = CONST;
 			*evalTokenBuffer.u64++ = (uint64_t)w;
 			break;
 		case CR_STREQ:
-			if (*tok.u32 != SYMBOL && *tok.u32 != STRING)
+			if (*tok != SYMBOL && *tok != STRING)
 				return error(str_error);
 
-			p = string[tok.u32[1]];
-			tok.u32 +=2;
+			p = string[tok[1]];
+			tok +=2;
 
-			if (*tok.u32++ != ',')
+			if (*tok++ != ',')
 				return error(comma_error);
 
-			if (*tok.u32 != SYMBOL && *tok.u32 != STRING)
+			if (*tok != SYMBOL && *tok != STRING)
 				return error(str_error);
 
-			p2 = string[tok.u32[1]];
-			tok.u32 += 2;
+			p2 = string[tok[1]];
+			tok += 2;
 
 			w = (WORD)(!strcmp(p, p2));
 			*evalTokenBuffer.u32++ = CONST;
@@ -228,19 +225,19 @@ int expr2(void)
 	char * p;
 	SYM * sy;
 	int j;
+	PTR ptk;
 
-	switch (*tok.u32++)
+	switch (*tok++)
 	{
 	case CONST:
-		*evalTokenBuffer.u32++ = CONST;
-		*evalTokenBuffer.u64++ = *tok.u64++;
-		break;
 	case FCONST:
-		*evalTokenBuffer.u32++ = FCONST;
-		*evalTokenBuffer.u64++ =  *tok.u64++;
+		ptk.u32 = tok;
+		*evalTokenBuffer.u32++ = CONST;
+		*evalTokenBuffer.u64++ = *ptk.u64++;
+		tok = ptk.u32;
 		break;
 	case SYMBOL:
-		p = string[*tok.u32++];
+		p = string[*tok++];
 		j = (*p == '.' ? curenv : 0);
 		sy = lookup(p, LABEL, j);
 
@@ -264,13 +261,13 @@ int expr2(void)
 		break;
 	case STRING:
 		*evalTokenBuffer.u32++ = CONST;
-		*evalTokenBuffer.u64++ = str_value(string[*tok.u32++]);
+		*evalTokenBuffer.u64++ = str_value(string[*tok++]);
 		break;
 	case '(':
 		if (expr0() != OK)
 			return ERROR;
 
-		if (*tok.u32++ != ')')
+		if (*tok++ != ')')
 			return error("missing closing parenthesis ')'");
 
 		break;
@@ -278,8 +275,22 @@ int expr2(void)
 		if (expr0() != OK)
 			return ERROR;
 
-		if (*tok.u32++ != ']')
+		if (*tok++ != ']')
 			return error("missing closing bracket ']'");
+
+		break;
+	case '{':
+		if (expr0() != OK)	// Eat up first parameter (register or immediate)
+			return ERROR;
+
+		if (*tok++ != ':')	// Demand a ':' there
+			return error("missing colon ':'");
+
+		if (expr0() != OK)	// Eat up second parameter (register or immediate)
+			return ERROR;
+
+		if (*tok++ != '}')
+			return error("missing closing brace '}'");
 
 		break;
 	case '$':
@@ -295,20 +306,6 @@ int expr2(void)
 		// '*' takes attributes of current section, not ABS!
 		*evalTokenBuffer.u32++ = cursect | DEFINED;
 		break;
-	case '{':
-		if (expr0() != OK)							// Eat up first parameter (register or immediate)
-			return ERROR;
-
-		if (*tok.u32++ != ':')						// Demand a ':' there
-			return error("missing colon ':'");
-
-		if (expr0() != OK)							// Eat up second parameter (register or immediate)
-			return ERROR;
-
-		if (*tok.u32++ != '}')
-			return error("missing closing brace '}'");
-
-		break;
 	default:
 		return error("bad expression");
 	}
@@ -320,7 +317,7 @@ int expr2(void)
 //
 // Recursive-descent expression analyzer (with some simple speed hacks)
 //
-int expr(TOKENPTR otk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
+int expr(TOKEN * otk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 {
 	// Passed in values (once derefenced, that is) can all be zero. They are
 	// there so that the expression analyzer can fill them in as needed. The
@@ -329,79 +326,82 @@ int expr(TOKENPTR otk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 	SYM * symbol;
 	char * p;
 	int j;
+	PTR ptk;
 
-	evalTokenBuffer = otk;	// Set token pointer to 'exprbuf' (direct.c)
+	evalTokenBuffer.u32 = otk;	// Set token pointer to 'exprbuf' (direct.c)
 							// Also set in various other places too (riscasm.c,
 							// e.g.)
 
-//printf("expr(): tokens 0-2: %i %i %i (%c %c %c); tc[2] = %i\n", tok.u32[0], tok.u32[1], tok.u32[2], tok.u32[0], tok.u32[1], tok.u32[2], tokenClass[tok.u32[2]]);
+//printf("expr(): tokens 0-2: %i %i %i (%c %c %c); tc[2] = %i\n", tok[0], tok[1], tok[2], tok[0], tok[1], tok[2], tokenClass[tok[2]]);
 	// Optimize for single constant or single symbol.
 	// Shamus: Subtle bug here. EOL token is 101; if you have a constant token
 	//         followed by the value 101, it will trigger a bad evaluation here.
 	//         This is probably a really bad assumption to be making here...!
-	//         (assuming tok.u32[1] == EOL is a single token that is)
+	//         (assuming tok[1] == EOL is a single token that is)
 	//         Seems that even other tokens (SUNARY type) can fuck this up too.
 #if 0
-//	if ((tok.u32[1] == EOL)
-	if ((tok.u32[1] == EOL && ((tok.u32[0] != CONST || tok.u32[0] != FCONST) && tokenClass[tok.u32[0]] != SUNARY))
-//		|| (((*tok.u32 == CONST || *tok.u32 == FCONST || *tok.u32 == SYMBOL) || (*tok.u32 >= KW_R0 && *tok.u32 <= KW_R31))
-//		&& (tokenClass[tok.u32[2]] < UNARY)))
-		|| (((tok.u32[0] == SYMBOL) || (tok.u32[0] >= KW_R0 && tok.u32[0] <= KW_R31))
-			&& (tokenClass[tok.u32[2]] < UNARY))
-		|| ((tok.u32[0] == CONST || tok.u32[0] == FCONST) && (tokenClass[tok.u32[3]] < UNARY))
+//	if ((tok[1] == EOL)
+	if ((tok[1] == EOL && ((tok[0] != CONST || tok[0] != FCONST) && tokenClass[tok[0]] != SUNARY))
+//		|| (((*tok == CONST || *tok == FCONST || *tok == SYMBOL) || (*tok >= KW_R0 && *tok <= KW_R31))
+//		&& (tokenClass[tok[2]] < UNARY)))
+		|| (((tok[0] == SYMBOL) || (tok[0] >= KW_R0 && tok[0] <= KW_R31))
+			&& (tokenClass[tok[2]] < UNARY))
+		|| ((tok[0] == CONST || tok[0] == FCONST) && (tokenClass[tok[3]] < UNARY))
 		)
 #else
 // Shamus: Seems to me that this could be greatly simplified by 1st checking if the first token is a multibyte token, *then* checking if there's an EOL after it depending on the actual length of the token (multiple vs. single). Otherwise, we have the horror show that is the following:
-	if ((tok.u32[1] == EOL
-			&& (tok.u32[0] != CONST && tokenClass[tok.u32[0]] != SUNARY))
-		|| (((tok.u32[0] == SYMBOL)
-				|| (tok.u32[0] >= KW_R0 && tok.u32[0] <= KW_R31))
-			&& (tokenClass[tok.u32[2]] < UNARY))
-		|| ((tok.u32[0] == CONST) && (tokenClass[tok.u32[3]] < UNARY))
+	if ((tok[1] == EOL
+			&& (tok[0] != CONST && tokenClass[tok[0]] != SUNARY))
+		|| (((tok[0] == SYMBOL)
+				|| (tok[0] >= KW_R0 && tok[0] <= KW_R31))
+			&& (tokenClass[tok[2]] < UNARY))
+		|| ((tok[0] == CONST) && (tokenClass[tok[3]] < UNARY))
 		)
-// Shamus: Yes, you can parse that out and make some kind of sense of it, but damn, it takes a while to get it and understand the subtle bugs that result from not being careful about what you're checking; especially vis-a-vis niavely checking tok.u32[1] for an EOL. O_o
+// Shamus: Yes, you can parse that out and make some kind of sense of it, but damn, it takes a while to get it and understand the subtle bugs that result from not being careful about what you're checking; especially vis-a-vis niavely checking tok[1] for an EOL. O_o
 #endif
 	{
-		if (*tok.u32 >= KW_R0 && *tok.u32 <= KW_R31)
+		if (*tok >= KW_R0 && *tok <= KW_R31)
 		{
 			*evalTokenBuffer.u32++ = CONST;
-			*evalTokenBuffer.u64++ = *a_value = (*tok.u32 - KW_R0);
+			*evalTokenBuffer.u64++ = *a_value = (*tok - KW_R0);
 			*a_attr = ABS | DEFINED;
 
 			if (a_esym != NULL)
 				*a_esym = NULL;
 
-			tok.u32++;
+			tok++;
 		}
-		else if (*tok.u32 == CONST)
+		else if (*tok == CONST)
 		{
-			*evalTokenBuffer.u32++ = *tok.u32++;
-			*evalTokenBuffer.u64++ = *a_value = *tok.u64++;
+			ptk.u32 = tok;
+			*evalTokenBuffer.u32++ = *ptk.u32++;
+			*evalTokenBuffer.u64++ = *a_value = *ptk.u64++;
 			*a_attr = ABS | DEFINED;
+			tok = ptk.u32;
 
 			if (a_esym != NULL)
 				*a_esym = NULL;
 
-//printf("Quick eval in expr(): CONST = %i, tokenClass[tok.u32[2]] = %i\n", *a_value, tokenClass[*tok.u32]);
+//printf("Quick eval in expr(): CONST = %i, tokenClass[tok[2]] = %i\n", *a_value, tokenClass[*tok]);
 		}
 // Not sure that removing float constant here is going to break anything and/or
 // make things significantly slower, but having this here seems to cause the
 // complexity of the check to get to this part of the parse to go through the
 // roof, and dammit, I just don't feel like fighting that fight ATM. :-P
 #if 0
-		else if (*tok.u32 == FCONST)
+		else if (*tok == FCONST)
 		{
-			*evalTokenBuffer.u32++ = *tok.u32++;
+			*evalTokenBuffer.u32++ = *tok++;
 			*evalTokenBuffer.u64++ = *a_value = *tok.u64++;
 			*a_attr = ABS | DEFINED | FLOAT;
 
 			if (a_esym != NULL)
 				*a_esym = NULL;
 
-//printf("Quick eval in expr(): CONST = %i, tokenClass[tok.u32[2]] = %i\n", *a_value, tokenClass[*tok.u32]);
+//printf("Quick eval in expr(): CONST = %i, tokenClass[tok[2]] = %i\n", *a_value, tokenClass[*tok]);
 		}
 #endif
-		else if (*tok.u32 == '*')
+		else if (*tok == '*')
 		{
 			*evalTokenBuffer.u32++ = CONST;
 
@@ -416,11 +416,11 @@ int expr(TOKENPTR otk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 			if (a_esym != NULL)
 				*a_esym = NULL;
 
-			tok.u32++;
+			tok++;
 		}
-		else if (*tok.u32 == STRING || *tok.u32 == SYMBOL)
+		else if (*tok == STRING || *tok == SYMBOL)
 		{
-			p = string[tok.u32[1]];
+			p = string[tok[1]];
 			j = (*p == '.' ? curenv : 0);
 			symbol = lookup(p, LABEL, j);
 #if 0
@@ -487,14 +487,14 @@ thrown away right here. What the hell is it for?
 				&& a_esym != NULL)
 				*a_esym = symbol;
 
-			tok.u32 += 2;
+			tok += 2;
 		}
 		else
 		{
 			// Unknown type here... Alert the user!,
 			error("undefined RISC register in expression");
 			// Prevent spurious error reporting...
-			tok.u32++;
+			tok++;
 			return ERROR;
 		}
 
@@ -516,7 +516,7 @@ thrown away right here. What the hell is it for?
 // UNDEFINED, but it's value includes everything but the symbol value, and
 // 'a_esym' is set to the external symbol.
 //
-int evexpr(TOKENPTR tk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
+int evexpr(TOKEN * _tk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 {
 	WORD attr, attr2;
 	SYM * sy;
@@ -524,6 +524,8 @@ int evexpr(TOKENPTR tk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 	WORD * sattr = evattr;
 	SYM * esym = NULL;						// No external symbol involved
 	WORD sym_seg = 0;
+	PTR tk;
+	tk.u32 = _tk;
 
 	while (*tk.u32 != ENDEXPR)
 	{

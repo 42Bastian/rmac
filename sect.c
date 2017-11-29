@@ -282,7 +282,7 @@ int chcheck(uint32_t amt)
 //
 // Arrange for a fixup on a location
 //
-int AddFixup(uint16_t attr, uint32_t loc, TOKENPTR fexpr)
+int AddFixup(uint16_t attr, uint32_t loc, TOKEN * fexpr)
 {
 	uint32_t i = MIN_FIXUP_MEM;
 	uint16_t len = 0;
@@ -291,7 +291,7 @@ int AddFixup(uint16_t attr, uint32_t loc, TOKENPTR fexpr)
 
 	// Compute length of expression (could be faster); determine if it's the
 	// single-symbol case; no expression if it's just a mark. (? is this true?)
-	if ((*fexpr.u32 == SYMBOL) && (fexpr.u32[2] == ENDEXPR))
+	if ((*fexpr == SYMBOL) && (fexpr[2] == ENDEXPR))
 	{
 		// Just a single symbol, possibly followed by a DWORD
 		i += sizeof(SYM *);
@@ -306,12 +306,12 @@ int AddFixup(uint16_t attr, uint32_t loc, TOKENPTR fexpr)
 		attr |= FU_EXPR;
 
 		// Count the # of tokens in the expression
-		for(len=0; fexpr.u32[len]!=ENDEXPR; len++)
+		for(len=0; fexpr[len]!=ENDEXPR; len++)
 		{
 			// Add one to len for 2X tokens, two for 3X tokens
-			if (fexpr.u32[len] == SYMBOL)
+			if (fexpr[len] == SYMBOL)
 				len++;
-			else if (fexpr.u32[len] == CONST)
+			else if (fexpr[len] == CONST)
 				len += 2;
 		}
 
@@ -362,11 +362,11 @@ int AddFixup(uint16_t attr, uint32_t loc, TOKENPTR fexpr)
 		*fchptr.wp++ = len;
 
 		while (len--)
-			*fchptr.lp++ = *fexpr.u32++;
+			*fchptr.lp++ = *fexpr++;
 	}
 	else
 	{
-		*fchptr.sy++ = symbolPtr[fexpr.u32[1]];
+		*fchptr.sy++ = symbolPtr[fexpr[1]];
 
 		// SCPCD: Correct bit mask for attr (else other FU_xxx will match)
 		// NYAN !
@@ -464,7 +464,7 @@ int ResolveFixups(int sno)
 			{
 				i = *fup.wp++;
 
-				if (evexpr((TOKENPTR)fup.tk, &eval, &eattr, &esym) != OK)
+				if (evexpr(fup.tk, &eval, &eattr, &esym) != OK)
 				{
 					fup.lp += i;
 					continue;

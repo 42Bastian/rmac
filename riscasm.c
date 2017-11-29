@@ -180,7 +180,7 @@ int GetRegister(WORD rattr)
 	TOKEN r_expr[EXPRSIZE];		// Expression token list
 
 	// Evaluate what's in the global "tok" buffer
-	if (expr((TOKENPTR)r_expr, &eval, &eattr, &esym) != OK)
+	if (expr(r_expr, &eval, &eattr, &esym) != OK)
 		return ERROR;
 
 	if ((challoc - ch_size) < 4)
@@ -188,7 +188,7 @@ int GetRegister(WORD rattr)
 
 	if (!(eattr & DEFINED))
 	{
-		AddFixup((WORD)(FU_WORD | rattr), sloc, (TOKENPTR)r_expr);
+		AddFixup((WORD)(FU_WORD | rattr), sloc, r_expr);
 		return 0;
 	}
 
@@ -298,13 +298,13 @@ int GenerateRISCCode(int state)
 		if (parm & SUB32)
 			attrflg |= FU_SUB32;
 
-		if (*tok.u32 != '#')
+		if (*tok != '#')
 			return MalformedOpcode(0x01);
 
-		tok.u32++;
+		tok++;
 		riscImmTokenSeen = 1;
 
-		if (expr((TOKENPTR)r_expr, &eval, &eattr, &esym) != OK)
+		if (expr(r_expr, &eval, &eattr, &esym) != OK)
 			return MalformedOpcode(0x02);
 
 		if ((challoc - ch_size) < 4)
@@ -312,7 +312,7 @@ int GenerateRISCCode(int state)
 
 		if (!(eattr & DEFINED))
 		{
-			AddFixup((WORD)(FU_WORD | attrflg), sloc, (TOKENPTR)r_expr);
+			AddFixup((WORD)(FU_WORD | attrflg), sloc, r_expr);
 			reg1 = 0;
 		}
 		else
@@ -336,22 +336,22 @@ int GenerateRISCCode(int state)
 
 	// Move Immediate--n,Rn--n in Second Word
 	case RI_MOVEI:
-		if (*tok.u32 != '#')
+		if (*tok != '#')
 			return MalformedOpcode(0x03);
 
-		tok.u32++;
+		tok++;
 		riscImmTokenSeen = 1;
 
 		// Check for equated register after # and return error if so
-		if (*tok.u32 == SYMBOL)
+		if (*tok == SYMBOL)
 		{
-			sy = lookup(string[tok.u32[1]], LABEL, 0);
+			sy = lookup(string[tok[1]], LABEL, 0);
 
 			if (sy && (sy->sattre & EQUATEDREG))
 				return error("equated register in 1st operand of MOVEI instruction");
 		}
 
-		if (expr((TOKENPTR)r_expr, &eval, &eattr, &esym) != OK)
+		if (expr(r_expr, &eval, &eattr, &esym) != OK)
 			return MalformedOpcode(0x04);
 
 		if (lastOpcode == RI_JUMP || lastOpcode == RI_JR)
@@ -371,7 +371,7 @@ int GenerateRISCCode(int state)
 
 		if (!(eattr & DEFINED))
 		{
-			AddFixup(FU_LONG | FU_MOVEI, sloc + 2, (TOKENPTR)r_expr);
+			AddFixup(FU_LONG | FU_MOVEI, sloc + 2, r_expr);
 			eval = 0;
 		}
 		else
@@ -394,11 +394,11 @@ int GenerateRISCCode(int state)
 
 	// PC,Rd or Rs,Rd
 	case RI_MOVE:
-		if (*tok.u32 == KW_PC)
+		if (*tok == KW_PC)
 		{
 			parm = 51;
 			reg1 = 0;
-			tok.u32++;
+			tok++;
 		}
 		else
 		{
@@ -417,24 +417,24 @@ int GenerateRISCCode(int state)
 		indexed = 0;
 		parm = 41;
 
-		if (*tok.u32 != '(')
+		if (*tok != '(')
 			return MalformedOpcode(0x05);
 
-		tok.u32++;
+		tok++;
 
-        if ((*(tok.u32 + 1) == '+') || (*(tok.u32 + 1) == '-')) {
+        if ((*(tok + 1) == '+') || (*(tok + 1) == '-')) {
             // Trying to make indexed call
-            if ((*tok.u32 == KW_R14 || *tok.u32 == KW_R15)) {
-                indexed = (*tok.u32 - KW_R0);
+            if ((*tok == KW_R14 || *tok == KW_R15)) {
+                indexed = (*tok - KW_R0);
             } else {
-                return IllegalIndexedRegister(*tok.u32);
+                return IllegalIndexedRegister(*tok);
             }
         }
 
-		if (*tok.u32 == SYMBOL)
+		if (*tok == SYMBOL)
 		{
-//			sy = lookup((char *)tok.u32[1], LABEL, 0);
-			sy = lookup(string[tok.u32[1]], LABEL, 0);
+//			sy = lookup((char *)tok[1], LABEL, 0);
+			sy = lookup(string[tok[1]], LABEL, 0);
 
 			if (!sy)
 			{
@@ -444,10 +444,10 @@ int GenerateRISCCode(int state)
 
 			if (sy->sattre & EQUATEDREG)
 			{
-				if ((*(tok.u32 + 2) == '+') || (*(tok.u32 + 2) == '-')) {
+				if ((*(tok + 2) == '+') || (*(tok + 2) == '-')) {
 				    if ((sy->svalue & 0x1F) == 14 || (sy->svalue & 0x1F) == 15) {
 				        indexed = (sy->svalue & 0x1F);
-                        tok.u32++;
+                        tok++;
 				    } else {
 				        return IllegalIndexedRegisterEqur(sy);
 				    }
@@ -463,20 +463,20 @@ int GenerateRISCCode(int state)
 		{
 			reg1 = indexed;
 			indexed = 0;
-			tok.u32++;
+			tok++;
 
-			if (*tok.u32 == '+')
+			if (*tok == '+')
 			{
 				parm = (WORD)(reg1 - 14 + 58);
-				tok.u32++;
+				tok++;
 
-				if (*tok.u32 >= KW_R0 && *tok.u32 <= KW_R31)
+				if (*tok >= KW_R0 && *tok <= KW_R31)
 					indexed = 1;
 
-				if (*tok.u32 == SYMBOL)
+				if (*tok == SYMBOL)
 				{
-//					sy = lookup((char *)tok.u32[1], LABEL, 0);
-					sy = lookup(string[tok.u32[1]], LABEL, 0);
+//					sy = lookup((char *)tok[1], LABEL, 0);
+					sy = lookup(string[tok[1]], LABEL, 0);
 
 					if (!sy)
 					{
@@ -494,7 +494,7 @@ int GenerateRISCCode(int state)
 				}
 				else
 				{
-					if (expr((TOKENPTR)r_expr, &eval, &eattr, &esym) != OK)
+					if (expr(r_expr, &eval, &eattr, &esym) != OK)
 						return MalformedOpcode(0x06);
 
 					if ((challoc - ch_size) < 4)
@@ -529,10 +529,10 @@ int GenerateRISCCode(int state)
 			}
 		}
 
-		if (*tok.u32 != ')')
+		if (*tok != ')')
 			return MalformedOpcode(0x07);
 
-		tok.u32++;
+		tok++;
 		CHECK_COMMA;
 		reg2 = GetRegister(FU_REGTWO);
 		at_eol();
@@ -545,18 +545,18 @@ int GenerateRISCCode(int state)
 		reg1 = GetRegister(FU_REGONE);
 		CHECK_COMMA;
 
-		if (*tok.u32 != '(')
+		if (*tok != '(')
 			return MalformedOpcode(0x08);
 
-		tok.u32++;
+		tok++;
 		indexed = 0;
 
-		if ((*tok.u32 == KW_R14 || *tok.u32 == KW_R15) && (*(tok.u32 + 1) != ')'))
-			indexed = (*tok.u32 - KW_R0);
+		if ((*tok == KW_R14 || *tok == KW_R15) && (*(tok + 1) != ')'))
+			indexed = (*tok - KW_R0);
 
-		if (*tok.u32 == SYMBOL)
+		if (*tok == SYMBOL)
 		{
-			sy = lookup(string[tok.u32[1]], LABEL, 0);
+			sy = lookup(string[tok[1]], LABEL, 0);
 
 			if (!sy)
 			{
@@ -567,10 +567,10 @@ int GenerateRISCCode(int state)
 			if (sy->sattre & EQUATEDREG)
 			{
 				if (((sy->svalue & 0x1F) == 14 || (sy->svalue & 0x1F) == 15)
-					&& (*(tok.u32 + 2) != ')'))
+					&& (*(tok + 2) != ')'))
 				{
 					indexed = (sy->svalue & 0x1F);
-					tok.u32++;
+					tok++;
 				}
 			}
 		}
@@ -583,19 +583,19 @@ int GenerateRISCCode(int state)
 		{
 			reg2 = indexed;
 			indexed = 0;
-			tok.u32++;
+			tok++;
 
-			if (*tok.u32 == '+')
+			if (*tok == '+')
 			{
 				parm = (WORD)(reg2 - 14 + 60);
-				tok.u32++;
+				tok++;
 
-				if (*tok.u32 >= KW_R0 && *tok.u32 <= KW_R31)
+				if (*tok >= KW_R0 && *tok <= KW_R31)
 					indexed = 1;
 
-				if (*tok.u32 == SYMBOL)
+				if (*tok == SYMBOL)
 				{
-					sy = lookup(string[tok.u32[1]], LABEL, 0);
+					sy = lookup(string[tok[1]], LABEL, 0);
 
 					if (!sy)
 					{
@@ -613,7 +613,7 @@ int GenerateRISCCode(int state)
 				}
 				else
 				{
-					if (expr((TOKENPTR)r_expr, &eval, &eattr, &esym) != OK)
+					if (expr(r_expr, &eval, &eattr, &esym) != OK)
 						return MalformedOpcode(0x09);
 
 					if ((challoc - ch_size) < 4)
@@ -621,7 +621,7 @@ int GenerateRISCCode(int state)
 
 					if (!(eattr & DEFINED))
 					{
-						AddFixup(FU_WORD | FU_REGTWO, sloc, (TOKENPTR)r_expr);
+						AddFixup(FU_WORD | FU_REGTWO, sloc, r_expr);
 						reg2 = 0;
 					}
 					else
@@ -653,26 +653,26 @@ int GenerateRISCCode(int state)
 			}
 		}
 
-		if (*tok.u32 != ')')
+		if (*tok != ')')
 			return MalformedOpcode(0x0A);
 
-		tok.u32++;
+		tok++;
 		at_eol();
 		BuildRISCIntructionWord(parm, reg2, reg1);
 		break;
 
 	// LOADB/LOADP/LOADW (Rn),Rn
 	case RI_LOADN:
-		if (*tok.u32 != '(')
+		if (*tok != '(')
 			return MalformedOpcode(0x0B);
 
-		tok.u32++;
+		tok++;
 		reg1 = GetRegister(FU_REGONE);
 
-		if (*tok.u32 != ')')
+		if (*tok != ')')
 			return MalformedOpcode(0x0C);
 
-		tok.u32++;
+		tok++;
 		CHECK_COMMA;
 		reg2 = GetRegister(FU_REGTWO);
 		at_eol();
@@ -684,16 +684,16 @@ int GenerateRISCCode(int state)
 		reg1 = GetRegister(FU_REGONE);
 		CHECK_COMMA;
 
-		if (*tok.u32 != '(')
+		if (*tok != '(')
 			return MalformedOpcode(0x0D);
 
-		tok.u32++;
+		tok++;
 		reg2 = GetRegister(FU_REGTWO);
 
-		if (*tok.u32 != ')')
+		if (*tok != ')')
 			return MalformedOpcode(0x0E);
 
-		tok.u32++;
+		tok++;
 		at_eol();
 		BuildRISCIntructionWord(parm, reg2, reg1);
 		break;
@@ -707,7 +707,7 @@ int GenerateRISCCode(int state)
 		// the JR or JUMP should default to 0, Jump Always
 		commaFound = 0;
 
-		for(t=tok.u32; *t!=EOL; t++)
+		for(t=tok; *t!=EOL; t++)
 		{
 			if (*t == ',')
 			{
@@ -718,20 +718,20 @@ int GenerateRISCCode(int state)
 
 		if (commaFound)
 		{
-			if (*tok.u32 == CONST)
+			if (*tok == CONST)
 			{
 				// CC using a constant number
-				tok.u32++;
-				uint64_t *tok64 = (uint64_t *)tok.u32;
+				tok++;
+				uint64_t *tok64 = (uint64_t *)tok;
 				val = (int)*tok64++;
-				tok.u32 = (uint32_t *)tok64;
+				tok = (uint32_t *)tok64;
 				CHECK_COMMA;
 			}
-			else if (*tok.u32 == SYMBOL)
+			else if (*tok == SYMBOL)
 			{
 				val = 99;
-//				strcpy(scratch, (char *)tok.u32[1]);
-				strcpy(scratch, string[tok.u32[1]]);
+//				strcpy(scratch, (char *)tok[1]);
+				strcpy(scratch, string[tok[1]]);
 				strtoupper(scratch);
 
 				for(i=0; i<MAXINTERNCC; i++)
@@ -747,8 +747,8 @@ int GenerateRISCCode(int state)
 				// Standard CC was not found, look for an equated one
 				if (val == 99)
 				{
-//					ccsym = lookup((char *)tok.u32[1], LABEL, 0);
-					ccsym = lookup(string[tok.u32[1]], LABEL, 0);
+//					ccsym = lookup((char *)tok[1], LABEL, 0);
+					ccsym = lookup(string[tok[1]], LABEL, 0);
 
 					if (ccsym && (ccsym->sattre & EQUATEDCC) && !(ccsym->sattre & UNDEF_CC))
 						val = ccsym->svalue;
@@ -756,10 +756,10 @@ int GenerateRISCCode(int state)
 						return error("unknown condition code");
 				}
 
-				tok.u32 += 2;
+				tok += 2;
 				CHECK_COMMA;
 			}
-			else if (*tok.u32 == '(')
+			else if (*tok == '(')
 			{
 				// Set CC to "Jump Always"
 				val = 0;
@@ -780,7 +780,7 @@ int GenerateRISCCode(int state)
 		if (type == RI_JR)
 		{
 			// JR cc,n
-			if (expr((TOKENPTR)r_expr, &eval, &eattr, &esym) != OK)
+			if (expr(r_expr, &eval, &eattr, &esym) != OK)
 				return MalformedOpcode(0x0F);
 
 			if ((challoc - ch_size) < 4)
@@ -788,7 +788,7 @@ int GenerateRISCCode(int state)
 
 			if (!(eattr & DEFINED))
 			{
-				AddFixup(FU_WORD | FU_JR, sloc, (TOKENPTR)r_expr);
+				AddFixup(FU_WORD | FU_JR, sloc, r_expr);
 				reg2 = 0;
 			}
 			else
@@ -804,16 +804,16 @@ int GenerateRISCCode(int state)
 		else
 		{
 			// JUMP cc, (Rn)
-			if (*tok.u32 != '(')
+			if (*tok != '(')
 				return MalformedOpcode(0x10);
 
-			tok.u32++;
+			tok++;
 			reg2 = GetRegister(FU_REGTWO);
 
-			if (*tok.u32 != ')')
+			if (*tok != ')')
 				return MalformedOpcode(0x11);
 
-			tok.u32++;
+			tok++;
 			at_eol();
 			BuildRISCIntructionWord(parm, reg2, reg1);
 		}

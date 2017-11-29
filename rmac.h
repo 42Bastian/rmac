@@ -177,24 +177,18 @@ XEX, 				// COM/EXE/XEX/whatever a8 object format
 // Assembler token
 #define TOKEN	uint32_t
 
-// Token pointer type is a union because we have 64-bit sized tokens now :-P
-#define TOKENPTR union _tokenptr
-TOKENPTR
-{
-	uint32_t * u32;
-	uint64_t * u64;
-};
-
 // Pointer type that can point to (almost) anything
 #define PTR union _ptr
 PTR
 {
-	uint8_t *  cp;				// Char
-	uint16_t * wp;				// WORD
-	uint32_t * lp;				// LONG
-	uint32_t   lw;				// LONG
-	SYM **     sy;				// SYM
-	TOKENPTR   tk;				// TOKEN
+	uint8_t *  cp;				// Char pointer
+	uint16_t * wp;				// WORD pointer
+	uint32_t * lp;				// LONG pointer
+	uint32_t * u32;				// 32-bit pointer
+	uint64_t * u64;				// 64-bit pointer
+	uint32_t   lw;				// LONG (for some reason)
+	SYM **     sy;				// SYM pointer
+	TOKEN *    tk;				// TOKEN pointer
 };
 
 // Symbol spaces

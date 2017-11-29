@@ -258,18 +258,18 @@ void m6502cg(int op)
 	//
 	zpreq = 0;
 
-	switch (tok.u32[0])
+	switch (tok[0])
 	{
 	case EOL:
 		amode = A65_IMPL;
 		break;
 
 	case '#':
-		tok.u32++;
+		tok++;
 
-		if (*tok.u32 == '>')
+		if (*tok == '>')
 		{
-			tok.u32++;
+			tok++;
 
 			if (expr(exprbuf, &eval, &eattr, NULL) < 0)
 				return;
@@ -277,9 +277,9 @@ void m6502cg(int op)
 			amode = A65_IMMEDH;
 			break;
 		}
-		else if (*tok.u32 == '<')
+		else if (*tok == '<')
 		{
-			tok.u32++;
+			tok++;
 
 			if (expr(exprbuf, &eval, &eattr, NULL) < 0)
 				return;
@@ -295,43 +295,43 @@ void m6502cg(int op)
 		break;
 
 	case '(':
-		tok.u32++;
+		tok++;
 
 		if (expr(exprbuf, &eval, &eattr, NULL) < 0)
 			return;
 
-		if (*tok.u32 == ')')
+		if (*tok == ')')
 		{
 			// (foo) or (foo),y
-			if (*++tok.u32 == ',')
+			if (*++tok == ',')
 			{
 				// (foo),y
-				tok.u32++;
-				p = string[tok.u32[1]];
+				tok++;
+				p = string[tok[1]];
 
-				// Sleazo tolower() ---------------------vvvvvvvvvvv
-				if (*tok.u32 != SYMBOL || p[1] != EOS || (*p | 0x20) != 'y')
+				// Sleazo tolower() -----------------vvvvvvvvvvv
+				if (*tok != SYMBOL || p[1] != EOS || (*p | 0x20) != 'y')
 					goto badmode;
 
-				tok.u32 += 2;
+				tok += 2;
 				amode = A65_INDY;
 			}
 			else
 				amode = A65_IND;
 		}
-		else if (*tok.u32 == ',')
+		else if (*tok == ',')
 		{
 			// (foo,x)
-			tok.u32++;
-			p = string[tok.u32[1]];
+			tok++;
+			p = string[tok[1]];
 
-			// Sleazo tolower() ---------------------vvvvvvvvvvv
-			if (*tok.u32 != SYMBOL || p[1] != EOS || (*p | 0x20) != 'x')
+			// Sleazo tolower() -----------------vvvvvvvvvvv
+			if (*tok != SYMBOL || p[1] != EOS || (*p | 0x20) != 'x')
 				goto badmode;
 
-			tok.u32 += 2;
+			tok += 2;
 
-			if (*tok.u32++ != ')')
+			if (*tok++ != ')')
 				goto badmode;
 
 			amode = A65_INDX;
@@ -342,17 +342,17 @@ void m6502cg(int op)
 		break;
 
 	case '@':
-		tok.u32++;
+		tok++;
 
 		if (expr(exprbuf, &eval, &eattr, NULL) < 0)
 			return;
 
-		if (*tok.u32 == '(')
+		if (*tok == '(')
 		{
-			tok.u32++;
-			p = string[tok.u32[1]];
+			tok++;
+			p = string[tok[1]];
 
-			if (*tok.u32 != SYMBOL || p[1] != EOS || tok.u32[2] != ')' || tok.u32[3] != EOL)
+			if (*tok != SYMBOL || p[1] != EOS || tok[2] != ')' || tok[3] != EOL)
 				goto badmode;
 
 			i = (*p | 0x20);	// Sleazo tolower()
@@ -364,10 +364,10 @@ void m6502cg(int op)
 			else
 				goto badmode;
 
-			tok.u32 += 3;	// Past SYMBOL <string> ')' EOL
+			tok += 3;	// Past SYMBOL <string> ')' EOL
 			zpreq = 1;		// Request zeropage optimization
 		}
-		else if (*tok.u32 == EOL)
+		else if (*tok == EOL)
 			amode = A65_IND;
 		else
 			goto badmode;
@@ -380,7 +380,7 @@ void m6502cg(int op)
 		//   x,foo
 		//   y,foo
 		//
-		p = string[tok.u32[1]];
+		p = string[tok[1]];
 		// ggn: the following code is effectively disabled as it would make
 		//      single letter labels not work correctly (would not identify the
 		//      label properly). And from what I understand it's something to
@@ -416,17 +416,17 @@ not_coinop:
 
 		zpreq = 1;
 
-		if (*tok.u32 == EOL)
+		if (*tok == EOL)
 			amode = A65_ABS;
-		else if (*tok.u32 == ',')
+		else if (*tok == ',')
 		{
-			tok.u32++;
-			p = string[tok.u32[1]];
+			tok++;
+			p = string[tok[1]];
 
-			if (*tok.u32 != SYMBOL || p[1] != EOS)
+			if (*tok != SYMBOL || p[1] != EOS)
 				goto badmode;
 
-			tok.u32 += 2;
+			tok += 2;
 
 			//
 			// Check for X or Y index register;
@@ -583,7 +583,7 @@ badmode:
 	if (sloc > 0x10000L)
 		fatal("6502 code pointer > 64K");
 
-	if (*tok.u32 != EOL)
+	if (*tok != EOL)
 		error(extra_stuff);
 }
 

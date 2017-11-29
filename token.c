@@ -7,6 +7,8 @@
 //
 
 #include "token.h"
+
+#include <errno.h>
 #include "direct.h"
 #include "error.h"
 #include "macro.h"
@@ -32,7 +34,7 @@ char irbuf[LNSIZ];			// Text for .rept block line
 char lnbuf[LNSIZ];			// Text of current line
 WORD filecount;				// Unique file number counter
 WORD cfileno;				// Current file number
-TOKENPTR tok;				// Ptr to current token
+TOKEN * tok;				// Ptr to current token
 TOKEN * etok;				// Ptr past last token in tokbuf[]
 TOKEN tokeol[1] = {EOL};	// Bailout end-of-line token
 char * string[TOKBUFSIZE*2];// Token buffer string pointer storage
@@ -305,7 +307,7 @@ INOBJ * a_inobj(int typ)
 	// Install INOBJ on top of input stack
 	inobj->in_ifent = ifent;				// Record .if context on entry
 	inobj->in_type = (WORD)typ;
-	inobj->in_otok = tok.u32;
+	inobj->in_otok = tok;
 	inobj->in_etok = etok;
 	inobj->in_link = cur_inobj;
 	cur_inobj = inobj;
@@ -791,7 +793,7 @@ int fpop(void)
 	if (numUnmatched > 0)
 		warn("missing %d .endif(s)", numUnmatched);
 
-	tok.u32 = inobj->in_otok;	// Restore tok and otok
+	tok = inobj->in_otok;	// Restore tok and otok
 	etok = inobj->in_etok;
 
 	switch (inobj->in_type)
@@ -946,7 +948,7 @@ int TokenizeLine(void)
 {
 	uint8_t * ln = NULL;		// Ptr to current position in line
 	uint8_t * p;				// Random character ptr
-	TOKENPTR tk;				// Token-deposit ptr
+	PTR tk;						// Token-deposit ptr
 	int state = 0;				// State for keyword detector
 	int j = 0;					// Var for keyword detector
 	uint8_t c;					// Random char
@@ -1047,7 +1049,7 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 		strcpy(lnbuf, ln);
 
 	// General housekeeping
-	tok.u32 = tokeol;		// Set "tok" to EOL in case of error
+	tok = tokeol;		// Set "tok" to EOL in case of error
 	tk.u32 = etok;			// Reset token ptr
 	stuffnull = 0;			// Don't stuff nulls
 	totlines++;				// Bump total #lines assembled
@@ -1606,7 +1608,6 @@ dostring:
 					}
 #else
 					// Here we parse the whole floating point number
-#include <errno.h>
 					char * numEnd;
 					errno = 0;
 					double f = strtod(numStart, &numEnd);
@@ -1639,7 +1640,7 @@ dostring:
 	// Terminate line of tokens and return "success."
 
 goteol:
-	tok.u32 = etok;							// Set tok to beginning of line
+	tok = etok;							// Set tok to beginning of line
 
 	if (stuffnull)							// Terminate last SYMBOL
 		*nullspot = EOS;
@@ -1668,11 +1669,11 @@ goteol:
 int d_goto(WORD unused)
 {
 	// Setup for the search
-	if (*tok.u32 != SYMBOL)
+	if (*tok != SYMBOL)
 		return error("missing label");
 
-	char * sym = string[tok.u32[1]];
-	tok.u32 += 2;
+	char * sym = string[tok[1]];
+	tok += 2;
 
 	if (cur_inobj->in_type != SRC_IMACRO)
 		return error("goto not in macro");
@@ -1804,8 +1805,9 @@ void DumpTokenBuffer(void)
 			printf("[COLON]");
 		else if (*t == CONST)
 		{
-			TOKENPTR tp = (TOKENPTR)(t + 1);
-			printf("[CONST: $%lX]", (uint64_t)(*tp.u64));
+			PTR tp;
+			tp.u32 = t + 1;
+			printf("[CONST: $%lX]", *tp.u64);
 			t += 2;
 		}
 		else if (*t == ACONST)

@@ -660,7 +660,7 @@ int m_shi(WORD inst, WORD siz)
 	}
 	else
 	{
-		AddFixup(FU_QUICK, sloc, (TOKENPTR)a0expr);
+		AddFixup(FU_QUICK, sloc, a0expr);
 		D_word(inst);
 	}
 
@@ -723,7 +723,7 @@ int m_dbra(WORD inst, WORD siz)
 	}
 	else
 	{
-		AddFixup(FU_WORD | FU_PCREL | FU_ISBRA, sloc, (TOKENPTR)a1expr);
+		AddFixup(FU_WORD | FU_PCREL | FU_ISBRA, sloc, a1expr);
 		D_word(0);
 	}
 
@@ -914,7 +914,7 @@ int m_moveq(WORD inst, WORD siz)
 	// Arrange for future fixup
 	if (!(a0exattr & DEFINED))
 	{
-		AddFixup(FU_BYTE | FU_SEXT, sloc + 1, (TOKENPTR)a0expr);
+		AddFixup(FU_BYTE | FU_SEXT, sloc + 1, a0expr);
 		a0exval = 0;
 	}
 	else if ((uint32_t)a0exval + 0x100 >= 0x200)
@@ -1030,7 +1030,7 @@ int m_br(WORD inst, WORD siz)
 	if (siz == SIZB || siz == SIZS)
 	{
 		// .B
-		AddFixup(FU_BBRA | FU_PCREL | FU_SEXT, sloc, (TOKENPTR)a0expr);
+		AddFixup(FU_BBRA | FU_PCREL | FU_SEXT, sloc, a0expr);
 		D_word(inst);
 		return OK;
 	}
@@ -1038,7 +1038,7 @@ int m_br(WORD inst, WORD siz)
 	{
 		// .W
 		D_word(inst);
-		AddFixup(FU_WORD | FU_PCREL | FU_LBRA | FU_ISBRA, sloc, (TOKENPTR)a0expr);
+		AddFixup(FU_WORD | FU_PCREL | FU_LBRA | FU_ISBRA, sloc, a0expr);
 		D_word(0);
 	}
 
@@ -1063,7 +1063,7 @@ int m_addq(WORD inst, WORD siz)
 	}
 	else
 	{
-		AddFixup(FU_QUICK, sloc, (TOKENPTR)a0expr);
+		AddFixup(FU_QUICK, sloc, a0expr);
 		D_word(inst);
 	}
 
@@ -1114,10 +1114,10 @@ int m_movem(WORD inst, WORD siz)
 	if (siz == SIZL)
 		inst |= 0x0040;
 
-	if (*tok.u32 == '#')
+	if (*tok == '#')
 	{
 		// Handle #<expr>, ea
-		tok.u32++;
+		tok++;
 
 		if (abs_expr(&eval) != OK)
 			return OK;
@@ -1129,14 +1129,14 @@ int m_movem(WORD inst, WORD siz)
 		goto immed1;
 	}
 
-	if ((*tok.u32 >= KW_D0) && (*tok.u32 <= KW_A7))
+	if ((*tok >= KW_D0) && (*tok <= KW_A7))
 	{
 		// <rlist>, ea
 		if (reglist(&rmask) < 0)
 			return OK;
 
 immed1:
-		if (*tok.u32++ != ',')
+		if (*tok++ != ',')
 			return error("missing comma");
 
 		if (amode(0) < 0)
@@ -1165,16 +1165,16 @@ immed1:
 
 		inst |= 0x0400 | am0 | a0reg;
 
-		if (*tok.u32++ != ',')
+		if (*tok++ != ',')
 			return error("missing comma");
 
-		if (*tok.u32 == EOL)
+		if (*tok == EOL)
 			return error("missing register list");
 
-		if (*tok.u32 == '#')
+		if (*tok == '#')
 		{
 			// ea, #<expr>
-			tok.u32++;
+			tok++;
 
 			if (abs_expr(&eval) != OK)
 				return OK;
@@ -1236,7 +1236,7 @@ int m_br30(WORD inst, WORD siz)
 	else
 	{
 		// .L
-		AddFixup(FU_LONG | FU_PCREL | FU_SEXT, sloc, (TOKENPTR)a0expr);
+		AddFixup(FU_LONG | FU_PCREL | FU_SEXT, sloc, a0expr);
 		D_word(inst);
 		return OK;
 	}
@@ -1378,21 +1378,21 @@ int m_cas(WORD inst, WORD siz)
 	}
 
 	// Dc
-	if ((*tok.u32 < KW_D0) && (*tok.u32 > KW_D7))
+	if ((*tok < KW_D0) && (*tok > KW_D7))
 		return error("CAS accepts only data registers");
 
-	inst2 = (*tok.u32++) & 7;
+	inst2 = (*tok++) & 7;
 
-	if (*tok.u32++ != ',')
+	if (*tok++ != ',')
 		return error("missing comma");
 
 	// Du
-	if ((*tok.u32 < KW_D0) && (*tok.u32 > KW_D7))
+	if ((*tok < KW_D0) && (*tok > KW_D7))
 		return error("CAS accepts only data registers");
 
-	inst2 |= ((*tok.u32++) & 7) << 6;
+	inst2 |= ((*tok++) & 7) << 6;
 
-	if (*tok.u32++ != ',')
+	if (*tok++ != ',')
 		return error("missing comma");
 
 	// ea
@@ -1402,7 +1402,7 @@ int m_cas(WORD inst, WORD siz)
 	if (modes > 1)
 		return error("too many ea fields");
 
-	if (*tok.u32 != EOL)
+	if (*tok != EOL)
 		return error("extra (unexpected) text found");
 
 	// Reject invalud ea modes
@@ -1448,71 +1448,71 @@ int m_cas2(WORD inst, WORD siz)
 	}
 
 	// Dc1
-	if ((*tok.u32 < KW_D0) && (*tok.u32 > KW_D7))
+	if ((*tok < KW_D0) && (*tok > KW_D7))
 		return error("CAS2 accepts only data registers for Dx1:Dx2 pairs");
 
-	inst2 = (*tok.u32++) & 7;
+	inst2 = (*tok++) & 7;
 
-	if (*tok.u32++ != ':')
+	if (*tok++ != ':')
 		return error("missing colon");
 
 	// Dc2
-	if ((*tok.u32 < KW_D0) && (*tok.u32 > KW_D7))
+	if ((*tok < KW_D0) && (*tok > KW_D7))
 		return error("CAS2 accepts only data registers for Dx1:Dx2 pairs");
 
-	inst3 = (*tok.u32++) & 7;
+	inst3 = (*tok++) & 7;
 
-	if (*tok.u32++ != ',')
+	if (*tok++ != ',')
 		return error("missing comma");
 
 	// Du1
-	if ((*tok.u32 < KW_D0) && (*tok.u32 > KW_D7))
+	if ((*tok < KW_D0) && (*tok > KW_D7))
 		return error("CAS2 accepts only data registers for Dx1:Dx2 pairs");
 
-	inst2 |= ((*tok.u32++) & 7) << 6;
+	inst2 |= ((*tok++) & 7) << 6;
 
-	if (*tok.u32++ != ':')
+	if (*tok++ != ':')
 		return error("missing colon");
 
 	// Du2
-	if ((*tok.u32 < KW_D0) && (*tok.u32 > KW_D7))
+	if ((*tok < KW_D0) && (*tok > KW_D7))
 		return error("CAS2 accepts only data registers for Dx1:Dx2 pairs");
 
-	inst3 |= ((*tok.u32++) & 7) << 6;
+	inst3 |= ((*tok++) & 7) << 6;
 
-	if (*tok.u32++ != ',')
+	if (*tok++ != ',')
 		return error("missing comma");
 
 	// Rn1
-	if (*tok.u32++ != '(')
+	if (*tok++ != '(')
 		return error("missing (");
-	if ((*tok.u32 >= KW_D0) && (*tok.u32 <= KW_D7))
-		inst2 |= (((*tok.u32++) & 7) << 12) | (0 << 15);
-	else if ((*tok.u32 >= KW_A0) && (*tok.u32 <= KW_A7))
-		inst2 |= (((*tok.u32++) & 7) << 12) | (1 << 15);
+	if ((*tok >= KW_D0) && (*tok <= KW_D7))
+		inst2 |= (((*tok++) & 7) << 12) | (0 << 15);
+	else if ((*tok >= KW_A0) && (*tok <= KW_A7))
+		inst2 |= (((*tok++) & 7) << 12) | (1 << 15);
 	else
 		return error("CAS accepts either data or address registers for Rn1:Rn2 pair");
 
-	if (*tok.u32++ != ')')
+	if (*tok++ != ')')
 		return error("missing (");
 
-	if (*tok.u32++ != ':')
+	if (*tok++ != ':')
 		return error("missing colon");
 
 	// Rn2
-	if (*tok.u32++ != '(')
+	if (*tok++ != '(')
 		return error("missing (");
-	if ((*tok.u32 >= KW_D0) && (*tok.u32 <= KW_D7))
-		inst3 |= (((*tok.u32++) & 7) << 12) | (0 << 15);
-	else if ((*tok.u32 >= KW_A0) && (*tok.u32 <= KW_A7))
-		inst3 |= (((*tok.u32++) & 7) << 12) | (1 << 15);
+	if ((*tok >= KW_D0) && (*tok <= KW_D7))
+		inst3 |= (((*tok++) & 7) << 12) | (0 << 15);
+	else if ((*tok >= KW_A0) && (*tok <= KW_A7))
+		inst3 |= (((*tok++) & 7) << 12) | (1 << 15);
 	else
 		return error("CAS accepts either data or address registers for Rn1:Rn2 pair");
 
-	if (*tok.u32++ != ')')
+	if (*tok++ != ')')
 		return error("missing (");
 
-	if (*tok.u32 != EOL)
+	if (*tok != EOL)
 		return error("extra (unexpected) text found");
 
 	D_word(inst);
@@ -1652,7 +1652,7 @@ int m_cpbr(WORD inst, WORD siz)
 	{
 		// .L
 		D_word(inst);
-		AddFixup(FU_LONG | FU_PCREL | FU_SEXT, sloc, (TOKENPTR)a0expr);
+		AddFixup(FU_LONG | FU_PCREL | FU_SEXT, sloc, a0expr);
 		D_long(0);
 		return OK;
 	}
@@ -1660,7 +1660,7 @@ int m_cpbr(WORD inst, WORD siz)
 	{
 		// .W
 		D_word(inst);
-		AddFixup(FU_WORD | FU_PCREL | FU_SEXT, sloc, (TOKENPTR)a0expr);
+		AddFixup(FU_WORD | FU_PCREL | FU_SEXT, sloc, a0expr);
 		D_word(0);
 	}
 
@@ -1700,7 +1700,7 @@ int m_cpdbr(WORD inst, WORD siz)
 	}
 	else
 	{
-		AddFixup(FU_WORD | FU_PCREL | FU_ISBRA, sloc, (TOKENPTR)a1expr);
+		AddFixup(FU_WORD | FU_PCREL | FU_ISBRA, sloc, a1expr);
 		D_word(0);
 	}
 
@@ -2129,51 +2129,51 @@ int m_pack(WORD inst, WORD siz)
 	if (siz != SIZN)
 		return error("bad size suffix");
 
-	if (*tok.u32 >= KW_D0 && *tok.u32 <= KW_D7)
+	if (*tok >= KW_D0 && *tok <= KW_D7)
 	{
 		// Dx,Dy,#<adjustment>
 		inst |= (0 << 3);   // R/M
-		inst |= (*tok.u32++ & 7);
+		inst |= (*tok++ & 7);
 
-		if (*tok.u32 != ',' && tok.u32[2] != ',')
+		if (*tok != ',' && tok[2] != ',')
 			return error("missing comma");
 
-		if (tok.u32[1] < KW_D0 && tok.u32[1] > KW_D7)
+		if (tok[1] < KW_D0 && tok[1] > KW_D7)
 			return error(syntax_error);
 
-		inst |= ((tok.u32[1] & 7)<<9);
-		tok.u32 = tok.u32 + 3;
+		inst |= ((tok[1] & 7)<<9);
+		tok = tok + 3;
 		D_word(inst);
 		// Fall through for adjustment (common in both valid cases)
 	}
-	else if (*tok.u32 == '-')
+	else if (*tok == '-')
 	{
 		// -(Ax),-(Ay),#<adjustment>
 		inst |= (1 << 3);   // R/M
-		tok.u32++;  // eat the minus
+		tok++;  // eat the minus
 
-		if ((*tok.u32 != '(') && (tok.u32[2]!=')') && (tok.u32[3]!=',') && (tok.u32[4] != '-') && (tok.u32[5] != '(') && (tok.u32[7] != ')') && (tok.u32[8] != ','))
+		if ((*tok != '(') && (tok[2]!=')') && (tok[3]!=',') && (tok[4] != '-') && (tok[5] != '(') && (tok[7] != ')') && (tok[8] != ','))
 			return error(syntax_error);
 
-		if (tok.u32[1] < KW_A0 && tok.u32[1] > KW_A7)
+		if (tok[1] < KW_A0 && tok[1] > KW_A7)
 			return error(syntax_error);
 
-		if (tok.u32[5] < KW_A0 && tok.u32[6] > KW_A7)
+		if (tok[5] < KW_A0 && tok[6] > KW_A7)
 			return error(syntax_error);
 
-		inst |= ((tok.u32[1] & 7) << 0);
-		inst |= ((tok.u32[6] & 7) << 9);
-		tok.u32 = tok.u32 + 9;
+		inst |= ((tok[1] & 7) << 0);
+		inst |= ((tok[6] & 7) << 9);
+		tok = tok + 9;
 		D_word(inst);
 		// Fall through for adjustment (common in both valid cases)
 	}
 	else
 		return error("invalid syntax");
 
-	if ((*tok.u32 != CONST) && (*tok.u32 != SYMBOL) && (*tok.u32 != '-'))
+	if ((*tok != CONST) && (*tok != SYMBOL) && (*tok != '-'))
 		return error(syntax_error);
 
-	if (expr((TOKENPTR)a0expr, &a0exval, &a0exattr, &a0esym) == ERROR)
+	if (expr(a0expr, &a0exval, &a0exattr, &a0esym) == ERROR)
 		return ERROR;
 
 	if ((a0exattr & DEFINED) == 0)
@@ -2182,7 +2182,7 @@ int m_pack(WORD inst, WORD siz)
 	if (a0exval + 0x8000 > 0x10000)
 		return error("");
 
-	if (*tok.u32 != EOL)
+	if (*tok != EOL)
 		return error(extra_stuff);
 
 	D_word((a0exval & 0xFFFF));
@@ -2463,15 +2463,15 @@ int m_pflush(WORD inst, WORD siz)
 		// PFLUSH FC, MASK, < ea >
 		WORD mask, fc;
 
-		switch ((int)*tok.u32)
+		switch ((int)*tok)
 		{
 		case '#':
-			tok.u32++;
+			tok++;
 
-			if (*tok.u32 != CONST && *tok.u32 != SYMBOL)
+			if (*tok != CONST && *tok != SYMBOL)
 				return error("function code should be an expression");
 
-			if (expr((TOKENPTR)a0expr, &a0exval, &a0exattr, &a0esym) == ERROR)
+			if (expr(a0expr, &a0exval, &a0exattr, &a0esym) == ERROR)
 				return ERROR;
 
 			if ((a0exattr & DEFINED) == 0)
@@ -2490,30 +2490,30 @@ int m_pflush(WORD inst, WORD siz)
 		case KW_D5:
 		case KW_D6:
 		case KW_D7:
-			fc = (1 << 4) | (*tok.u32++ & 7);
+			fc = (1 << 4) | (*tok++ & 7);
 			break;
 		case KW_SFC:
 			fc = 0;
-			tok.u32++;
+			tok++;
 			break;
 		case KW_DFC:
 			fc = 1;
-			tok.u32++;
+			tok++;
 			break;
 		default:
 			return error(syntax_error);
 		}
 
-		if (*tok.u32++ != ',')
+		if (*tok++ != ',')
 			return error("comma exptected");
 
-		if (*tok.u32++ != '#')
+		if (*tok++ != '#')
 			return error("mask should be an immediate value");
 
-		if (*tok.u32 != CONST && *tok.u32 != SYMBOL)
+		if (*tok != CONST && *tok != SYMBOL)
 			return error("mask is supposed to be immediate");
 
-		if (expr((TOKENPTR)a0expr, &a0exval, &a0exattr, &a0esym) == ERROR)
+		if (expr(a0expr, &a0exval, &a0exattr, &a0esym) == ERROR)
 			return ERROR;
 
 		if ((a0exattr & DEFINED) == 0)
@@ -2524,7 +2524,7 @@ int m_pflush(WORD inst, WORD siz)
 
 		mask = (uint16_t)a0exval << 5;
 
-		if (*tok.u32 == EOL)
+		if (*tok == EOL)
 		{
 			// PFLUSH FC, MASK
 			D_word(inst);
@@ -2532,15 +2532,15 @@ int m_pflush(WORD inst, WORD siz)
 			D_word(inst);
 			return OK;
 		}
-		else if (*tok.u32 == ',')
+		else if (*tok == ',')
 		{
 			// PFLUSH FC, MASK, < ea >
-			tok.u32++;
+			tok++;
 
 			if (amode(0) == ERROR)
 				return ERROR;
 
-			if (*tok.u32 != EOL)
+			if (*tok != EOL)
 				return error(extra_stuff);
 
 			if (am0 == AIND || am0 == ABSW || am0 == ABSL || am0 == ADISP || am0 == ADISP || am0 == AINDEXED || am0 == ABASE || am0 == MEMPOST || am0 == MEMPRE)
@@ -2565,10 +2565,10 @@ int m_pflush(WORD inst, WORD siz)
 	{
 		// PFLUSH(An)
 		// PFLUSHN(An)
-		if (*tok.u32 != '(' && tok.u32[2] != ')')
+		if (*tok != '(' && tok[2] != ')')
 			return error(syntax_error);
 
-		if (tok.u32[1] < KW_A0 && tok.u32[1] > KW_A7)
+		if (tok[1] < KW_A0 && tok[1] > KW_A7)
 			return error("expected (An)");
 
 		if ((inst & 7) == 7)
@@ -2579,9 +2579,9 @@ int m_pflush(WORD inst, WORD siz)
 			// pflushn inside 68ktab and detect it here.
 			inst = (inst & 0xff8) | 8;
 
-		inst |= (tok.u32[1] & 7) | (5 << 8);
+		inst |= (tok[1] & 7) | (5 << 8);
 
-		if (tok.u32[3] != EOL)
+		if (tok[3] != EOL)
 			return error(extra_stuff);
 
 		D_word(inst);
@@ -3111,7 +3111,7 @@ int m_fdbcc(WORD inst, WORD siz)
 	}
 	else
 	{
-		AddFixup(FU_WORD | FU_PCREL | FU_ISBRA, sloc, (TOKENPTR)a1expr);
+		AddFixup(FU_WORD | FU_PCREL | FU_ISBRA, sloc, a1expr);
 		D_word(0);
 	}
 
@@ -3469,13 +3469,13 @@ int m_fmovem(WORD inst, WORD siz)
 
 	if (siz == SIZX || siz==SIZN)
 	{
-		if ((*tok.u32 >= KW_FP0) && (*tok.u32 <= KW_FP7))
+		if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
 		{
 			//fmovem.x <rlist>,ea
 			if (fpu_reglist_left(&regmask) < 0)
 				return OK;
 
-			if (*tok.u32++ != ',')
+			if (*tok++ != ',')
 				return error("missing comma");
 
 			if (amode(0) < 0)
@@ -3492,12 +3492,12 @@ int m_fmovem(WORD inst, WORD siz)
 			ea0gen(siz);
 			return OK;
 		}
-		else if ((*tok.u32 >= KW_D0) && (*tok.u32 <= KW_D7))
+		else if ((*tok >= KW_D0) && (*tok <= KW_D7))
 		{
 			// fmovem.x Dn,ea
-			datareg = (*tok.u32++ & 7) << 10;
+			datareg = (*tok++ & 7) << 10;
 
-			if (*tok.u32++ != ',')
+			if (*tok++ != ',')
 				return error("missing comma");
 
 			if (amode(0) < 0)
@@ -3522,10 +3522,10 @@ int m_fmovem(WORD inst, WORD siz)
 
 			inst |= am0 | a0reg;
 
-			if (*tok.u32++ != ',')
+			if (*tok++ != ',')
 				return error("missing comma");
 
-			if ((*tok.u32 >= KW_FP0) && (*tok.u32 <= KW_FP7))
+			if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
 			{
 				//fmovem.x ea,<rlist>
 				if (fpu_reglist_right(&regmask) < 0)
@@ -3540,7 +3540,7 @@ int m_fmovem(WORD inst, WORD siz)
 			else
 			{
 				// fmovem.x ea,Dn
-				datareg = (*tok.u32++ & 7) << 10;
+				datareg = (*tok++ & 7) << 10;
 				D_word(inst);
 				inst = (1 << 15) | (1 << 14) | (0 << 13) | (3 << 11) | (datareg << 4);
 				D_word(inst);
@@ -3551,39 +3551,39 @@ int m_fmovem(WORD inst, WORD siz)
 	}
 	else if (siz == SIZL)
 	{
-		if ((*tok.u32 == KW_FPCR) || (*tok.u32 == KW_FPSR) || (*tok.u32 == KW_FPIAR))
+		if ((*tok == KW_FPCR) || (*tok == KW_FPSR) || (*tok == KW_FPIAR))
 		{
 			//fmovem.l <rlist>,ea
 			regmask = (1 << 15) | (1 << 13);
 fmovem_loop_1:
-			if (*tok.u32 == KW_FPCR)
+			if (*tok == KW_FPCR)
 			{
 				regmask |= (1 << 12);
-				tok.u32++;
+				tok++;
 				goto fmovem_loop_1;
 			}
 
-			if (*tok.u32 == KW_FPSR)
+			if (*tok == KW_FPSR)
 			{
 				regmask |= (1 << 11);
-				tok.u32++;
+				tok++;
 				goto fmovem_loop_1;
 			}
 
-			if (*tok.u32 == KW_FPIAR)
+			if (*tok == KW_FPIAR)
 			{
 				regmask |= (1 << 10);
-				tok.u32++;
+				tok++;
 				goto fmovem_loop_1;
 			}
 
-			if ((*tok.u32 == '/') || (*tok.u32 == '-'))
+			if ((*tok == '/') || (*tok == '-'))
 			{
-				tok.u32++;
+				tok++;
 				goto fmovem_loop_1;
 			}
 
-			if (*tok.u32++ != ',')
+			if (*tok++ != ',')
 				return error("missing comma");
 
 			if (amode(0) < 0)
@@ -3602,40 +3602,40 @@ fmovem_loop_1:
 
 			inst |= am0 | a0reg;
 
-			if (*tok.u32++ != ',')
+			if (*tok++ != ',')
 				return error("missing comma");
 
 			regmask = (1 << 15) | (0 << 13);
 
 fmovem_loop_2:
-			if (*tok.u32 == KW_FPCR)
+			if (*tok == KW_FPCR)
 			{
 				regmask |= (1 << 12);
-				tok.u32++;
+				tok++;
 				goto fmovem_loop_2;
 			}
 
-			if (*tok.u32 == KW_FPSR)
+			if (*tok == KW_FPSR)
 			{
 				regmask |= (1 << 11);
-				tok.u32++;
+				tok++;
 				goto fmovem_loop_2;
 			}
 
-			if (*tok.u32 == KW_FPIAR)
+			if (*tok == KW_FPIAR)
 			{
 				regmask |= (1 << 10);
-				tok.u32++;
+				tok++;
 				goto fmovem_loop_2;
 			}
 
-			if ((*tok.u32 == '/') || (*tok.u32 == '-'))
+			if ((*tok == '/') || (*tok == '-'))
 			{
-				tok.u32++;
+				tok++;
 				goto fmovem_loop_2;
 			}
 
-			if (*tok.u32 != EOL)
+			if (*tok != EOL)
 				return error("extra (unexpected) text found");
 
 			inst |= am0 | a0reg;

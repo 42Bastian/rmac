@@ -15,6 +15,7 @@
 
 
 static int siztab[4] = { 3, 5, 9, 9 };
+static PTR tp;
 
 
 //
@@ -34,34 +35,35 @@ int visprt(char c)
 //
 // Print expression, return ptr to just past the ENDEXPR
 //
-TOKEN * printexpr(TOKEN * tp)
+TOKEN * printexpr(TOKEN * tokenptr)
 {
-	if (tp != NULL)
+	if (tokenptr != NULL)
 	{
-		while (*tp != ENDEXPR)
+		while (*tokenptr != ENDEXPR)
 		{
-			switch ((int)*tp++)
+			switch ((int)*tokenptr++)
 			{
 			case SYMBOL:
-				printf("'%s' ", symbolPtr[*tp]->sname);
-				tp++;
+				printf("'%s' ", symbolPtr[*tokenptr]->sname);
+				tokenptr++;
 				break;
 			case CONST:
-				printf("$%lX ", ((uint64_t)tp[0] << 32) | (uint64_t)tp[1]);
-				tp += 2;
+				tp.u32 = tokenptr;
+				printf("$%lX ", *tp.u64++);
+				tokenptr = tp.u32;
 				break;
 			case ACONST:
-				printf("ACONST=($%X,$%X) ", *tp, tp[1]);
-				tp += 2;
+				printf("ACONST=($%X,$%X) ", *tokenptr, tokenptr[1]);
+				tokenptr += 2;
 				break;
 			default:
-				printf("%c ", (char)tp[-1]);
+				printf("%c ", (char)tokenptr[-1]);
 				break;
 			}
 		}
 	}
 
-	return tp + 1;
+	return tokenptr + 1;
 }
 
 
@@ -106,7 +108,7 @@ int fudump(CHUNK * ch)
 			{
 				uint16_t esiz = *p.wp++;
 				printf("(%d long) ", (int)esiz);
-				p.tk.u32 = printexpr(p.tk.u32);
+				p.tk = printexpr(p.tk);
 			}
 			else
 			{
@@ -219,16 +221,16 @@ int mdump(char * start, LONG count, int flg, LONG base)
 		switch (flg & 3)
 		{
 		case 0:
-			printf("%02X ", start[i] & 0xff);
+			printf("%02X ", start[i] & 0xFF);
 			i++;
 			break;
 		case 1:
-			printf("%02X%02X ", start[i] & 0xff, start[i+1] & 0xff);
+			printf("%02X%02X ", start[i] & 0xFF, start[i+1] & 0xFF);
 			i += 2;
 			break;
 		case 2:
-			printf("%02X%02X%02X%02X ", start[i] & 0xff, start[i+1] & 0xff,
-				start[i+2] & 0xff, start[i+3] & 0xff);
+			printf("%02X%02X%02X%02X ", start[i] & 0xFF, start[i+1] & 0xFF,
+				start[i+2] & 0xFF, start[i+3] & 0xFF);
 			i += 4;
 			break;
 		case 3:
@@ -281,8 +283,9 @@ int dumptok(TOKEN * tk)
 		switch ((int)*tk++)
 		{
 		case CONST:                                        // CONST <value>
-			printf("CONST=%lu", ((uint64_t)tk[0] << 32) | (uint64_t)tk[1]);
-			tk += 2;
+			tp.u32 = tk;
+			printf("CONST=%lu", *tp.u64++);
+			tk = tp.u32;
 			break;
 		case STRING:                                       // STRING <address>
 			printf("STRING='%s'", string[*tk++]);
@@ -339,7 +342,8 @@ void DumpTokens(TOKEN * tokenBuffer)
 			printf("[COLON]");
 		else if (*t == CONST)
 		{
-			printf("[CONST: $%lX]", ((uint64_t)t[1] << 32) | (uint64_t)t[2]);
+			tp.u32 = t + 1;
+			printf("[CONST: $%lX]", *tp.u64);
 			t += 2;
 		}
 		else if (*t == ACONST)

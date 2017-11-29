@@ -153,7 +153,7 @@ extern int lnsave;
 extern uint16_t curlineno;
 extern char * curfname;
 extern WORD cfileno;
-extern TOKENPTR tok;
+extern TOKEN * tok;
 extern char lnbuf[];
 extern char lntag;
 extern char tolowertab[];

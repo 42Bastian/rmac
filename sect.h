@@ -79,7 +79,9 @@
 
 #else
 
-#error Please implement a non-byte swapped D_extend!
+WARNING(Please implement a non-byte swapped D_extend!)
+//stopgap for now, until this can be implemented proppa-ly :-P
+#define D_extend(w) {chcheck(12); chptr+=12; sloc+=12; ch_size+=12; if(orgactive) orgaddr +=12;}
 
 #endif
 // Fill n bytes with zeroes
@@ -213,7 +215,7 @@ void SwitchSection(int);
 void SaveSection(void);
 int fixtest(int, uint32_t);
 int chcheck(uint32_t);
-int AddFixup(uint16_t, uint32_t, TOKENPTR);
+int AddFixup(uint16_t, uint32_t, TOKEN *);
 int ResolveAllFixups(void);
 
 #endif // __SECT_H__

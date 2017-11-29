@@ -24,11 +24,11 @@ static long unused;				// For supressing 'write' warnings
 //
 int at_eol(void)
 {
-	if (*tok.u32 != EOL)
+	if (*tok != EOL)
 	{
-		error("syntax error. expected EOL, found $%X ('%c')", *tok.u32, *tok.u32);
+		error("syntax error. expected EOL, found $%X ('%c')", *tok, *tok);
 		printf("Token = ");
-		DumpToken(*tok.u32);
+		DumpToken(*tok);
 		printf("\n");
 		DumpTokenBuffer();
 	}
