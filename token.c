@@ -716,6 +716,11 @@ char * GetNextRepeatLine(void)
 
 //		strp = irept->ir_nextln;
 	}
+	// Mark the current macro line in the irept object
+	// This is probably overkill - a global variable
+	// would suffice here (it only gets used during
+	// error reporting anyway)
+	irept->lineno = irept->ir_nextln->lineno;
 
 //	strcpy(irbuf, (char *)(irept->ir_nextln + 1));
 	strcpy(irbuf, irept->ir_nextln->line);

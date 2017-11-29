@@ -117,6 +117,7 @@ int defmac1(char * ln, int notEndFlag)
 			curmac->lineList = malloc(sizeof(LLIST));
 			curmac->lineList->next = NULL;
 			curmac->lineList->line = strdup(ln);
+			curmac->lineList->lineno = curlineno;
 			curmac->last = curmac->lineList;
 		}
 		else
@@ -124,6 +125,7 @@ int defmac1(char * ln, int notEndFlag)
 			curmac->last->next = malloc(sizeof(LLIST));
 			curmac->last->next->next = NULL;
 			curmac->last->next->line = strdup(ln);
+			curmac->lineList->lineno = curlineno;
 			curmac->last = curmac->last->next;
 		}
 
@@ -224,6 +226,7 @@ WARNING("!!! Casting (char *) as LONG !!!")
 		firstrpt = malloc(sizeof(LLIST));
 		firstrpt->next = NULL;
 		firstrpt->line = strdup(line);
+		firstrpt->lineno = curlineno;
 		nextrpt = firstrpt;
 	}
 	else
@@ -231,6 +234,7 @@ WARNING("!!! Casting (char *) as LONG !!!")
 		nextrpt->next = malloc(sizeof(LLIST));
 		nextrpt->next->next = NULL;
 		nextrpt->next->line = strdup(line);
+		nextrpt->next->lineno = curlineno;
 		nextrpt = nextrpt->next;
 	}
 #endif

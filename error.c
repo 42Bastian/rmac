@@ -91,7 +91,18 @@ int error(const char * text, ...)
 	if (listing > 0)
 		ship_ln(buf);
 
-	sprintf(buf1, "%s %d: Error: %s\n", curfname, curlineno, buf);
+	switch (cur_inobj->in_type)
+	{
+	case SRC_IFILE:
+		sprintf(buf1, "%s %d: Error: %s\n", curfname, curlineno, buf);
+ 	       break;
+	case SRC_IMACRO:
+		sprintf(buf1, "%s %d: Error: %s\n", curfname, cur_inobj->inobj.imacro->im_macro->lineList->lineno, buf);
+		break;
+	case SRC_IREPT:
+		sprintf(buf1, "%s %d: Error: %s\n", curfname, cur_inobj->inobj.irept->lineno, buf);
+		break;
+	}
 
 	if (err_flag)
 		unused = write(err_fd, buf1, (LONG)strlen(buf1));

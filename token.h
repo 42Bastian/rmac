@@ -146,6 +146,7 @@ IREPT {
 	LLIST * ir_firstln;		// Pointer to first line
 	LLIST * ir_nextln;		// Pointer to next line
 	uint32_t ir_count;		// Repeat count (decrements)
+	uint32_t lineno;		// Repeat line number (Convert this to global instead of putting it here?)
 };
 
 // Exported variables

@@ -17,6 +17,7 @@ LLIST
 {
 	LLIST * next;
 	uint8_t * line;
+	int lineno;
 };
 
 // Symbols
