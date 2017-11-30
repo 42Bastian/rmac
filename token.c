@@ -1624,7 +1624,8 @@ dostring:
 
 					*tk.u32++ = FCONST;
 // Shamus: Well, this is all kinds of icky--not the least of which is that unlike uintNN_t types, we have no guarantees of any kind when it comes to the size of floating point numbers in C (as far as I know of). If there is, we need to use those kinds here, or else figure out at runtime what sizes we're dealing with and act accordingly. To be fair, this is OK as long as the double type is less than 64 bits wide, but again, there's no guarantee that it isn't. :-/
-					*tk.u64++ = f;
+					*tk.dp = f;
+					tk.u64++;
 					continue;
 				}
 			}

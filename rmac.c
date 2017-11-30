@@ -378,31 +378,31 @@ int Process(int argc, char ** argv)
 				break;
 			case 'm':
 			case 'M':
-				if ((*(argv[argno] + 2) == '6') && (*(argv[argno] + 3) == '8') && (*(argv[argno] + 4) == '0') && (*(argv[argno] + 5) == '0') && (*(argv[argno] + 6) == '0'))
+				if (strcmp(argv[argno] + 2, "68000") == 0)
 					d_68000();
-				else if ((*(argv[argno] + 2) == '6')&&(*(argv[argno] + 3) == '8')&&(*(argv[argno] + 4) == '0')&&(*(argv[argno] + 5) == '2')&&(*(argv[argno] + 6) == '0'))
+				else if (strcmp(argv[argno] + 2, "68020") == 0)
 					d_68020();
-				else if ((*(argv[argno] + 2) == '6')&&(*(argv[argno] + 3) == '8')&&(*(argv[argno] + 4) == '0')&&(*(argv[argno] + 5) == '3')&&(*(argv[argno] + 6) == '0'))
+				else if (strcmp(argv[argno] + 2, "68030") == 0)
 					d_68030();
-				else if ((*(argv[argno] + 2) == '6')&&(*(argv[argno] + 3) == '8')&&(*(argv[argno] + 4) == '0')&&(*(argv[argno] + 5) == '4')&&(*(argv[argno] + 6) == '0'))
+				else if (strcmp(argv[argno] + 2, "68040") == 0)
 					d_68040();
-				else if ((*(argv[argno] + 2) == '6')&&(*(argv[argno] + 3) == '8')&&(*(argv[argno] + 4) == '0')&&(*(argv[argno] + 5) == '6')&&(*(argv[argno] + 6) == '0'))
+				else if (strcmp(argv[argno] + 2, "68060") == 0)
 					d_68060();
-				else if ((*(argv[argno] + 2) == '6')&&(*(argv[argno] + 3) == '8')&&(*(argv[argno] + 4) == '8')&&(*(argv[argno] + 5) == '8')&&(*(argv[argno] + 6) == '1'))
+				else if (strcmp(argv[argno] + 2, "68881") == 0)
 					d_68881();
-				else if ((*(argv[argno] + 2) == '6')&&(*(argv[argno] + 3) == '8')&&(*(argv[argno] + 4) == '8')&&(*(argv[argno] + 5) == '8')&&(*(argv[argno] + 6) == '2'))
+				else if (strcmp(argv[argno] + 2, "68882") == 0)
 					d_68882();
-				else if ((*(argv[argno] + 2) == '5')&&(*(argv[argno] + 3) == '6')&&(*(argv[argno] + 4) == '0')&&(*(argv[argno] + 5) == '0')&&(*(argv[argno] + 6) == '1'))
+				else if (strcmp(argv[argno] + 2, "56001") == 0)
 					d_56001();
-				else if ((*(argv[argno] + 2) == '6')&&(*(argv[argno] + 3) == '5')&&(*(argv[argno] + 4) == '0')&&(*(argv[argno] + 5) == '2'))
+				else if (strcmp(argv[argno] + 2, "6502") == 0)
 					d_6502();
-				else if ((*(argv[argno] + 2) == 't')&&(*(argv[argno] + 3) == 'o')&&(*(argv[argno] + 4) == 'm'))
+				else if (strcmp(argv[argno] + 2, "tom") == 0)
 					d_gpu();
-				else if ((*(argv[argno] + 2) == 'j')&&(*(argv[argno] + 3) == 'e')&&(*(argv[argno] + 4) == 'r')&&(*(argv[argno] + 5) == 'r')&&(*(argv[argno] + 6) == 'y'))
+				else if (strcmp(argv[argno] + 2, "jerry") == 0)
 					d_dsp();
 				else
 				{
-					printf("Unrecognised CPU");
+					printf("Unrecognized CPU '%s'\n", argv[argno] + 2);
 					errcnt++;
 					return errcnt;
 				}

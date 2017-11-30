@@ -135,7 +135,7 @@
 // Byteswap crap
 #define BYTESWAP16(x) ((((x) & 0x00FF) << 8) | (((x) & 0xFF00) >> 8))
 #define BYTESWAP32(x) ((((x) & 0x000000FF) << 24) | (((x) & 0x0000FF00) << 8) | (((x) & 0x00FF0000) >> 8) | (((x) & 0xFF000000) >> 24))
-#define BYTESWAP64(x) ((BYTESWAP32(x >> 32) | (BYTESWAP32(x & 0xFFFFFFFF) << 32)))
+#define BYTESWAP64(x) (BYTESWAP32(x >> 32) | (BYTESWAP32(x & 0xFFFFFFFF) << 32))
 #define WORDSWAP32(x) ((((x) & 0x0000FFFF) << 16) | (((x) & 0xFFFF0000) >> 16))
 
 //
@@ -189,6 +189,7 @@ PTR
 	uint32_t   lw;				// LONG (for some reason)
 	SYM **     sy;				// SYM pointer
 	TOKEN *    tk;				// TOKEN pointer
+	double *   dp;				// Double pointer (temporary!)
 };
 
 // Symbol spaces

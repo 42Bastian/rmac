@@ -168,9 +168,9 @@ char unsupport[] = "unsupported for selected CPU";
 
 // Include code tables
 MNTAB machtab[] = {
-   { 0xFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0x0000, 0, m_badmode }, // 0
-   #include "68ktab.h"
-   {  0,  0L,  0L, 0x0000, 0, m_unimp   }            // Last entry
+	{ 0xFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0x0000, 0, m_badmode }, // 0
+#include "68ktab.h"
+	{  0,  0L,  0L, 0x0000, 0, m_unimp   }            // Last entry
 };
 
 // Register number << 9
@@ -208,10 +208,10 @@ WORD lwsiz_8[] = {
 // Byte/Word/long size (0=.w, 1=.l) in bit 9
 WORD lwsiz_9[] = {
 	(WORD)-1,
-	0,                                                      // Byte
-	1<<9, (WORD)-1,                                         // Word
-	1<<10, (WORD)-1, (WORD)-1, (WORD)-1,                    // Long
-	1<<9                                                    // Word (SIZN)
+	0,                                               // Byte
+	1<<9, (WORD)-1,                                  // Word
+	1<<10, (WORD)-1, (WORD)-1, (WORD)-1,             // Long
+	1<<9                                             // Word (SIZN)
 };
 
 // Addressing mode in bits 6..11 (register/mode fields are reversed)
@@ -739,6 +739,7 @@ int m_move(WORD inst, WORD size)
 	return OK;
 }
 
+
 //
 // Handle MOVE <C_ALL030> <C_ALTDATA>
 //        MOVE <C_ALL030> <M_AREG>
@@ -1093,18 +1094,13 @@ int m_clra(WORD inst, WORD siz)
 int m_clrd(WORD inst, WORD siz)
 {
 	if (!CHECK_OPTS(OPT_CLR_DX))
-	{
 		inst |= a0reg;
-		D_word(inst);
-
-		return OK;
-	}
 	else
-	{
 		inst = (a0reg << 9) | B16(01110000, 00000000);
-		D_word(inst);
-		return OK;
-	}
+
+	D_word(inst);
+
+	return OK;
 }
 
 
@@ -1892,6 +1888,7 @@ int m_divsl(WORD inst, WORD siz)
 	return OK;
 }
 
+
 //
 // divul.l
 //
@@ -2489,6 +2486,7 @@ int m_pflush(WORD inst, WORD siz)
 	return OK;
 }
 
+
 //
 // pflushr (68851)
 //
@@ -2547,12 +2545,11 @@ int m_pflushr(WORD inst, WORD siz)
 int m_pload(WORD inst, WORD siz, WORD extension)
 {
 	// TODO: 68851 support is not added yet.
-	// None of the ST series of computers had a 68020 + 68551 socket and since
+	// None of the ST series of computers had a 68020 + 68851 socket and since
 	// this is an Atari targetted assembler...
 	CHECKNO30;
 
 	inst |= am1;
-
 	D_word(inst);
 
 	switch (am0)
@@ -2585,15 +2582,18 @@ int m_pload(WORD inst, WORD siz, WORD extension)
 	return OK;
 }
 
+
 int m_ploadr(WORD inst, WORD siz)
 {
 	return m_pload(inst, siz, 1 << 9);
 }
 
+
 int m_ploadw(WORD inst, WORD siz)
 {
 	return m_pload(inst, siz, 0 << 9);
 }
+
 
 //
 // pmove (68030/68851)
@@ -2602,15 +2602,13 @@ int m_pmove(WORD inst, WORD siz)
 {
 	int inst2,reg;
 
-	// TODO: 68851 support is not added yet.
-	// None of the ST series of computers had
-	// a 68020 + 68851 socket and since this is
-	// an Atari targetted assembler....
-	// (same for 68EC030)
+	// TODO: 68851 support is not added yet. None of the ST series of
+	// computers had a 68020 + 68851 socket and since this is an Atari
+	// targetted assembler.... (same for 68EC030)
 	CHECKNO30;
 
-	inst2 = inst & (1 << 8); //Copy the flush bit over to inst2 in case we're called from m_pmovefd
-	inst &= ~(1 << 8);		//And mask it out
+	inst2 = inst & (1 << 8);	// Copy the flush bit over to inst2 in case we're called from m_pmovefd
+	inst &= ~(1 << 8);			// And mask it out
 
 	if (am0 == CREG)
 	{
@@ -2641,7 +2639,6 @@ int m_pmove(WORD inst, WORD siz)
 
 	if ((reg == (KW_MMUSR - KW_SFC)) && ((siz != SIZW) && (siz != SIZN)))
 		return error(siz_error);
-
 
 	if (am0 == CREG)
 	{
@@ -2698,17 +2695,15 @@ int m_pmovefd(WORD inst, WORD siz)
 	return m_pmove(inst | (1 << 8), siz);
 }
 
+
 //
 // ptrapcc (68851)
 //
 int m_ptrapcc(WORD inst, WORD siz)
 {
     CHECKNO20;
-	// We stash the 5 condition bits
-	// inside the opcode in 68ktab
-	// (bits 0-4), so we need to extract
-	// them first and fill in
-	// the clobbered bits.
+	// We stash the 5 condition bits inside the opcode in 68ktab (bits 0-4),
+	// so we need to extract them first and fill in the clobbered bits.
 	WORD opcode = inst & 0x1F;
 	inst = (inst & 0xFFE0) | (0x18);
 
@@ -2732,6 +2727,7 @@ int m_ptrapcc(WORD inst, WORD siz)
 		D_word(inst);
 		D_word(opcode);
 	}
+
 	return OK;
 }
 
@@ -2831,8 +2827,8 @@ int m_fsabs(WORD inst, WORD siz)
 {
 	if (activefpu == FPU_68040)
 		return gen_fpu(inst, siz, B8(01011000), FPU_P_EMUL);
-	else
-		return error("Unsupported in current FPU");
+
+	return error("Unsupported in current FPU");
 }
 
 
@@ -2840,8 +2836,8 @@ int m_fdabs(WORD inst, WORD siz)
 {
 	if (activefpu == FPU_68040)
 		return gen_fpu(inst, siz, B8(01011100), FPU_P_EMUL);
-	else
-		return error("Unsupported in current FPU");
+
+	return error("Unsupported in current FPU");
 }
 
 
@@ -2867,8 +2863,8 @@ int m_fsadd(WORD inst, WORD siz)
 {
 	if (activefpu == FPU_68040)
 		return gen_fpu(inst, siz, B8(01100010), FPU_P_EMUL);
-	else
-		return error("Unsupported in current FPU");
+
+	return error("Unsupported in current FPU");
 }
 
 
@@ -2876,8 +2872,8 @@ int m_fdadd(WORD inst, WORD siz)
 {
 	if (activefpu == FPU_68040)
 		return gen_fpu(inst, siz, B8(01100110), FPU_P_EMUL);
-	else
-		return error("Unsupported in current FPU");
+
+	return error("Unsupported in current FPU");
 }
 
 
@@ -2985,8 +2981,8 @@ int m_fsdiv(WORD inst, WORD siz)
 {
 	if (activefpu == FPU_68040)
 		return gen_fpu(inst, siz, B8(01100000), FPU_P_EMUL);
-	else
-		return error("Unsupported in current FPU");
+
+	return error("Unsupported in current FPU");
 }
 
 
@@ -2994,8 +2990,8 @@ int m_fddiv(WORD inst, WORD siz)
 {
 	if (activefpu == FPU_68040)
 		return gen_fpu(inst, siz, B8(01100100), FPU_P_EMUL);
-	else
-		return error("Unsupported in current FPU");
+
+	return error("Unsupported in current FPU");
 }
 
 
@@ -3111,7 +3107,6 @@ int m_fmod(WORD inst, WORD siz)
 //
 int m_fmove(WORD inst, WORD siz)
 {
-
 	// EA to register
 	if ((am0 == FREG) && (am1 < AM_USP))
 	{
@@ -3136,7 +3131,6 @@ int m_fmove(WORD inst, WORD siz)
 		case SIZP:	inst |= (3 << 10);
 			// In P size we have 2 cases: {#k} where k is immediate
 			// and {Dn} where Dn=Data register
-
 			if (bfparam1)
 			{
 				// Dn
@@ -3157,7 +3151,6 @@ int m_fmove(WORD inst, WORD siz)
 			return error("Something bad happened, possibly.");
 			break;
 		}
-
 
 		// Destination specifier
 		inst |= (a0reg << 7);
@@ -3261,8 +3254,8 @@ int m_fmovescr(WORD inst, WORD siz)
 		ea0gen(siz);
 		return OK;
 	}
-	else
-		return error("m_fmovescr says: wut?");
+
+	return error("m_fmovescr says: wut?");
 }
 
 //
@@ -3320,7 +3313,7 @@ int m_fmovem(WORD inst, WORD siz)
 	WORD regmask;
 	WORD datareg;
 
-	if (siz == SIZX || siz==SIZN)
+	if (siz == SIZX || siz == SIZN)
 	{
 		if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
 		{
@@ -3553,8 +3546,8 @@ int m_fdneg(WORD inst, WORD siz)
 {
 	if (activefpu == FPU_68040)
 		return gen_fpu(inst, siz, B8(01011110), FPU_P_EMUL);
-	else
-		return error("Unsupported in current FPU");
+
+	return error("Unsupported in current FPU");
 }
 
 
@@ -3592,11 +3585,8 @@ int m_fscale(WORD inst, WORD siz)
 //
 int m_fscc(WORD inst, WORD siz)
 {
-	// We stash the 5 condition bits
-	// inside the opcode in 68ktab
-	// (bits 4-0), so we need to extract
-	// them first and fill in
-	// the clobbered bits.
+	// We stash the 5 condition bits inside the opcode in 68ktab (bits 4-0),
+	// so we need to extract them first and fill in the clobbered bits.
 	WORD opcode = inst & 0x1F;
 	inst &= 0xFFE0;
 	inst |= am0 | a0reg;
@@ -3606,19 +3596,17 @@ int m_fscc(WORD inst, WORD siz)
 	return OK;
 }
 
+
 //
 // FTRAPcc (6888X, 68040)
 //
-
 int m_ftrapcc(WORD inst, WORD siz)
 {
-	// We stash the 5 condition bits
-	// inside the opcode in 68ktab
-	// (bits 3-7), so we need to extract
-	// them first and fill in
-	// the clobbered bits.
+	// We stash the 5 condition bits inside the opcode in 68ktab (bits 3-7),
+	// so we need to extract them first and fill in the clobbered bits.
 	WORD opcode = (inst >> 3) & 0x1F;
 	inst = (inst & 0xFF07) | (0xF << 3);
+
 	if (siz == SIZW)
 	{
 		inst |= 2;
@@ -3640,8 +3628,10 @@ int m_ftrapcc(WORD inst, WORD siz)
 		D_word(opcode);
 		return OK;
 	}
+
 	return OK;
 }
+
 
 //
 // fsgldiv (6888X, 68040)
@@ -3675,19 +3665,20 @@ int m_fsin(WORD inst, WORD siz)
 //
 int m_fsincos(WORD inst, WORD siz)
 {
-	// Swap a1reg, a2reg as a2reg should be stored
-	// in the bitfield gen_fpu generates
+	// Swap a1reg, a2reg as a2reg should be stored in the bitfield gen_fpu
+	// generates
 	int temp;
 	temp = a2reg;
 	a2reg = a1reg;
 	a1reg = temp;
+
 	if (gen_fpu(inst, siz, B8(00110000), FPU_FPSP) == OK)
 	{
 		chptr[-1] |= a2reg;
 		return OK;
 	}
-	else
-		return ERROR;
+
+	return ERROR;
 }
 
 
@@ -3722,8 +3713,8 @@ int m_fdfsqrt(WORD inst, WORD siz)
 {
 	if (activefpu == FPU_68040)
 		return gen_fpu(inst, siz, B8(01000101), FPU_P_EMUL);
-	else
-		return error("Unsupported in current FPU");
+
+	return error("Unsupported in current FPU");
 }
 
 
@@ -3740,8 +3731,8 @@ int m_fsfsub(WORD inst, WORD siz)
 {
 	if (activefpu == FPU_68040)
 		return gen_fpu(inst, siz, B8(01101000), FPU_P_EMUL);
-	else
-		return error("Unsupported in current FPU");
+
+	return error("Unsupported in current FPU");
 }
 
 
@@ -3749,8 +3740,8 @@ int m_fdsub(WORD inst, WORD siz)
 {
 	if (activefpu == FPU_68040)
 		return gen_fpu(inst, siz, B8(01101100), FPU_P_EMUL);
-	else
-		return error("Unsupported in current FPU");
+
+	return error("Unsupported in current FPU");
 }
 
 

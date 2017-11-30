@@ -230,6 +230,11 @@ int expr2(void)
 	switch (*tok++)
 	{
 	case CONST:
+		ptk.u32 = tok;
+		*evalTokenBuffer.u32++ = CONST;
+		*evalTokenBuffer.u64++ = *ptk.u64++;
+		tok = ptk.u32;
+		break;
 	case FCONST:
 		ptk.u32 = tok;
 		*evalTokenBuffer.u32++ = CONST;
