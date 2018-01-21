@@ -1,4 +1,4 @@
-//
+
 // RMAC - Reboot's Macro Assembler for all Atari computers
 // EXPR.C - Expression Analyzer
 // Copyright (C) 199x Landon Dyer, 2011-2017 Reboot and Friends
@@ -237,7 +237,7 @@ int expr2(void)
 		break;
 	case FCONST:
 		ptk.u32 = tok;
-		*evalTokenBuffer.u32++ = CONST;
+		*evalTokenBuffer.u32++ = FCONST;
 		*evalTokenBuffer.u64++ = *ptk.u64++;
 		tok = ptk.u32;
 		break;
@@ -558,28 +558,28 @@ int evexpr(TOKEN * _tk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 			}
 
 			if (sy->sattr & DEFINED)
-			{
 				*++sval = sy->svalue;		// Push symbol's value
-			}
 			else
-			{
 				*++sval = 0;				// 0 for undefined symbols
-			}
 
 			*++sattr = (WORD)(sy->sattr & ~GLOBAL);	// Push attribs
 			sym_seg = (WORD)(sy->sattr & TDB);
 			break;
+
 		case CONST:
 			*++sval = *tk.u64++;
 //printf("evexpr(): CONST = %lX\n", *sval);
 			*++sattr = ABS | DEFINED;		// Push simple attribs
 			break;
+
 		case FCONST:
-//printf("evexpr(): FCONST = %i\n", *tk.u32);
-			*((double *)sval) = *((double *)tk.u32);
-			tk.u32 += 2;
+//printf("evexpr(): FCONST = %lf\n", *tk.dp);
+			// Even though it's a double, we can treat it like a uint64_t since
+			// we're just moving the bits around.
+			*++sval = *tk.u64++;
 			*++sattr = ABS | DEFINED | FLOAT; // Push simple attribs
 			break;
+
 		case ACONST:
 //printf("evexpr(): ACONST = %i\n", *tk.u32);
 			*++sval = *tk.u32++;				// Push value
@@ -597,36 +597,26 @@ int evexpr(TOKEN * _tk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 			//
 			//   [1] + : Error
 			//       - : ABS
+
 		case '+':
 //printf("evexpr(): +\n");
 			--sval;							// Pop value
 			--sattr;						// Pop attrib
 //printf("--> N+N: %i + %i = ", *sval, sval[1]);
-			// Extract float attributes from both terms and pack them
-			// into a single value
-			attr = sattr[0] & FLOAT | ((sattr[1] & FLOAT) >> 1);
-			attr2 = sattr[0] | sattr[1] & FLOAT; // Returns FLOAT if either of the two numbers are FLOAT
+			// Get FLOAT attribute, if any
+			attr = (sattr[0] | sattr[1]) & FLOAT;
 
-			if (attr == (FLOAT | (FLOAT >> 1)))
+			// Since adding an int to a fp value promotes it to a fp value, we
+			// don't care whether it's first or second; we cast to to a double
+			// regardless.
+			if (attr == FLOAT)
 			{
-				// Float + Float
-				double * dst = (double *)sval;
-				double * src = (double *)(sval + 1);
-				*dst += *src;
-			}
-			else if (attr == FLOAT)
-			{
-				// Float + Int
-				double * dst = (double *)sval;
-				uint64_t * src = (uint64_t *)(sval + 1);
-				*dst += *src;
-			}
-			else if (attr == FLOAT >> 1)
-			{
-				// Int + Float
-				uint64_t * dst = (uint64_t *)sval;
-				double * src = (double *)(sval + 1);
-				*(double *)dst = *src + *dst;
+				PTR p;
+				p.u64 = sval;
+				double fpval1 = (sattr[0] & FLOAT ? *p.dp : (double)*p.i64);
+				p.u64++;
+				double fpval2 = (sattr[1] & FLOAT ? *p.dp : (double)*p.i64);
+				*(double *)sval = fpval1 + fpval2;
 			}
 			else
 			{
@@ -635,54 +625,43 @@ int evexpr(TOKEN * _tk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 //printf("%i\n", *sval);
 
 			if (!(*sattr & TDB))
-				*sattr = sattr[1] | attr2;
+				*sattr = sattr[1] | attr;
 			else if (sattr[1] & TDB)
 				return error(seg_error);
 
 			break;
+
 		case '-':
 //printf("evexpr(): -\n");
 			--sval;							// Pop value
 			--sattr;						// Pop attrib
 //printf("--> N-N: %i - %i = ", *sval, sval[1]);
-			// Extract float attributes from both terms and pack them
-			// into a single value
-			attr = sattr[0] & FLOAT | ((sattr[1] & FLOAT) >> 1);
-			attr2 = sattr[0] | sattr[1] & FLOAT; // Returns FLOAT if either of the two numbers are FLOAT
+			// Get FLOAT attribute, if any
+			attr = (sattr[0] | sattr[1]) & FLOAT;
 
-			if (attr == (FLOAT | (FLOAT >> 1)))
+			// Since subtracting an int to a fp value promotes it to a fp
+			// value, we don't care whether it's first or second; we cast to to
+			// a double regardless.
+			if (attr == FLOAT)
 			{
-				// Float - Float
-				double * dst = (double *)sval;
-				double * src = (double *)(sval + 1);
-				*dst -= *src;
-			}
-			else if (attr == FLOAT)
-			{
-				// Float - Int
-				double * dst = (double *)sval;
-				uint64_t * src = (uint64_t *)(sval + 1);
-				*dst -= *src;
-			}
-			else if (attr == FLOAT >> 1)
-			{
-				// Int - Float
-				uint64_t * dst = (uint64_t *)sval;
-				double * src = (double *)(sval + 1);
-				*(double *)dst = *dst - *src;
+				PTR p;
+				p.u64 = sval;
+				double fpval1 = (sattr[0] & FLOAT ? *p.dp : (double)*p.i64);
+				p.u64++;
+				double fpval2 = (sattr[1] & FLOAT ? *p.dp : (double)*p.i64);
+				*(double *)sval = fpval1 - fpval2;
 			}
 			else
 			{
-				*sval -= sval[1];				// Compute value
+				*sval -= sval[1];
 			}
-
 //printf("%i\n", *sval);
 
+			*sattr |= attr;					// Inherit FLOAT attribute
 			attr = (WORD)(*sattr & TDB);
 #if 0
 printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 #endif
-			*sattr |= attr2;                // Inherit FLOAT attribute
 			// If symbol1 is ABS, take attributes from symbol2
 			if (!attr)
 				*sattr = sattr[1];
@@ -691,6 +670,7 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 				*sattr &= ~TDB;
 
 			break;
+
 		// Unary operators only work on ABS items
 		case UNMINUS:
 //printf("evexpr(): UNMINUS\n");
@@ -699,16 +679,18 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 
 			if (*sattr & FLOAT)
 			{
-				double *dst = (double *)sval;
+				double * dst = (double *)sval;
 				*dst = -*dst;
 				*sattr = ABS | DEFINED | FLOAT; // Expr becomes absolute
 			}
 			else
 			{
-				*sval = -(int)*sval;
+				*sval = -(int64_t)*sval;
 				*sattr = ABS | DEFINED;			// Expr becomes absolute
 			}
+
 			break;
+
 		case '!':
 //printf("evexpr(): !\n");
 			if (*sattr & TDB)
@@ -720,6 +702,7 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			*sval = !*sval;
 			*sattr = ABS | DEFINED;			// Expr becomes absolute
 			break;
+
 		case '~':
 //printf("evexpr(): ~\n");
 			if (*sattr & TDB)
@@ -731,6 +714,7 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			*sval = ~*sval;
 			*sattr = ABS | DEFINED;			// Expr becomes absolute
 			break;
+
 		// Comparison operators must have two values that
 		// are in the same segment, but that's the only requirement.
 		case LE:
@@ -741,38 +725,28 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			if ((*sattr & TDB) != (sattr[1] & TDB))
 				return error(seg_error);
 
-			// Extract float attributes from both terms and pack them
-			// into a single value
-			attr = sattr[0] & FLOAT | ((sattr[1] & FLOAT) >> 1);
+			// Get FLOAT attribute, if any
+			attr = (sattr[0] | sattr[1]) & FLOAT;
 
-			if (attr == (FLOAT | (FLOAT >> 1)))
+			// Cast any ints in the comparison to double, if there's at least
+			// one double in the comparison.
+			if (attr == FLOAT)
 			{
-				// Float <= Float
-				double * dst = (double *)sval;
-				double * src = (double *)(sval + 1);
-				*sval = *dst <= *src;
-			}
-			else if (attr == FLOAT)
-			{
-				// Float <= Int
-				double * dst = (double *)sval;
-				uint64_t * src = (uint64_t *)(sval + 1);
-				*sval = *dst <= *src;
-			}
-			else if (attr == FLOAT >> 1)
-			{
-				// Int <= Float
-				uint64_t * dst = (uint64_t *)sval;
-				double * src = (double *)(sval + 1);
-				*sval = *dst <= *src;
+				PTR p;
+				p.u64 = sval;
+				double fpval1 = (sattr[0] & FLOAT ? *p.dp : (double)*p.i64);
+				p.u64++;
+				double fpval2 = (sattr[1] & FLOAT ? *p.dp : (double)*p.i64);
+				*sval = (fpval1 <= fpval2);
 			}
 			else
 			{
-				*sval = *sval <= sval[1];
+				*sval = (*sval <= sval[1]);
 			}
 
 			*sattr = ABS | DEFINED;
 			break;
+
 		case GE:
 //printf("evexpr(): GE\n");
 			sattr--;
@@ -781,39 +755,28 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			if ((*sattr & TDB) != (sattr[1] & TDB))
 				return error(seg_error);
 
-			// Extract float attributes from both terms and pack them
-			// into a single value
-			attr = sattr[0] & FLOAT | ((sattr[1] & FLOAT) >> 1);
+			// Get FLOAT attribute, if any
+			attr = (sattr[0] | sattr[1]) & FLOAT;
 
-			if (attr == (FLOAT | (FLOAT >> 1)))
+			// Cast any ints in the comparison to double, if there's at least
+			// one double in the comparison.
+			if (attr == FLOAT)
 			{
-				// Float >= Float
-				double * dst = (double *)sval;
-				double * src = (double *)(sval + 1);
-				*sval = *dst >= *src;
-			}
-			else if (attr == FLOAT)
-			{
-				// Float >= Int
-				double * dst = (double *)sval;
-				uint64_t * src = (uint64_t *)(sval + 1);
-				*sval = *dst >= *src;
-			}
-			else if (attr == FLOAT >> 1)
-			{
-				// Int >= Float
-				uint64_t * dst = (uint64_t *)sval;
-				double * src = (double *)(sval + 1);
-				*sval = *dst >= *src;
-			}
-			else if (attr == 0)
-			{
-				*sval = *sval >= sval[1];
+				PTR p;
+				p.u64 = sval;
+				double fpval1 = (sattr[0] & FLOAT ? *p.dp : (double)*p.i64);
+				p.u64++;
+				double fpval2 = (sattr[1] & FLOAT ? *p.dp : (double)*p.i64);
+				*sval = (fpval1 >= fpval2);
 			}
 			else
-				*sattr = ABS | DEFINED;
+			{
+				*sval = (*sval >= sval[1]);
+			}
 
+			*sattr = ABS | DEFINED;
 			break;
+
 		case '>':
 //printf("evexpr(): >\n");
 			sattr--;
@@ -822,39 +785,28 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			if ((*sattr & TDB) != (sattr[1] & TDB))
 				return error(seg_error);
 
-			// Extract float attributes from both terms and pack them
-			// into a single value
-			attr = sattr[0] & FLOAT | ((sattr[1] & FLOAT) >> 1);
+			// Get FLOAT attribute, if any
+			attr = (sattr[0] | sattr[1]) & FLOAT;
 
-			if (attr == (FLOAT | (FLOAT >> 1)))
+			// Cast any ints in the comparison to double, if there's at least
+			// one double in the comparison.
+			if (attr == FLOAT)
 			{
-				// Float > Float
-				double * dst = (double *)sval;
-				double * src = (double *)(sval + 1);
-				*sval = *dst > *src;
-			}
-			else if (attr == FLOAT)
-			{
-				// Float > Int
-				double * dst = (double *)sval;
-				uint64_t * src = (uint64_t *)(sval + 1);
-				*sval = *dst > *src;
-			}
-			else if (attr == FLOAT >> 1)
-			{
-				// Int > Float
-				uint64_t * dst = (uint64_t *)sval;
-				double * src = (double *)(sval + 1);
-				*sval = *dst > *src;
+				PTR p;
+				p.u64 = sval;
+				double fpval1 = (sattr[0] & FLOAT ? *p.dp : (double)*p.i64);
+				p.u64++;
+				double fpval2 = (sattr[1] & FLOAT ? *p.dp : (double)*p.i64);
+				*sval = (fpval1 > fpval2);
 			}
 			else
 			{
-				*sval = *sval > sval[1];
+				*sval = (*sval > sval[1]);
 			}
 
 			*sattr = ABS | DEFINED;
-
 			break;
+
 		case '<':
 //printf("evexpr(): <\n");
 			sattr--;
@@ -863,39 +815,28 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			if ((*sattr & TDB) != (sattr[1] & TDB))
 				return error(seg_error);
 
-			// Extract float attributes from both terms and pack them
-			// into a single value
-			attr = sattr[0] & FLOAT | ((sattr[1] & FLOAT) >> 1);
+			// Get FLOAT attribute, if any
+			attr = (sattr[0] | sattr[1]) & FLOAT;
 
-			if (attr == (FLOAT | (FLOAT >> 1)))
+			// Cast any ints in the comparison to double, if there's at least
+			// one double in the comparison.
+			if (attr == FLOAT)
 			{
-				// Float < Float
-				double * dst = (double *)sval;
-				double * src = (double *)(sval + 1);
-				*sval = *dst < *src;
-			}
-			else if (attr == FLOAT)
-			{
-				// Float < Int
-				double * dst = (double *)sval;
-				uint64_t * src = (uint64_t *)(sval + 1);
-				*sval = *dst < *src;
-			}
-			else if (attr == FLOAT >> 1)
-			{
-				// Int < Float
-				uint64_t * dst = (uint64_t *)sval;
-				double * src = (double *)(sval + 1);
-				*sval = *dst < *src;
+				PTR p;
+				p.u64 = sval;
+				double fpval1 = (sattr[0] & FLOAT ? *p.dp : (double)*p.i64);
+				p.u64++;
+				double fpval2 = (sattr[1] & FLOAT ? *p.dp : (double)*p.i64);
+				*sval = (fpval1 < fpval2);
 			}
 			else
 			{
-				*sval = *sval < sval[1];
+				*sval = (*sval < sval[1]);
 			}
 
-			*sattr = ABS | DEFINED;
-
+			*sattr = ABS | DEFINED;		// Expr forced to ABS
 			break;
+
 		case NE:
 //printf("evexpr(): NE\n");
 			sattr--;
@@ -904,33 +845,28 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			if ((*sattr & TDB) != (sattr[1] & TDB))
 				return error(seg_error);
 
-			// Extract float attributes from both terms and pack them
-			// into a single value
-			attr = sattr[0] & FLOAT | ((sattr[1] & FLOAT) >> 1);
+			// Get FLOAT attribute, if any
+			attr = (sattr[0] | sattr[1]) & FLOAT;
 
-			if (attr == (FLOAT | (FLOAT >> 1)))
+			// Cast any ints in the comparison to double, if there's at least
+			// one double in the comparison.
+			if (attr == FLOAT)
 			{
-				// Float <> Float
-				return error("comparison for equality with float types not allowed.");
-			}
-			else if (attr == FLOAT)
-			{
-				// Float <> Int
-				return error("comparison for equality with float types not allowed.");
-			}
-			else if (attr == FLOAT >> 1)
-			{
-				// Int != Float
-				return error("comparison for equality with float types not allowed.");
+				PTR p;
+				p.u64 = sval;
+				double fpval1 = (sattr[0] & FLOAT ? *p.dp : (double)*p.i64);
+				p.u64++;
+				double fpval2 = (sattr[1] & FLOAT ? *p.dp : (double)*p.i64);
+				*sval = (fpval1 != fpval2);
 			}
 			else
 			{
-				*sval = *sval != sval[1];
+				*sval = (*sval != sval[1]);
 			}
 
-			*sattr = ABS | DEFINED;
-
+			*sattr = ABS | DEFINED;		// Expr forced to ABS
 			break;
+
 		case '=':
 //printf("evexpr(): =\n");
 			sattr--;
@@ -939,37 +875,29 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			if ((*sattr & TDB) != (sattr[1] & TDB))
 				return error(seg_error);
 
-			// Extract float attributes from both terms and pack them
-			// into a single value
-			attr = sattr[0] & FLOAT | ((sattr[1] & FLOAT) >> 1);
+			// Get FLOAT attribute, if any
+			attr = (sattr[0] | sattr[1]) & FLOAT;
 
-			if (attr == (FLOAT | (FLOAT >> 1)))
+			// Cast any ints in the comparison to double, if there's at least
+			// one double in the comparison.
+			if (attr == FLOAT)
 			{
-				// Float = Float
-				double * dst = (double *)sval;
-				double * src = (double *)(sval + 1);
-				*sval = *src == *dst;
-			}
-			else if (attr == FLOAT)
-			{
-				// Float = Int
-				return error("equality with float ");
-			}
-			else if (attr == FLOAT >> 1)
-			{
-				// Int == Float
-				uint64_t * dst = (uint64_t *)sval;
-				double * src = (double *)(sval + 1);
-				*sval = *src == *dst;
+				PTR p;
+				p.u64 = sval;
+				double fpval1 = (sattr[0] & FLOAT ? *p.dp : (double)*p.i64);
+				p.u64++;
+				double fpval2 = (sattr[1] & FLOAT ? *p.dp : (double)*p.i64);
+				*sval = (fpval1 == fpval2);
 			}
 			else
 			{
-				*sval = *sval == sval[1];
+				*sval = (*sval == sval[1]);
 			}
 
-			*sattr = ABS | DEFINED;
+			*sattr = ABS | DEFINED;		// Expr forced to ABS
 
 			break;
+
 		// All other binary operators must have two ABS items to work with.
 		// They all produce an ABS value.
 		default:
@@ -982,33 +910,25 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 			{
 			case '*':
 				sval--;
-				sattr--;					// Pop attrib
+				sattr--;
 //printf("--> NxN: %i x %i = ", *sval, sval[1]);
-				// Extract float attributes from both terms and pack them
-				// into a single value
-				attr = sattr[0] & FLOAT | ((sattr[1] & FLOAT) >> 1);
-				attr2 = sattr[0] | sattr[1] & FLOAT; // Returns FLOAT if either of the two numbers are FLOAT
+				// Get FLOAT attribute, if any
+				attr = (sattr[0] | sattr[1]) & FLOAT;
 
-				if (attr == (FLOAT | (FLOAT >> 1)))
+				// Since multiplying an int to a fp value promotes it to a fp
+				// value, we don't care whether it's first or second; it will
+				// be cast to a double regardless.
+/*
+An open question here is do we promote ints to floats as signed or unsigned? It makes a difference if, say, the int is put in as -1 but is promoted to a double as $FFFFFFFFFFFFFFFF--you get very different results that way! For now, we promote as signed until proven detrimental otherwise.
+*/
+				if (attr == FLOAT)
 				{
-					// Float * Float
-					double * dst = (double *)sval;
-					double * src = (double *)(sval + 1);
-					*dst *= *src;
-				}
-				else if (attr == FLOAT)
-				{
-					// Float * Int
-					double * dst = (double *)sval;
-					uint64_t * src = (uint64_t *)(sval + 1);
-					*dst *= *src;
-				}
-				else if (attr == FLOAT >> 1)
-				{
-					// Int * Float
-					uint64_t * dst = (uint64_t *)sval;
-					double * src = (double *)(sval + 1);
-					*(double *)dst = *src * *dst;
+					PTR p;
+					p.u64 = sval;
+					double fpval1 = (sattr[0] & FLOAT ? *p.dp : (double)*p.i64);
+					p.u64++;
+					double fpval2 = (sattr[1] & FLOAT ? *p.dp : (double)*p.i64);
+					*(double *)sval = fpval1 * fpval2;
 				}
 				else
 				{
@@ -1016,53 +936,28 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 				}
 //printf("%i\n", *sval);
 
-				*sattr = ABS | DEFINED;			// Expr becomes absolute
-				*sattr |= attr2;
-
+				*sattr = ABS | DEFINED | attr;		// Expr becomes absolute
 				break;
+
 			case '/':
 				sval--;
-				sattr--;					// Pop attrib
-
-
+				sattr--;
 //printf("--> N/N: %i / %i = ", sval[0], sval[1]);
-				// Extract float attributes from both terms and pack them
-				// into a single value
-				attr = sattr[0] & FLOAT | ((sattr[1] & FLOAT) >> 1);
-				attr2 = sattr[0] | sattr[1] & FLOAT; // Returns FLOAT if either of the two numbers are FLOAT
+				// Get FLOAT attribute, if any
+				attr = (sattr[0] | sattr[1]) & FLOAT;
 
-				if (attr == (FLOAT | (FLOAT >> 1)))
+				if (attr == FLOAT)
 				{
-					// Float / Float
-					double * dst = (double *)sval;
-					double * src = (double *)(sval + 1);
+					PTR p;
+					p.u64 = sval;
+					double fpval1 = (sattr[0] & FLOAT ? *p.dp : (double)*p.i64);
+					p.u64++;
+					double fpval2 = (sattr[1] & FLOAT ? *p.dp : (double)*p.i64);
 
-					if (*src == 0)
+					if (fpval2 == 0)
 						return error("divide by zero");
 
-					*dst = *dst / *src;
-				}
-				else if (attr == FLOAT)
-				{
-					// Float / Int
-					double * dst = (double *)sval;
-					uint64_t * src = (uint64_t *)(sval + 1);
-
-					if (*src == 0)
-						return error("divide by zero");
-
-					*dst = *dst / *src;
-				}
-				else if (attr == FLOAT >> 1)
-				{
-					// Int / Float
-					uint64_t * dst=(uint64_t *)sval;
-					double * src=(double *)(sval + 1);
-
-					if (*src == 0)
-						return error("divide by zero");
-
-					*(double *)dst = *dst / *src;
+					*(double *)sval = fpval1 / fpval2;
 				}
 				else
 				{
@@ -1077,15 +972,14 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 					// ints.
 					*sval = (int32_t)sval[0] / (int32_t)sval[1];
 				}
-
-				*sattr = ABS | DEFINED;			// Expr becomes absolute
-				*sattr |= attr2;
-
 //printf("%i\n", *sval);
+
+				*sattr = ABS | DEFINED | attr;		// Expr becomes absolute
 				break;
+
 			case '%':
 				sval--;
-				sattr--;					// Pop attrib
+				sattr--;
 
 				if ((*sattr | sattr[1]) & FLOAT)
 					return error("floating point numbers not allowed with operator '%'.");
@@ -1093,9 +987,10 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 				if (sval[1] == 0)
 					return error("mod (%) by zero");
 
-				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				*sval %= sval[1];
+				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				break;
+
 			case SHL:
 				sval--;
 				sattr--;					// Pop attrib
@@ -1103,9 +998,10 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 				if ((*sattr | sattr[1]) & FLOAT)
 					return error("floating point numbers not allowed with operator '<<'.");
 
-				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				*sval <<= sval[1];
+				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				break;
+
 			case SHR:
 				sval--;
 				sattr--;					// Pop attrib
@@ -1113,9 +1009,10 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 				if ((*sattr | sattr[1]) & FLOAT)
 					return error("floating point numbers not allowed with operator '>>'.");
 
-				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				*sval >>= sval[1];
+				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				break;
+
 			case '&':
 				sval--;
 				sattr--;					// Pop attrib
@@ -1123,9 +1020,10 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 				if ((*sattr | sattr[1]) & FLOAT)
 					return error("floating point numbers not allowed with operator '&'.");
 
-				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				*sval &= sval[1];
+				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				break;
+
 			case '^':
 				sval--;
 				sattr--;					// Pop attrib
@@ -1133,21 +1031,24 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 				if ((*sattr | sattr[1]) & FLOAT)
 					return error("floating point numbers not allowed with operator '^'.");
 
-				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				*sval ^= sval[1];
+				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				break;
+
 			case '|':
 				sval--;
-				sattr--;					// Pop attrib
+				sattr--;
 
 				if ((*sattr | sattr[1]) & FLOAT)
 					return error("floating point numbers not allowed with operator '|'.");
 
-				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				*sval |= sval[1];
+				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				break;
+
 			default:
-				interror(5);				// Bad operator in expression stream
+				// Bad operator in expression stream (this should never happen!)
+				interror(5);
 			}
 		}
 	}
@@ -1158,13 +1059,9 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 	if (a_esym != NULL)
 		*a_esym = esym;
 
-	// sym_seg added in 1.0.16 to solve a problem with forward symbols in
-	// expressions where absolute values also existed. The absolutes were
-	// overiding the symbol segments and not being included :(
-	//*a_attr = *sattr | sym_seg;           // Copy value + attrib
-
-	*a_attr = *sattr;						// Copy value + attrib
+	// Copy value + attrib into return variables
 	*a_value = *sval;
+	*a_attr = *sattr;
 
 	return OK;
 }

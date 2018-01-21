@@ -312,7 +312,7 @@ int WriteObject(int fd)
 
 		ssize = sy_assign(NULL, NULL);				// Assign index numbers to the symbols
 		tds = sect[TEXT].sloc + sect[DATA].sloc;	// Get size of TEXT and DATA segment
-		buf = malloc(0x600000);						// Allocate 6mb object file image memory
+		buf = malloc(0x800000);						// Allocate 8MB object file image memory
 
 		if (buf == NULL)
 		{
@@ -320,7 +320,7 @@ int WriteObject(int fd)
 			return ERROR;
 		}
 
-		memset(buf, 0, 0x600000);		// Clear allocated memory
+		memset(buf, 0, 0x800000);		// Clear allocated memory
 		objImage = buf;					// Set global object image pointer
 		strtable = malloc(0x200000);	// Allocate 2MB string table buffer
 

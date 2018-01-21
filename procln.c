@@ -575,7 +575,7 @@ When checking to see if it's already been equated, issue a warning.
 		}
 
 		sy->sattr |= eattr | EQUATED;	// Symbol inherits value and attributes
-		sy->svalue = (uint32_t)eval;
+		sy->svalue = eval;
 
 		if (list_flag)					// Put value in listing
 			listvalue((uint32_t)eval);

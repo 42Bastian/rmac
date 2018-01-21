@@ -15,6 +15,7 @@ int eaNgen(WORD siz)
 	vbd = (uint32_t)aNbdexval;
 	wbd = (WORD)(aNbdexattr & DEFINED);
 	tdbbd = (WORD)(aNbdexattr & TDB);
+	uint8_t extDbl[12];
 
 	switch (amN)
 	{
@@ -213,20 +214,23 @@ int eaNgen(WORD siz)
 			// 68881/68882/68040 only
 			if (w)
 			{
-				float vv;
 				if (tdb)
 					MarkRelocatable(cursect, sloc, tdb, MSINGLE, NULL);
 
-				vv = (float)v;
-
-				D_single(vv);
+				// The value passed back from expr() is an internal C double;
+				// so we have to access it as such then convert it to an
+				// IEEE-754 float so we can store it as such in the instruction
+				// stream here.
+				PTR p;
+				p.u64 = &aNexval;
+				float f = (float)*p.dp;
+				uint32_t ieee754 = FloatToIEEE754(f);
+				D_long(ieee754);
 			}
 			else
 			{
-				float vv = 0;
 				AddFixup(FU_FLOATSING, sloc, aNexpr);
-
-				D_single(vv);
+				D_long(0);	// IEEE-754 zero is all zeroes
 			}
 
     		break;
@@ -234,26 +238,19 @@ int eaNgen(WORD siz)
 			// 68881/68882/68040 only
 			if (w)
 			{
-				double vv;
-				unsigned long long vvv;
 				if (tdb)
 					MarkRelocatable(cursect, sloc, tdb, MDOUBLE, NULL);
 
-				// We want to store the IEE754 float into ram from a generic
-				// 32-bit int. First, convert it to double float, then cast
-				// that to 64-bit, then convert to big endian (if needed)
-				// and then store it (phew!)
-				vv = *(float *)&aNexval;
-				vvv = BYTESWAP64(*(unsigned long long *)&vv);
-
-				D_double(vvv);
+				PTR p;
+				p.u64 = &aNexval;
+				double d = *p.dp;
+				uint64_t ieee754 = DoubleToIEEE754(d);
+				D_quad(ieee754);
 			}
 			else
 			{
-				unsigned long long vvv = 0;
 				AddFixup(FU_FLOATDOUB, sloc, aNexpr);
-
-				D_double(vvv);
+				D_quad(0LL);	// IEEE-754 zero is all zeroes
 			}
 
 			break;
@@ -261,25 +258,19 @@ int eaNgen(WORD siz)
 			// 68881/68882/68040 only
 			if (w)
 			{
-				long double vv;
 				if (tdb)
 					MarkRelocatable(cursect, sloc, tdb, MEXTEND, NULL);
 
-				// We want to store the IEE754 float into ram from a generic
-				// 32-bit int. First, convert it to double float, then cast
-				// that to 96-bit, then convert to big endian (if needed)
-				// and then store it (phew!)
-				vv = (double)aNexval;
-
-				//*chptr++ = (char)((*(unsigned long long *)&vv) >> 32) | 0x80 /* assume that the number is normalised */;
-				D_extend(vv);
+				PTR p;
+				p.u64 = &aNexval;
+				DoubleToExtended(*p.dp, extDbl);
+				D_extend(extDbl);
 			}
 			else
 			{
-				long double vvv = 0;
 				AddFixup(FU_FLOATDOUB, sloc, aNexpr);
-
-				D_extend(vvv);
+				memset(extDbl, 0, 12);
+				D_extend(extDbl);
 			}
 
 			break;
@@ -361,7 +352,7 @@ int eaNgen(WORD siz)
 			else
 			{
 				// Arrange for fixup later on
-				AddFixup(FU_WORD|FU_SEXT, sloc, aNbexpr);
+				AddFixup(FU_WORD | FU_SEXT, sloc, aNbexpr);
 				D_word(0);
 			}
 		}
@@ -384,13 +375,13 @@ int eaNgen(WORD siz)
 			}
 		}
 		// Deposit od (if not suppressed)
-		if ((aNexten&7)==EXT_IISPRE0 || (aNexten&7)==EXT_IISPREN
-			|| (aNexten&7)==EXT_IISNOIN || (aNexten&7)==EXT_IISPOSN)
+		if ((aNexten & 7) == EXT_IISPRE0 || (aNexten & 7) == EXT_IISPREN
+			|| (aNexten & 7) == EXT_IISNOIN || (aNexten & 7) == EXT_IISPOSN)
 		{
 			// Don't deposit anything (suppressed)
 		}
-		else if ((aNexten&7)==EXT_IISPREW
-			|| (aNexten&7)==EXT_IISPOSW || (aNexten&7)==EXT_IISNOIW)
+		else if ((aNexten & 7) == EXT_IISPREW
+			|| (aNexten & 7) == EXT_IISPOSW || (aNexten & 7) == EXT_IISNOIW)
 		{
 			// Deposit word od
 			if (w)
@@ -407,7 +398,7 @@ int eaNgen(WORD siz)
 			else
 			{
 				// Arrange for fixup later on
-				AddFixup(FU_WORD|FU_SEXT, sloc, aNexpr);
+				AddFixup(FU_WORD | FU_SEXT, sloc, aNexpr);
 				D_word(0);
 			}
 		}
@@ -425,7 +416,7 @@ int eaNgen(WORD siz)
 			else
 			{
 				// Arrange for fixup later on
-				AddFixup(FU_LONG|FU_SEXT, sloc, aNexpr);
+				AddFixup(FU_LONG | FU_SEXT, sloc, aNexpr);
 				D_long(0);
 			}
 		}

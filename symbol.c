@@ -482,7 +482,7 @@ int symtable(void)
 					strcpy(ln2, "external");
 				else
 				{
-					sprintf(ln2, "%08X", q->svalue);
+					sprintf(ln2, "%016lX", q->svalue);
 					ToUppercase(ln2);
 				}
 

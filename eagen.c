@@ -8,10 +8,10 @@
 
 #include "eagen.h"
 #include "amode.h"
-#include "sect.h"
-#include "mark.h"
 #include "error.h"
+#include "fltpoint.h"
 #include "mach.h"
+#include "mark.h"
 #include "riscasm.h"
 #include "sect.h"
 #include "token.h"

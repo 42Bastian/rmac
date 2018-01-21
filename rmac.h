@@ -19,7 +19,7 @@
 //
 // TARGET SPECIFIC BUILD SETTINGS
 //
-#if defined(WIN32) || defined (WIN64)
+#if defined(WIN32) || defined(WIN64)
 	#include <io.h>
 	#include <fcntl.h>
 	// Release platform - windows
@@ -27,6 +27,7 @@
 	#define _OPEN_FLAGS     _O_TRUNC|_O_CREAT|_O_BINARY|_O_RDWR
 	#define _OPEN_INC       _O_RDONLY|_O_BINARY
 	#define _PERM_MODE      _S_IREAD|_S_IWRITE
+
 	#ifdef _MSC_VER
 		#if _MSC_VER > 1000
 			#pragma warning(disable:4996)
@@ -58,8 +59,8 @@
 
 	#include <sys/fcntl.h>
 	#include <unistd.h>
-	// Release platform - mac OS-X or Linux
-	#define PLATFORM        "OSX/Linux"
+	// Release platform - Linux or mac OS-X
+	#define PLATFORM        "Linux/OSX"
 	#define _OPEN_FLAGS     O_TRUNC|O_CREAT|O_RDWR
 	#define _OPEN_INC       O_RDONLY
 	#define _PERM_MODE      S_IRUSR|S_IWUSR
@@ -76,7 +77,9 @@
 	// WARNING WARNING WARNING
 	#define DO_PRAGMA(x) _Pragma (#x)
 	#define WARNING(desc) DO_PRAGMA(message (#desc))
-#else
+
+	#else
+
 	// Release platform - not specified
 	#include <sys/fcntl.h>
 	#define PLATFORM        "Unknown"
@@ -87,7 +90,9 @@
 	#define DO_PRAGMA(x) _Pragma (#x)
 	#define WARNING(desc) DO_PRAGMA(message (#desc))
 	#endif
+
 #endif
+
 
 //
 // Endian related, for safe handling of endian-sensitive data
@@ -189,7 +194,8 @@ PTR
 	uint32_t   lw;				// LONG (for some reason)
 	SYM **     sy;				// SYM pointer
 	TOKEN *    tk;				// TOKEN pointer
-	double *   dp;				// Double pointer (temporary!)
+	double *   dp;				// Double pointer
+	int64_t *  i64;				// 64-bit signed int pointer
 };
 
 // Symbol spaces

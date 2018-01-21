@@ -11,6 +11,7 @@
 #include "amode.h"
 #include "error.h"
 #include "expr.h"
+#include "fltpoint.h"
 #include "listing.h"
 #include "mach.h"
 #include "macro.h"
@@ -20,8 +21,6 @@
 #include "sect.h"
 #include "symbol.h"
 #include "token.h"
-#include "math.h"
-#include "sect.h"
 
 #define DEF_KW
 #include "kwtab.h"
@@ -1149,43 +1148,46 @@ int d_dc(WORD siz)
 			D_quad(eval);
 			break;
 		case SIZS:
+			// 32-bit float size
 			if (m6502)
 				return error(in_6502mode);
 
 			if (!defined)
 			{
-				float vv = 0;
 				AddFixup(FU_FLOATSING, sloc, exprbuf);
-
-				D_single(vv);
+				D_long(0);
 			}
 			else
 			{
 				if (tdb)
 					MarkRelocatable(cursect, sloc, tdb, MSINGLE, NULL);
 
-				D_single(eval);
+				PTR ptr;
+				ptr.u64 = &eval;
+				uint32_t ieee754 = FloatToIEEE754((float)*ptr.dp);
+				D_long(ieee754);
 			}
 
 			break;
 		case SIZD:
+			// 64-bit double size
 			if (m6502)
 				return error(in_6502mode);
 
 			if (!defined)
 			{
-				double vv = 0;
 				AddFixup(FU_FLOATDOUB, sloc, exprbuf);
-
-				D_double(vv);
+				D_quad(0LL);
 			}
 			else
 			{
 				if (tdb)
 					MarkRelocatable(cursect, sloc, tdb, MDOUBLE, NULL);
 
-				double vv = *(double *)&eval;
-				D_double(vv);
+				PTR ptr;
+				ptr.u64 = &eval;
+				uint64_t ieee754 = DoubleToIEEE754(*ptr.dp);
+				D_quad(ieee754);
 			}
 
 			break;
@@ -1193,20 +1195,23 @@ int d_dc(WORD siz)
 			if (m6502)
 				return error(in_6502mode);
 
+			uint8_t extDbl[12];
+			memset(extDbl, 0, 12);
+
 			if (!defined)
 			{
-				double vv = 0;
 				AddFixup(FU_FLOATEXT, sloc, exprbuf);
-
-				D_extend(vv);
+				D_extend(extDbl);
 			}
 			else
 			{
 				if (tdb)
 					MarkRelocatable(cursect, sloc, tdb, MEXTEND, NULL);
 
-				float vv = *(double *)&eval;
-				D_extend(vv);
+				PTR ptr;
+				ptr.u64 = &eval;
+				DoubleToExtended(*ptr.dp, extDbl);
+				D_extend(extDbl);
 			}
 
 			break;

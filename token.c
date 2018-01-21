@@ -1600,19 +1600,8 @@ dostring:
 				else if ((int)chrtab[*(ln + 1)] & DIGIT)
 				{
 					// Hey, more digits after the dot, so we assume it's a
-					// floating point number of some kind
-#if 0
-					double fract = 10;
-					ln++;
-					f = (double)v;
-
-					while ((int)chrtab[*ln] & DIGIT)
-					{
-						f = f + (double)(*ln++ - '0') / fract;
-						fract *= 10;
-					}
-#else
-					// Here we parse the whole floating point number
+					// floating point number of some kind... numEnd will point
+					// to the first non-float character after it's done
 					char * numEnd;
 					errno = 0;
 					double f = strtod(numStart, &numEnd);
@@ -1620,10 +1609,12 @@ dostring:
 
 					if (errno != 0)
 						return error("floating point parse error");
-#endif
 
+					// N.B.: We use the C compiler's internal double
+					//       representation for all internal float calcs and
+					//       are reasonably sure that the size of said double
+					//       is 8 bytes long (which we check for in fltpoint.c)
 					*tk.u32++ = FCONST;
-// Shamus: Well, this is all kinds of icky--not the least of which is that unlike uintNN_t types, we have no guarantees of any kind when it comes to the size of floating point numbers in C (as far as I know of). If there is, we need to use those kinds here, or else figure out at runtime what sizes we're dealing with and act accordingly. To be fair, this is OK as long as the double type is less than 64 bits wide, but again, there's no guarantee that it isn't. :-/
 					*tk.dp = f;
 					tk.u64++;
 					continue;
@@ -1728,6 +1719,8 @@ void DumpToken(TOKEN t)
 		printf("[COLON]");
 	else if (t == CONST)
 		printf("[CONST]");
+	else if (t == FCONST)
+		printf("[FCONST]");
 	else if (t == ACONST)
 		printf("[ACONST]");
 	else if (t == STRING)
@@ -1814,6 +1807,13 @@ void DumpTokenBuffer(void)
 			PTR tp;
 			tp.u32 = t + 1;
 			printf("[CONST: $%lX]", *tp.u64);
+			t += 2;
+		}
+		else if (*t == FCONST)
+		{
+			PTR tp;
+			tp.u32 = t + 1;
+			printf("[FCONST: $%lX]", *tp.u64);
 			t += 2;
 		}
 		else if (*t == ACONST)

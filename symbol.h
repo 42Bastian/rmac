@@ -31,7 +31,7 @@ SYM
 	uint16_t sattr;			// Attribute bits
 	uint32_t sattre;		// Extended attribute bits
 	uint16_t senv;			// Enviroment number
-	uint32_t svalue;		// Symbol value
+	uint64_t svalue;		// Symbol value (now 64-bit)
 	uint8_t * sname;		// * -> Symbol's print-name
 	LLIST * lineList;		// * -> Macro's linked list of lines
 	LLIST * last;			// * -> end of macro linked list

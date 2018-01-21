@@ -3,7 +3,7 @@
 // SECT.H - Code Generation, Fixups and Section Management
 // Copyright (C) 199x Landon Dyer, 2011-2017 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
-// Source utilised with the kind permission of Landon Dyer
+// Source utilized with the kind permission of Landon Dyer
 //
 
 #ifndef __SECT_H__
@@ -11,7 +11,7 @@
 
 #include "rmac.h"
 
-// Macros to deposit code in the current section
+// Macros to deposit code in the current section (in Big Endian)
 // D_rword deposits a "6502" format (low, high) word (01).
 #define D_byte(b)	{*chptr++=(uint8_t)(b); sloc++; ch_size++; \
 						if(orgactive) orgaddr++;}
@@ -34,56 +34,11 @@
 						sloc += 8; ch_size += 8; if(orgactive) orgaddr += 8;}
 #define D_rword(w)	{*chptr++=(uint8_t)(w); *chptr++=(uint8_t)((w)>>8); \
 						sloc+=2; ch_size+=2;if(orgactive) orgaddr += 2;}
-#define D_single(w) {chcheck(4);*chptr++ = ((char *)&w)[3]; \
-						*chptr++ = ((char *)&w)[2]; \
-						*chptr++ = ((char *)&w)[1]; \
-						*chptr++=((char *)&w)[0]; \
-						sloc+=4; ch_size += 4; if(orgactive) orgaddr += 4;}
-#define D_double(w) {chcheck(8);*chptr++=(char)((*(unsigned long long *)&w)); \
-						*chptr++=(char)((*(unsigned long long *)&w)>>8); \
-						*chptr++=(char)((*(unsigned long long *)&w)>>16); \
-						*chptr++=(char)((*(unsigned long long *)&w)>>24); \
-						*chptr++=(char)((*(unsigned long long *)&w)>>32); \
-						*chptr++=(char)((*(unsigned long long *)&w)>>40); \
-						*chptr++=(char)((*(unsigned long long *)&w)>>48); \
-						*chptr++=(char)((*(unsigned long long *)&w)>>56); \
-						sloc+=8; ch_size += 8; if(orgactive) orgaddr += 8;}
-#ifdef _MSC_VER
-#define D_extend(w) {chcheck(12); *chptr++ = (char)((*(unsigned long long *)&w) >> 56); \
-*chptr++ = (char)(((*(unsigned long long *)&w) >> (52)) & 0xf); \
-*chptr++ = (char)(0); \
-*chptr++ = (char)(0); \
-*chptr++ = (char)(((*(unsigned long long *)&w) >> (48 - 3))|0x80 /* assume that the number is normalised */); \
-*chptr++ = (char)((*(unsigned long long *)&w) >> (40 - 3)); \
-*chptr++ = (char)((*(unsigned long long *)&w) >> (32 - 3)); \
-*chptr++ = (char)((*(unsigned long long *)&w) >> (24 - 3)); \
-*chptr++ = (char)((*(unsigned long long *)&w) >> (16 - 3)); \
-*chptr++ = (char)((*(unsigned long long *)&w) >> (8 - 3)); \
-*chptr++ = (char)((*(unsigned long long *)&w << 3)); \
-*chptr++=(char)(0); \
-	sloc+=12; ch_size += 12; if(orgactive) orgaddr += 12;}
-#elif defined(LITTLE_ENDIAN)
-#define D_extend(w) {chcheck(12);*chptr++=((char *)&w)[0]; \
-						*chptr++=((char *)&w)[1]; \
-						*chptr++=((char *)&w)[2]; \
-						*chptr++=((char *)&w)[3]; \
-						*chptr++=((char *)&w)[4]; \
-						*chptr++=((char *)&w)[5]; \
-						*chptr++=((char *)&w)[6]; \
-						*chptr++=((char *)&w)[7]; \
-						*chptr++=((char *)&w)[8]; \
-						*chptr++=((char *)&w)[9]; \
-						*chptr++=((char *)&w)[10]; \
-						*chptr++=((char *)&w)[11]; \
-						sloc+=12; ch_size += 12; if(orgactive) orgaddr += 12;}
+// This macro expects to get an array of uint8_ts with the hi bits in a[0] and
+// the low bits in a[11] (Big Endian).
+#define D_extend(a) {memcpy(chptr, a, 12); chptr+=12; sloc+=12, ch_size+=12;\
+					if (orgactive) orgaddr+=12;}
 
-#else
-
-WARNING(Please implement a non-byte swapped D_extend!)
-//stopgap for now, until this can be implemented proppa-ly :-P
-#define D_extend(w) {chcheck(12); chptr+=12; sloc+=12; ch_size+=12; if(orgactive) orgaddr +=12;}
-
-#endif
 // Fill n bytes with zeroes
 #define D_ZEROFILL(n)	{memset(chptr, 0, n); chptr+=n; sloc+=n; ch_size+=n;\
 						if (orgactive) orgaddr+=n;}

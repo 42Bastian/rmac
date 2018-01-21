@@ -27,9 +27,9 @@ HOSTCC = gcc
 #CFLAGS = -std=$(STD) -D_DEFAULT_SOURCE -g -D__GCCUNIX__ -I. -O2 -MMD
 CFLAGS = -std=$(STD) -D_DEFAULT_SOURCE -g -D__GCCUNIX__ -I. -O2
 
-SRCS = 6502.c amode.c debug.c direct.c eagen.c error.c expr.c listing.c mach.c macro.c mark.c object.c procln.c riscasm.c rmac.c sect.c symbol.c token.c
+SRCS = 6502.c amode.c debug.c direct.c eagen.c error.c expr.c fltpoint.c listing.c mach.c macro.c mark.c object.c procln.c riscasm.c rmac.c sect.c symbol.c token.c
 
-OBJS = 6502.o amode.o debug.o direct.o eagen.o error.o expr.o listing.o mach.o macro.o mark.o object.o procln.o riscasm.o rmac.o sect.o symbol.o token.o
+OBJS = 6502.o amode.o debug.o direct.o eagen.o error.o expr.o fltpoint.o listing.o mach.o macro.o mark.o object.o procln.o riscasm.o rmac.o sect.o symbol.o token.o
 
 #
 # Build everything
@@ -102,6 +102,9 @@ error.o : error.c error.h
 expr.o : expr.c expr.h
 	$(CC) $(CFLAGS) -c expr.c
 
+fltpoint.o : fltpoint.c fltpoint.h
+	$(CC) $(CFLAGS) -c fltpoint.c
+
 listing.o : listing.c listing.h
 	$(CC) $(CFLAGS) -c listing.c
 
@@ -136,7 +139,7 @@ token.o : token.c token.h
 	$(CC) $(CFLAGS) -c token.c
 
 rmac : $(OBJS)
-	$(CC) $(CFLAGS) -o rmac $(OBJS)
+	$(CC) $(CFLAGS) -o rmac $(OBJS) -lm
 
 #
 # Clean build environment
@@ -157,9 +160,9 @@ debug.o: debug.c debug.h rmac.h symbol.h amode.h direct.h mark.h sect.h \
  token.h
 direct.o: direct.c direct.h rmac.h symbol.h 6502.h amode.h error.h expr.h \
  listing.h mach.h macro.h mark.h procln.h token.h riscasm.h sect.h \
- kwtab.h
+ kwtab.h fltpoint.h
 eagen.o: eagen.c eagen.h rmac.h symbol.h amode.h sect.h mark.h error.h \
- mach.h riscasm.h eagen0.c
+ mach.h riscasm.h eagen0.c fltpoint.h
 error.o: error.c error.h rmac.h symbol.h token.h listing.h
 expr.o: expr.c expr.h rmac.h symbol.h direct.h error.h listing.h mach.h \
  procln.h token.h riscasm.h sect.h kwtab.h

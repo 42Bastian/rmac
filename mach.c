@@ -11,11 +11,11 @@
 #include "direct.h"
 #include "eagen.h"
 #include "error.h"
+#include "expr.h"
 #include "procln.h"
 #include "riscasm.h"
 #include "sect.h"
 #include "token.h"
-#include "expr.h"
 
 #define DEF_KW
 #include "kwtab.h"
