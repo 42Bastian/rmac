@@ -66,7 +66,7 @@
 
 uint32_t FloatToIEEE754(float f)
 {
-	uint32_t sign = (f < 0 ? 0x80000000 : 0);
+	uint32_t sign = (signbit(f) ? 0x80000000 : 0);
 
 	// Split the float into normalized mantissa (range: (-1, -0.5], 0,
 	// [+0.5, +1)) and base-2 exponent
@@ -104,7 +104,7 @@ uint32_t FloatToIEEE754(float f)
 
 uint64_t DoubleToIEEE754(double d)
 {
-	uint64_t sign = (d < 0 ? 0x8000000000000000LL : 0);
+	uint64_t sign = (signbit(d) ? 0x8000000000000000LL : 0);
 	int32_t exponent;
 
 	// Split double into normalized mantissa (range: (-1, -0.5], 0, [+0.5, +1))
@@ -141,9 +141,10 @@ uint64_t DoubleToIEEE754(double d)
 
 void DoubleToExtended(double d, uint8_t out[])
 {
+	int8_t sign = (signbit(d) ? 0x80 : 0);
 	int32_t exponent;
 	double mantissa = frexp((d < 0 ? -d : d), &exponent);
-	exponent += 0x3FFF;
+	exponent += 0x3FFE;
 
 	if (d == 0)
 		exponent = 0;
@@ -154,7 +155,7 @@ void DoubleToExtended(double d, uint8_t out[])
 	// Motorola extended floating point is 96 bits, so we pack it into the
 	// 12-byte array that's passed in. The format is as follows: 1 bit (sign),
 	// 15 bits (exponent w/$3FFF bias), 16 bits of zero, 64 bits of mantissa.
-	out[0] = (d < 0 ? 0x80 : 0x00) | ((exponent >> 8) & 0x7F);
+	out[0] = sign | ((exponent >> 8) & 0x7F);
 	out[1] = exponent & 0xFF;
 	out[2] = 0;
 	out[3] = 0;
