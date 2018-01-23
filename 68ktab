@@ -4,7 +4,8 @@ abcd  NB     M_DREG          M_DREG          %1100rrr100000rrr   m_abcd    +
 add   NBWL   C_ALL           M_DREG          %1101rrr0sseR1100   m_ea      +
 -     NBWL   M_DREG          C_ALTMEM        %1101rrr1sseR0101   m_ea      +
 adda  NWL    C_ALL           M_AREG          %1101rrrs11eeeeee   m_adda    +
-addi  NWBL   M_IMMED         C_ALTDATA       %00000110sseeeS11   m_ea
+addi  NWBL   M_IMMED         C_ALTDATA       %00000110sseeeS11   m_ea      +
+-     NWBL   M_IMMED         C_ALTDATA       %00000110sseeeS10   m_ea030
 
 addq  NBWL   M_IMMED         C_ALT           %0101ddd0sseeeeee   m_addq
 
@@ -14,6 +15,7 @@ addx  NBWL   M_DREG          M_DREG          %1101rrr1ss000rrS   m_abcd    +
 and   NBWL   C_DATA          M_DREG          %1100rrr0sseR1S00   m_ea      +
 -     NBWL   M_DREG          C_ALTMEM        %1100rrr1sseR0S01   m_ea      +
 andi  NBWL   M_IMMED         C_ALTDATA       %00000010sseeeS11   m_ea      +
+-     NBWL   M_IMMED         C_ALL030        %00000010sseeeS10   m_ea030   +
 -     NB     M_IMMED         M_AM_CCR        %0000001000111100   m_imm8    +
 -     NW     M_IMMED         M_AM_SR         %0000001001111100   m_imm
 
@@ -121,6 +123,7 @@ cmp   NWL    M_AREG          M_DREG          %1011rrr0sseR1S00   m_ea      +
 -     NBWL   C_ALL           M_DREG          %1011rrr0sseR1S00   m_ea      +
 cmpa  NWL    C_ALL           M_AREG          %1011rrrs11eeeeee   m_adda    +
 cmpi  NBWL   M_IMMED         C_ALTDATA       %00001100sseeeS11   m_ea	   +
+-     NBWL   M_IMMED         C_ALL030        %00001100sseeeS10   m_ea030   +
 cmpm  NBWL   M_APOSTINC      M_APOSTINC      %1011xxx1ss001yRS   m_reg
 
 cmp2  NBWL   C_ALL030        M_DREG+M_AREG   %00000ss011eeeeee   m_cmp2
@@ -256,6 +259,7 @@ divul LN     C_DATA030       M_DREG          %0100110001eeeeee   m_muls
 
 eor   NBWL   M_DREG          C_ALTDATA       %1011rrr1sseR0S01   m_ea      +
 eori  NBWL   M_IMMED         C_ALTDATA       %00001010sseeeS11   m_ea      +
+-     NBWL   M_IMMED         C_ALL030        %00001010sseeeS10   m_ea030   +
 -     NB     M_IMMED         M_AM_CCR        %0000101000111100   m_imm8    +
 -     NW     M_IMMED         M_AM_SR         %0000101001111100   m_imm
 
@@ -629,6 +633,7 @@ not   NBWL   C_ALTDATA       M_AM_NONE       %01000110sseee100   m_ea
 or    NBWL   C_DATA          M_DREG          %1000rrr0sseR1S00   m_ea      +
 -     NBWL   M_DREG          C_MEM           %1000rrr1sseR0S01   m_ea      +
 ori   NBWL   M_IMMED         C_ALTDATA       %00000000sseeeS11   m_ea      +
+-     NBWL   M_IMMED         C_ALL030        %00000000sseeeS10   m_ea030   +
 -     NB     M_IMMED         M_AM_CCR        %0000000000111100   m_imm8    +
 -     NW     M_IMMED         M_AM_SR         %0000000001111100   m_imm
 
@@ -780,7 +785,8 @@ stop  N      M_IMMED         M_AM_NONE       %0100111001110010   m_imm
 sub   NBWL   C_ALL           M_DREG          %1001rrr0sseR1S00   m_ea      +
 -     NBWL   M_DREG          C_ALTMEM        %1001rrr1sseR0S01   m_ea      +
 suba  NWL    C_ALL           M_AREG          %1001rrrs11eeeeee   m_adda    +
-subi  NBWL   M_IMMED         C_ALTDATA       %00000100sseeeS11   m_ea
+subi  NBWL   M_IMMED         C_ALTDATA       %00000100sseeeS11   m_ea      +
+-     NBWL   M_IMMED         C_ALL030        %00000100sseeeS11   m_ea030
 
 subq  NBWL   M_IMMED         C_ALT           %0101ddd1sseeeeee   m_addq
 

@@ -929,6 +929,112 @@ IS_SUPPRESSEDn:
 
 				if (*tok == ',')
 				{
+					// Check if we're actually doing d8(An,Dn) or (d16,An,Dn[.size][*scale])
+					// TODO: not a very clear cut case from what I can think. The only way
+					// to distinguish between the two is to check AnEXVAL and see if it's
+					// >127 or <-128. But this doesn't work if AnEXVAL isn't defined yet.
+					// For now we fall through to d8(An,Dn) but this might bite us in the
+					// arse during fixups...
+					if ((AnEXATTR & DEFINED) && (AnEXVAL + 0x80 > 0x100))
+					{
+						// We're going to treat it as a full extension format with no
+						// indirect access and no base displacement/index register suppression
+						AnEXTEN |= EXT_FULLWORD;	// Definitely using full extension format, so set bit 8
+						AnEXTEN |= EXT_IISPRE0;		// No Memory Indirect Action
+						AnEXTEN |= EXT_BDSIZEL;		// Base Displacement Size Long
+						tok++;						// Get past the comma
+
+						// Our expression is techically a base displacement
+						// so let's copy it to the relevant variables so
+						// eagen0.c can pick it up properly
+						//AnBEXPR = AnEXPR;
+						AnBEXVAL = AnEXVAL;
+						AnBEXATTR = AnEXATTR;
+
+						if ((*tok >= KW_D0) && (*tok <= KW_D7))
+						{
+							AnEXTEN |= ((*tok++) & 7) << 12;
+							// Check for size
+							{
+								switch ((int)*tok)
+								{
+								// Index reg size: <empty> | .W | .L
+								case DOTW:
+									tok++;
+									break;
+								default:
+									break;
+								case DOTL:
+									tok++;
+									AnEXTEN |= EXT_L;
+									break;
+								case DOTB:
+									// .B not allowed here...
+									goto badmode;
+								}
+							}
+							// Check for scale
+							if (*tok == '*')		// ([bd,An/PC],Xn*...)
+							{						// scale: *1, *2, *4, *8 
+								tok++;
+
+								if (*tok == SYMBOL)
+								{
+									if (expr(scaleexpr, &scaleval, &scaleattr, &scaleesym) != OK)
+										return error("scale factor expression must evaluate");
+									switch (scaleval)
+									{
+									case 1:
+										break;
+									case 2:
+										AnIXSIZ |= TIMES2;
+										break;
+									case 4:
+										AnIXSIZ |= TIMES4;
+										break;
+									case 8:
+										AnIXSIZ |= TIMES8;
+										break;
+									default:
+										goto badmode;
+									}
+								}
+								else if (*tok++ != CONST)
+									goto badmode;
+								else
+								{
+									switch ((int)*tok++)
+									{
+									case 1:
+										break;
+									case 2:
+										AnIXSIZ |= TIMES2;
+										break;
+									case 4:
+										AnIXSIZ |= TIMES4;
+										break;
+									case 8:
+										AnIXSIZ |= TIMES8;
+										break;
+									default:
+										goto badmode;
+									}
+
+									tok++;  // Take into account that constants are 64-bit
+								}
+							}
+
+							if (*tok++ != ')')
+								return error("Closing parenthesis missing on addressing mode");
+
+							// Let's say that this is the closest to our case
+							AMn = MEMPOST;
+							goto AnOK;
+						}
+						else
+							goto badmode;
+					}
+						
 					AMn = AINDEXED;
 					goto AMn_IXN;
 				}

@@ -400,8 +400,13 @@ int m_ea030(WORD inst, WORD siz)
 			// a corner case, so kludge it
 			a0reg = a0reg + 8;
 		else if (am0 == PCDISP)
-			//Another corner case (possibly!), so kludge ahoy
+			// Another corner case (possibly!), so kludge ahoy
 			inst |= am0;				// Get ea0 into instr
+		else if (am0 == IMMED && am1 == MEMPOST)
+		{
+			// Added for addi/andi/cmpi/eori/ori/subi #xx,(bd,An,Dm)
+			inst |= a1reg | AINDEXED;
+		}
 		else if (am0 == IMMED)
 			inst |= am0 | a0reg;		// Get ea0 into instr
 		else if (am0 == AM_CCR)
@@ -676,12 +681,12 @@ int m_link(WORD inst, WORD siz)
 
 WORD extra_addressing[16]=
 {
-	0,     // 0100 (bd,An,Xn)
-	0,     // 0101 ([bd,An],Xn,od)
-	0x180, // 0102 ([bc,An,Xn],od) (111 110 110 111)
-	0,     // 0103 (bd,PC,Xn)
-	0,     // 0104 ([bd,PC],Xn,od)
-	0,     // 0105 ([bc,PC,Xn],od)
+	0x30,  // 0100 (bd,An,Xn)
+	0x30,  // 0101 ([bd,An],Xn,od)
+	0x30,  // 0102 ([bc,An,Xn],od)
+	0x30,  // 0103 (bd,PC,Xn)
+	0x30,  // 0104 ([bd,PC],Xn,od)
+	0x30,  // 0105 ([bc,PC,Xn],od)
 	0,     // 0106
 	0,     // 0107
 	0,     // 0110
@@ -753,14 +758,12 @@ int m_move(WORD inst, WORD size)
 
 //
 // Handle MOVE <C_ALL030> <C_ALTDATA>
-//        MOVE <C_ALL030> <M_AREG>
+//		MOVE <C_ALL030> <M_AREG>
 //
 int m_move30(WORD inst, WORD size)
 {
 	int siz = (int)size;
-	// TODO: is extra_addressing necessary/correct?
-	//inst |= siz_12[siz] | reg_9[a1reg & 7] | a0reg | extra_addressing[am0 - ABASE];
-	inst |= siz_12[siz] | reg_9[a1reg & 7] | a0reg;
+	inst |= siz_12[siz] | reg_9[a1reg & 7] | a0reg | extra_addressing[am0 - ABASE];
 
 	D_word(inst);
 
