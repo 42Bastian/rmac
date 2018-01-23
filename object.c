@@ -67,12 +67,39 @@ uint8_t * AddSymEntry(register uint8_t * buf, SYM * sym, int globflag)
 	// Copy symbol name to buffer (first 8 chars or less)
 	register uint8_t * s = sym->sname;
 	register int i;
+	uint32_t extra = 0;
 
 	for(i=0; i<8 && *s; i++)
 		*buf++ = *s++;
 
 	while (i++ < 8)
 		*buf++ = '\0';
+
+	register uint16_t w1 = sym->sattr;
+	register uint16_t w = AL_DEFINED | tdb_tab[w1 & TDB];
+
+	if (prg_flag == 3)
+	{
+		// Extended symbol - Check to see if symbol is larger than 8 characters
+		// and write an extra 14 characters where the next symbol would be.
+		// Modify the flag word for this
+		if (*s)
+		{
+			//printf("%s '%i' - will write extended symbol\n", sym->sname,s[0]);
+			uint8_t *buf2 = buf + 6;
+
+			for(i=8; i<8+14 && *s; i++)
+				*buf2++ = *s++;
+
+			while (i++ < 8 + 14)
+				*buf2++ = '\0';
+
+			symsize += 14;
+			w |= 0x48;
+			extra = 14;
+		}
+	}
+
 
 	//
 	// Construct and deposit flag word
@@ -84,9 +111,6 @@ uint8_t * AddSymEntry(register uint8_t * buf, SYM * sym, int globflag)
 	// o  exports (DEFINED) are AL_GLOBAL
 	// o  imports (~DEFINED) are AL_EXTERN
 	//
-	register uint16_t w1 = sym->sattr;
-	register uint16_t w = AL_DEFINED | tdb_tab[w1 & TDB];
-
 	if (w1 & EQUATED)		// Equated
 		w |= AL_EQUATED;
 
@@ -105,7 +129,7 @@ uint8_t * AddSymEntry(register uint8_t * buf, SYM * sym, int globflag)
 
 	SETBE16(buf, 0, w);
 	buf += 2;
-	register uint32_t z = sym->svalue;
+	register uint32_t z = (uint32_t)sym->svalue;
 
 	if (prg_flag)			// Relocate value in .PRG segment
 	{
@@ -120,6 +144,9 @@ uint8_t * AddSymEntry(register uint8_t * buf, SYM * sym, int globflag)
 
 	SETBE32(buf, 0, z);		// Deposit symbol value
 	buf += 4;
+
+	symsize += 14;
+	buf += extra;
 
 	return buf;
 }
@@ -288,7 +315,6 @@ int WriteObject(int fd)
 	CHUNK * cp;				// Chunk (for gather)
 	uint8_t * buf;			// Scratch area
 	uint8_t * p;			// Temporary ptr
-	LONG ssize;				// Size of symbols
 	LONG trsize, drsize;	// Size of relocations
 	long unused;			// For supressing 'write' warnings
 
@@ -310,7 +336,7 @@ int WriteObject(int fd)
 			printf("Total       : %d bytes\n", sect[TEXT].sloc + sect[DATA].sloc + sect[BSS].sloc);
 		}
 
-		ssize = sy_assign(NULL, NULL);				// Assign index numbers to the symbols
+		sy_assign(NULL, NULL);						// Assign index numbers to the symbols
 		tds = sect[TEXT].sloc + sect[DATA].sloc;	// Get size of TEXT and DATA segment
 		buf = malloc(0x800000);						// Allocate 8MB object file image memory
 
@@ -396,6 +422,8 @@ int WriteObject(int fd)
 	}
 	else if (obj_format == ALCYON)
 	{
+		uint32_t symbolmaxsize = 0;
+
 		if (verb_flag)
 		{
 			if (prg_flag)
@@ -409,20 +437,15 @@ int WriteObject(int fd)
 			}
 		}
 
-		// Compute size of symbol table; assign numbers to the symbols...
-		ssize = 0;
-
-		// As we grabbed BSD *and* Alcyon in prg_flag == 0 mode, this is *always*
-		// false... :-P
 		if (prg_flag != 1)
-			ssize = sy_assign(NULL, NULL) * 14;
+			symbolmaxsize = sy_assign(NULL, NULL) * 28;		// Assign index numbers to the symbols
 
 		// Alloc memory for header + text + data, symbol and relocation
 		// information construction.
 		t = tds = sect[TEXT].sloc + sect[DATA].sloc;
 
-		if (t < ssize)
-			t = ssize;
+		if (t < symbolmaxsize)
+			t = symbolmaxsize;
 
 		// Is there any reason to do this this way???
 		buf = malloc(t + HDRSIZE);
@@ -434,7 +457,7 @@ int WriteObject(int fd)
 		D_long(sect[TEXT].sloc);	// 02 - TEXT size
 		D_long(sect[DATA].sloc);	// 06 - DATA size
 		D_long(sect[BSS].sloc); 	// 0A - BSS size
-		D_long(ssize);				// 0E - symbol table size
+		D_long(0);					// 0E - symbol table size (will be filled later if non zero)
 		D_long(0);					// 12 - stack size (unused)
 		D_long(PRGFLAGS);			// 16 - PRGFLAGS
 		D_word(0);					// 1A - relocation information exists
@@ -462,13 +485,20 @@ int WriteObject(int fd)
 		if (prg_flag != 1)
 		{
 			sy_assign(buf, AddSymEntry);
-			unused = write(fd, buf, ssize);
+			unused = write(fd, buf, symsize);
 		}
 
 		// Construct and write relocation information; the size of it changes if
 		// we're writing a RELMODed executable.
 		tds = MarkImage(buf, tds, sect[TEXT].sloc, 1);
 		unused = write(fd, buf, tds);
+
+		// If we generated a symbol table we need to update the placeholder value
+		// we wrote above in the header
+		lseek(fd, 0xE, 0);
+		symsize = BYTESWAP32(symsize);
+		unused = write(fd, &symsize, 4);
+
 	}
 	else if (obj_format == ELF)
 	{

@@ -33,6 +33,7 @@ int glob_flag;					// Assume undefined symbols are global
 int lsym_flag;					// Include local symbols in object file
 int sbra_flag;					// Warn about possible short branches
 int prg_flag;					// !=0, produce .PRG executable (2=symbols)
+int prg_extend;					// !=0, output extended .PRG symbols
 int legacy_flag;				// Do stuff like insert code in RISC assembler
 int obj_format;					// Object format flag
 int debug;						// [1..9] Enable debugging levels
@@ -168,6 +169,7 @@ void DisplayHelp(void)
 		"  ~oall             Turn all optimisations off\n"
 		"  -p                Create an ST .prg (without symbols)\n"
 		"  -ps               Create an ST .prg (with symbols)\n"
+		"  -px               Create an ST .prg (with exsymbols)\n"
 		"                    Forces -fa\n"
 		"  -r[size]          Pad segments to boundary size specified\n"
 		"                    w: word (2 bytes, default alignment)\n"
@@ -430,7 +432,8 @@ int Process(int argc, char ** argv)
 			case 'P':
 				/*
 				 * -p		.PRG generation w/o symbols
-				 * -ps	.PRG generation with symbols
+				 * -ps		.PRG generation with symbols
+				 * -px		.PRG generation with extended symbols
 				 */
 				switch (argv[argno][2])
 				{
@@ -441,6 +444,11 @@ int Process(int argc, char ** argv)
 					case 's':
 					case 'S':
 						prg_flag = 2;
+						break;
+
+					case 'x':
+					case 'X':
+						prg_flag = 3;
 						break;
 
 					default:
