@@ -9,6 +9,11 @@
 // This file is included (twice) to parse two addressing modes, into slightly
 // different var names
 {
+	uint64_t scaleval;			// Expression's value
+	TOKEN scaleexpr[EXPRSIZE];	// Expression
+	WORD scaleattr;				// Expression's attribute
+	SYM * scaleesym;			// External symbol involved in expr
+
 	// Dn
 	// An
 	// # expression
@@ -44,10 +49,10 @@
 	// (d8,An,Xn[.siz][*scale])
 	// (d16,PC)
 	// (d8,PC,Xn[.siz][*scale])
-	// ([bd,An],Xn,od)
-	// ([bd,An,Xn],od)
-	// ([bd,PC],Xn,od)
-	// ([bd,PC,Xn],od)
+	// ([bd,An],Xn[.siz][*scale],od)
+	// ([bd,An,Xn[.siz][*scale]],od)
+	// ([bd,PC],Xn[.siz][*scale],od)
+	// ([bd,PC,Xn[.siz][*scale]],od)
 	else if (*tok == '(')
 	{
 		tok++;
@@ -92,16 +97,14 @@
 			}
 			else if (*tok == 'L')
 			{
-				// TODO: does DINDL gets used at all?
-				AMn = DINDL;                                     // (Dn.l)
-				AnEXTEN = 1 << 1;   // Long index size
+				AMn = DINDL;									 // (Dn.l)
+				AnEXTEN = 1 << 11;   // Long index size
 				tok++;
 			}
 			else if (*tok == 'W')                                // (Dn.w)
 			{
-				// TODO: does DINDW gets used at all?
 				AMn = DINDW;
-				AnEXTEN = 1 << 1;   // Word index size
+				AnEXTEN = 0 << 11;   // Word index size
 				tok++;
 			}
 			else if (*tok == ',')
@@ -126,27 +129,30 @@
 
 				if (*tok == SYMBOL)
 				{
-					if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
+					if (expr(scaleexpr, &scaleval, &scaleattr, &scaleesym) != OK)
 						return error("scale factor expression must evaluate");
 
-					switch (AnEXVAL)
+					switch (scaleval)
 					{
 					case 1:
 						break;
 					case 2:
 						AnIXSIZ |= TIMES2;
+						AnEXTEN |= 1 << 9;
 						break;
 					case 4:
 						AnIXSIZ |= TIMES4;
+						AnEXTEN |= 2 << 9;
 						break;
 					case 8:
 						AnIXSIZ |= TIMES8;
+						AnEXTEN |= 3 << 9;
 						break;
 					default:
 						goto badmode;
 					}
 				}
-				else if (*tok++ != CONST || *tok > 8)
+				else if (*tok++ != CONST)
 					goto badmode;
 				else
 				{
@@ -156,16 +162,21 @@
 						break;
 					case 2:
 						AnIXSIZ |= TIMES2;
+						AnEXTEN |= 1 << 9;
 						break;
 					case 4:
 						AnIXSIZ |= TIMES4;
+						AnEXTEN |= 2 << 9;
 						break;
 					case 8:
 						AnIXSIZ |= TIMES8;
+						AnEXTEN |= 3 << 9;
 						break;
 					default:
 						goto badmode;
 					}
+
+					tok++;  // Take into account that constants are 64-bit
 				}
 			}
 
@@ -236,9 +247,9 @@
 
 				if (*tok == SYMBOL)
 				{
-					if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
+					if (expr(scaleexpr, &scaleval, &scaleattr, &scaleesym) != OK)
 						return error("scale factor expression must evaluate");
-					switch (AnEXVAL)
+					switch (scaleval)
 					{
 					case 1:
 						break;
@@ -255,7 +266,7 @@
 						goto badmode;
 					}
 				}
-				else if (*tok++ != CONST || *tok > 8)
+				else if (*tok++ != CONST)
 					goto badmode;
 				else
 				{
@@ -275,6 +286,8 @@
 					default:
 						goto badmode;
 					}
+
+					tok++;  // Take into account that constants are 64-bit
 				}
 			}
 
@@ -371,23 +384,23 @@
 
 				// Check for size
 				{
-				// ([bd,An/PC],Xn.W/L...)
-				switch ((int)*tok)
+					// ([bd,An/PC],Xn.W/L...)
+					switch ((int)*tok)
 				{
-				// Index reg size: <empty> | .W | .L
-				case DOTW:
-					tok++;
-					break;
-				default:
-					break;
-				case DOTL:
-					AnEXTEN |= EXT_L;
-					tok++;
-					break;
-				case DOTB:
-					// .B not allowed here...
-					goto badmode;
-				}
+					// Index reg size: <empty> | .W | .L
+					case DOTW:
+						tok++;
+						break;
+					default:
+						break;
+					case DOTL:
+						AnEXTEN |= EXT_L;
+						tok++;
+						break;
+					case DOTB:
+						// .B not allowed here...
+						goto badmode;
+					}
 				}
 
 				// Check for scale
@@ -397,10 +410,10 @@
 
 					if (*tok == SYMBOL)
 					{
-						if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
+						if (expr(scaleexpr, &scaleval, &scaleattr, &scaleesym) != OK)
 							return error("scale factor expression must evaluate");
 
-						switch (AnEXVAL)
+						switch (scaleval)
 						{
 						case 1:
 							break;
@@ -417,7 +430,7 @@
 							goto badmode;
 				}
 					}
-					else if (*tok++ != CONST || *tok > 8)
+					else if (*tok++ != CONST)
 						goto badmode;
 					else
 					{
@@ -437,6 +450,8 @@
 						default:
 							goto badmode;
 						}
+
+						tok++;  // Take into account that constants are 64-bit
 					}
 				}
 				if (*tok == ']')  // ([bd,Dn]...
@@ -525,10 +540,10 @@
 
 					if (*tok == SYMBOL)
 					{
-						if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
+						if (expr(scaleexpr, &scaleval, &scaleattr, &scaleesym) != OK)
 							return error("scale factor expression must evaluate");
 
-						switch (AnEXVAL)
+						switch (scaleval)
 						{
 						case 1:
 							break;
@@ -545,7 +560,7 @@
 							goto badmode;
 						}
 					}
-					else if (*tok++ != CONST || *tok > 8)
+					else if (*tok++ != CONST)
 						goto badmode;
 					else
 					{
@@ -565,13 +580,15 @@
 						default:
 							goto badmode;
 						}
+
+						tok++;  // Take into account that constants are 64-bit
 					}
 				}
 
 				// Check for od
 				if (*tok == ')')	// ([bd,An/PC],Xn)
 				{
-					//od is non existant, get out of jail free card
+					// od is non existent, get out of jail free card
 					AMn = MEMPOST;		// let's say it's ([bd,An],Xn,od) with od=0 then
 					AnEXTEN |= EXT_IISPOSN; // No outer displacement
 					tok++;
@@ -642,7 +659,7 @@ IS_SUPPRESSEDn:
 				// Check for od
 				if (*tok == ')')	// ([bd,An/PC],Xn)
 				{
-					//od is non existant, get out of jail free card
+					// od is non existent, get out of jail free card
 					AMn = MEMPOST;		// let's say it's ([bd,An],Xn,od) with od=0 then
 					AnEXTEN |= EXT_IISNOIN; // No outer displacement
 					tok++;
@@ -653,7 +670,7 @@ IS_SUPPRESSEDn:
 				else
 					tok++;	// eat the comma
 
-                if ((*tok != CONST) && (*tok != SYMBOL))
+				if ((*tok != CONST) && (*tok != SYMBOL))
 					goto badmode;
 
 				expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM);
@@ -729,21 +746,21 @@ IS_SUPPRESSEDn:
 				{
 				// ([bd,An/PC],Xn.W/L...)
 				switch ((int)*tok)
-				{
-				// Index reg size: <empty> | .W | .L
-				case DOTW:
-					tok++;
-					break;
-				default:
-					break;
-				case DOTL:
-					tok++;
-					AnEXTEN |= EXT_L;
-					break;
-				case DOTB:
+					{
+					// Index reg size: <empty> | .W | .L
+					case DOTW:
+						tok++;
+						break;
+					default:
+						break;
+					case DOTL:
+						tok++;
+						AnEXTEN |= EXT_L;
+						break;
+					case DOTB:
 					// .B not allowed here...
 					goto badmode;
-				}
+					}
 				}
 
 				// Check for scale
@@ -753,9 +770,9 @@ IS_SUPPRESSEDn:
 
 					if (*tok == SYMBOL)
 					{
-						if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
+						if (expr(scaleexpr, &scaleval, &scaleattr, &scaleesym) != OK)
 							return error("scale factor expression must evaluate");
-						switch (AnEXVAL)
+						switch (scaleval)
 						{
 						case 1:
 							break;
@@ -772,7 +789,7 @@ IS_SUPPRESSEDn:
 							goto badmode;
 						}
 					}
-					else if (*tok++ != CONST || *tok > 8)
+					else if (*tok++ != CONST)
 						goto badmode;
 					else
 					{
@@ -782,35 +799,40 @@ IS_SUPPRESSEDn:
 							break;
 						case 2:
 							AnIXSIZ |= TIMES2;
+							AnEXTEN |= 1 << 9;
 							break;
 						case 4:
 							AnIXSIZ |= TIMES4;
+							AnEXTEN |= 2 << 9;
 							break;
 						case 8:
 							AnIXSIZ |= TIMES8;
+							AnEXTEN |= 3 << 9;
 							break;
 						default:
 							goto badmode;
 						}
+
+						tok++;  // Take into account that constants are 64-bit
 					}
 				}
 
-				//Check for ]
+				// Check for ]
 				if (*tok != ']')
 					return error("Expected closing bracket ]");
 				tok++;			// Eat the bracket
 
-				//Check for od
+				// Check for od
 				if (*tok == ')')	// ([bd,An/PC,Xn]...
 				{
-					//od is non existant, get out of jail free card
+					// od is non existent, get out of jail free card
 					//AnEXVAL=0;		// zero outer displacement
 					AMn = MEMPRE;			// let's say it's ([bd,An,Xn],od) with od suppressed then
 					AnEXTEN |= EXT_IISPREN; // No outer displacement
 					tok++;
 					goto AnOK;
 				}
-                else if (*tok++ != ',')
+				else if (*tok++ != ',')
 					return error("comma expected after ]");
 
 				if (*tok == SYMBOL || *tok == CONST)
@@ -849,7 +871,7 @@ IS_SUPPRESSEDn:
 
 						// Defined, absolute values from $FFFF8000..$00007FFF
 						// get optimized to absolute short
-                        if (CHECK_OPTS(OPT_BASE_DISP)
+						if (CHECK_OPTS(OPT_BASE_DISP)
 							&& ((AnEXATTR & (TDB | DEFINED)) == DEFINED)
 							&& (((uint32_t)AnEXVAL + 0x8000) < 0x10000))
 						{
@@ -961,7 +983,7 @@ IS_SUPPRESSEDn:
 	{
 		AMn = AM_USP;
 		tok++;
-		AnREG = 2;	//Added this for the case of USP used in movec (see CREGlut in mach.c). Hopefully nothing gets broken!
+		AnREG = 2;	// Added this for the case of USP used in movec (see CREGlut in mach.c). Hopefully nothing gets broken!
 		goto AnOK;
 	}
 	else if ((*tok >= KW_IC40) && (*tok <= KW_BC40))
