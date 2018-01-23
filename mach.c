@@ -41,7 +41,6 @@ int m_dbra(WORD, WORD);
 int m_link(WORD, WORD);
 int m_adda(WORD, WORD);
 int m_addq(WORD, WORD);
-//int m_move(WORD, int);
 int m_move(WORD, WORD);
 int m_moveq(WORD, WORD);
 int m_usp(WORD, WORD);
@@ -63,12 +62,7 @@ int m_cmp2(WORD inst, WORD siz);
 int m_bkpt(WORD inst, WORD siz);
 int m_cpbr(WORD inst, WORD siz);
 int m_cpdbr(WORD inst, WORD siz);
-int m_divs(WORD inst, WORD siz);
 int m_muls(WORD inst, WORD siz);
-int m_divu(WORD inst, WORD siz);
-int m_mulu(WORD inst, WORD siz);
-int m_divsl(WORD inst, WORD siz);
-int m_divul(WORD inst, WORD siz);
 int m_move16a(WORD inst, WORD siz);
 int m_move16b(WORD inst, WORD siz);
 int m_pack(WORD inst, WORD siz);
@@ -1122,7 +1116,7 @@ int m_clrd(WORD inst, WORD siz)
 
 ////////////////////////////////////////
 //
-// 68020/30/40 instructions
+// 68020/30/40/60 instructions
 //
 ////////////////////////////////////////
 
@@ -1618,62 +1612,7 @@ int m_cpdbr(WORD inst, WORD siz)
 
 
 //
-// divs.l
-//
-int m_divs(WORD inst, WORD siz)
-{
-	if ((activecpu & (CPU_68020 | CPU_68030 | CPU_68040)) == 0)
-		return error(unsupport);
-
-	WORD flg = inst;					// Save flag bits
-	inst &= ~0x3F;						// Clobber flag bits in instr
-
-	// Install "standard" instr size bits
-	if (flg & 4)
-		inst |= siz_6[siz];
-
-	if (flg & 16)
-	{
-		// OR-in register number
-		if (flg & 8)
-			inst |= reg_9[a1reg];		// ea1reg in bits 9..11
-		else
-			inst |= reg_9[a0reg];		// ea0reg in bits 9..11
-	}
-
-	if (flg & 1)
-	{
-		// Use am1
-		inst |= am1 | a1reg;			// Get ea1 into instr
-		D_word(inst);					// Deposit instr
-
-		// Generate ea0 if requested
-		if (flg & 2)
-			ea0gen(siz);
-
-		ea1gen(siz);					// Generate ea1
-	}
-	else
-	{
-		// Use am0
-		inst |= am0 | a0reg;			// Get ea0 into instr
-		D_word(inst);					// Deposit instr
-		ea0gen(siz);					// Generate ea0
-
-		// Generate ea1 if requested
-		if (flg & 2)
-			ea1gen(siz);
-	}
-
-	inst = a1reg + (a2reg << 12) + (1 << 11);
-	D_word(inst);
-
-	return OK;
-}
-
-
-//
-// muls.l
+// muls.l / divs.l / divu.l / mulu.l (68020+)
 //
 int m_muls(WORD inst, WORD siz)
 {
@@ -1681,7 +1620,7 @@ int m_muls(WORD inst, WORD siz)
 		return error(unsupport);
 
 	WORD flg = inst;					// Save flag bits
-	inst &= ~0x3F;						// Clobber flag bits in instr
+	inst &= ~0x33F;						// Clobber flag and extension bits in instr
 
 	// Install "standard" instr size bits
 	if (flg & 4)
@@ -1689,12 +1628,20 @@ int m_muls(WORD inst, WORD siz)
 
 	if (flg & 16)
 	{
-		// OR-in register number
+		// OR-in register number 
 		if (flg & 8)
 			inst |= reg_9[a1reg];		// ea1reg in bits 9..11
 		else
 			inst |= reg_9[a0reg];		// ea0reg in bits 9..11
 	}
+
+	// Regarding extension word: bit 11 is signed/unsigned selector
+	//                           bit 10 is 32/64 bit selector
+	// Both of these are packed in bits 9 and 8 of the instruction
+	// field in 68ktab. Extra compilcations arise from the fact we
+	// have to distinguish between divu/s.l Dn,Dm (which is encoded
+	// as divu/s.l Dn,Dm:Dm) and divu/s.l Dn,Dm:Dx - the first is
+	// 32 bit while the second 64 bit
 
 	if (flg & 1)
 	{
@@ -1702,261 +1649,44 @@ int m_muls(WORD inst, WORD siz)
 		inst |= am1 | a1reg;			// Get ea1 into instr
 		D_word(inst);					// Deposit instr
 
-										// Extension word
-		inst = a1reg + (a2reg << 12) + (1 << 11);
-		inst |= mulmode;  // add size bit
+		// Extension word
+		if (a1reg == a2reg)
+			inst = a1reg + (a2reg << 12) + ((flg & 0x200) << 2);
+		else
+			inst = a1reg + (a2reg << 12) + ((flg & 0x300) << 2);
+
+		 D_word(inst);
+
+		// Generate ea0 if requested 
+		if (flg & 2)
+			ea0gen(siz);
+
+		ea1gen(siz);					// Generate ea1
+
+		return OK;
+	}
+	else
+	{
+		// Use am0
+		inst |= am0 | a0reg;			// Get ea0 into instr
+		D_word(inst);					// Deposit instr
+
+		// Extension word
+		if (a1reg == a2reg)
+			inst = a1reg + (a2reg << 12) + ((flg & 0x200) << 2);
+		else
+			inst = a1reg + (a2reg << 12) + ((flg & 0x300) << 2);
+
 		D_word(inst);
 
-		// Generate ea0 if requested
-		if (flg & 2)
-			ea0gen(siz);
-
-		ea1gen(siz);					// Generate ea1
-	}
-	else
-	{
-		// Use am0
-		inst |= am0 | a0reg;			// Get ea0 into instr
-		D_word(inst);					// Deposit instr
-										// Extension word
-		inst = a1reg + (a2reg << 12) + (1 << 11);
-		inst |= mulmode;  // add size bit
-		D_word(inst);
-
 		ea0gen(siz);					// Generate ea0
 
 		// Generate ea1 if requested
 		if (flg & 2)
 			ea1gen(siz);
+
+		return OK;
 	}
-
-	//D_word(inst);
-	//ea0gen(siz);
-
-	return OK;
-}
-
-
-//
-// divu.l
-//
-int m_divu(WORD inst, WORD siz)
-{
-	if ((activecpu & (CPU_68020 | CPU_68030 | CPU_68040)) == 0)
-		return error(unsupport);
-
-	//WARNING("divu.l d0,d1 is actually divul.l d0,d1:d1!!!")
-
-	WORD flg = inst;					// Save flag bits
-	inst &= ~0x3F;						// Clobber flag bits in instr
-
-	// Install "standard" instr size bits
-	if (flg & 4)
-		inst |= siz_6[siz];
-
-	if (flg & 16)
-	{
-		// OR-in register number
-		if (flg & 8)
-			inst |= reg_9[a1reg];		// ea1reg in bits 9..11
-		else
-			inst |= reg_9[a0reg];		// ea0reg in bits 9..11
-	}
-
-	if (flg & 1)
-	{
-		// Use am1
-		inst |= am1 | a1reg;			// Get ea1 into instr
-		D_word(inst);					// Deposit instr
-
-		// Generate ea0 if requested
-		if (flg & 2)
-			ea0gen(siz);
-
-		ea1gen(siz);					// Generate ea1
-	}
-	else
-	{
-		// Use am0
-		inst |= am0 | a0reg;			// Get ea0 into instr
-		D_word(inst);					// Deposit instr
-		ea0gen(siz);					// Generate ea0
-
-										// Generate ea1 if requested
-		if (flg & 2)
-			ea1gen(siz);
-	}
-
-	inst = a1reg + (a2reg << 12);
-	D_word(inst);
-
-	return OK;
-}
-
-
-//
-// mulu.l
-//
-int m_mulu(WORD inst, WORD siz)
-{
-	if ((activecpu & (CPU_68020 | CPU_68030 | CPU_68040)) == 0)
-		return error(unsupport);
-
-	WORD flg = inst;					// Save flag bits
-	inst &= ~0x3F;						// Clobber flag bits in instr
-
-	// Install "standard" instr size bits
-	if (flg & 4)
-		inst |= siz_6[siz];
-
-	if (flg & 16)
-	{
-		// OR-in register number
-		if (flg & 8)
-			inst |= reg_9[a1reg];		// ea1reg in bits 9..11
-		else
-			inst |= reg_9[a0reg];		// ea0reg in bits 9..11
-	}
-
-	if (flg & 1)
-	{
-		// Use am1
-		inst |= am1 | a1reg;			// Get ea1 into instr
-		D_word(inst);					// Deposit instr
-
-		// Generate ea0 if requested
-		if (flg & 2)
-			ea0gen(siz);
-
-		ea1gen(siz);					// Generate ea1
-	}
-	else
-	{
-		// Use am0
-		inst |= am0 | a0reg;			// Get ea0 into instr
-		D_word(inst);					// Deposit instr
-		ea0gen(siz);					// Generate ea0
-
-		// Generate ea1 if requested
-		if (flg & 2)
-			ea1gen(siz);
-	}
-
-	inst = a1reg + (a2reg << 12);
-    inst |= mulmode;  // add size bit
-	D_word(inst);
-
-	return OK;
-}
-
-
-//
-// divsl.l
-//
-int m_divsl(WORD inst, WORD siz)
-{
-	if ((activecpu & (CPU_68020 | CPU_68030 | CPU_68040)) == 0)
-		return error(unsupport);
-
-	WORD flg = inst;					// Save flag bits
-	inst &= ~0x3F;						// Clobber flag bits in instr
-
-	// Install "standard" instr size bits
-	if (flg & 4)
-		inst |= siz_6[siz];
-
-	if (flg & 16)
-	{
-		// OR-in register number
-		if (flg & 8)
-			inst |= reg_9[a1reg];		// ea1reg in bits 9..11
-		else
-			inst |= reg_9[a0reg];		// ea0reg in bits 9..11
-	}
-
-	if (flg & 1)
-	{
-		// Use am1
-		inst |= am1 | a1reg;			// Get ea1 into instr
-		D_word(inst);					// Deposit instr
-
-		// Generate ea0 if requested
-		if (flg & 2)
-			ea0gen(siz);
-
-		ea1gen(siz);					// Generate ea1
-	}
-	else
-	{
-		// Use am0
-		inst |= am0 | a0reg;			// Get ea0 into instr
-		D_word(inst);					// Deposit instr
-		ea0gen(siz);					// Generate ea0
-
-		// Generate ea1 if requested
-		if (flg & 2)
-			ea1gen(siz);
-	}
-
-	inst = a1reg + (a2reg << 12) + (1 << 11) + (1 << 10);
-	D_word(inst);
-
-	return OK;
-}
-
-
-//
-// divul.l
-//
-int m_divul(WORD inst, WORD siz)
-{
-	if ((activecpu & (CPU_68020 | CPU_68030 | CPU_68040)) == 0)
-		return error(unsupport);
-
-	WORD flg = inst;					// Save flag bits
-	inst &= ~0x3F;						// Clobber flag bits in instr
-
-	// Install "standard" instr size bits
-	if (flg & 4)
-		inst |= siz_6[siz];
-
-	if (flg & 16)
-	{
-		// OR-in register number
-		if (flg & 8)
-			inst |= reg_9[a1reg];		// ea1reg in bits 9..11
-		else
-			inst |= reg_9[a0reg];		// ea0reg in bits 9..11
-	}
-
-	if (flg & 1)
-	{
-		// Use am1
-		inst |= am1 | a1reg;			// Get ea1 into instr
-		D_word(inst);					// Deposit instr
-
-		// Generate ea0 if requested
-		if (flg & 2)
-			ea0gen(siz);
-
-		ea1gen(siz);					// Generate ea1
-	}
-	else
-	{
-		// Use am0
-		inst |= am0 | a0reg;			// Get ea0 into instr
-		D_word(inst);					// Deposit instr
-		ea0gen(siz);					// Generate ea0
-
-		// Generate ea1 if requested
-		if (flg & 2)
-			ea1gen(siz);
-	}
-
-	inst = a1reg + (a2reg << 12) + (1 << 10);
-	D_word(inst);
-
-	return OK;
 }
 
 

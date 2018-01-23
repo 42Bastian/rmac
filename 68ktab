@@ -245,16 +245,14 @@ dbvc  NW     M_DREG          C_LABEL         %0101100011001rrr   m_dbra
 dbvs  NW     M_DREG          C_LABEL         %0101100111001rrr   m_dbra
 
 divs  NW     C_DATA          M_DREG          %1000rrr111eR1000   m_ea     +
--     L      C_DATA030       M_DREG          %0100110001eeeeee   m_divs   +
--     L      C_DATA030       M_DREG          %0100110001eeeeee   m_divs
+-     L      C_DATA030       M_DREG          %0100111101eeeeee   m_muls
 
-divsl NL     C_DATA030       M_DREG          %0100110001eeeeee   m_divsl
+divsl NL     C_DATA030       M_DREG          %0100111001eeeeee   m_muls
 
 divu  NW     C_DATA          M_DREG          %1000rrr011eR1000   m_ea     +
--     L      C_DATA030       M_DREG          %0100110001eeeeee   m_divu   +
--     L      C_DATA030       M_DREG          %0100110001eeeeee   m_divu   +
+-     L      C_DATA030       M_DREG          %0100110101eeeeee   m_muls
 
-divul LN     C_DATA030       M_DREG          %0100110001eeeeee   m_divul
+divul LN     C_DATA030       M_DREG          %0100110001eeeeee   m_muls
 
 eor   NBWL   M_DREG          C_ALTDATA       %1011rrr1sseR0S01   m_ea      +
 eori  NBWL   M_IMMED         C_ALTDATA       %00001010sseeeS11   m_ea      +
@@ -618,9 +616,9 @@ movep NWL    M_DREG          M_AIND|M_ADISP  %0000rrr11s001aaa   m_movep   +
 moveq NL     M_IMMED         M_DREG          %0111rrr0dddddddd   m_moveq
 
 muls  NW     C_DATA          M_DREG          %1100rrr111eR1000   m_ea      +
--     L      C_DATA030       M_DREG          %0100110000eeeeee   m_muls
+-     L      C_DATA030       M_DREG          %0100111100eeeeee   m_muls    
 mulu  NW     C_DATA          M_DREG          %1100rrr011eR1000   m_ea      +
--     L      C_DATA030       M_DREG          %0100110000eeeeee   m_mulu
+-     L      C_DATA030       M_DREG          %0100110100eeeeee   m_muls
 
 nbcd  NB     C_ALTDATA       M_AM_NONE       %0100100000eee000   m_ea
 neg   NBWL   C_ALTDATA       M_AM_NONE       %01000100sseeeS00   m_ea

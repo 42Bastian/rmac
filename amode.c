@@ -61,7 +61,6 @@ WORD a1extension;			// 020+ extension address word
 WORD am1_030;				// ea bits for 020+ addressing modes
 
 int a2reg;					// Register for div.l (68020+)
-WORD mulmode;				// to distinguish between 32 and 64 bit multiplications (68020+)
 
 int bfparam1;				// bfxxx / fmove instruction parameter 1
 int bfparam2;				// bfxxx / fmove instruction parameter 2
@@ -186,25 +185,20 @@ int amode(int acount)
 
 		if ((*tok >= KW_D0) && (*tok <= KW_D7))
 		{
-			a2reg = (*tok - KW_D0);
-			mulmode = 1 << 10;
+			a2reg = (*tok++) & 7;
 		}
 		else if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
 		{
-			a2reg = (*tok - KW_FP0);
-			mulmode = 1 << 10;
+			a2reg = (*tok++) & 7;
 		}
 		else
 			return error("a data or FPU register must follow a :");
-
-		*tok++;
 	}
 	else
 	{
 		// If no ':' is present then maybe we have something like divs.l d0,d1
 		// which sould translate to divs.l d0,d1:d1
 		a2reg = a1reg;
-		mulmode = 0;
 	}
 
 	nmodes = 2;
