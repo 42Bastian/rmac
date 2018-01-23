@@ -35,7 +35,6 @@ int largestAlign[3] = { 2, 2, 2 };	// Largest alignment value seen per section
 // Function prototypes
 int d_unimpl(void);
 int d_68000(void);
-int d_68000(void);
 int d_68020(void);
 int d_68030(void);
 int d_68040(void);
@@ -1536,29 +1535,29 @@ int d_68060(void)
 {
 	d_68000();
 	activecpu = CPU_68060;
-	activefpu = FPU_68040;
+	activefpu = FPU_68060;
 	return 0;
 }
 
 
 //
-// .68881 - Back to 68000 TEXT segment and select 68881 FPU
+// .68881 - Back to 680x0 TEXT segment and select 68881 FPU
 //
 int d_68881(void)
 {
-	d_68000();
+	//d_68000();
 	activefpu = FPU_68881;
 	return 0;
 }
 
 
 //
-// .68882 - Back to 68000 TEXT segment and select 68882 FPU
+// .68882 - Back to 680x0 TEXT segment and select 68882 FPU
 //
 int d_68882(void)
 {
-	d_68000();
-	activefpu = FPU_68881;
+	//d_68000();
+	activefpu = FPU_68882;
 	return 0;
 }
 

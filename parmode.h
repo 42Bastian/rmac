@@ -197,7 +197,9 @@
 				// It might be (Dn[.wl][*scale],od)
 				// Maybe this is wrong and we have to write some code here
 				// instead of reusing that path...
-				AnEXTEN |= EXT_BDSIZE0;     // Base displacement null - suppressed
+				AnEXTEN |= EXT_FULLWORD;	// Definitely using full extension format, so set bit 8
+				AnEXTEN |= EXT_BS;	 // Base displacement null - suppressed
+				AnEXTEN |= AnIXREG << 12;
 				goto CHECKODn;
 			}
 			else
@@ -370,7 +372,7 @@
 			}
 			else if ((*tok >= KW_A0) && (*tok <= KW_A7))
 			{					// ([bd,An,...
-				AnREG = (6 << 3) | *tok & 7;
+				AnREG = (6 << 3) | (*tok & 7);
 				tok++;
 			}
 			else if ((*tok >= KW_D0) && (*tok <= KW_D7))
@@ -603,7 +605,7 @@
 				if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
 					goto badmode;
 
-				if (CHECK_OPTS(OPT_BASE_DISP) && (AnEXVAL == 0))
+				if (CHECK_OPTS(OPT_BASE_DISP) && (AnEXATTR & DEFINED) && (AnEXVAL == 0))
 				{
 					// od=0 so optimise it out
 					AMn = MEMPOST;		 // let's say it's ([bd,An],Xn,od) with od=0 then
@@ -616,7 +618,26 @@
 				if (*tok == DOTL)
 				{
 					// expr.L
-					AnEXTEN |= EXT_IISPOSL; // Long outer displacement
+					if (!(AnEXTEN & EXT_BS))
+						AnEXTEN |= EXT_IISPOSL; // Long outer displacement
+					else
+					{
+						// bd is suppressed, so sticking the od size in bd
+						AnEXTEN |= EXT_BDSIZEL;
+						// And of course the expression has to be copied to
+						// AnBEXPR instead of AnEXPR. Yay. :-/
+						int i = 0;
+
+						do
+						{
+							AnBEXPR[i] = AnEXPR[i];
+							i++;
+						}
+						while (AnEXPR[i] != 'E');
+
+						AnBEXPR[i] = 'E';
+					}
+
 					AMn = MEMPOST;
 					tok++;
 
@@ -726,9 +747,9 @@ IS_SUPPRESSEDn:
 			}
 			else if (*tok == ',')
 			{
-				*tok++;			// ([bd,An,Xn.size*scale],od)
+				tok++;			// ([bd,An,Xn.size*scale],od)
 
-				//Check for Xn
+				// Check for Xn
 				if ((*tok >= KW_A0) && (*tok <= KW_A7))
 				{
 					AnEXTEN |= ((*tok & 7) << 12);
@@ -744,8 +765,8 @@ IS_SUPPRESSEDn:
 
 				// Check for size
 				{
-				// ([bd,An/PC],Xn.W/L...)
-				switch ((int)*tok)
+					// ([bd,An/PC],Xn.W/L...)
+					switch ((int)*tok)
 					{
 					// Index reg size: <empty> | .W | .L
 					case DOTW:
@@ -764,8 +785,8 @@ IS_SUPPRESSEDn:
 				}
 
 				// Check for scale
-				if (*tok == '*')			// ([bd,An/PC],Xn*...)
-				{                           // scale: *1, *2, *4, *8
+				if (*tok == '*')				// ([bd,An/PC],Xn*...)
+				{								// scale: *1, *2, *4, *8 
 					tok++;
 
 					if (*tok == SYMBOL)

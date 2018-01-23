@@ -580,6 +580,8 @@ lea   NL     C_CTRL          M_AREG          %0100rrr111eR1000   m_lea
 
 link  NWL    M_AREG          M_IMMED         %0100111001010rrr   m_link
 
+lpstop NW    M_IMMED         M_AM_NONE       %1111100000000000   m_lpstop
+
 lsl   NBWL   M_DREG          M_DREG          %1110rrr1ss101rrr   m_shr     +
 -     NBWL   M_IMMED         M_DREG          %1110ccc1ss001rrr   m_shi     +
 -     NBWL   C_ALTMEM        M_AM_NONE       %1110001111eee000   m_ea      +
@@ -675,12 +677,14 @@ pdbcc NWL    M_DREG          C_LABEL         %1111000001001ccc   m_cpdbr
 
 pflush !     M_AM_NONE       M_AM_NONE       %1111000000eeeeee   m_pflush
 pflushn !    M_AM_NONE       M_AM_NONE       %1111010100000111   m_pflush
-pflushan N   M_AM_NONE       M_AM_NONE       %1111010100010000   m_self
+pflushan N   M_AM_NONE       M_AM_NONE       %1111010100010000   m_pflushan
 pflusha N    M_AM_NONE       M_AM_NONE       %1111000000000000   m_pflusha
 pflushr N    C_ALL030        M_AM_NONE       %1111000000eeeeee   m_pflushr
 
 ploadr N     M_FC            C_PMOVE         %1111000000eeeeee   m_ploadr
-ploadw N     M_FC            C_PMOVE         %1111000000eeeeee   m_ploadw
+ploadw N     M_FC            C_PMOVE         %1111000000eeeeee   m_ploadw     
+
+plpa   N     M_AIND          M_AM_NONE       %1111010110001rrr   m_plpa
 
 pmove NWLD   M_MRN           C_PMOVE         %1111000000eeeeee   m_pmove +
 -     NWLD   C_PMOVE         M_MRN           %1111000000eeeeee   m_pmove

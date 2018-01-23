@@ -24,7 +24,7 @@
 int movep = 0; // Global flag to indicate we're generating a movep instruction
 
 // Function prototypes
-int m_unimp(WORD, WORD), m_badmode(WORD, WORD), m_bad6mode(WORD, WORD), m_bad6inst(WORD, WORD);
+int m_unimp(WORD, WORD), m_badmode(WORD, WORD);
 int m_self(WORD, WORD);
 int m_abcd(WORD, WORD);
 int m_reg(WORD, WORD);
@@ -73,12 +73,15 @@ int m_cinv(WORD inst, WORD siz);
 int m_cprest(WORD inst, WORD siz);
 int m_movec(WORD inst, WORD siz);
 int m_moves(WORD inst, WORD siz);
+int m_lpstop(WORD inst, WORD siz);
+int m_plpa(WORD inst, WORD siz);
 
 // PMMU
 int m_pbcc(WORD inst, WORD siz);
 int m_pflusha(WORD inst, WORD siz);
 int m_pflush(WORD inst, WORD siz);
 int m_pflushr(WORD inst, WORD siz);
+int m_pflushan(WORD inst, WORD siz);
 int m_pload(WORD inst, WORD siz, WORD extension);
 int m_pmove(WORD inst, WORD siz);
 int m_pmovefd(WORD inst, WORD siz);
@@ -606,7 +609,7 @@ int m_dbra(WORD inst, WORD siz)
 		if ((a1exattr & TDB) != cursect)
 			return error(rel_error);
 
-		uint32_t v = a1exval - sloc;
+		uint32_t v = (uint32_t)a1exval - sloc;
 
 		if (v + 0x8000 > 0x10000)
 			return error(range_error);
@@ -1045,7 +1048,7 @@ immed1:
 			rmask = 0;
 
 			for(i=0x8000; i; i>>=1, w>>=1)
-				rmask = (WORD)((rmask << 1) | w & 1);
+				rmask = (WORD)((rmask << 1) | (w & 1));
 		}
 	}
 	else
@@ -1181,19 +1184,38 @@ int m_bfop(WORD inst, WORD siz)
 	else
 		bfparam1 = bfval1 << 12;
 
-	D_word((inst | am0 | a0reg | am1 | a1reg));
+	//D_word((inst | am0 | a0reg | am1 | a1reg));
+	if (inst == B16(11101111, 11000000))
+		// bfins special case
+		D_word((inst | am1 | a1reg));
+	else
+		D_word((inst | am0 | a0reg));
+
 	ea0gen(siz);	// Generate EA
 
 	// Second instruction word - Dest register (if exists), Do, Offset, Dw, Width
-	inst = bfparam1 | bfparam2;
+	if (inst == B16(11101111, 11000000))
+	{
+		// bfins special case
+		inst = bfparam1 | bfparam2;
 
-	if (am1 == DREG)
-		inst |= a1reg << 0;
+		if (am1 == DREG)
+			inst |= a0reg << 12;
 
-	if (am0 == DREG)
-		inst |= a0reg << 12;
+		D_word(inst);
+	}
+	else
+	{
+		inst = bfparam1 | bfparam2;
 
-	D_word(inst);
+		if (am1 == DREG)
+			inst |= a0reg << 0;
+
+		if (am0 == DREG)
+			inst |= a1reg << 12;
+
+		D_word(inst);
+	}
 
 	return OK;
 }
@@ -1516,11 +1538,12 @@ int m_chk2(WORD inst, WORD siz)
 
 
 //
-// cpbcc(68020, 68030)
+// cpbcc(68020, 68030, 68040 (FBcc), 68060 (FBcc))
+// TODO: Better checks for different instructions?
 //
 int m_cpbr(WORD inst, WORD siz)
 {
-	if ((activecpu & (CPU_68020 | CPU_68030)) == 0)
+	if ((activecpu & (CPU_68020 | CPU_68030)) && (!activefpu == 0))
 		return error(unsupport);
 
 	if (a0exattr & DEFINED)
@@ -1541,7 +1564,7 @@ int m_cpbr(WORD inst, WORD siz)
 				return OK;
 			}
 		}
-        else // SIZW/SIZN
+		else // SIZW/SIZN
 		{
 			if ((v + 0x8000) >= 0x10000)
 				return error(range_error);
@@ -1612,6 +1635,7 @@ int m_cpdbr(WORD inst, WORD siz)
 	}
 
 	return OK;
+
 }
 
 
@@ -1729,7 +1753,7 @@ int m_move16b(WORD inst, WORD siz)
 			return error("Wasn't this suppose to call m_move16a???");
 		else
 		{
-			//move16 (ax)+,(xxx).L
+			// move16 (ax)+,(xxx).L
 			inst |= 0 << 3;
 			v = (int)a1exval;
 		}
@@ -1738,20 +1762,20 @@ int m_move16b(WORD inst, WORD siz)
 	{
 		if (am1 == AIND)
 		{
-			//move16 (xxx).L,(ax)+
+			// move16 (xxx).L,(ax)+
 			inst |= 1 << 3;
 			v = (int)a0exval;
 		}
-		else //APOSTINC
+		else // APOSTINC
 		{
-			//move16 (xxx).L,(ax)
+			// move16 (xxx).L,(ax)
 			inst |= 3 << 3;
 			v = (int)a0exval;
 		}
 	}
 	else if (am0 == AIND)
 	{
-		//move16 (ax),(xxx).L
+		// move16 (ax),(xxx).L
 		inst |= 2 << 3;
 		v = (int)a1exval;
 	}
@@ -1923,7 +1947,7 @@ int m_trapcc(WORD inst, WORD siz)
 
 
 //
-// cinvl/p/a (68040)
+// cinvl/p/a (68040/68060)
 //
 int m_cinv(WORD inst, WORD siz)
 {
@@ -1986,7 +2010,7 @@ int m_frestore(WORD inst, WORD siz)
 
 
 //
-// movec (68010, 68020, 68030, 68040, CPU32)
+// movec (68010, 68020, 68030, 68040, 68060, CPU32)
 //
 int m_movec(WORD inst, WORD siz)
 {
@@ -2141,7 +2165,7 @@ int m_pflush(WORD inst, WORD siz)
 			if ((a0exattr & DEFINED) == 0)
 				return error("function code immediate should be defined");
 
-			if (a0exval > 7 && a0exval < 0)
+			if (a0exval > 7)
 				return error("function code out of range (0-7)");
 
 			fc = (uint16_t)a0exval;
@@ -2183,7 +2207,7 @@ int m_pflush(WORD inst, WORD siz)
 		if ((a0exattr & DEFINED) == 0)
 			return error("mask immediate value should be defined");
 
-		if (a0exval > 7 && a0exval < 0)
+		if (a0exval > 7)
 			return error("function code out of range (0-7)");
 
 		mask = (uint16_t)a0exval << 5;
@@ -2252,6 +2276,18 @@ int m_pflush(WORD inst, WORD siz)
 	}
 	else
 		return error(unsupport);
+
+	return OK;
+}
+
+
+//
+// pflushan (68040, 68060)
+//
+int m_pflushan(WORD inst, WORD siz)
+{
+	if (activecpu == CPU_68040 || activecpu == CPU_68060)
+		D_word(inst);
 
 	return OK;
 }
@@ -2395,7 +2431,7 @@ int m_pmove(WORD inst, WORD siz)
 
 	// The instruction is a quad-word (8 byte) operation
 	// for the CPU root pointer and the supervisor root pointer.
-	// It is a long - word operation for the translation control register
+	// It is a long-word operation for the translation control register
 	// and the transparent translation registers(TT0 and TT1).
 	// It is a word operation for the MMU status register.
 
@@ -2417,7 +2453,7 @@ int m_pmove(WORD inst, WORD siz)
 	}
 	else if (am1 == CREG)
 	{
-    	inst |= am0 | a0reg;
+		inst |= am0 | a0reg;
 		D_word(inst);
 	}
 
@@ -2471,7 +2507,7 @@ int m_pmovefd(WORD inst, WORD siz)
 //
 int m_ptrapcc(WORD inst, WORD siz)
 {
-    CHECKNO20;
+	CHECKNO20;
 	// We stash the 5 condition bits inside the opcode in 68ktab (bits 0-4),
 	// so we need to extract them first and fill in the clobbered bits.
 	WORD opcode = inst & 0x1F;
@@ -3726,5 +3762,45 @@ int m_ftwotox(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
 	return gen_fpu(inst, siz, B8(00010001), FPU_FPSP);
+}
+
+
+/////////////////////////////////
+//                             //
+// 68060 specific instructions //
+//                             //
+/////////////////////////////////
+
+
+//
+// lpstop (68060)
+//
+int m_lpstop(WORD inst, WORD siz)
+{
+	CHECKNO60;
+	D_word(B16(00000001, 11000000));
+
+	if (a0exattr&DEFINED)
+		D_word(a0exval);
+	else
+	{
+		AddFixup(FU_WORD, sloc, a0expr);
+		D_word(0);
+	}
+
+	return OK;
+}
+
+
+//
+// plpa (68060)
+//
+int m_plpa(WORD inst, WORD siz)
+{
+	CHECKNO60;
+	inst |= a0reg;		// Install register
+	D_word(inst);
+
+	return OK;
 }
 

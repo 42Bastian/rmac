@@ -1,4 +1,4 @@
-
+//
 // RMAC - Reboot's Macro Assembler for all Atari computers
 // EXPR.C - Expression Analyzer
 // Copyright (C) 199x Landon Dyer, 2011-2017 Reboot and Friends

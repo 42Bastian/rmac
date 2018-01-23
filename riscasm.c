@@ -193,7 +193,7 @@ int GetRegister(WORD rattr)
 	}
 
 	// If we got a register in range (0-31), return it
-	if ((eval >= 0) && (eval <= 31))
+	if (eval <= 31)
 		return (int)eval;
 
 	// Otherwise, it's out of range & we flag an error
@@ -751,7 +751,7 @@ int GenerateRISCCode(int state)
 					ccsym = lookup(string[tok[1]], LABEL, 0);
 
 					if (ccsym && (ccsym->sattre & EQUATEDCC) && !(ccsym->sattre & UNDEF_CC))
-						val = ccsym->svalue;
+						val = (int)ccsym->svalue;
 					else
 						return error("unknown condition code");
 				}

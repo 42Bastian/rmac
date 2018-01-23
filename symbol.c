@@ -309,7 +309,6 @@ uint32_t sy_assign_ELF(uint8_t * buf, uint8_t *(* construct)())
 	// and export all global-referenced labels. Not sure if this is
 	// required but it's here nonetheless
 
-	//for(sy=sdecl; sy!=NULL; sy=sy->sorder)
 	for(SYM * sy=sdecl; sy!=NULL; sy=sy->sdecl)
 	{
 		if ((sy->stype == LABEL)

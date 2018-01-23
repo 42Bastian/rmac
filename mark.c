@@ -221,7 +221,7 @@ uint32_t MarkImage(register uint8_t * mp, uint32_t siz, uint32_t tsize, int okfl
 
 					w |= symbol->senv << 3;
 					*wp++ = w >> 8;
-					*wp = w;
+					*wp = (uint8_t)w;
 				}
 			}
 			else
