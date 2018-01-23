@@ -87,7 +87,7 @@ int m_ptrapcc(WORD inst, WORD siz);
 int m_ploadr(WORD inst, WORD siz);
 int m_ploadw(WORD inst, WORD siz);
 
-//FPU
+// FPU
 int m_fabs(WORD inst, WORD siz);
 int m_facos(WORD inst, WORD siz);
 int m_fadd(WORD inst, WORD siz);
@@ -126,6 +126,7 @@ int m_fmul(WORD inst, WORD siz);
 int m_fneg(WORD inst, WORD siz);
 int m_fnop(WORD inst, WORD siz);
 int m_frem(WORD inst, WORD siz);
+int m_frestore(WORD inst, WORD siz);
 int m_fsabs(WORD inst, WORD siz);
 int m_fsadd(WORD inst, WORD siz);
 int m_fscc(WORD inst, WORD siz);
@@ -1945,19 +1946,39 @@ int m_cinv(WORD inst, WORD siz)
 }
 
 
+int m_fpusavrest(WORD inst, WORD siz)
+{
+	inst |= am0 | a0reg;
+	D_word(inst);
+	ea0gen(siz);
+
+	return OK;
+}
+
+
 //
-// cpRESTORE (68020, 68030)
+// cpSAVE/cpRESTORE (68020, 68030)
 //
 int m_cprest(WORD inst, WORD siz)
 {
 	if (activecpu & !(CPU_68020 | CPU_68030))
 		return error(unsupport);
 
-	inst |= am0 | a0reg;
-	D_word(inst);
-	ea0gen(siz);
+	return m_fpusavrest(inst, siz);
 
-	return OK;
+}
+
+
+//
+// FSAVE/FRESTORE (68040, 68060)
+//
+int m_frestore(WORD inst, WORD siz)
+{
+	if ((!(activecpu & (CPU_68040 | CPU_68060))) ||
+		(activefpu&(FPU_68881 | FPU_68882)))
+		return error(unsupport);
+
+	return m_fpusavrest(inst, siz);
 }
 
 
@@ -2493,11 +2514,18 @@ int m_ptest(WORD inst, WORD siz)
 	return ERROR;
 }
 
+//////////////////////////////////////////////////////////////////////////////
+//
+// 68020/30/40/60 instructions
+// Note: the map of which instructions are allowed on which CPUs came from the
+// 68060 manual, section D-1 (page 392 of the PDF). The current implementation
+// is missing checks for the EC models which have a simplified FPU.
+//
+//////////////////////////////////////////////////////////////////////////////
+
 
 #define FPU_NOWARN 0
-#define FPU_P_EMUL 1
-#define FPU_P2_EMU 2
-#define FPU_FPSP   4
+#define FPU_FPSP   1
 
 
 //
@@ -2510,8 +2538,8 @@ static inline int gen_fpu(WORD inst, WORD siz, WORD opmode, WORD emul)
 		inst |= (1 << 9);	// Bolt on FPU id
 		inst |= am0;
 
-		if (am0 == DREG)
-            inst |= a0reg;
+		//if (am0 == DREG || am0 == AREG)
+			inst |= a0reg;
 
 		D_word(inst);
 		inst = 1 << 14; // R/M field (we have ea so have to set this to 1)
@@ -2553,135 +2581,158 @@ static inline int gen_fpu(WORD inst, WORD siz, WORD opmode, WORD emul)
 		D_word(inst);
 	}
 
-	if ((emul & FPU_FPSP) && (activefpu == FPU_68040))
-		warn("Instruction is emulated in 68040");
+	if ((emul & FPU_FPSP) && (activefpu == (FPU_68040 | FPU_68060)))
+		warn("Instruction is emulated in 68040/060");
 
 	return OK;
 }
 
 
 //
-// fabs, fsabs, fdabs (6888X, 68040)
+// fabs (6888X, 68040FPSP, 68060FPSP)
 //
 int m_fabs(WORD inst, WORD siz)
 {
-	return gen_fpu(inst, siz, B8(00011000), FPU_P_EMUL);
+	CHECKNOFPU;
+	return gen_fpu(inst, siz, B8(00011000), FPU_NOWARN);
 }
 
 
+//
+// fsabs (68040, 68060)
+//
 int m_fsabs(WORD inst, WORD siz)
 {
+	CHECKNO40;
 	if (activefpu == FPU_68040)
-		return gen_fpu(inst, siz, B8(01011000), FPU_P_EMUL);
+		return gen_fpu(inst, siz, B8(01011000), FPU_NOWARN);
 
 	return error("Unsupported in current FPU");
 }
 
 
+//
+// fdabs (68040, 68060)
+//
 int m_fdabs(WORD inst, WORD siz)
 {
 	if (activefpu == FPU_68040)
-		return gen_fpu(inst, siz, B8(01011100), FPU_P_EMUL);
+		return gen_fpu(inst, siz, B8(01011100), FPU_NOWARN);
 
 	return error("Unsupported in current FPU");
 }
 
 
 //
-// facos (6888X, 68040FPSP)
+// facos (6888X, 68040FPSP, 68060FPSP)
 //
 int m_facos(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
 	return gen_fpu(inst, siz, B8(00011100), FPU_FPSP);
 }
 
 
 //
-// fadd (6888X, 68040FPSP)
+// fadd (6888X, 68040, 68060)
 //
 int m_fadd(WORD inst, WORD siz)
 {
-	return gen_fpu(inst, siz, B8(00100010), FPU_P_EMUL);
+	CHECKNOFPU;
+	return gen_fpu(inst, siz, B8(00100010), FPU_NOWARN);
 }
 
 
+//
+// fsadd (68040, 68060)
+//
 int m_fsadd(WORD inst, WORD siz)
 {
-	if (activefpu == FPU_68040)
-		return gen_fpu(inst, siz, B8(01100010), FPU_P_EMUL);
-
-	return error("Unsupported in current FPU");
-}
-
-
-int m_fdadd(WORD inst, WORD siz)
-{
-	if (activefpu == FPU_68040)
-		return gen_fpu(inst, siz, B8(01100110), FPU_P_EMUL);
+	if (activefpu & (FPU_68040 | FPU_68060))
+		return gen_fpu(inst, siz, B8(01100010), FPU_NOWARN);
 
 	return error("Unsupported in current FPU");
 }
 
 
 //
-// fasin (6888X, 68040FPSP)f
+// fxadd (68040)
+//
+int m_fdadd(WORD inst, WORD siz)
+{
+	if (activefpu & (FPU_68040 | FPU_68060))
+		return gen_fpu(inst, siz, B8(01100110), FPU_NOWARN);
+
+	return error("Unsupported in current FPU");
+}
+
+
+//
+// fasin (6888X, 68040FPSP, 68060FPSP)
 //
 int m_fasin(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
 	return gen_fpu(inst, siz, B8(00001100), FPU_FPSP);
 }
 
 
 //
-// fatan (6888X, 68040FPSP)
+// fatan (6888X, 68040FPSP, 68060FPSP)
 //
 int m_fatan(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
 	return gen_fpu(inst, siz, B8(00001010), FPU_FPSP);
 }
 
 
 //
-// fatanh (6888X, 68040FPSP)
+// fatanh (6888X, 68040FPSP, 68060FPSP)
 //
 int m_fatanh(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
 	return gen_fpu(inst, siz, B8(00001101), FPU_FPSP);
 }
 
 
 //
-// fcmp (6888X, 68040)
+// fcmp (6888X, 68040, 68060)
 //
 int m_fcmp(WORD inst, WORD siz)
 {
-	return gen_fpu(inst, siz, B8(00111000), FPU_P_EMUL);
+	CHECKNOFPU;
+	return gen_fpu(inst, siz, B8(00111000), FPU_FPSP);
 }
 
 
 //
-// fcos (6888X, 68040FPSP)
+// fcos (6888X, 68040FPSP, 68060FPSP)
 //
 int m_fcos(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
 	return gen_fpu(inst, siz, B8(00011101), FPU_FPSP);
 }
 
 
 //
-// fcosh (6888X, 68040FPSP)
+// fcosh (6888X, 68040FPSP, 68060FPSP)
 //
 int m_fcosh(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
 	return gen_fpu(inst, siz, B8(00011001), FPU_FPSP);
 }
 
 
 //
-// fdbcc (6888X, 68040)
+// fdbcc (6888X, 68040, 68060FPSP)
 //
 int m_fdbcc(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
 	WORD opcode = inst & 0x3F;	// Grab conditional bitfield
 
 	inst &= ~0x3F;
@@ -2710,75 +2761,89 @@ int m_fdbcc(WORD inst, WORD siz)
 		D_word(0);
 	}
 
+	if (activefpu == FPU_68060)
+		warn("Instruction is emulated in 68060");
+
 	return OK;
 }
 
 
 //
-// fdiv (6888X, 68040)
+// fdiv (6888X, 68040, 68060)
 //
 int m_fdiv(WORD inst, WORD siz)
 {
-	return gen_fpu(inst, siz, B8(00100000), FPU_P_EMUL);
+	CHECKNOFPU;
+	return gen_fpu(inst, siz, B8(00100000), FPU_NOWARN);
 }
 
 
+//
+// fsdiv (68040, 68060)
+//
 int m_fsdiv(WORD inst, WORD siz)
 {
-	if (activefpu == FPU_68040)
-		return gen_fpu(inst, siz, B8(01100000), FPU_P_EMUL);
-
-	return error("Unsupported in current FPU");
-}
-
-
-int m_fddiv(WORD inst, WORD siz)
-{
-	if (activefpu == FPU_68040)
-		return gen_fpu(inst, siz, B8(01100100), FPU_P_EMUL);
+	if (activefpu & (FPU_68040 | FPU_68060))
+		return gen_fpu(inst, siz, B8(01100000), FPU_NOWARN);
 
 	return error("Unsupported in current FPU");
 }
 
 
 //
-// fetox (6888X, 68040FPSP)
+// fddiv (68040, 68060)
+//
+int m_fddiv(WORD inst, WORD siz)
+{
+	if (activefpu & (FPU_68040 | FPU_68060))
+		return gen_fpu(inst, siz, B8(01100100), FPU_NOWARN);
+
+	return error("Unsupported in current FPU");
+}
+
+
+//
+// fetox (6888X, 68040FPSP, 68060FPSP)
 //
 int m_fetox(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
 	return gen_fpu(inst, siz, B8(00010000), FPU_FPSP);
 }
 
 
 //
-// fetoxm1 (6888X, 68040FPSP)
+// fetoxm1 (6888X, 68040FPSP, 68060FPSP)
 //
 int m_fetoxm1(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
 	return gen_fpu(inst, siz, B8(00001000), FPU_FPSP);
 }
 
 
 //
-// fgetexp (6888X, 68040FPSP)
+// fgetexp (6888X, 68040FPSP, 68060FPSP)
 //
 int m_fgetexp(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
 	return gen_fpu(inst, siz, B8(00011110), FPU_FPSP);
 }
 
 
 //
-// fgetman (6888X, 68040FPSP)
+// fgetman (6888X, 68040FPSP, 68060FPSP)
 //
 int m_fgetman(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
 	return gen_fpu(inst, siz, B8(00011111), FPU_FPSP);
 }
 
 
 //
-// fint (6888X, 68040FPSP)
+// fint (6888X, 68040FPSP, 68060)
 //
 int m_fint(WORD inst, WORD siz)
 {
@@ -2786,12 +2851,15 @@ int m_fint(WORD inst, WORD siz)
 		// special case - fint fpx = fint fpx,fpx
 		a1reg = a0reg;
 
-	return gen_fpu(inst, siz, B8(00000001), FPU_FPSP);
+	if (activefpu == FPU_68040)
+		warn("Instruction is emulated in 68040");
+
+	return gen_fpu(inst, siz, B8(00000001), FPU_NOWARN);
 }
 
 
 //
-// fintrz (6888X, 68040FPSP)
+// fintrz (6888X, 68040FPSP, 68060)
 //
 int m_fintrz(WORD inst, WORD siz)
 {
@@ -2799,64 +2867,76 @@ int m_fintrz(WORD inst, WORD siz)
 		// special case - fintrz fpx = fintrz fpx,fpx
 		a1reg = a0reg;
 
-	return gen_fpu(inst, siz, B8(00000011), FPU_FPSP);
+	if (activefpu == FPU_68040)
+		warn("Instruction is emulated in 68040");
+	
+	return gen_fpu(inst, siz, B8(00000011), FPU_NOWARN);
 }
 
 
 //
-// flog10 (6888X, 68040FPSP)
+// flog10 (6888X, 68040FPSP, 68060FPSP)
 //
 int m_flog10(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
 	return gen_fpu(inst, siz, B8(00010101), FPU_FPSP);
 }
 
 
 //
-// flog2 (6888X, 68040FPSP)
+// flog2 (6888X, 68040FPSP, 68060FPSP)
 //
 int m_flog2(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
 	return gen_fpu(inst, siz, B8(00010110), FPU_FPSP);
 }
 
 
 //
-// flogn (6888X, 68040FPSP)
+// flogn (6888X, 68040FPSP, 68060FPSP)
 //
 int m_flogn(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
 	return gen_fpu(inst, siz, B8(00010100), FPU_FPSP);
 }
 
 
 //
-// flognp1 (6888X, 68040FPSP)
+// flognp1 (68040FPSP, 68060FPSP)
 //
 int m_flognp1(WORD inst, WORD siz)
 {
-	return gen_fpu(inst, siz, B8(00000110), FPU_FPSP);
+	if (activefpu & (FPU_68040 | FPU_68060))
+		return gen_fpu(inst, siz, B8(00000110), FPU_FPSP);
+
+	return error("Unsupported in current FPU");
 }
 
 
 //
-// fmod (6888X, 68040FPSP)
+// fmod (6888X, 68040FPSP, 68060FPSP)
 //
 int m_fmod(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
 	return gen_fpu(inst, siz, B8(00100001), FPU_FPSP);
 }
 
 
 //
-// fmove (6888X, 68040)
+// fmove (6888X, 68040, 68060)
 //
 int m_fmove(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
+
 	// EA to register
 	if ((am0 == FREG) && (am1 < AM_USP))
 	{
-		//fpx->ea
+		// fpx->ea
 		// EA
 		inst |= am1 | a1reg;
 		D_word(inst);
@@ -2955,13 +3035,13 @@ int m_fmove(WORD inst, WORD siz)
 		inst = 0 << 14;
 
 		// Source specifier
-		if (siz != SIZX)
+		if (siz != SIZX && siz != SIZN)
 			return error("Invalid size");
 
 		// Source register
 		inst |= (a0reg << 10);
 
-        // Destination register
+		// Destination register
 		inst |= (a1reg << 7);
 
 		D_word(inst);
@@ -2972,10 +3052,12 @@ int m_fmove(WORD inst, WORD siz)
 
 
 //
-// fmove (6888X, 68040)
+// fmove (6888X, 68040, 68060)
 //
 int m_fmovescr(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
+
 	// Move Floating-Point System Control Register (FPCR)
 	// ea
 	// dr
@@ -3005,10 +3087,13 @@ int m_fmovescr(WORD inst, WORD siz)
 }
 
 //
-// fsmove/fdmove (68040)
+// fsmove/fdmove (68040, 68060)
 //
 int m_fsmove(WORD inst, WORD siz)
 {
+	if (!(activefpu & (FPU_68040 | FPU_68060)))
+		return error("Unsupported in current FPU");
+
 	return error("Not implemented yet.");
 
 #if 0
@@ -3022,6 +3107,9 @@ int m_fsmove(WORD inst, WORD siz)
 
 int m_fdmove(WORD inst, WORD siz)
 {
+	if (!(activefpu & (FPU_68040 | FPU_68060)))
+		return error("Unsupported in current FPU");
+
 	return error("Not implemented yet.");
 
 #if 0
@@ -3034,10 +3122,12 @@ int m_fdmove(WORD inst, WORD siz)
 
 
 //
-// fmovecr (6888X, 68040FPSP)
+// fmovecr (6888X, 68040FPSP, 68060FPSP)
 //
 int m_fmovecr(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
+
 	D_word(inst);
 	inst = 0x5c00;
 	inst |= a1reg << 7;
@@ -3045,17 +3135,19 @@ int m_fmovecr(WORD inst, WORD siz)
 	D_word(inst);
 
 	if (activefpu == FPU_68040)
-		warn("Instruction is emulated in 68040");
+		warn("Instruction is emulated in 68040/060");
 
 	return OK;
 }
 
 
 //
-// fmovem (6888X, 68040)
+// fmovem (6888X, 68040, 68060FPSP)
 //
 int m_fmovem(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
+
 	WORD regmask;
 	WORD datareg;
 
@@ -3063,7 +3155,7 @@ int m_fmovem(WORD inst, WORD siz)
 	{
 		if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
 		{
-			//fmovem.x <rlist>,ea
+			// fmovem.x <rlist>,ea
 			if (fpu_reglist_left(&regmask) < 0)
 				return OK;
 
@@ -3100,6 +3192,11 @@ int m_fmovem(WORD inst, WORD siz)
 			if (!(amsktab[am0] & (C_ALTCTRL | M_APREDEC)))
 				return error("invalid addressing mode");
 
+			// Quote from the 060 manual:
+			// "[..] when the processor attempts an FMOVEM.X instruction using a dynamic register list."
+			if (activefpu == FPU_68060)
+				warn("Instruction is emulated in 68060");
+
 			D_word(inst);
 			inst = (1 << 15) | (1 << 14) | (1 << 13) | (1 << 11) | (datareg << 4);
 			D_word(inst);
@@ -3119,7 +3216,7 @@ int m_fmovem(WORD inst, WORD siz)
 
 			if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
 			{
-				//fmovem.x ea,<rlist>
+				// fmovem.x ea,<rlist>
 				if (fpu_reglist_right(&regmask) < 0)
 					return OK;
 
@@ -3133,6 +3230,12 @@ int m_fmovem(WORD inst, WORD siz)
 			{
 				// fmovem.x ea,Dn
 				datareg = (*tok++ & 7) << 10;
+
+				// Quote from the 060 manual:
+				// "[..] when the processor attempts an FMOVEM.X instruction using a dynamic register list."
+				if (activefpu == FPU_68060)
+					warn("Instruction is emulated in 68060");
+
 				D_word(inst);
 				inst = (1 << 15) | (1 << 14) | (0 << 13) | (3 << 11) | (datareg << 4);
 				D_word(inst);
@@ -3145,13 +3248,16 @@ int m_fmovem(WORD inst, WORD siz)
 	{
 		if ((*tok == KW_FPCR) || (*tok == KW_FPSR) || (*tok == KW_FPIAR))
 		{
-			//fmovem.l <rlist>,ea
+			// fmovem.l <rlist>,ea
 			regmask = (1 << 15) | (1 << 13);
+			int no_control_regs = 0;
+
 fmovem_loop_1:
 			if (*tok == KW_FPCR)
 			{
 				regmask |= (1 << 12);
 				tok++;
+				no_control_regs++;
 				goto fmovem_loop_1;
 			}
 
@@ -3159,6 +3265,7 @@ fmovem_loop_1:
 			{
 				regmask |= (1 << 11);
 				tok++;
+				no_control_regs++;
 				goto fmovem_loop_1;
 			}
 
@@ -3166,6 +3273,7 @@ fmovem_loop_1:
 			{
 				regmask |= (1 << 10);
 				tok++;
+				no_control_regs++;
 				goto fmovem_loop_1;
 			}
 
@@ -3181,6 +3289,14 @@ fmovem_loop_1:
 			if (amode(0) < 0)
 				return OK;
 
+			// Quote from the 060 manual:
+			// "[..] when the processor attempts to execute an FMOVEM.L instruction with
+			// an immediate addressing mode to more than one floating - point
+			// control register (FPCR, FPSR, FPIAR)[..]"
+			if (activefpu == FPU_68060)
+				if (no_control_regs > 1 && am0 == IMMED)
+					warn("Instruction is emulated in 68060");
+
 			inst |= am0 | a0reg;
 			D_word(inst);
 			D_word(regmask);
@@ -3188,7 +3304,7 @@ fmovem_loop_1:
 		}
 		else
 		{
-			//fmovem.l ea,<rlist>
+			// fmovem.l ea,<rlist>
 			if (amode(0) < 0)
 				return OK;
 
@@ -3244,93 +3360,135 @@ fmovem_loop_2:
 
 
 //
-// fmul (6888X, 68040)
+// fmul (6888X, 68040, 68060)
 //
 int m_fmul(WORD inst, WORD siz)
 {
-	return gen_fpu(inst, siz, B8(00100011), FPU_P_EMUL);
+	CHECKNOFPU;
+	return gen_fpu(inst, siz, B8(00100011), FPU_NOWARN);
 }
 
 
+//
+// fsmul (68040, 68060)
+//
 int m_fsmul(WORD inst, WORD siz)
 {
-	if (activefpu == FPU_68040)
-		return gen_fpu(inst, siz, B8(01100011), FPU_P_EMUL);
-	else
-		return error("Unsupported in current FPU");
+	if (activefpu & (FPU_68040 | FPU_68060))
+		return gen_fpu(inst, siz, B8(01100011), FPU_NOWARN);
+	
+	return error("Unsupported in current FPU");
 }
 
 
+//
+// fdmul (68040)
+//
 int m_fdmul(WORD inst, WORD siz)
 {
-	if (activefpu == FPU_68040)
-		return gen_fpu(inst, siz, B8(01100111), FPU_P_EMUL);
-	else
-		return error("Unsupported in current FPU");
-}
-
-
-//
-// fneg (6888X, 68040)
-//
-int m_fneg(WORD inst, WORD siz)
-{
-	return gen_fpu(inst, siz, B8(00011010), FPU_P_EMUL);
-}
-
-
-int m_fsneg(WORD inst, WORD siz)
-{
-	if (activefpu == FPU_68040)
-		return gen_fpu(inst, siz, B8(01011010), FPU_P_EMUL);
-	else
-		return error("Unsupported in current FPU");
-}
-
-
-int m_fdneg(WORD inst, WORD siz)
-{
-	if (activefpu == FPU_68040)
-		return gen_fpu(inst, siz, B8(01011110), FPU_P_EMUL);
+	if (activefpu & (FPU_68040 | FPU_68060))
+		return gen_fpu(inst, siz, B8(01100111), FPU_NOWARN);
 
 	return error("Unsupported in current FPU");
 }
 
 
 //
-// fnop (6888X, 68040)
+// fneg (6888X, 68040, 68060)
 //
-int m_fnop(WORD inst, WORD siz)
+int m_fneg(WORD inst, WORD siz)
 {
-	return gen_fpu(inst, siz, B8(00000000), FPU_P_EMUL);
+	CHECKNOFPU;
+
+	if (am1 == AM_NONE)
+	{
+		a1reg = a0reg;
+		return gen_fpu(inst, siz, B8(00011010), FPU_NOWARN);
+	}
+	
+	return gen_fpu(inst, siz, B8(00011010), FPU_NOWARN);
 }
 
 
 //
-// frem (6888X, 68040FPSP)
+// fsneg (68040, 68060)
+//
+int m_fsneg(WORD inst, WORD siz)
+{
+	if (activefpu & (FPU_68040 | FPU_68060))
+	{
+		if (am1 == AM_NONE)
+		{
+			a1reg = a0reg;
+			return gen_fpu(inst, siz, B8(01011010), FPU_NOWARN);
+		}
+		
+		return gen_fpu(inst, siz, B8(01011010), FPU_NOWARN);
+	}
+
+	return error("Unsupported in current FPU");
+}
+
+
+//
+// fdneg (68040, 68060)
+//
+int m_fdneg(WORD inst, WORD siz)
+{
+	if (activefpu & (FPU_68040 | FPU_68060))
+	{
+		if (am1 == AM_NONE)
+		{
+				a1reg = a0reg;
+				return gen_fpu(inst, siz, B8(01011110), FPU_NOWARN);
+		}
+
+		return gen_fpu(inst, siz, B8(01011110), FPU_NOWARN);
+	}
+
+	return error("Unsupported in current FPU");
+}
+
+
+//
+// fnop (6888X, 68040, 68060)
+//
+int m_fnop(WORD inst, WORD siz)
+{
+	CHECKNOFPU;
+	return gen_fpu(inst, siz, B8(00000000), FPU_NOWARN);
+}
+
+
+//
+// frem (6888X, 68040FPSP, 68060FPSP)
 //
 int m_frem(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
 	return gen_fpu(inst, siz, B8(00100101), FPU_FPSP);
 }
 
 
 //
-// fscale (6888X, 68040FPSP)
+// fscale (6888X, 68040FPSP, 68060FPSP)
 //
 int m_fscale(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
 	return gen_fpu(inst, siz, B8(00100110), FPU_FPSP);
 }
 
 
 //
-// FScc (6888X, 68040), cpScc (68851, 68030), PScc (68851)
+// FScc (6888X, 68040, 68060), cpScc (68851, 68030), PScc (68851)
 // TODO: Add check for PScc to ensure 68020+68851 active
 // TODO: Add check for cpScc to ensure 68020+68851, 68030
 //
 int m_fscc(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
+
 	// We stash the 5 condition bits inside the opcode in 68ktab (bits 4-0),
 	// so we need to extract them first and fill in the clobbered bits.
 	WORD opcode = inst & 0x1F;
@@ -3339,15 +3497,181 @@ int m_fscc(WORD inst, WORD siz)
 	D_word(inst);
 	ea0gen(siz);
 	D_word(opcode);
+	if (activefpu == FPU_68060)
+		warn("Instruction is emulated in 68060");
 	return OK;
 }
 
 
 //
-// FTRAPcc (6888X, 68040)
+// fsgldiv (6888X, 68040FPSP, 68060FPSP)
+//
+int m_fsgldiv(WORD inst, WORD siz)
+{
+	CHECKNOFPU;
+	return gen_fpu(inst, siz, B8(00100100), FPU_FPSP);
+}
+
+
+//
+// fsglmul (6888X, 68040, 68060FPSP)
+//
+int m_fsglmul(WORD inst, WORD siz)
+{
+	CHECKNOFPU;
+	return gen_fpu(inst, siz, B8(00100111), FPU_FPSP);
+}
+
+
+//
+// fsin (6888X, 68040FPSP, 68060FPSP)
+//
+int m_fsin(WORD inst, WORD siz)
+{
+	CHECKNOFPU;
+	return gen_fpu(inst, siz, B8(00001110), FPU_FPSP);
+}
+
+
+//
+// fsincos (6888X, 68040FPSP, 68060FPSP)
+//
+int m_fsincos(WORD inst, WORD siz)
+{
+	CHECKNOFPU;
+
+	// Swap a1reg, a2reg as a2reg should be stored in the bitfield gen_fpu
+	// generates
+	int temp;
+	temp = a2reg;
+	a2reg = a1reg;
+	a1reg = temp;
+
+	if (gen_fpu(inst, siz, B8(00110000), FPU_FPSP) == OK)
+	{
+		chptr[-1] |= a2reg;
+		return OK;
+	}
+
+	return ERROR;
+}
+
+
+//
+// fsinh (6888X, 68040FPSP, 68060FPSP)
+//
+int m_fsinh(WORD inst, WORD siz)
+{
+	CHECKNOFPU;
+	return gen_fpu(inst, siz, B8(00000010), FPU_FPSP);
+}
+
+
+//
+// fsqrt (6888X, 68040, 68060)
+//
+int m_fsqrt(WORD inst, WORD siz)
+{
+	CHECKNOFPU;
+	return gen_fpu(inst, siz, B8(00000100), FPU_NOWARN);
+}
+
+
+//
+// fsfsqrt (68040, 68060)
+//
+int m_fsfsqrt(WORD inst, WORD siz)
+{
+	if (activefpu & (FPU_68040 | FPU_68060))
+		return gen_fpu(inst, siz, B8(01000001), FPU_NOWARN);
+	
+	return error("Unsupported in current FPU");
+}
+
+
+//
+// fdfsqrt (68040, 68060)
+//
+int m_fdfsqrt(WORD inst, WORD siz)
+{
+	if (activefpu & (FPU_68040 | FPU_68060))
+		return gen_fpu(inst, siz, B8(01000101), FPU_NOWARN);
+
+	return error("Unsupported in current FPU");
+}
+
+
+//
+// fsub (6888X, 68040, 68060)
+//
+int m_fsub(WORD inst, WORD siz)
+{
+	CHECKNOFPU;
+	return gen_fpu(inst, siz, B8(00101000), FPU_NOWARN);
+}
+
+
+//
+// fsfsub (68040, 68060)
+//
+int m_fsfsub(WORD inst, WORD siz)
+{
+	if (activefpu & (FPU_68040 | FPU_68060))
+		return gen_fpu(inst, siz, B8(01101000), FPU_NOWARN);
+
+	return error("Unsupported in current FPU");
+}
+
+
+//
+// fdfsub (68040, 68060)
+//
+int m_fdsub(WORD inst, WORD siz)
+{
+	if (activefpu & (FPU_68040 | FPU_68060))
+		return gen_fpu(inst, siz, B8(01101100), FPU_NOWARN);
+
+	return error("Unsupported in current FPU");
+}
+
+
+//
+// ftan (6888X, 68040FPSP, 68060FPSP)
+//
+int m_ftan(WORD inst, WORD siz)
+{
+	CHECKNOFPU;
+	return gen_fpu(inst, siz, B8(00001111), FPU_FPSP);
+}
+
+
+//
+// ftanh (6888X, 68040FPSP, 68060FPSP)
+//
+int m_ftanh(WORD inst, WORD siz)
+{
+	CHECKNOFPU;
+	return gen_fpu(inst, siz, B8(00001001), FPU_FPSP);
+}
+
+
+//
+// ftentox (6888X, 68040FPSP, 68060FPSP)
+//
+int m_ftentox(WORD inst, WORD siz)
+{
+	CHECKNOFPU;
+	return gen_fpu(inst, siz, B8(00010010), FPU_FPSP);
+}
+
+
+//
+// FTRAPcc (6888X, 68040, 68060FPSP)
 //
 int m_ftrapcc(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
+
 	// We stash the 5 condition bits inside the opcode in 68ktab (bits 3-7),
 	// so we need to extract them first and fill in the clobbered bits.
 	WORD opcode = (inst >> 3) & 0x1F;
@@ -3367,7 +3691,7 @@ int m_ftrapcc(WORD inst, WORD siz)
 		D_word(opcode);
 		D_long(a0exval);
 	}
-	else if (siz = SIZN)
+	else if (siz == SIZN)
 	{
 		inst |= 4;
 		D_word(inst);
@@ -3375,163 +3699,29 @@ int m_ftrapcc(WORD inst, WORD siz)
 		return OK;
 	}
 
+	if (activefpu == FPU_68060)
+		warn("Instruction is emulated in 68060");
+
 	return OK;
 }
 
 
 //
-// fsgldiv (6888X, 68040)
-//
-int m_fsgldiv(WORD inst, WORD siz)
-{
-	return gen_fpu(inst, siz, B8(00100100), FPU_P_EMUL);
-}
-
-
-//
-// fsglmul (6888X, 68040)
-//
-int m_fsglmul(WORD inst, WORD siz)
-{
-	return gen_fpu(inst, siz, B8(00100111), FPU_P_EMUL);
-}
-
-
-//
-// fsin (6888X, 68040FPSP)
-//
-int m_fsin(WORD inst, WORD siz)
-{
-	return gen_fpu(inst, siz, B8(00001110), FPU_FPSP);
-}
-
-
-//
-// fsincos (6888X, 68040FPSP)
-//
-int m_fsincos(WORD inst, WORD siz)
-{
-	// Swap a1reg, a2reg as a2reg should be stored in the bitfield gen_fpu
-	// generates
-	int temp;
-	temp = a2reg;
-	a2reg = a1reg;
-	a1reg = temp;
-
-	if (gen_fpu(inst, siz, B8(00110000), FPU_FPSP) == OK)
-	{
-		chptr[-1] |= a2reg;
-		return OK;
-	}
-
-	return ERROR;
-}
-
-
-//
-// fsin (6888X, 68040FPSP)
-//
-int m_fsinh(WORD inst, WORD siz)
-{
-	return gen_fpu(inst, siz, B8(00000010), FPU_FPSP);
-}
-
-
-//
-// fsqrt (6888X, 68040)
-//
-int m_fsqrt(WORD inst, WORD siz)
-{
-	return gen_fpu(inst, siz, B8(00000100), FPU_P_EMUL);
-}
-
-
-int m_fsfsqrt(WORD inst, WORD siz)
-{
-	if (activefpu == FPU_68040)
-		return gen_fpu(inst, siz, B8(01000001), FPU_P_EMUL);
-	else
-		return error("Unsupported in current FPU");
-}
-
-
-int m_fdfsqrt(WORD inst, WORD siz)
-{
-	if (activefpu == FPU_68040)
-		return gen_fpu(inst, siz, B8(01000101), FPU_P_EMUL);
-
-	return error("Unsupported in current FPU");
-}
-
-
-//
-// fsub (6888X, 68040)
-//
-int m_fsub(WORD inst, WORD siz)
-{
-	return gen_fpu(inst, siz, B8(00101000), FPU_P_EMUL);
-}
-
-
-int m_fsfsub(WORD inst, WORD siz)
-{
-	if (activefpu == FPU_68040)
-		return gen_fpu(inst, siz, B8(01101000), FPU_P_EMUL);
-
-	return error("Unsupported in current FPU");
-}
-
-
-int m_fdsub(WORD inst, WORD siz)
-{
-	if (activefpu == FPU_68040)
-		return gen_fpu(inst, siz, B8(01101100), FPU_P_EMUL);
-
-	return error("Unsupported in current FPU");
-}
-
-
-//
-// ftan (6888X, 68040FPSP)
-//
-int m_ftan(WORD inst, WORD siz)
-{
-	return gen_fpu(inst, siz, B8(00001111), FPU_FPSP);
-}
-
-
-//
-// ftanh (6888X, 68040FPSP)
-//
-int m_ftanh(WORD inst, WORD siz)
-{
-	return gen_fpu(inst, siz, B8(00001001), FPU_FPSP);
-}
-
-
-//
-// ftentox (6888X, 68040FPSP)
-//
-int m_ftentox(WORD inst, WORD siz)
-{
-	return gen_fpu(inst, siz, B8(00010010), FPU_FPSP);
-}
-
-
-//
-// ftst (6888X, 68040)
+// ftst (6888X, 68040, 68060)
 //
 int m_ftst(WORD inst, WORD siz)
 {
-	return gen_fpu(inst, siz, B8(00111010), FPU_P_EMUL);
+	CHECKNOFPU;
+	return gen_fpu(inst, siz, B8(00111010), FPU_NOWARN);
 }
 
 
 //
-// ftwotox (6888X, 68040FPSP)
+// ftwotox (6888X, 68040FPSP, 68060FPSP)
 //
 int m_ftwotox(WORD inst, WORD siz)
 {
+	CHECKNOFPU;
 	return gen_fpu(inst, siz, B8(00010001), FPU_FPSP);
 }
 

@@ -376,17 +376,17 @@ fdbst  N       M_DREG        C_LABEL         %1111001001011111  m_fdbcc
 fdbseq N       M_DREG        C_LABEL         %1111001001010001  m_fdbcc
 fdbsne N       M_DREG        C_LABEL         %1111001001011110  m_fdbcc
 
-fdiv  NBWLSDXP  C_ALL030     M_FREG          %1111001000eeeeee  m_fdiv    +
--     NX        M_FREG       M_FREG          %1111001000eeeeee  m_fdiv    +
+fdiv  NBWLSDXP  C_ALL030     M_FREG          %1111001000eeeeee  m_fdiv      +
+-     NX        M_FREG       M_FREG          %1111001000eeeeee  m_fdiv      +
 -     NX        M_FREG       M_AM_NONE       %1111001000eeeeee  m_fdiv
-fsdiv NBWLSDXP  C_ALL030     M_FREG          %1111001000eeeeee  m_fsdiv   +
--     NX        M_FREG       M_FREG          %1111001000eeeeee  m_fsdiv   +
+fsdiv NBWLSDXP  C_ALL030     M_FREG          %1111001000eeeeee  m_fsdiv     +
+-     NX        M_FREG       M_FREG          %1111001000eeeeee  m_fsdiv     +
 -     NX        M_FREG       M_AM_NONE       %1111001000eeeeee  m_fsdiv
-fddiv NBWLSDXP  C_ALL030     M_FREG          %1111001000eeeeee  m_fddiv   +
--     NX        M_FREG       M_FREG          %1111001000eeeeee  m_fddiv   +
+fddiv NBWLSDXP  C_ALL030     M_FREG          %1111001000eeeeee  m_fddiv     +
+-     NX        M_FREG       M_FREG          %1111001000eeeeee  m_fddiv     +
 -     NX        M_FREG       M_AM_NONE       %1111001000eeeeee  m_fddiv
-fetox NBWLSDXP  C_ALL030     M_FREG          %1111001000eeeeee  m_fetox   +
--     NX        M_FREG       M_FREG          %1111001000eeeeee  m_fetox   +
+fetox NBWLSDXP  C_ALL030     M_FREG          %1111001000eeeeee  m_fetox     +
+-     NX        M_FREG       M_FREG          %1111001000eeeeee  m_fetox     +
 -     NX        M_FREG       M_AM_NONE       %1111001000eeeeee  m_fetox
 fetoxm1 NBWLSDXP C_ALL030    M_FREG          %1111001000eeeeee  m_fetoxm1   +
 -       NX       M_FREG      M_FREG          %1111001000eeeeee  m_fetoxm1   +
@@ -397,56 +397,56 @@ fgetexp NBWLSDXP C_ALL030    M_FREG          %1111001000eeeeee  m_fgetexp   +
 fgetman NBWLSDXP C_ALL030    M_FREG          %1111001000eeeeee  m_fgetman   +
 -       NX       M_FREG      M_FREG          %1111001000eeeeee  m_fgetman   +
 -       NX       M_FREG      M_AM_NONE       %1111001000eeeeee  m_fgetman
-fint  NBWLSDXP  C_ALL030     M_FREG          %1111001000eeeeee   m_fint   +
--     NX        M_FREG       M_FREG          %1111001000eeeeee   m_fint   +
--     NX        M_FREG       M_AM_NONE       %1111001000eeeeee   m_fint
-fintrz NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee   m_fintrz   +
--      NX       M_FREG       M_FREG          %1111001000eeeeee   m_fintrz   +
--      NX       M_FREG       M_AM_NONE       %1111001000eeeeee   m_fintrz
-flog10 NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee   m_flog10   +
--      NX       M_FREG       M_FREG          %1111001000eeeeee   m_flog10   +
--      NX       M_FREG       M_AM_NONE       %1111001000eeeeee   m_flog10
-flog2  NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee   m_flog2   +
--      NX       M_FREG       M_FREG          %1111001000eeeeee   m_flog2   +
--      NX       M_FREG       M_AM_NONE       %1111001000eeeeee   m_flog2
-flogn  NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee   m_flogn   +
--      NX       M_FREG       M_FREG          %1111001000eeeeee   m_flogn   +
--      NX       M_FREG       M_AM_NONE       %1111001000eeeeee   m_flogn
-flognp1 NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee   m_flognp1   +
--       NX       M_FREG       M_FREG          %1111001000eeeeee   m_flognp1   +
--       NX       M_FREG       M_AM_NONE       %1111001000eeeeee   m_flognp1
-fmod   NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee   m_fmod   +
--      NX       M_FREG       M_FREG          %1111001000eeeeee   m_fmod   +
--      NX       M_FREG       M_AM_NONE       %1111001000eeeeee   m_fmod
-fmove  NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee   m_fmove +
--      NBWLSDXP M_FREG       C_ALL030        %1111001000eeeeee   m_fmove +
--      NX       M_FREG       M_FREG          %1111001000eeeeee   m_fmove +
--      NL       M_FPSCR      C_ALL030        %1111001000eeeeee   m_fmovescr +
--      NL       C_ALL030     M_FPSCR         %1111001000eeeeee   m_fmovescr +
-fsmove NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee   m_fsmove
-fdmove NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee   m_fdmove
-fmovecr NX     M_IMMED         M_FREG          %1111001000000000   m_fmovecr
-fmovem !       M_AM_NONE       M_AM_NONE       %1111001000eeeeee   m_fmovem
-fmul  NBWLSDXP C_ALL030      M_FREG          %1111001000eeeeee   m_fmul    +
--     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fmul
-fsmul NBWLSDXP C_ALL030      M_FREG          %1111001000eeeeee   m_fsmul   +
--     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fsmul
-fdmul NX       C_ALL030      M_FREG          %1111001000eeeeee   m_fdmul   +
--     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fdmul
-fneg  NBWLSDXP C_ALL030      M_FREG          %1111001000eeeeee   m_fneg    +
--     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fneg    +
--     NX       M_FREG        M_AM_NONE       %1111001000eeeeee   m_fneg
-fsneg NBWLSDXP C_ALL030      M_FREG          %1111001000eeeeee   m_fsneg   +
--     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fsneg   +
--     NX       M_FREG        M_AM_NONE       %1111001000eeeeee   m_fsneg
-fdneg NBWLSDXP C_ALL030      M_FREG          %1111001000eeeeee   m_fdneg   +
--     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fdneg   +
--     NX       M_FREG        M_AM_NONE       %1111001000eeeeee   m_fdneg
-fnop  N        M_AM_NONE     M_AM_NONE       %1111001010000000   m_fnop
-frem  NBWLSDXP C_ALL030      M_FREG          %1111001000eeeeee   m_frem   +
--     NX       M_FREG        M_FREG          %1111001000eeeeee   m_frem
-fscale NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee   m_fscale  +
--      NX      M_FREG       M_FREG          %1111001000eeeeee   m_fscale
+fint  NBWLSDXP  C_ALL030     M_FREG          %1111001000eeeeee  m_fint      +
+-     NX        M_FREG       M_FREG          %1111001000eeeeee  m_fint      +
+-     NX        M_FREG       M_AM_NONE       %1111001000eeeeee  m_fint
+fintrz NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee  m_fintrz    + 
+-      NX       M_FREG       M_FREG          %1111001000eeeeee  m_fintrz    +
+-      NX       M_FREG       M_AM_NONE       %1111001000eeeeee  m_fintrz
+flog10 NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee  m_flog10    + 
+-      NX       M_FREG       M_FREG          %1111001000eeeeee  m_flog10    +
+-      NX       M_FREG       M_AM_NONE       %1111001000eeeeee  m_flog10
+flog2  NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee  m_flog2     +
+-      NX       M_FREG       M_FREG          %1111001000eeeeee  m_flog2     +
+-      NX       M_FREG       M_AM_NONE       %1111001000eeeeee  m_flog2
+flogn  NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee  m_flogn     +
+-      NX       M_FREG       M_FREG          %1111001000eeeeee  m_flogn     +
+-      NX       M_FREG       M_AM_NONE       %1111001000eeeeee  m_flogn
+flognp1 NBWLSDXP C_ALL030     M_FREG         %1111001000eeeeee  m_flognp1   + 
+-       NX       M_FREG       M_FREG         %1111001000eeeeee  m_flognp1   +
+-       NX       M_FREG       M_AM_NONE      %1111001000eeeeee  m_flognp1
+fmod   NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee  m_fmod      +
+-      NX       M_FREG       M_FREG          %1111001000eeeeee  m_fmod      +
+-      NX       M_FREG       M_AM_NONE       %1111001000eeeeee  m_fmod
+fmove  NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee  m_fmove     +
+-      NBWLSDXP M_FREG       C_ALL030        %1111001000eeeeee  m_fmove     +
+-      NX       M_FREG       M_FREG          %1111001000eeeeee  m_fmove     +
+-      NL       M_FPSCR      C_ALL030        %1111001000eeeeee  m_fmovescr  +
+-      NL       C_ALL030     M_FPSCR         %1111001000eeeeee  m_fmovescr  +
+fsmove NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee  m_fsmove
+fdmove NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee  m_fdmove
+fmovecr NX      M_IMMED      M_FREG          %1111001000000000  m_fmovecr
+fmovem !        M_AM_NONE    M_AM_NONE       %1111001000eeeeee  m_fmovem
+fmul  NBWLSDXP C_ALL030      M_FREG          %1111001000eeeeee  m_fmul      +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee  m_fmul    
+fsmul NBWLSDXP C_ALL030      M_FREG          %1111001000eeeeee  m_fsmul     +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee  m_fsmul   
+fdmul NX       C_ALL030      M_FREG          %1111001000eeeeee  m_fdmul     +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee  m_fdmul   
+fneg  NBWLSDXP C_ALL030      M_FREG          %1111001000eeeeee  m_fneg      +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee  m_fneg      +
+-     NX       M_FREG        M_AM_NONE       %1111001000eeeeee  m_fneg
+fsneg NBWLSDXP C_ALL030      M_FREG          %1111001000eeeeee  m_fsneg     +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee  m_fsneg     +
+-     NX       M_FREG        M_AM_NONE       %1111001000eeeeee  m_fsneg
+fdneg NBWLSDXP C_ALL030      M_FREG          %1111001000eeeeee  m_fdneg     +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee  m_fdneg     +
+-     NX       M_FREG        M_AM_NONE       %1111001000eeeeee  m_fdneg
+fnop  N        M_AM_NONE     M_AM_NONE       %1111001010000000  m_fnop
+frem  NBWLSDXP C_ALL030      M_FREG          %1111001000eeeeee  m_frem      +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee  m_frem
+fscale NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee  m_fscale    +
+-      NX      M_FREG        M_FREG          %1111001000eeeeee  m_fscale  
 
 fseq   NB       C_ALL030      M_AM_NONE       %1111001001e00001  m_fscc
 fsze
@@ -483,46 +483,46 @@ fsst   NB       C_ALL030      M_AM_NONE       %1111001001e11111  m_fscc
 fsseq  NB       C_ALL030      M_AM_NONE       %1111001001e10001  m_fscc
 fssne  NB       C_ALL030      M_AM_NONE       %1111001001e11110  m_fscc
 
-fsgldiv NBWLSDXP C_ALL030    M_FREG          %1111001000eeeeee   m_fsgldiv  +
--       NX       M_FREG      M_FREG          %1111001000eeeeee   m_fsgldiv
-fsglmul NBWLSDXP C_ALL030    M_FREG          %1111001000eeeeee   m_fsglmul  +
--       NX       M_FREG      M_FREG          %1111001000eeeeee   m_fsglmul
-fsin   NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee   m_fsin   +
--      NX       M_FREG       M_FREG          %1111001000eeeeee   m_fsin   +
+fsgldiv NBWLSDXP C_ALL030    M_FREG          %1111001000eeeeee   m_fsgldiv  + 
+-       NX       M_FREG      M_FREG          %1111001000eeeeee   m_fsgldiv 
+fsglmul NBWLSDXP C_ALL030    M_FREG          %1111001000eeeeee   m_fsglmul  + 
+-       NX       M_FREG      M_FREG          %1111001000eeeeee   m_fsglmul 
+fsin   NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee   m_fsin     +
+-      NX       M_FREG       M_FREG          %1111001000eeeeee   m_fsin     +
 -      NX       M_FREG       M_AM_NONE       %1111001000eeeeee   m_fsin
-fsincos NBWLSDXP C_ALL030    M_FREG          %1111001000eeeeee   m_fsincos  +
+fsincos NBWLSDXP C_ALL030    M_FREG          %1111001000eeeeee   m_fsincos  + 
 -       NX       M_FREG      M_FREG          %1111001000eeeeee   m_fsincos
-fsinh  NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee   m_fsinh   +
--      NX       M_FREG       M_FREG          %1111001000eeeeee   m_fsinh   +
+fsinh  NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee   m_fsinh    +
+-      NX       M_FREG       M_FREG          %1111001000eeeeee   m_fsinh    +
 -      NX       M_FREG       M_AM_NONE       %1111001000eeeeee   m_fsinh
 fsqrt  NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee   m_fsqrt    +
 -      NX       M_FREG       M_FREG          %1111001000eeeeee   m_fsqrt    +
 -      NX       M_FREG       M_AM_NONE       %1111001000eeeeee   m_fsqrt
-fssqrt NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee   m_fsfsqrt   +
--      NX       M_FREG       M_FREG          %1111001000eeeeee   m_fsfsqrt   +
+fssqrt NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee   m_fsfsqrt  +
+-      NX       M_FREG       M_FREG          %1111001000eeeeee   m_fsfsqrt  +
 -      NX       M_FREG       M_AM_NONE       %1111001000eeeeee   m_fsfsqrt
-fdsqrt NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee   m_fdfsqrt   +
--      NX       M_FREG       M_FREG          %1111001000eeeeee   m_fdfsqrt   +
+fdsqrt NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee   m_fdfsqrt  +
+-      NX       M_FREG       M_FREG          %1111001000eeeeee   m_fdfsqrt  +
 -      NX       M_FREG       M_AM_NONE       %1111001000eeeeee   m_fdfsqrt
-fsub  NBWLSDXP C_ALL030      M_FREG          %1111001000eeeeee   m_fsub    +
+fsub  NBWLSDXP C_ALL030      M_FREG          %1111001000eeeeee   m_fsub     +
 -     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fsub
-fssub NBWLSDXP C_ALL030      M_FREG          %1111001000eeeeee   m_fsub   +
+fssub NBWLSDXP C_ALL030      M_FREG          %1111001000eeeeee   m_fsub     +
 -     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fsub
-fdsub NBWLSDXP C_ALL030      M_FREG          %1111001000eeeeee   m_fdsub   +
+fdsub NBWLSDXP C_ALL030      M_FREG          %1111001000eeeeee   m_fdsub    +
 -     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fdsub
-ftan  NBWLSDXP C_ALL030      M_FREG          %1111001000eeeeee   m_ftan   +
--     NX       M_FREG        M_FREG          %1111001000eeeeee   m_ftan   +
+ftan  NBWLSDXP C_ALL030      M_FREG          %1111001000eeeeee   m_ftan     +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_ftan     +
 -     NX       M_FREG        M_AM_NONE       %1111001000eeeeee   m_ftan
-ftanh NBWLSDXP C_ALL030      M_FREG          %1111001000eeeeee   m_ftanh   +
--     NX       M_FREG        M_FREG          %1111001000eeeeee   m_ftanh   +
+ftanh NBWLSDXP C_ALL030      M_FREG          %1111001000eeeeee   m_ftanh    +
+-     NX       M_FREG        M_FREG          %1111001000eeeeee   m_ftanh    +
 -     NX       M_FREG        M_AM_NONE       %1111001000eeeeee   m_ftanh
-ftentox NBWLSDXP C_ALL030    M_FREG          %1111001000eeeeee   m_ftentox   +
--       NX       M_FREG      M_FREG          %1111001000eeeeee   m_ftentox   +
+ftentox NBWLSDXP C_ALL030    M_FREG          %1111001000eeeeee   m_ftentox  +
+-       NX       M_FREG      M_FREG          %1111001000eeeeee   m_ftentox  +
 -       NX       M_FREG      M_AM_NONE       %1111001000eeeeee   m_ftentox
-ftst  NBWLSDXP C_ALL030      M_AM_NONE       %1111001000eeeeee   m_ftst +
+ftst  NBWLSDXP C_ALL030      M_AM_NONE       %1111001000eeeeee   m_ftst     +
 -     NX         M_FREG      M_AM_NONE       %1111001000eeeeee   m_ftst
-ftwotox NBWLSDXP C_ALL030    M_FREG          %1111001000eeeeee   m_ftwotox   +
--       NX       M_FREG      M_FREG          %1111001000eeeeee   m_ftwotox   +
+ftwotox NBWLSDXP C_ALL030    M_FREG          %1111001000eeeeee   m_ftwotox  +
+-       NX       M_FREG      M_FREG          %1111001000eeeeee   m_ftwotox  +
 -       NX       M_FREG      M_AM_NONE       %1111001000eeeeee   m_ftwotox
 
 ftrapeq   WLN  M_IMMED|M_AM_NONE    M_AM_NONE       %1111001000001mmm  m_ftrapcc
@@ -561,8 +561,8 @@ ftrapseq  WLN  M_IMMED|M_AM_NONE    M_AM_NONE       %1111001010001mmm  m_ftrapcc
 ftrapsne  WLN  M_IMMED|M_AM_NONE    M_AM_NONE       %1111001011110mmm  m_ftrapcc
 
 
-frestore N   C_DATA030       M_AM_NONE       %1111001101eeeeee   m_cprest
-fsave N      C_DATA030       M_AM_NONE       %1111001100eeeeee   m_cprest
+frestore N   C_DATA030       M_AM_NONE       %1111001101eeeeee   m_frestore
+fsave N      C_DATA030       M_AM_NONE       %1111001100eeeeee   m_frestore
 
 illegal N    M_AM_NONE       M_AM_NONE       %0100101011111100   m_self
 

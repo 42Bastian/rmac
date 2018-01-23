@@ -139,6 +139,7 @@ SECT {
 #define FPU_68881 1
 #define FPU_68882 2
 #define FPU_68040 4
+#define FPU_68060 8
 
 // Helper macros to test for active CPU
 #define CHECK00 if (activecpu == CPU_68000) return error(unsupport)
@@ -151,7 +152,7 @@ SECT {
 #define CHECKNO30 if (activecpu != CPU_68030) return error(unsupport)
 #define CHECKNO40 if (activecpu != CPU_68040) return error(unsupport)
 #define CHECKNO60 if (activecpu != CPU_68060) return error(unsupport)
-
+#define CHECKNOFPU if (!activefpu) return error(unsupport)
 
 // Globals, external etc
 extern uint32_t sloc;
