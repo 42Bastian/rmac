@@ -161,6 +161,8 @@ void DisplayHelp(void)
 		"                    o5: Absolute long base displacement to word (off)\n"
 		"                    o6: Null branches to NOP                    (off)\n"
 		"                    o7: clr.l Dx to moveq #0,Dx                 (off)\n"
+		"                    o8: adda.w/l #x,Dy to addq.w/l #x,Dy        (off)\n"
+		"                    o9: adda.w/l #x,Dy to lea x(Dy),Dy          (off)\n"
 		"  ~o[value]         Turn a specific optimisation off\n"
 		"  +oall             Turn all optimisations on\n"
 		"  ~oall             Turn all optimisations off\n"

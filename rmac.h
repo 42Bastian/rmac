@@ -275,6 +275,8 @@ enum
 	OPT_BASE_DISP     = 5,
 	OPT_NULL_BRA      = 6,
 	OPT_CLR_DX        = 7,
+	OPT_ADDA_ADDQ     = 8,
+	OPT_ADDA_LEA      = 9,
 	OPT_COUNT   // Dummy, used to count number of optimisation switches
 };
 

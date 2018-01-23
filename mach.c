@@ -452,6 +452,22 @@ int m_abcd(WORD inst, WORD siz)
 //
 int m_adda(WORD inst, WORD siz)
 {
+	if (a0exattr & DEFINED)
+	{
+ 		if (CHECK_OPTS(OPT_ADDA_ADDQ))
+			if (a0exval > 1 && a0exval <= 8)
+				// Immediate is between 1 and 8 so let's convert to addq
+				return m_addq(B16(01010000, 00000000), siz);
+	if (CHECK_OPTS(OPT_ADDA_LEA))
+		if (a0exval > 8)
+ 		{
+			// Immediate is larger than 8 so let's convert to lea
+			am0 = ADISP;    // Change addressing mode
+			a0reg = a1reg;  // In ADISP a0reg is used instead of a1reg!
+			return m_lea(B16(01000001, 11011000), SIZW);
+		}
+	}
+
 	inst |= am0 | a0reg | lwsiz_8[siz] | reg_9[a1reg];
 	D_word(inst);
 	ea0gen(siz);	// Generate EA
@@ -1298,7 +1314,7 @@ int m_cas(WORD inst, WORD siz)
 	if (*tok != EOL)
 		return error("extra (unexpected) text found");
 
-	// Reject invalud ea modes
+	// Reject invalid ea modes
 	amsk = amsktab[am0];
 
 	if ((amsk & (M_AIND | M_APOSTINC | M_APREDEC | M_ADISP | M_AINDEXED | M_ABSW | M_ABSL | M_ABASE | M_MEMPOST | M_MEMPRE)) == 0)
