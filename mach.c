@@ -1186,10 +1186,14 @@ int m_bfop(WORD inst, WORD siz)
 
 	//D_word((inst | am0 | a0reg | am1 | a1reg));
 	if (inst == B16(11101111, 11000000))
+	{
 		// bfins special case
 		D_word((inst | am1 | a1reg));
+	}
 	else
+	{
 		D_word((inst | am0 | a0reg));
+	}
 
 	ea0gen(siz);	// Generate EA
 
@@ -1656,7 +1660,7 @@ int m_muls(WORD inst, WORD siz)
 
 	if (flg & 16)
 	{
-		// OR-in register number 
+		// OR-in register number
 		if (flg & 8)
 			inst |= reg_9[a1reg];		// ea1reg in bits 9..11
 		else
@@ -1685,7 +1689,7 @@ int m_muls(WORD inst, WORD siz)
 
 		 D_word(inst);
 
-		// Generate ea0 if requested 
+		// Generate ea0 if requested
 		if (flg & 2)
 			ea0gen(siz);
 
@@ -2908,7 +2912,7 @@ int m_fintrz(WORD inst, WORD siz)
 
 	if (activefpu == FPU_68040)
 		warn("Instruction is emulated in 68040");
-	
+
 	return gen_fpu(inst, siz, B8(00000011), FPU_NOWARN);
 }
 
@@ -3415,7 +3419,7 @@ int m_fsmul(WORD inst, WORD siz)
 {
 	if (activefpu & (FPU_68040 | FPU_68060))
 		return gen_fpu(inst, siz, B8(01100011), FPU_NOWARN);
-	
+
 	return error("Unsupported in current FPU");
 }
 
@@ -3444,7 +3448,7 @@ int m_fneg(WORD inst, WORD siz)
 		a1reg = a0reg;
 		return gen_fpu(inst, siz, B8(00011010), FPU_NOWARN);
 	}
-	
+
 	return gen_fpu(inst, siz, B8(00011010), FPU_NOWARN);
 }
 
@@ -3461,7 +3465,7 @@ int m_fsneg(WORD inst, WORD siz)
 			a1reg = a0reg;
 			return gen_fpu(inst, siz, B8(01011010), FPU_NOWARN);
 		}
-		
+
 		return gen_fpu(inst, siz, B8(01011010), FPU_NOWARN);
 	}
 
@@ -3623,7 +3627,7 @@ int m_fsfsqrt(WORD inst, WORD siz)
 {
 	if (activefpu & (FPU_68040 | FPU_68060))
 		return gen_fpu(inst, siz, B8(01000001), FPU_NOWARN);
-	
+
 	return error("Unsupported in current FPU");
 }
 
@@ -3780,8 +3784,10 @@ int m_lpstop(WORD inst, WORD siz)
 	CHECKNO60;
 	D_word(B16(00000001, 11000000));
 
-	if (a0exattr&DEFINED)
+	if (a0exattr & DEFINED)
+	{
 		D_word(a0exval);
+	}
 	else
 	{
 		AddFixup(FU_WORD, sloc, a0expr);

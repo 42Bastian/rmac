@@ -100,7 +100,6 @@ uint8_t * AddSymEntry(register uint8_t * buf, SYM * sym, int globflag)
 		}
 	}
 
-
 	//
 	// Construct and deposit flag word
 	//
@@ -422,49 +421,37 @@ int WriteObject(int fd)
 	}
 	else if (obj_format == ALCYON)
 	{
-		uint32_t symbolmaxsize = 0;
-
 		if (verb_flag)
 		{
 			if (prg_flag)
-			{
 				printf("TOS header  : 28 bytes\n");
-				printf("Total       : %d bytes\n", 28 + sect[TEXT].sloc + sect[DATA].sloc + sect[BSS].sloc);
-			}
-			else
-			{
-				printf("Total       : %d bytes\n", sect[TEXT].sloc + sect[DATA].sloc + sect[BSS].sloc);
-			}
+
+			printf("Total       : %d bytes\n", sect[TEXT].sloc + sect[DATA].sloc + sect[BSS].sloc + (prg_flag ? 28 : 0));
 		}
 
-		if (prg_flag != 1)
-			symbolmaxsize = sy_assign(NULL, NULL) * 28;		// Assign index numbers to the symbols
+		// Assign index numbers to the symbols, get # of symbols (we assume
+		// that all symbols can potentially be extended, hence the x28)
+		uint32_t symbolMaxSize = sy_assign(NULL, NULL) * 28;
 
 		// Alloc memory for header + text + data, symbol and relocation
 		// information construction.
-		t = tds = sect[TEXT].sloc + sect[DATA].sloc;
-
-		if (t < symbolmaxsize)
-			t = symbolmaxsize;
-
-		// Is there any reason to do this this way???
-		buf = malloc(t + HDRSIZE);
-		buf += HDRSIZE;
+		tds = sect[TEXT].sloc + sect[DATA].sloc;
+		buf = malloc(HDRSIZE + tds + symbolMaxSize);
 
 		// Build object file header just before the text+data image
-		chptr = buf - HDRSIZE;		// -> base of header
+		chptr = buf;				// -> base of header
 		D_word(0x601A);				// 00 - magic number
 		D_long(sect[TEXT].sloc);	// 02 - TEXT size
 		D_long(sect[DATA].sloc);	// 06 - DATA size
 		D_long(sect[BSS].sloc); 	// 0A - BSS size
-		D_long(0);					// 0E - symbol table size (will be filled later if non zero)
+		D_long(0);					// 0E - symbol table size (filled later)
 		D_long(0);					// 12 - stack size (unused)
 		D_long(PRGFLAGS);			// 16 - PRGFLAGS
 		D_word(0);					// 1A - relocation information exists
 
 		// Construct text and data segments; fixup relocatable longs in .PRG
 		// mode; finally write the header + text + data
-		p = buf;
+		p = buf + HDRSIZE;
 
 		for(i=TEXT; i<=DATA; i++)
 		{
@@ -477,28 +464,24 @@ int WriteObject(int fd)
 
 		// Do a first pass on the Alcyon image, if in PRG mode
 		if (prg_flag)
-			MarkImage(buf, tds, sect[TEXT].sloc, 0);
+			MarkImage(buf + HDRSIZE, tds, sect[TEXT].sloc, 0);
 
-		unused = write(fd, buf - HDRSIZE, tds + HDRSIZE);
-
-		// Construct and write symbol table
-		if (prg_flag != 1)
+		// Construct symbol table and update the header entry, if necessary
+		if (prg_flag > 1)
 		{
-			sy_assign(buf, AddSymEntry);
-			unused = write(fd, buf, symsize);
+			// sy_assign with AddSymEntry updates symsize (stays 0 otherwise)
+			sy_assign(buf + HDRSIZE + tds, AddSymEntry);
+			chptr = buf + 0x0E;			// Point to symbol table size entry
+			D_long(symsize);
 		}
 
+		// Write out the header + text & data + symbol table (if any)
+		unused = write(fd, buf, HDRSIZE + tds + symsize);
+
 		// Construct and write relocation information; the size of it changes if
-		// we're writing a RELMODed executable.
+		// we're writing a RELMODed executable. N.B.: Destroys buffer!
 		tds = MarkImage(buf, tds, sect[TEXT].sloc, 1);
 		unused = write(fd, buf, tds);
-
-		// If we generated a symbol table we need to update the placeholder value
-		// we wrote above in the header
-		lseek(fd, 0xE, 0);
-		symsize = BYTESWAP32(symsize);
-		unused = write(fd, &symsize, 4);
-
 	}
 	else if (obj_format == ELF)
 	{

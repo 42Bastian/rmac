@@ -213,12 +213,12 @@
 			// Common index handler; enter here with 'tok' pointing at the
 			// comma.
 
-			AMn_IX0:                 // Handle indexed with missing expr
+AMn_IX0:                 // Handle indexed with missing expr
 
 			AnEXVAL = 0;
 			AnEXATTR = ABS | DEFINED;
 
-			AMn_IXN:                 // Handle any indexed (tok -> a comma)
+AMn_IXN:                 // Handle any indexed (tok -> a comma)
 
 			if (*tok++ != ',')
 				goto badmode;
@@ -251,6 +251,7 @@
 				{
 					if (expr(scaleexpr, &scaleval, &scaleattr, &scaleesym) != OK)
 						return error("scale factor expression must evaluate");
+
 					switch (scaleval)
 					{
 					case 1:
@@ -320,18 +321,21 @@
 			else
 			{
 				expr(AnBEXPR, &AnBEXVAL, &AnBEXATTR, &AnESYM);
+
 				if (CHECK_OPTS(OPT_BASE_DISP) && AnBEXVAL == 0 && AnEXATTR != 0)
 				{
 					// bd=0 so let's optimise it out
 					AnEXTEN|=EXT_BDSIZE0;
 				}
 				else if (*tok == DOTL)
-				{						// ([bd.l,...
-						AnEXTEN |= EXT_BDSIZEL;
-						tok++;
+				{
+					// ([bd.l,...
+					AnEXTEN |= EXT_BDSIZEL;
+					tok++;
 				}
 				else
-				{						// ([bd[.w],... or ([bd,...
+				{
+					// ([bd[.w],... or ([bd,...
 					// Is .W forced here?
 					if (*tok == DOTW)
 					{
@@ -340,8 +344,8 @@
 					}
 					else
 					{
-						// Defined, absolute values from $FFFF8000..$00007FFF get optimized
-						// to absolute short
+						// Defined, absolute values from $FFFF8000..$00007FFF
+						// get optimized to absolute short
 						if (CHECK_OPTS(OPT_ABS_SHORT)
 							&& ((AnBEXATTR & (TDB | DEFINED)) == DEFINED)
 							&& (((uint32_t)AnBEXVAL + 0x8000) < 0x10000))
@@ -385,24 +389,22 @@
 				tok++;
 
 				// Check for size
+				// ([bd,An/PC],Xn.W/L...)
+				switch ((int)*tok)
 				{
-					// ([bd,An/PC],Xn.W/L...)
-					switch ((int)*tok)
-				{
-					// Index reg size: <empty> | .W | .L
-					case DOTW:
-						tok++;
-						break;
-					default:
-						break;
-					case DOTL:
-						AnEXTEN |= EXT_L;
-						tok++;
-						break;
-					case DOTB:
-						// .B not allowed here...
-						goto badmode;
-					}
+				// Index reg size: <empty> | .W | .L
+				case DOTW:
+					tok++;
+					break;
+				default:
+					break;
+				case DOTL:
+					AnEXTEN |= EXT_L;
+					tok++;
+					break;
+				case DOTB:
+					// .B not allowed here...
+					goto badmode;
 				}
 
 				// Check for scale
@@ -515,24 +517,22 @@
 				}
 
 				// Check for size
+				// ([bd,An/PC],Xn.W/L...)
+				switch ((int)*tok)
 				{
-					// ([bd,An/PC],Xn.W/L...)
-					switch ((int)*tok)
-					{
-					// Index reg size: <empty> | .W | .L
-					case DOTW:
-						tok++;
-						break;
-					default:
-						break;
-					case DOTL:
-						AnEXTEN |= EXT_L;
-						tok++;
-						break;
-					case DOTB:
-						// .B not allowed here...
-						goto badmode;
-					}
+				// Index reg size: <empty> | .W | .L
+				case DOTW:
+					tok++;
+					break;
+				default:
+					break;
+				case DOTL:
+					AnEXTEN |= EXT_L;
+					tok++;
+					break;
+				case DOTB:
+					// .B not allowed here...
+					goto badmode;
 				}
 
 				// Check for scale
@@ -601,7 +601,7 @@
 				else
 					tok++;	// eat the comma
 
-				CHECKODn:
+CHECKODn:
 				if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
 					goto badmode;
 
@@ -661,9 +661,7 @@
 
 					// Is .W forced here?
 					if (*tok == DOTW)
-					{
 						tok++;
-					}
 				}
 
 				// Check for final closing parenthesis
@@ -764,35 +762,34 @@ IS_SUPPRESSEDn:
 				}
 
 				// Check for size
+				// ([bd,An/PC],Xn.W/L...)
+				switch ((int)*tok)
 				{
-					// ([bd,An/PC],Xn.W/L...)
-					switch ((int)*tok)
-					{
-					// Index reg size: <empty> | .W | .L
-					case DOTW:
-						tok++;
-						break;
-					default:
-						break;
-					case DOTL:
-						tok++;
-						AnEXTEN |= EXT_L;
-						break;
-					case DOTB:
-					// .B not allowed here...
-					goto badmode;
-					}
+				// Index reg size: <empty> | .W | .L
+				case DOTW:
+					tok++;
+					break;
+				default:
+					break;
+				case DOTL:
+					tok++;
+					AnEXTEN |= EXT_L;
+					break;
+				case DOTB:
+				// .B not allowed here...
+				goto badmode;
 				}
 
 				// Check for scale
 				if (*tok == '*')				// ([bd,An/PC],Xn*...)
-				{								// scale: *1, *2, *4, *8 
+				{								// scale: *1, *2, *4, *8
 					tok++;
 
 					if (*tok == SYMBOL)
 					{
 						if (expr(scaleexpr, &scaleval, &scaleattr, &scaleesym) != OK)
 							return error("scale factor expression must evaluate");
+
 						switch (scaleval)
 						{
 						case 1:
@@ -950,22 +947,25 @@ IS_SUPPRESSEDn:
 
 				if (*tok == ',')
 				{
-					// Check if we're actually doing d8(An,Dn) or (d16,An,Dn[.size][*scale])
-					// TODO: not a very clear cut case from what I can think. The only way
-					// to distinguish between the two is to check AnEXVAL and see if it's
-					// >127 or <-128. But this doesn't work if AnEXVAL isn't defined yet.
-					// For now we fall through to d8(An,Dn) but this might bite us in the
-					// arse during fixups...
+					// Check if we're actually doing d8(An,Dn) or
+					// (d16,An,Dn[.size][*scale])
+					// TODO: not a very clear cut case from what I can think.
+					// The only way to distinguish between the two is to check
+					// AnEXVAL and see if it's >127 or <-128. But this doesn't
+					// work if AnEXVAL isn't defined yet. For now we fall
+					// through to d8(An,Dn) but this might bite us in the arse
+					// during fixups...
 					if ((AnEXATTR & DEFINED) && (AnEXVAL + 0x80 > 0x100))
 					{
-						// We're going to treat it as a full extension format with no
-						// indirect access and no base displacement/index register suppression
+						// We're going to treat it as a full extension format
+						// with no indirect access and no base displacement/
+						// index register suppression
 						AnEXTEN |= EXT_FULLWORD;	// Definitely using full extension format, so set bit 8
 						AnEXTEN |= EXT_IISPRE0;		// No Memory Indirect Action
 						AnEXTEN |= EXT_BDSIZEL;		// Base Displacement Size Long
 						tok++;						// Get past the comma
 
-						// Our expression is techically a base displacement
+						// Our expression is techically a base displacement,
 						// so let's copy it to the relevant variables so
 						// eagen0.c can pick it up properly
 						//AnBEXPR = AnEXPR;
@@ -996,13 +996,14 @@ IS_SUPPRESSEDn:
 							}
 							// Check for scale
 							if (*tok == '*')		// ([bd,An/PC],Xn*...)
-							{						// scale: *1, *2, *4, *8 
+							{						// scale: *1, *2, *4, *8
 								tok++;
 
 								if (*tok == SYMBOL)
 								{
 									if (expr(scaleexpr, &scaleval, &scaleattr, &scaleesym) != OK)
 										return error("scale factor expression must evaluate");
+
 									switch (scaleval)
 									{
 									case 1:
@@ -1055,7 +1056,7 @@ IS_SUPPRESSEDn:
 						else
 							goto badmode;
 					}
-						
+
 					AMn = AINDEXED;
 					goto AMn_IXN;
 				}

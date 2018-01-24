@@ -72,7 +72,7 @@ WORD bf0exattr;				// Expression's attribute
 SYM * bf0esym;				// External symbol involved in expr
 
 // Function prototypes
-int check030bf(void);
+int Check030Bitfield(void);
 
 
 //
@@ -132,7 +132,7 @@ int amode(int acount)
 	// it's a bitfield instruction--check the parameters inside the {} block
 	// for validity
 	if (*tok == '{')
-		if (check030bf() == ERROR)
+		if (Check030Bitfield() == ERROR)
 			return ERROR;
 
 	if ((acount == 0) || (*tok != ','))
@@ -170,7 +170,7 @@ int amode(int acount)
 	// It's a bitfield instruction--check the parameters inside the {} block
 	// for validity
 	if (*tok == '{')
-        if (check030bf() == ERROR)
+        if (Check030Bitfield() == ERROR)
 		return ERROR;
 
 	// At this point, it is legal for 020+ to have a ':'. For example divu.l
@@ -184,13 +184,9 @@ int amode(int acount)
 		tok++;  //eat the colon
 
 		if ((*tok >= KW_D0) && (*tok <= KW_D7))
-		{
 			a2reg = (*tok++) & 7;
-		}
 		else if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
-		{
 			a2reg = (*tok++) & 7;
-		}
 		else
 			return error("a data or FPU register must follow a :");
 	}
@@ -207,9 +203,6 @@ int amode(int acount)
 	// Error messages:
 badmode:
 	return error("addressing mode syntax");
-
-	//unmode:
-	//return error("unimplemented addressing mode");
 }
 
 
@@ -376,7 +369,7 @@ int fpu_reglist_right(WORD * a_rmask)
 // bfxxx <ea>{param1,param2}
 // param1/2 are either data registers or immediate values
 //
-int check030bf(void)
+int Check030Bitfield(void)
 {
 	PTR tp;
 	CHECK00;
