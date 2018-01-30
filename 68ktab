@@ -128,41 +128,41 @@ cmpm  NBWL   M_APOSTINC      M_APOSTINC      %1011xxx1ss001yRS   m_reg
 
 cmp2  NBWL   C_ALL030        M_DREG+M_AREG   %00000ss011eeeeee   m_cmp2
 
-cpbeq NBW    C_LABEL         M_AM_NONE       %111100101s000001   m_cpbr
+cpbeq NBW    C_LABEL         M_AM_NONE       %111100101s000001   m_cpbcc
 cpbze
 cpbz
-cpbge NBW    C_LABEL         M_AM_NONE       %111100101s010011   m_cpbr
-cpbgt NBW    C_LABEL         M_AM_NONE       %111100101s010010   m_cpbr
-cpbgl NBW    C_LABEL         M_AM_NONE       %111100101s010110   m_cpbr
-cpbgle NBW   C_LABEL         M_AM_NONE       %111100101s010111   m_cpbr
-cpble NBW    C_LABEL         M_AM_NONE       %111100101s010101   m_cpbr
-cpblt NBW    C_LABEL         M_AM_NONE       %111100101s010100   m_cpbr
-cpbne NBW    C_LABEL         M_AM_NONE       %111100101s001110   m_cpbr
-cpbngt NBW   C_LABEL         M_AM_NONE       %111100101s011101   m_cpbr
-cpbnge NBW   C_LABEL         M_AM_NONE       %111100101s011100   m_cpbr
-cpbngl NBW   C_LABEL         M_AM_NONE       %111100101s011001   m_cpbr
-cpbnle NBW   C_LABEL         M_AM_NONE       %111100101s011010   m_cpbr
-cpbngle NBW  C_LABEL         M_AM_NONE       %111100101s011000   m_cpbr
+cpbge NBW    C_LABEL         M_AM_NONE       %111100101s010011   m_cpbcc
+cpbgt NBW    C_LABEL         M_AM_NONE       %111100101s010010   m_cpbcc
+cpbgl NBW    C_LABEL         M_AM_NONE       %111100101s010110   m_cpbcc
+cpbgle NBW   C_LABEL         M_AM_NONE       %111100101s010111   m_cpbcc
+cpble NBW    C_LABEL         M_AM_NONE       %111100101s010101   m_cpbcc
+cpblt NBW    C_LABEL         M_AM_NONE       %111100101s010100   m_cpbcc
+cpbne NBW    C_LABEL         M_AM_NONE       %111100101s001110   m_cpbcc
+cpbngt NBW   C_LABEL         M_AM_NONE       %111100101s011101   m_cpbcc
+cpbnge NBW   C_LABEL         M_AM_NONE       %111100101s011100   m_cpbcc
+cpbngl NBW   C_LABEL         M_AM_NONE       %111100101s011001   m_cpbcc
+cpbnle NBW   C_LABEL         M_AM_NONE       %111100101s011010   m_cpbcc
+cpbngle NBW  C_LABEL         M_AM_NONE       %111100101s011000   m_cpbcc
 cpbnz
-cpbogt NBW   C_LABEL         M_AM_NONE       %111100101s000010   m_cpbr
-cpbule NBW   C_LABEL         M_AM_NONE       %111100101s001101   m_cpbr
-cpboge NBW   C_LABEL         M_AM_NONE       %111100101s000011   m_cpbr
-cpbult NBW   C_LABEL         M_AM_NONE       %111100101s001100   m_cpbr
-cpbolt NBW   C_LABEL         M_AM_NONE       %111100101s000100   m_cpbr
-cpbuge NBW   C_LABEL         M_AM_NONE       %111100101s001011   m_cpbr
-cpbole NBW   C_LABEL         M_AM_NONE       %111100101s000101   m_cpbr
-cpbugt NBW   C_LABEL         M_AM_NONE       %111100101s001010   m_cpbr
-cpbogl NBW   C_LABEL         M_AM_NONE       %111100101s000110   m_cpbr
-cpbueq NBW   C_LABEL         M_AM_NONE       %111100101s001001   m_cpbr
-cpbor NBW    C_LABEL         M_AM_NONE       %111100101s000111   m_cpbr
-cpbun NBW    C_LABEL         M_AM_NONE       %111100101s001000   m_cpbr
-cpbt  NBW    C_LABEL         M_AM_NONE       %111100101s001111   m_cpbr
+cpbogt NBW   C_LABEL         M_AM_NONE       %111100101s000010   m_cpbcc
+cpbule NBW   C_LABEL         M_AM_NONE       %111100101s001101   m_cpbcc
+cpboge NBW   C_LABEL         M_AM_NONE       %111100101s000011   m_cpbcc
+cpbult NBW   C_LABEL         M_AM_NONE       %111100101s001100   m_cpbcc
+cpbolt NBW   C_LABEL         M_AM_NONE       %111100101s000100   m_cpbcc
+cpbuge NBW   C_LABEL         M_AM_NONE       %111100101s001011   m_cpbcc
+cpbole NBW   C_LABEL         M_AM_NONE       %111100101s000101   m_cpbcc
+cpbugt NBW   C_LABEL         M_AM_NONE       %111100101s001010   m_cpbcc
+cpbogl NBW   C_LABEL         M_AM_NONE       %111100101s000110   m_cpbcc
+cpbueq NBW   C_LABEL         M_AM_NONE       %111100101s001001   m_cpbcc
+cpbor NBW    C_LABEL         M_AM_NONE       %111100101s000111   m_cpbcc
+cpbun NBW    C_LABEL         M_AM_NONE       %111100101s001000   m_cpbcc
+cpbt  NBW    C_LABEL         M_AM_NONE       %111100101s001111   m_cpbcc
 cpbra
-cpbf  NBW    C_LABEL         M_AM_NONE       %111100101s000000   m_cpbr
-cpbsf NBW    C_LABEL         M_AM_NONE       %111100101s010000   m_cpbr
-cpbst NBW    C_LABEL         M_AM_NONE       %111100101s011111   m_cpbr
-cpbseq NBW   C_LABEL         M_AM_NONE       %111100101s010001   m_cpbr
-cpbsne NBW   C_LABEL         M_AM_NONE       %111100101s011110   m_cpbr
+cpbf  NBW    C_LABEL         M_AM_NONE       %111100101s000000   m_cpbcc
+cpbsf NBW    C_LABEL         M_AM_NONE       %111100101s010000   m_cpbcc
+cpbst NBW    C_LABEL         M_AM_NONE       %111100101s011111   m_cpbcc
+cpbseq NBW   C_LABEL         M_AM_NONE       %111100101s010001   m_cpbcc
+cpbsne NBW   C_LABEL         M_AM_NONE       %111100101s011110   m_cpbcc
 
 cpdbeq NBW   M_DREG          C_LABEL         %111100101s000001   m_cpdbr
 cpdbze
@@ -297,42 +297,42 @@ fatanh NBWLSDXP C_ALL030     M_FREG          %1111001000eeeeee   m_fatanh  +
 -      NX       M_FREG        M_FREG          %1111001000eeeeee   m_fatanh +
 -      NX       M_FREG        M_AM_NONE       %1111001000eeeeee   m_fatanh
 
-fbeq  NBW      C_LABEL       M_AM_NONE       %111100101s000001   m_cpbr
+fbeq  NBW      C_LABEL       M_AM_NONE       %111100101s000001   m_fbcc
 fbze
 fbz
-fbge  NWL      C_LABEL       M_AM_NONE       %111100101s010011   m_cpbr
-fbgt  NWL      C_LABEL       M_AM_NONE       %111100101s010010   m_cpbr
-fbgl  NWL      C_LABEL       M_AM_NONE       %111100101s010110   m_cpbr
-fbgle NWL      C_LABEL       M_AM_NONE       %111100101s010111   m_cpbr
-fble  NWL      C_LABEL       M_AM_NONE       %111100101s010101   m_cpbr
-fblt  NWL      C_LABEL       M_AM_NONE       %111100101s010100   m_cpbr
-fbne  NWL      C_LABEL       M_AM_NONE       %111100101s001110   m_cpbr
-fbngt NWL      C_LABEL       M_AM_NONE       %111100101s011101   m_cpbr
-fbnge NWL      C_LABEL       M_AM_NONE       %111100101s011100   m_cpbr
-fbngl NWL      C_LABEL       M_AM_NONE       %111100101s011001   m_cpbr
-fbnle NWL      C_LABEL       M_AM_NONE       %111100101s011010   m_cpbr
-fbnlt NWL      C_LABEL       M_AM_NONE       %111100101s011011   m_cpbr
-fbngle NWL     C_LABEL       M_AM_NONE       %111100101s011000   m_cpbr
+fbge  NWL      C_LABEL       M_AM_NONE       %111100101s010011   m_fbcc
+fbgt  NWL      C_LABEL       M_AM_NONE       %111100101s010010   m_fbcc
+fbgl  NWL      C_LABEL       M_AM_NONE       %111100101s010110   m_fbcc
+fbgle NWL      C_LABEL       M_AM_NONE       %111100101s010111   m_fbcc
+fble  NWL      C_LABEL       M_AM_NONE       %111100101s010101   m_fbcc
+fblt  NWL      C_LABEL       M_AM_NONE       %111100101s010100   m_fbcc
+fbne  NWL      C_LABEL       M_AM_NONE       %111100101s001110   m_fbcc
+fbngt NWL      C_LABEL       M_AM_NONE       %111100101s011101   m_fbcc
+fbnge NWL      C_LABEL       M_AM_NONE       %111100101s011100   m_fbcc
+fbngl NWL      C_LABEL       M_AM_NONE       %111100101s011001   m_fbcc
+fbnle NWL      C_LABEL       M_AM_NONE       %111100101s011010   m_fbcc
+fbnlt NWL      C_LABEL       M_AM_NONE       %111100101s011011   m_fbcc
+fbngle NWL     C_LABEL       M_AM_NONE       %111100101s011000   m_fbcc
 fbnz
-fbogt NWL      C_LABEL       M_AM_NONE       %111100101s000010   m_cpbr
-fbule NWL      C_LABEL       M_AM_NONE       %111100101s001101   m_cpbr
-fboge NWL      C_LABEL       M_AM_NONE       %111100101s000011   m_cpbr
-fbult NWL      C_LABEL       M_AM_NONE       %111100101s001100   m_cpbr
-fbolt NWL      C_LABEL       M_AM_NONE       %111100101s000100   m_cpbr
-fbuge NWL      C_LABEL       M_AM_NONE       %111100101s001011   m_cpbr
-fbole NWL      C_LABEL       M_AM_NONE       %111100101s000101   m_cpbr
-fbugt NWL      C_LABEL       M_AM_NONE       %111100101s001010   m_cpbr
-fbogl NWL      C_LABEL       M_AM_NONE       %111100101s000110   m_cpbr
-fbueq NWL      C_LABEL       M_AM_NONE       %111100101s001001   m_cpbr
-fbor  NWL      C_LABEL       M_AM_NONE       %111100101s000111   m_cpbr
-fbun  NWL      C_LABEL       M_AM_NONE       %111100101s001000   m_cpbr
-fbt   NWL      C_LABEL       M_AM_NONE       %111100101s001111   m_cpbr
+fbogt NWL      C_LABEL       M_AM_NONE       %111100101s000010   m_fbcc
+fbule NWL      C_LABEL       M_AM_NONE       %111100101s001101   m_fbcc
+fboge NWL      C_LABEL       M_AM_NONE       %111100101s000011   m_fbcc
+fbult NWL      C_LABEL       M_AM_NONE       %111100101s001100   m_fbcc
+fbolt NWL      C_LABEL       M_AM_NONE       %111100101s000100   m_fbcc
+fbuge NWL      C_LABEL       M_AM_NONE       %111100101s001011   m_fbcc
+fbole NWL      C_LABEL       M_AM_NONE       %111100101s000101   m_fbcc
+fbugt NWL      C_LABEL       M_AM_NONE       %111100101s001010   m_fbcc
+fbogl NWL      C_LABEL       M_AM_NONE       %111100101s000110   m_fbcc
+fbueq NWL      C_LABEL       M_AM_NONE       %111100101s001001   m_fbcc
+fbor  NWL      C_LABEL       M_AM_NONE       %111100101s000111   m_fbcc
+fbun  NWL      C_LABEL       M_AM_NONE       %111100101s001000   m_fbcc
+fbt   NWL      C_LABEL       M_AM_NONE       %111100101s001111   m_fbcc
 fbra
-fbf   NWL      C_LABEL       M_AM_NONE       %111100101s000000   m_cpbr
-fbsf  NWL      C_LABEL       M_AM_NONE       %111100101s010000   m_cpbr
-fbst  NWL      C_LABEL       M_AM_NONE       %111100101s011111   m_cpbr
-fbseq NWL      C_LABEL       M_AM_NONE       %111100101s010001   m_cpbr
-fbsne NWL      C_LABEL       M_AM_NONE       %111100101s011110   m_cpbr
+fbf   NWL      C_LABEL       M_AM_NONE       %111100101s000000   m_fbcc
+fbsf  NWL      C_LABEL       M_AM_NONE       %111100101s010000   m_fbcc
+fbst  NWL      C_LABEL       M_AM_NONE       %111100101s011111   m_fbcc
+fbseq NWL      C_LABEL       M_AM_NONE       %111100101s010001   m_fbcc
+fbsne NWL      C_LABEL       M_AM_NONE       %111100101s011110   m_fbcc
 
 fcmp  NBWLSDXP C_ALL030      M_FREG          %1111001000eeeeee   m_fcmp   +
 -     NX       M_FREG        M_FREG          %1111001000eeeeee   m_fcmp
@@ -641,22 +641,22 @@ ori   NBWL   M_IMMED         C_ALTDATA       %00000000sseeeS11   m_ea      +
 
 pack  !      M_AM_NONE       M_AM_NONE       %1000rrr10100mrrr   m_pack
 
-pbbs  NWL    C_LABEL         M_AM_NONE       %111100001s000000   m_cpbr
-pbbc  NWL    C_LABEL         M_AM_NONE       %111100001s000001   m_cpbr
-pbls  NWL    C_LABEL         M_AM_NONE       %111100001s000010   m_cpbr
-pblc  NWL    C_LABEL         M_AM_NONE       %111100001s000011   m_cpbr
-pbss  NWL    C_LABEL         M_AM_NONE       %111100001s000100   m_cpbr
-pbsc  NWL    C_LABEL         M_AM_NONE       %111100001s000101   m_cpbr
-pbas  NWL    C_LABEL         M_AM_NONE       %111100001s000110   m_cpbr
-pbac  NWL    C_LABEL         M_AM_NONE       %111100001s000111   m_cpbr
-pbws  NWL    C_LABEL         M_AM_NONE       %111100001s001000   m_cpbr
-pbwc  NWL    C_LABEL         M_AM_NONE       %111100001s001001   m_cpbr
-pbis  NWL    C_LABEL         M_AM_NONE       %111100001s001010   m_cpbr
-pbic  NWL    C_LABEL         M_AM_NONE       %111100001s001011   m_cpbr
-pbgs  NWL    C_LABEL         M_AM_NONE       %111100001s001100   m_cpbr
-pbgc  NWL    C_LABEL         M_AM_NONE       %111100001s001101   m_cpbr
-pbcs  NWL    C_LABEL         M_AM_NONE       %111100001s001110   m_cpbr
-pbcc  NWL    C_LABEL         M_AM_NONE       %111100001s001111   m_cpbr
+pbbs  NWL    C_LABEL         M_AM_NONE       %111100001s000000   m_pbcc
+pbbc  NWL    C_LABEL         M_AM_NONE       %111100001s000001   m_pbcc
+pbls  NWL    C_LABEL         M_AM_NONE       %111100001s000010   m_pbcc
+pblc  NWL    C_LABEL         M_AM_NONE       %111100001s000011   m_pbcc
+pbss  NWL    C_LABEL         M_AM_NONE       %111100001s000100   m_pbcc
+pbsc  NWL    C_LABEL         M_AM_NONE       %111100001s000101   m_pbcc
+pbas  NWL    C_LABEL         M_AM_NONE       %111100001s000110   m_pbcc
+pbac  NWL    C_LABEL         M_AM_NONE       %111100001s000111   m_pbcc
+pbws  NWL    C_LABEL         M_AM_NONE       %111100001s001000   m_pbcc
+pbwc  NWL    C_LABEL         M_AM_NONE       %111100001s001001   m_pbcc
+pbis  NWL    C_LABEL         M_AM_NONE       %111100001s001010   m_pbcc
+pbic  NWL    C_LABEL         M_AM_NONE       %111100001s001011   m_pbcc
+pbgs  NWL    C_LABEL         M_AM_NONE       %111100001s001100   m_pbcc
+pbgc  NWL    C_LABEL         M_AM_NONE       %111100001s001101   m_pbcc
+pbcs  NWL    C_LABEL         M_AM_NONE       %111100001s001110   m_pbcc
+pbcc  NWL    C_LABEL         M_AM_NONE       %111100001s001111   m_pbcc
 
 pdbbs NWL    M_DREG          C_LABEL         %1111000001001ccc   m_cpdbr
 pdbls NWL    M_DREG          C_LABEL         %1111000001001ccc   m_cpdbr

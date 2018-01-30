@@ -523,7 +523,7 @@ thrown away right here. What the hell is it for?
 //
 int evexpr(TOKEN * _tk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 {
-	WORD attr, attr2;
+	WORD attr;
 	SYM * sy;
 	uint64_t * sval = evstk;				// (Empty) initial stack
 	WORD * sattr = evattr;

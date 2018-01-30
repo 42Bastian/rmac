@@ -60,7 +60,7 @@ int m_cas2(WORD inst, WORD siz);
 int m_chk2(WORD inst, WORD siz);
 int m_cmp2(WORD inst, WORD siz);
 int m_bkpt(WORD inst, WORD siz);
-int m_cpbr(WORD inst, WORD siz);
+int m_cpbcc(WORD inst, WORD siz);
 int m_cpdbr(WORD inst, WORD siz);
 int m_muls(WORD inst, WORD siz);
 int m_move16a(WORD inst, WORD siz);
@@ -92,6 +92,7 @@ int m_ploadw(WORD inst, WORD siz);
 
 // FPU
 int m_fabs(WORD inst, WORD siz);
+int m_fbcc(WORD inst, WORD siz);
 int m_facos(WORD inst, WORD siz);
 int m_fadd(WORD inst, WORD siz);
 int m_fasin(WORD inst, WORD siz);
@@ -1542,13 +1543,10 @@ int m_chk2(WORD inst, WORD siz)
 
 
 //
-// cpbcc(68020, 68030, 68040 (FBcc), 68060 (FBcc))
-// TODO: Better checks for different instructions?
+// cpbcc(68020, 68030, 68040 (FBcc), 68060 (FBcc)), pbcc (68851)
 //
-int m_cpbr(WORD inst, WORD siz)
+int m_fpbr(WORD inst, WORD siz)
 {
-	if ((activecpu & (CPU_68020 | CPU_68030)) && (!activefpu == 0))
-		return error(unsupport);
 
 	if (a0exattr & DEFINED)
 	{
@@ -1599,6 +1597,38 @@ int m_cpbr(WORD inst, WORD siz)
 	}
 
 	return OK;
+}
+
+
+//
+// cpbcc(68020, 68030, 68040 (FBcc), 68060 (FBcc))
+//
+int m_cpbcc(WORD inst, WORD siz)
+{
+	if (!(activecpu & (CPU_68020 | CPU_68030)))
+		return error(unsupport);
+
+	return m_fpbr(inst, siz);
+}
+
+
+//
+// fbcc(6808X, 68040, 68060)
+//
+int m_fbcc(WORD inst, WORD siz)
+{
+	CHECKNOFPU;
+	return m_fpbr(inst, siz);
+}
+
+
+//
+// pbcc(68851 but let's assume 68020 only)
+//
+int m_pbcc(WORD inst, WORD siz)
+{
+	CHECKNO20;
+	return m_fpbr(inst, siz);
 }
 
 
@@ -2106,16 +2136,6 @@ int m_moves(WORD inst, WORD siz)
 	}
 
 	return OK;
-}
-
-
-//
-// PBcc (MC68851)
-//
-int m_pbcc(WORD inst, WORD siz)
-{
-	CHECKNO20;
-	return error("Not implemented yet.");
 }
 
 
@@ -2948,14 +2968,12 @@ int m_flogn(WORD inst, WORD siz)
 
 
 //
-// flognp1 (68040FPSP, 68060FPSP)
+// flognp1 (6888X, 68040FPSP, 68060FPSP)
 //
 int m_flognp1(WORD inst, WORD siz)
 {
-	if (activefpu & (FPU_68040 | FPU_68060))
-		return gen_fpu(inst, siz, B8(00000110), FPU_FPSP);
-
-	return error("Unsupported in current FPU");
+	CHECKNOFPU;
+	return gen_fpu(inst, siz, B8(00000110), FPU_FPSP);
 }
 
 
