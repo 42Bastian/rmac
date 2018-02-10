@@ -12,51 +12,52 @@
 #include "rmac.h"
 
 // Macros to deposit code in the current section (in Big Endian)
-// D_rword deposits a "6502" format (low, high) word (01).
-#define D_byte(b)	{*chptr++=(uint8_t)(b); sloc++; ch_size++; \
-						if(orgactive) orgaddr++;}
+#define D_byte(b)	{chcheck(1);*chptr++=(uint8_t)(b); sloc++; ch_size++; \
+	if(orgactive) orgaddr++;}
 #define D_word(w)	{chcheck(2);*chptr++=(uint8_t)((w)>>8); \
-						*chptr++=(uint8_t)(w); \
-						sloc += 2; ch_size += 2; if(orgactive) orgaddr += 2;}
-#define D_long(lw)	{*chptr++=(uint8_t)((lw)>>24); \
-						*chptr++=(uint8_t)((lw)>>16);\
-						*chptr++=(uint8_t)((lw)>>8); \
-						*chptr++=(uint8_t)(lw); \
-						sloc += 4; ch_size += 4; if(orgactive) orgaddr += 4;}
-#define D_quad(qw)	{*chptr++=(uint8_t)((qw)>>56); \
-						*chptr++=(uint8_t)((qw)>>48);\
-						*chptr++=(uint8_t)((qw)>>40);\
-						*chptr++=(uint8_t)((qw)>>32);\
-						*chptr++=(uint8_t)((qw)>>24);\
-						*chptr++=(uint8_t)((qw)>>16);\
-						*chptr++=(uint8_t)((qw)>>8); \
-						*chptr++=(uint8_t)(qw); \
-						sloc += 8; ch_size += 8; if(orgactive) orgaddr += 8;}
-#define D_rword(w)	{*chptr++=(uint8_t)(w); *chptr++=(uint8_t)((w)>>8); \
-						sloc+=2; ch_size+=2;if(orgactive) orgaddr += 2;}
+	*chptr++=(uint8_t)(w); \
+	sloc += 2; ch_size += 2; if(orgactive) orgaddr += 2;}
+#define D_long(lw)	{chcheck(4);*chptr++=(uint8_t)((lw)>>24); \
+	*chptr++=(uint8_t)((lw)>>16);\
+	*chptr++=(uint8_t)((lw)>>8); \
+	*chptr++=(uint8_t)(lw); \
+	sloc += 4; ch_size += 4; if(orgactive) orgaddr += 4;}
+#define D_quad(qw)	{chcheck(8);*chptr++=(uint8_t)((qw)>>56); \
+	*chptr++=(uint8_t)((qw)>>48);\
+	*chptr++=(uint8_t)((qw)>>40);\
+	*chptr++=(uint8_t)((qw)>>32);\
+	*chptr++=(uint8_t)((qw)>>24);\
+	*chptr++=(uint8_t)((qw)>>16);\
+	*chptr++=(uint8_t)((qw)>>8); \
+	*chptr++=(uint8_t)(qw); \
+	sloc += 8; ch_size += 8; if(orgactive) orgaddr += 8;}
+
+// D_rword deposits a "6502" format (low, high) word (01).
+#define D_rword(w)	{chcheck(2);*chptr++=(uint8_t)(w); \
+	*chptr++=(uint8_t)((w)>>8); \
+	sloc+=2; ch_size+=2;if(orgactive) orgaddr += 2;}
 
 // Macro for the 56001. Word size on this device is 24 bits wide. I hope that
 // orgaddr += 1 means that the addresses in the device reflect this.
-#define D_dsp(w)    {chcheck(3);*chptr++=(uint8_t)(w>>16); \
+#define D_dsp(w)	{chcheck(3);*chptr++=(uint8_t)(w>>16); \
 	*chptr++=(uint8_t)(w>>8); *chptr++=(uint8_t)w; \
 	sloc+=1; ch_size += 3; if(orgactive) orgaddr += 1; \
 	dsp_written_data_in_current_org=1;}
 
 // This macro expects to get an array of uint8_ts with the hi bits in a[0] and
 // the low bits in a[11] (Big Endian).
-#define D_extend(a) {memcpy(chptr, a, 12); chptr+=12; sloc+=12, ch_size+=12;\
-					if (orgactive) orgaddr+=12;}
+#define D_extend(a)	{chcheck(12); memcpy(chptr, a, 12); chptr+=12; sloc+=12, \
+	ch_size+=12; if (orgactive) orgaddr+=12;}
 
 // Fill n bytes with zeroes
-#define D_ZEROFILL(n)	{memset(chptr, 0, n); chptr+=n; sloc+=n; ch_size+=n;\
-						if (orgactive) orgaddr+=n;}
+#define D_ZEROFILL(n)	{chcheck(n); memset(chptr, 0, n); chptr+=n; sloc+=n; \
+	ch_size+=n; if (orgactive) orgaddr+=n;}
 
 #define NSECTS       16			// Max. number of sections
 
 // Tunable (storage) definitions
-#define CH_THRESHOLD    64		// Minimum amount of space in code chunk
-#define CH_CODE_SIZE    2048	// Code chunk normal allocation
-#define CH_FIXUP_SIZE   1024	// Fixup chunk normal allocation
+#define CH_THRESHOLD    32		// Minimum amount of space in code chunk
+#define CH_CODE_SIZE    4096	// Code chunk normal allocation (4K)
 
 // Section attributes (.scattr)
 #define SUSED        0x8000		// Section is used (really, valid)
@@ -64,20 +65,7 @@
 #define SABS         0x2000		// Section is absolute
 #define SPIC         0x1000		// Section is position-independent code
 
-// N.B.: THIS IS NO LONGER TRUE
-// Fixup record a WORD of these bits, followed by a loc and then a pointer
-// to a symbol or an ENDEXPR-terminated postfix expression.
-//
-// SYMBOL		EXPRESSION
-// ------		----------
-// ~FU_EXPR    FU_EXPR     fixup type
-// loc.L       loc.L       location in section
-// fileno.W    fileno.W    file number fixup occurred in
-// lineno.W    lineno.W    line number fixup occurred in
-// symbol.L    size.W      &symbol  /  size of expression
-// token.L     expression list
-// (etc)
-// ENDEXPR.L	(end of expression)
+// FIXUP attributes
 #define FUMASK       0x000F		// Mask for fixup cases:
 #define FU_QUICK     0x0000		// Fixup 3-bit quick instruction field
 #define FU_BYTE      0x0001		// Fixup byte
@@ -193,7 +181,7 @@ void InitSection(void);
 void SwitchSection(int);
 void SaveSection(void);
 int fixtest(int, uint32_t);
-int chcheck(uint32_t);
+void chcheck(uint32_t);
 int AddFixup(uint32_t, uint32_t, TOKEN *);
 int ResolveAllFixups(void);
 

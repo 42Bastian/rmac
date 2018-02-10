@@ -177,26 +177,26 @@ int fixtest(int sno, uint32_t loc)
 
 //
 // Check that there are at least 'amt' bytes left in the current chunk. If
-// there are not, allocate another chunk of at least 'amt' bytes (and probably
-// more).
+// there are not, allocate another chunk of at least CH_CODE_SIZE bytes or
+// 'amt', whichever is larger.
 //
 // If 'amt' is zero, ensure there are at least CH_THRESHOLD bytes, likewise.
 //
-int chcheck(uint32_t amt)
+void chcheck(uint32_t amt)
 {
 	DEBUG { printf("chcheck(%u)\n", amt); }
 
 	// If in BSS section, no allocation required
 	if (scattr & SBSS)
-		return 0;
+		return;
 
-	if (!amt)
+	if (amt == 0)
 		amt = CH_THRESHOLD;
 
-	DEBUG { printf("    challoc=%i, ch_size=%i, diff=%i\n", challoc, ch_size, challoc-ch_size); }
+	DEBUG { printf("    challoc=%i, ch_size=%i, diff=%i\n", challoc, ch_size, challoc - ch_size); }
 
 	if ((int)(challoc - ch_size) >= (int)amt)
-		return 0;
+		return;
 
 	if (amt < CH_CODE_SIZE)
 		amt = CH_CODE_SIZE;
@@ -216,7 +216,7 @@ int chcheck(uint32_t amt)
 	{
 		cp->chprev = scode;
 		scode->chnext = cp;
-		scode->ch_size = ch_size;			// Save old chunk's globals
+		scode->ch_size = ch_size;	// Save old chunk's globals
 	}
 
 	// Setup chunk and global vars
@@ -227,7 +227,7 @@ int chcheck(uint32_t amt)
 	chptr = cp->chptr = ((uint8_t *)cp) + sizeof(CHUNK);
 	scode = p->scode = cp;
 
-	return 0;
+	return;
 }
 
 
