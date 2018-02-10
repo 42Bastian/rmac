@@ -2,7 +2,7 @@
 // RMAC - Reboot's Macro Assembler for all Atari computers
 // EAGEN0.C - Effective Address Code Generation
 //            Generated Code for eaN (Included twice by "eagen.c")
-// Copyright (C) 199x Landon Dyer, 2011-2017 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2018 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -167,7 +167,7 @@ int eaNgen(WORD siz)
 				if (v + 0x100 >= 0x200)
 					return error(range_error);
 
-				D_word(v);
+				D_word(v & 0xFF);
 			}
 			else
 			{

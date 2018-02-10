@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for all Atari computers
 // SECT.C - Code Generation, Fixups and Section Management
-// Copyright (C) 199x Landon Dyer, 2011-2017 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2018 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -19,9 +19,6 @@
 #include "token.h"
 
 
-// Minimum size of a fixup record
-#define MIN_FIXUP_MEM  (3 * sizeof(uint16_t) + 1 * sizeof(uint32_t))
-
 // Function prototypes
 void MakeSection(int, uint16_t);
 void SwitchSection(int);
@@ -32,7 +29,7 @@ int cursect;			// Current section number
 
 // These are copied from the section descriptor, the current code chunk
 // descriptor and the current fixup chunk descriptor when a switch is made into
-// a section.  They are copied back to the descriptors when the section is left.
+// a section. They are copied back to the descriptors when the section is left.
 uint16_t scattr;		// Section attributes
 uint32_t sloc;			// Current loc in section
 
@@ -41,11 +38,6 @@ uint32_t challoc;		// # bytes alloc'd to code chunk
 uint32_t ch_size;		// # bytes used in code chunk
 uint8_t * chptr;		// Deposit point in code chunk buffer
 uint8_t * chptr_opcode;	// Backup of chptr, updated before entering code generators
-
-CHUNK * sfix;			// Current (last) fixup chunk
-uint32_t fchalloc;		// # bytes alloc'd to fixup chunk
-uint32_t fchsize;		// # bytes used in fixup chunk
-PTR fchptr;				// Deposit point in fixup chunk buffer
 
 // Return a size (SIZB, SIZW, SIZL) or 0, depending on what kind of fixup is
 // associated with a location.
@@ -78,16 +70,16 @@ static uint8_t fusizoffs[] = {
 //
 void InitSection(void)
 {
-	// Cleanup all sections
+	// Initialize all sections
 	for(int i=0; i<NSECTS; i++)
 		MakeSection(i, 0);
 
 	// Construct default sections, make TEXT the current section
-	MakeSection(ABS,   SUSED | SABS | SBSS);		// ABS
-	MakeSection(TEXT,  SUSED | TEXT       );		// TEXT
-	MakeSection(DATA,  SUSED | DATA       );		// DATA
-	MakeSection(BSS,   SUSED | BSS  | SBSS);		// BSS
-	MakeSection(M6502, SUSED | TEXT       );		// 6502 code section
+	MakeSection(ABS,   SUSED | SABS | SBSS);	// ABS
+	MakeSection(TEXT,  SUSED | TEXT       );	// TEXT
+	MakeSection(DATA,  SUSED | DATA       );	// DATA
+	MakeSection(BSS,   SUSED | BSS  | SBSS);	// BSS
+	MakeSection(M6502, SUSED | TEXT       );	// 6502 code section
 
 	// Switch to TEXT for starters
 	SwitchSection(TEXT);
@@ -102,6 +94,7 @@ void MakeSection(int sno, uint16_t attr)
 	SECT * p = &sect[sno];
 	p->scattr = attr;
 	p->sloc = 0;
+	p->orgaddr = 0;
 	p->scode = p->sfcode = NULL;
 	p->sfix = p->sffix = NULL;
 }
@@ -123,7 +116,7 @@ void SwitchSection(int sno)
 	scattr = p->scattr;
 	sloc = p->sloc;
 	scode = p->scode;
-	sfix = p->sfix;
+	orgaddr = p->orgaddr;
 
 	// Copy code chunk vars
 	if ((cp = scode) != NULL)
@@ -138,16 +131,6 @@ void SwitchSection(int sno)
 	}
 	else
 		challoc = ch_size = 0;
-
-	// Copy fixup chunk vars
-	if ((cp = sfix) != NULL)
-	{
-		fchalloc = cp->challoc;
-		fchsize = cp->ch_size;
-		fchptr.cp = cp->chptr + fchsize;
-	}
-	else
-		fchalloc = fchsize = 0;
 }
 
 
@@ -158,53 +141,34 @@ void SaveSection(void)
 {
 	SECT * p = &sect[cursect];
 
-	p->scattr = scattr;						// Bailout section vars
+	p->scattr = scattr;				// Bailout section vars
 	p->sloc = sloc;
+	p->orgaddr = orgaddr;
 
-	if (scode != NULL)						// Bailout code chunk
+	if (scode != NULL)				// Bailout code chunk
 		scode->ch_size = ch_size;
-
-	if (sfix != NULL)						// Bailout fixup chunk
-		sfix->ch_size = fchsize;
 }
 
 
 //
-// Test to see if a location has a fixup sic'd on it.  This is used by the
+// Test to see if a location has a fixup set on it. This is used by the
 // listing generator to print 'xx's instead of '00's for forward references
 //
 int fixtest(int sno, uint32_t loc)
 {
-	PTR fup;
-
 	// Force update to sect[] variables
 	StopMark();
 
-	// Hairy, ugly linear search for a mark on our location; the speed doesn't
+	// Ugly linear search for a mark on our location. The speed doesn't
 	// matter, since this is only done when generating a listing, which is
-	// SLOW.
-	for(CHUNK * ch=sect[sno].sffix; ch!=NULL; ch=ch->chnext)
+	// SLOW anyway.
+	for(FIXUP * fp=sect[sno].sffix; fp!=NULL; fp=fp->next)
 	{
-		fup.cp = (uint8_t *)ch->chptr;
-		uint8_t * fuend = fup.cp + ch->ch_size;
+		uint32_t w = fp->attr;
+		uint32_t xloc = fp->loc + (int)fusizoffs[w & FUMASK];
 
-		while (fup.cp < fuend)
-		{
-			uint16_t w = *fup.wp++;
-			uint32_t xloc = *fup.lp++ + (int)fusizoffs[w & FUMASK];
-			fup.wp += 2;
-
-			if (xloc == loc)
-				return (int)fusiztab[w & FUMASK];
-
-			if (w & FU_EXPR)
-			{
-				w = *fup.wp++;
-				fup.lp += w;
-			}
-			else
-				fup.lp++;
-		}
+		if (xloc == loc)
+			return (int)fusiztab[w & FUMASK];
 	}
 
 	return 0;
@@ -221,6 +185,7 @@ int fixtest(int sno, uint32_t loc)
 int chcheck(uint32_t amt)
 {
 	DEBUG { printf("chcheck(%u)\n", amt); }
+
 	// If in BSS section, no allocation required
 	if (scattr & SBSS)
 		return 0;
@@ -229,6 +194,7 @@ int chcheck(uint32_t amt)
 		amt = CH_THRESHOLD;
 
 	DEBUG { printf("    challoc=%i, ch_size=%i, diff=%i\n", challoc, ch_size, challoc-ch_size); }
+
 	if ((int)(challoc - ch_size) >= (int)amt)
 		return 0;
 
@@ -266,120 +232,67 @@ int chcheck(uint32_t amt)
 
 
 //
-// A fixup record is at least 4 pieces of data long, with some optional data at
-// the end. Is of the form:
-//
-// SYMBOL      EXPRESSION
-// ------      ----------
-// FU_EXPR.W   FU_EXPR.W        fixup type
-// loc.L       loc.L            location in section
-// fileno.W    fileno.W         file number fixup occurred in
-// lineno.W    lineno.W         line number fixup occurred in
-// symbol.*    size.W           &symbol (32 or 64 bits) / size of expression
-//             token.L          size (zero or more) TOKENS (32-bits each)
-//             ENDEXPR.L        End of expression (with size > zero)
-// JR.L                         Possible ORG address of RISC JR instruction
-//
 // Arrange for a fixup on a location
 //
-int AddFixup(uint16_t attr, uint32_t loc, TOKEN * fexpr)
+int AddFixup(uint32_t attr, uint32_t loc, TOKEN * fexpr)
 {
-	uint32_t i = MIN_FIXUP_MEM;
-	uint16_t len = 0;
+	uint16_t exprlen = 0;
+	SYM * symbol = NULL;
+	uint32_t _orgaddr = 0;
 
-	DEBUG printf("FIXUP@$%X: $%X\n", loc, attr);
-
-	// Compute length of expression (could be faster); determine if it's the
-	// single-symbol case; no expression if it's just a mark. (? is this true?)
-	if ((*fexpr == SYMBOL) && (fexpr[2] == ENDEXPR))
+	// First, check to see if the expression is a bare label, otherwise, force
+	// the FU_EXPR flag into the attributes and count the tokens.
+	if ((fexpr[0] == SYMBOL) && (fexpr[2] == ENDEXPR))
 	{
-		// Just a single symbol, possibly followed by a DWORD
-		i += sizeof(SYM *);
+		symbol = symbolPtr[fexpr[1]];
 
-		// SCPCD: Correct bit mask for attr (else other FU_xxx will match)
-		// NYAN !
+		// Save the org address for JR RISC instruction
 		if ((attr & FUMASKRISC) == FU_JR)
-			i += sizeof(uint32_t);
+			_orgaddr = orgaddr;
 	}
 	else
 	{
 		attr |= FU_EXPR;
-
-		// Count the # of tokens in the expression
-		for(len=0; fexpr[len]!=ENDEXPR; len++)
-		{
-			// Add one to len for 2X tokens, two for 3X tokens
-			if (fexpr[len] == SYMBOL)
-				len++;
-			else if (fexpr[len] == CONST)
-				len += 2;
-		}
-
-		// Add 1 for ENDEXPR
-		len++;
-		i += sizeof(uint16_t) + (len * sizeof(TOKEN));
+		exprlen = ExpressionLength(fexpr);
 	}
 
-	// Alloc another fixup chunk for this one to fit in if necessary
-	if ((fchalloc - fchsize) < i)
+	// Allocate space for the fixup + any expression
+	FIXUP * fixup = malloc(sizeof(FIXUP) + (sizeof(TOKEN) * exprlen));
+
+	// Store the relevant fixup information in the FIXUP
+	fixup->next = NULL;
+	fixup->attr = attr;
+	fixup->loc = loc;
+	fixup->fileno = cfileno;
+	fixup->lineno = curlineno;
+	fixup->expr = NULL;
+	fixup->symbol = symbol;
+	fixup->orgaddr = _orgaddr;
+
+	// Copy the passed in expression to the FIXUP, if any
+	if (exprlen > 0)
 	{
-		SECT * p = &sect[cursect];
-		CHUNK * cp = (CHUNK *)malloc(sizeof(CHUNK) + CH_FIXUP_SIZE);
-
-		// First fixup chunk in section
-		if (sfix == NULL)
-		{
-			cp->chprev = NULL;
-			p->sffix = cp;
-		}
-		// Add to other chunks
-		else
-		{
-			cp->chprev = sfix;
-			sfix->chnext = cp;
-			sfix->ch_size = fchsize;
-		}
-
-		// Setup fixup chunk and its global vars
-		cp->chnext = NULL;
-		fchalloc = cp->challoc = CH_FIXUP_SIZE;
-		fchsize = cp->ch_size = 0;
-		fchptr.cp = cp->chptr = ((uint8_t *)cp) + sizeof(CHUNK);
-		sfix = p->sfix = cp;
+		fixup->expr = (TOKEN *)((uint8_t *)fixup + sizeof(FIXUP));
+		memcpy(fixup->expr, fexpr, sizeof(TOKEN) * exprlen);
 	}
 
-	// Record fixup type, fixup location, and the file number and line number
-	// the fixup is located at.
-	*fchptr.wp++ = attr;
-	*fchptr.lp++ = loc;
-	*fchptr.wp++ = cfileno;
-	*fchptr.wp++ = curlineno;
-
-	// Store postfix expression or pointer to a single symbol, or nothing for a
-	// mark (a zero word is stored in this case--[? is it?]).
-	if (attr & FU_EXPR)
+	// Finally, put the FIXUP in the current section's linked list
+	if (sect[cursect].sffix == NULL)
 	{
-		*fchptr.wp++ = len;
-
-		while (len--)
-			*fchptr.lp++ = *fexpr++;
+		sect[cursect].sffix = fixup;
+		sect[cursect].sfix = fixup;
 	}
 	else
 	{
-		*fchptr.sy++ = symbolPtr[fexpr[1]];
-
-		// SCPCD: Correct bit mask for attr (else other FU_xxx will match)
-		// NYAN !
-		if ((attr & FUMASKRISC) == FU_JR)
-		{
-			if (orgactive)
-				*fchptr.lp++ = orgaddr;
-			else
-				*fchptr.lp++ = 0x00000000;
-		}
+		sect[cursect].sfix->next = fixup;
+		sect[cursect].sfix = fixup;
 	}
 
-	fchsize += i;
+	DEBUG { printf("AddFixup: sno=%u, l#=%u, attr=$%X, loc=$%X, expr=%p, sym=%p, org=$%X\n", cursect, fixup->lineno, fixup->attr, fixup->loc, (void *)fixup->expr, (void *)fixup->symbol, fixup->orgaddr);
+		if (symbol != NULL)
+			printf("          name: %s, value: $lX\n", symbol->sname, symbol->svalue);
+	}
+
 	return 0;
 }
 
@@ -389,18 +302,11 @@ int AddFixup(uint16_t attr, uint32_t loc, TOKEN * fexpr)
 //
 int ResolveFixups(int sno)
 {
-	PTR fup;				// Current fixup
 	uint64_t eval;			// Expression value
-	SYM * sy;				// (Temp) pointer to a symbol
-	uint16_t i;				// (Temp) word
 	int reg2;
 	uint16_t flags;
 
 	SECT * sc = &sect[sno];
-	CHUNK * ch = sc->sffix;
-
-	if (ch == NULL)
-		return 0;
 
 	// "Cache" first chunk
 	CHUNK * cch = sc->sfcode;
@@ -413,410 +319,430 @@ int ResolveFixups(int sno)
 	if (sno == M6502)
 		cch->ch_size = cch->challoc;
 
-	do
+	// Get first fixup for the passed in section
+	FIXUP * fixup = sect[sno].sffix;
+
+	while (fixup != NULL)
 	{
-		fup.cp = ch->chptr;					// fup -> start of chunk
-		uint16_t * fuend = (uint16_t *)(fup.cp + ch->ch_size);	// fuend -> end of chunk
+		// We do it this way because we have continues everywhere... :-P
+		FIXUP * fup = fixup;
+		fixup = fixup->next;
 
-		while (fup.wp < fuend)
+		uint32_t w = fup->attr;		// Fixup long (type+modes+flags)
+		uint32_t loc = fup->loc;	// Location to fixup
+		cfileno = fup->fileno;
+		curlineno = fup->lineno;
+		DEBUG { printf("ResolveFixups: sect#=%u, l#=%u, attr=$%X, loc=$%X, expr=%p, sym=%p, org=$%X\n", sno, fup->lineno, fup->attr, fup->loc, (void *)fup->expr, (void *)fup->symbol, fup->orgaddr); }
+
+		// This is based on global vars cfileno, curfname :-P
+		// This approach is kinda meh as well. I think we can do better
+		// than this.
+		SetFilenameForErrorReporting();
+
+		// Search for chunk containing location to fix up; compute a
+		// pointer to the location (in the chunk). Often we will find the
+		// Fixup is in the "cached" chunk, so the linear-search is seldom
+		// executed.
+		if (loc < cch->chloc || loc >= (cch->chloc + cch->ch_size))
 		{
-			uint16_t w = *fup.wp++;		// Fixup word (type+modes+flags)
-			uint32_t loc = *fup.lp++;	// Location to fixup
-			cfileno = *fup.wp++;
-			curlineno = *fup.wp++;
-			DEBUG { printf("ResolveFixups: cfileno=%u\n", cfileno); }
-
-			// This is based on global vars cfileno, curfname :-P
-			// This approach is kinda meh as well. I think we can do better
-			// than this.
-			SetFilenameForErrorReporting();
-
-			SYM * esym = NULL;			// External symbol involved in expr
-
-			// Search for chunk containing location to fix up; compute a
-			// pointer to the location (in the chunk). Often we will find the
-			// Fixup is in the "cached" chunk, so the linear-search is seldom
-			// executed.
-			if (loc < cch->chloc || loc >= (cch->chloc + cch->ch_size))
+			for(cch=sc->sfcode; cch!=NULL; cch=cch->chnext)
 			{
-				for(cch=sc->sfcode; cch!=NULL; cch=cch->chnext)
-				{
-					if (loc >= cch->chloc && loc < (cch->chloc + cch->ch_size))
-						break;
-				}
-
-				if (cch == NULL)
-				{
-					// Fixup (loc) out of range
-					interror(7);
-					// NOTREACHED
-				}
+				if (loc >= cch->chloc && loc < (cch->chloc + cch->ch_size))
+					break;
 			}
 
-			// Location to fix (in cached chunk)
-			uint8_t * locp = cch->chptr + (loc - cch->chloc);
-			uint16_t eattr = 0;			// Expression attrib
-
-			// Compute expression/symbol value and attribs
-
-			// Complex expression
-			if (w & FU_EXPR)
+			if (cch == NULL)
 			{
-				i = *fup.wp++;
-
-				if (evexpr(fup.tk, &eval, &eattr, &esym) != OK)
-				{
-					fup.lp += i;
-					continue;
-				}
-
-				fup.lp += i;
+				// Fixup (loc) is out of range--this should never happen!
+				// Once we call this function, it winds down immediately; it
+				// doesn't return.
+				interror(7);
 			}
-			// Simple symbol
-			else
-			{
-				sy = *fup.sy++;
-				eattr = sy->sattr;
+		}
 
-				if (eattr & DEFINED)
-					eval = sy->svalue;
-				else
-					eval = 0;
+		// Location to fix (in current chunk)
+		// We use the address of the chunk that loc is actually in, then
+		// subtract the chunk's starting location from loc to get the offset
+		// into the current chunk.
+		uint8_t * locp = cch->chptr + (loc - cch->chloc);
+		uint16_t eattr = 0;			// Expression attrib
+		SYM * esym = NULL;			// External symbol involved in expr
 
-				// If the symbol is not defined, but global, set esym to sy
-				if ((eattr & (GLOBAL | DEFINED)) == GLOBAL)
-					esym = sy;
-			}
+		// Compute expression/symbol value and attributes
 
-			uint16_t tdb = eattr & TDB;
-
-			// If the expression is undefined and no external symbol is
-			// involved, then that's an error.
-			if (!(eattr & DEFINED) && (esym == NULL))
-			{
-				error(undef_error);
+		// Complex expression
+		if (w & FU_EXPR)
+		{
+			if (evexpr(fup->expr, &eval, &eattr, &esym) != OK)
 				continue;
-			}
+		}
+		// Simple symbol
+		else
+		{
+			SYM * sy = fup->symbol;
+			eattr = sy->sattr;
 
-			// Do the fixup
-			//
-			// If a PC-relative fixup is undefined, its value is *not*
-			// subtracted from the location (that will happen in the linker
-			// when the external reference is resolved).
-			//
-			// MWC expects PC-relative things to have the LOC subtracted from
-			// the value, if the value is external (that is, undefined at this
-			// point).
-			//
-			// PC-relative fixups must be DEFINED and either in the same
-			// section (whereupon the subtraction takes place) or ABS (with no
-			// subtract).
-			if (w & FU_PCREL)
+			if (eattr & DEFINED)
+				eval = sy->svalue;
+			else
+				eval = 0;
+
+			// If the symbol is not defined, but global, set esym to sy
+			if ((eattr & (GLOBAL | DEFINED)) == GLOBAL)
+				esym = sy;
+		}
+
+		uint16_t tdb = eattr & TDB;
+
+		// If the expression/symbol is undefined and no external symbol is
+		// involved, then that's an error.
+		if (!(eattr & DEFINED) && (esym == NULL))
+		{
+			error(undef_error);
+			continue;
+		}
+
+		// Do the fixup
+		//
+		// If a PC-relative fixup is undefined, its value is *not*
+		// subtracted from the location (that will happen in the linker
+		// when the external reference is resolved).
+		//
+		// MWC expects PC-relative things to have the LOC subtracted from
+		// the value, if the value is external (that is, undefined at this
+		// point).
+		//
+		// PC-relative fixups must be DEFINED and either in the same
+		// section (whereupon the subtraction takes place) or ABS (with no
+		// subtract).
+		if (w & FU_PCREL)
+		{
+			if (eattr & DEFINED)
 			{
-				if (eattr & DEFINED)
+				if (tdb == sno)
+					eval -= loc;
+				else if (tdb)
 				{
-					if (tdb == sno)
-						eval -= (uint32_t)loc;
-					else if (tdb)
+					// Allow cross-section PCREL fixups in Alcyon mode
+					if (prg_flag)
+					{
+						switch (tdb)
+						{
+						case TEXT:
+// Shouldn't there be a break here, since otherwise, it will point to the DATA section?
+//							break;
+						case DATA:
+							eval += sect[TEXT].sloc;
+							break;
+						case BSS:
+							eval += sect[TEXT].sloc + sect[DATA].sloc;
+							break;
+						default:
+							error("invalid section");
+						break;
+						}
+
+						eval -= loc;
+					}
+					else
 					{
 						error("PC-relative expr across sections");
 						continue;
 					}
-
-					if (sbra_flag && (w & FU_LBRA) && (eval + 0x80 < 0x100))
-						warn("unoptimized short branch");
 				}
-				else if (obj_format == MWC)
-					eval -= (uint32_t)loc;
 
-				tdb = 0;
-				eattr &= ~TDB;
+				if (sbra_flag && (w & FU_LBRA) && (eval + 0x80 < 0x100))
+					warn("unoptimized short branch");
+			}
+			else if (obj_format == MWC)
+				eval -= loc;
+
+			tdb = 0;
+			eattr &= ~TDB;
+		}
+
+		// Handle fixup classes
+		switch (w & FUMASK)
+		{
+		// FU_BBRA fixes up a one-byte branch offset.
+		case FU_BBRA:
+			if (!(eattr & DEFINED))
+			{
+				error("external short branch");
+				continue;
 			}
 
-			// Do fixup classes
-			switch (w & FUMASK)
+			eval -= 2;
+
+			if (eval + 0x80 >= 0x100)
+				goto rangeErr;
+
+			if (eval == 0)
 			{
-			// FU_BBRA fixes up a one-byte branch offset.
-			case FU_BBRA:
-				if (!(eattr & DEFINED))
+				if (CHECK_OPTS(OPT_NULL_BRA))
 				{
-					error("external short branch");
+					// Just output a NOP
+					*locp++ = 0x4E;
+					*locp = 0x71;
 					continue;
 				}
-
-				eval -= 2;
-
-				if (eval + 0x80 >= 0x100)
-					goto rangeErr;
-
-				if (eval == 0)
+				else
 				{
-					if (CHECK_OPTS(OPT_NULL_BRA))
-					{
-						// just output a nop
-						*locp++ = 0x4E;
-						*locp = 0x71;
-						continue;
-					}
-					else
-					{
-						error("illegal bra.s with zero offset");
-						continue;
-					}
+					error("illegal bra.s with zero offset");
+					continue;
 				}
-				*++locp = (uint8_t)eval;
-				break;
-			// Fixup one-byte value at locp + 1.
-			case FU_WBYTE:
+			}
+
+			*++locp = (uint8_t)eval;
+			break;
+
+		// Fixup one-byte value at locp + 1.
+		case FU_WBYTE:
+			locp++;
+			// FALLTHROUGH
+
+		// Fixup one-byte forward references
+		case FU_BYTE:
+			if (!(eattr & DEFINED))
+			{
+				error("external byte reference");
+				continue;
+			}
+
+			if (tdb)
+			{
+				error("non-absolute byte reference");
+				continue;
+			}
+
+			if ((w & FU_PCREL) && ((eval + 0x80) >= 0x100))
+				goto rangeErr;
+
+			if (w & FU_SEXT)
+			{
+				if ((eval + 0x100) >= 0x200)
+					goto rangeErr;
+			}
+			else if (eval >= 0x100)
+				goto rangeErr;
+
+			*locp = (uint8_t)eval;
+			break;
+
+		// Fixup high/low byte off word for 6502
+		case FU_BYTEH:
+			if (!(eattr & DEFINED))
+			{
+				error("external byte reference");
+				continue;
+			}
+
+			*locp = (uint8_t)((eval >> 8) & 0xFF);
+			break;
+
+		case FU_BYTEL:
+			if (!(eattr & DEFINED))
+			{
+				error("external byte reference");
+				continue;
+			}
+
+			*locp = (uint8_t)(eval & 0xFF);
+			break;
+
+		// Fixup WORD forward references; the word could be unaligned in
+		// the section buffer, so we have to be careful.
+		case FU_WORD:
+			if ((w & FUMASKRISC) == FU_JR)
+			{
+				if (fup->orgaddr)
+					reg2 = (signed)((eval - (fup->orgaddr + 2)) / 2);
+				else
+					reg2 = (signed)((eval - (loc + 2)) / 2);
+
+				if ((reg2 < -16) || (reg2 > 15))
+				{
+					error("relative jump out of range");
+					break;
+				}
+
+				*locp = (uint8_t)(*locp | ((reg2 >> 3) & 0x03));
 				locp++;
-				// FALLTHROUGH
-			// Fixup one-byte forward references
-			case FU_BYTE:
-				if (!(eattr & DEFINED))
+				*locp = (uint8_t)(*locp | ((reg2 & 0x07) << 5));
+				break;
+			}
+			else if ((w & FUMASKRISC) == FU_NUM15)
+			{
+				if (eval < -16 || eval > 15)
 				{
-					error("external byte reference");
-					continue;
+					error("constant out of range");
+					break;
 				}
 
+				*locp = (uint8_t)(*locp | ((eval >> 3) & 0x03));
+				locp++;
+				*locp = (uint8_t)(*locp | ((eval & 0x07) << 5));
+				break;
+			}
+			else if ((w & FUMASKRISC) == FU_NUM31)
+			{
+				if (eval > 31)
+				{
+					error("constant out of range");
+					break;
+				}
+
+				*locp = (uint8_t)(*locp | ((eval >> 3) & 0x03));
+				locp++;
+				*locp = (uint8_t)(*locp | ((eval & 0x07) << 5));
+				break;
+			}
+			else if ((w & FUMASKRISC) == FU_NUM32)
+			{
+				if (eval < 1 || eval > 32)
+				{
+					error("constant out of range");
+					break;
+				}
+
+				if (w & FU_SUB32)
+					eval = (32 - eval);
+
+				eval = (eval == 32) ? 0 : eval;
+				*locp = (uint8_t)(*locp | ((eval >> 3) & 0x03));
+				locp++;
+				*locp = (uint8_t)(*locp | ((eval & 0x07) << 5));
+				break;
+			}
+			else if ((w & FUMASKRISC) == FU_REGONE)
+			{
+				if (eval > 31)
+				{
+					error("register value out of range");
+					break;
+				}
+
+				*locp = (uint8_t)(*locp | ((eval >> 3) & 0x03));
+				locp++;
+				*locp = (uint8_t)(*locp | ((eval & 0x07) << 5));
+				break;
+			}
+			else if ((w & FUMASKRISC) == FU_REGTWO)
+			{
+				if (eval > 31)
+				{
+					error("register value out of range");
+					break;
+				}
+
+				locp++;
+				*locp = (uint8_t)(*locp | (eval & 0x1F));
+				break;
+			}
+
+			if (!(eattr & DEFINED))
+			{
+				flags = MWORD;
+
+				if (w & FU_PCREL)
+					flags |= MPCREL;
+
+				MarkRelocatable(sno, loc, 0, flags, esym);
+			}
+			else
+			{
 				if (tdb)
-				{
-					error("non-absolute byte reference");
-					continue;
-				}
-
-				if ((w & FU_PCREL) && eval + 0x80 >= 0x100)
-					goto rangeErr;
+					MarkRelocatable(sno, loc, tdb, MWORD, NULL);
 
 				if (w & FU_SEXT)
 				{
-					if (eval + 0x100 >= 0x200)
+					if (eval + 0x10000 >= 0x20000)
 						goto rangeErr;
 				}
-				else if (eval >= 0x100)
-					goto rangeErr;
-
-				*locp = (uint8_t)eval;
-				break;
-			// Fixup high/low byte off word for 6502
-			case FU_BYTEH:
-				if (!(eattr & DEFINED))
-				{
-					error("external byte reference");
-					continue;
-				}
-
-				*locp = (uint8_t)((eval >> 8) & 0xFF);
-				break;
-			case FU_BYTEL:
-				if (!(eattr & DEFINED))
-				{
-					error("external byte reference");
-					continue;
-				}
-
-				*locp = (uint8_t)(eval & 0xFF);
-				break;
-			// Fixup WORD forward references;
-			// the word could be unaligned in the section buffer, so we have to
-			// be careful.
-			case FU_WORD:
-				if ((w & FUMASKRISC) == FU_JR)
-				{
-					uint32_t orgaddr = *fup.lp++;
-
-					if (orgaddr)
-						reg2 = (signed)((eval - (orgaddr + 2)) / 2);
-					else
-						reg2 = (signed)((eval - (loc + 2)) / 2);
-
-					if ((reg2 < -16) || (reg2 > 15))
-					{
-						error("relative jump out of range");
-						break;
-					}
-
-					*locp = (uint8_t)(*locp | ((reg2 >> 3) & 0x03));
-					locp++;
-					*locp = (uint8_t)(*locp | ((reg2 & 0x07) << 5));
-					break;
-				}
-
-				if ((w & FUMASKRISC) == FU_NUM15)
-				{
-					if (eval < -16 || eval > 15)
-					{
-						error("constant out of range");
-						break;
-					}
-
-					*locp = (uint8_t)(*locp | ((eval >> 3) & 0x03));
-					locp++;
-					*locp = (uint8_t)(*locp | ((eval & 0x07) << 5));
-					break;
-				}
-
-				if ((w & FUMASKRISC) == FU_NUM31)
-				{
-					if (eval < 0 || eval > 31)
-					{
-						error("constant out of range");
-						break;
-					}
-
-					*locp = (uint8_t)(*locp | ((eval >> 3) & 0x03));
-					locp++;
-					*locp = (uint8_t)(*locp | ((eval & 0x07) << 5));
-					break;
-				}
-
-				if ((w & FUMASKRISC) == FU_NUM32)
-				{
-					if (eval < 1 || eval > 32)
-					{
-						error("constant out of range");
-						break;
-					}
-
-					if (w & FU_SUB32)
-						eval = (32 - eval);
-
-					eval = (eval == 32) ? 0 : eval;
-					*locp = (uint8_t)(*locp | ((eval >> 3) & 0x03));
-					locp++;
-					*locp = (uint8_t)(*locp | ((eval & 0x07) << 5));
-					break;
-				}
-
-				if ((w & FUMASKRISC) == FU_REGONE)
-				{
-					if (eval < 0 || eval > 31)
-					{
-						error("register value out of range");
-						break;
-					}
-
-					*locp = (uint8_t)(*locp | ((eval >> 3) & 0x03));
-					locp++;
-					*locp = (uint8_t)(*locp | ((eval & 0x07) << 5));
-					break;
-				}
-
-				if ((w & FUMASKRISC) == FU_REGTWO)
-				{
-					if (eval < 0 || eval > 31)
-					{
-						error("register value out of range");
-						break;
-					}
-
-					locp++;
-					*locp = (uint8_t)(*locp | (eval & 0x1F));
-					break;
-				}
-
-				if (!(eattr & DEFINED))
-				{
-					flags = MWORD;
-
-					if (w & FU_PCREL)
-						flags |= MPCREL;
-
-					MarkRelocatable(sno, loc, 0, flags, esym);
-				}
 				else
 				{
-					if (tdb)
-						MarkRelocatable(sno, loc, tdb, MWORD, NULL);
-
-					if (w & FU_SEXT)
+					// Range-check BRA and DBRA
+					if (w & FU_ISBRA)
 					{
-						if (eval + 0x10000 >= 0x20000)
+						if (eval + 0x8000 >= 0x10000)
 							goto rangeErr;
 					}
-					else
-					{
-						// Range-check BRA and DBRA
-						if (w & FU_ISBRA)
-						{
-							if (eval + 0x8000 >= 0x10000)
-							goto rangeErr;
-						}
-						else if (eval >= 0x10000)
-							goto rangeErr;
-					}
+					else if (eval >= 0x10000)
+						goto rangeErr;
 				}
-
-				// 6502 words are little endian, so handle that here
-				if (sno == M6502)
-					SETLE16(locp, 0, eval)
-				else
-				    SETBE16(locp, 0, eval)
-
-				break;
-			// Fixup LONG forward references;
-			// the long could be unaligned in the section buffer, so be careful
-			// (again).
-			case FU_LONG:
-				flags = MLONG;
-
-				if ((w & FUMASKRISC) == FU_MOVEI)
-				{
-					// Long constant in MOVEI # is word-swapped, so fix it here
-					eval = WORDSWAP32(eval);
-					flags |= MMOVEI;
-				}
-
-				// If the symbol is undefined, make sure to pass the symbol in
-				// to the MarkRelocatable() function.
-				if (!(eattr & DEFINED))
-					MarkRelocatable(sno, loc, 0, flags, esym);
-				else if (tdb)
-					MarkRelocatable(sno, loc, tdb, flags, NULL);
-
-				SETBE32(locp, 0, eval);
-				break;
-
-			// Fixup a 3-bit "QUICK" reference in bits 9..1
-			// (range of 1..8) in a word. Really bits 1..3 in a byte.
-			case FU_QUICK:
-				if (!(eattr & DEFINED))
-				{
-					error("External quick reference");
-					continue;
-				}
-
-				if (eval < 1 || eval > 8)
-					goto rangeErr;
-
-				*locp |= (eval & 7) << 1;
-				break;
-
-			// Fix up 6502 funny branch
-			case FU_6BRA:
-				eval -= (loc + 1);
-
-				if (eval + 0x80 >= 0x100)
-					goto rangeErr;
-
-				*locp = (uint8_t)eval;
-				break;
-
-			default:
-				// Bad fixup type--this should *never* happen!
-				interror(4);
-				// NOTREACHED
 			}
-			continue;
-rangeErr:
-			error("expression out of range");
+
+			// 6502 words are little endian, so handle that here
+			if (sno == M6502)
+				SETLE16(locp, 0, eval)
+			else
+				SETBE16(locp, 0, eval)
+
+			break;
+
+		// Fixup LONG forward references;
+		// the long could be unaligned in the section buffer, so be careful
+		// (again).
+		case FU_LONG:
+			flags = MLONG;
+
+			if ((w & FUMASKRISC) == FU_MOVEI)
+			{
+				// Long constant in MOVEI # is word-swapped, so fix it here
+				eval = WORDSWAP32(eval);
+				flags |= MMOVEI;
+			}
+
+			// If the symbol is undefined, make sure to pass the symbol in
+			// to the MarkRelocatable() function.
+			if (!(eattr & DEFINED))
+				MarkRelocatable(sno, loc, 0, flags, esym);
+			else if (tdb)
+				MarkRelocatable(sno, loc, tdb, flags, NULL);
+
+			SETBE32(locp, 0, eval);
+			break;
+
+		// Fixup a 3-bit "QUICK" reference in bits 9..1
+		// (range of 1..8) in a word. [Really bits 1..3 in a byte.]
+		case FU_QUICK:
+			if (!(eattr & DEFINED))
+			{
+				error("External quick reference");
+				continue;
+			}
+
+			if ((eval < 1) || (eval > 8))
+				goto rangeErr;
+
+			*locp |= (eval & 7) << 1;
+			break;
+
+		// Fix up 6502 funny branch
+		case FU_6BRA:
+			eval -= (loc + 1);
+
+			if (eval + 0x80 >= 0x100)
+				goto rangeErr;
+
+			*locp = (uint8_t)eval;
+			break;
+
+		default:
+			// Bad fixup type--this should *never* happen!
+			// Once we call this function, it winds down immediately; it
+			// doesn't return.
+			interror(4);
 		}
 
-		ch = ch->chnext;
+		continue;
+rangeErr:
+		error("expression out of range");
 	}
-	while (ch != NULL);
 
 	return 0;
 }
+
 
 //
 // Resolve all fixups
@@ -832,7 +758,7 @@ int ResolveAllFixups(void)
 	DEBUG printf("Resolving DATA sections...\n");
 	ResolveFixups(DATA);
 	DEBUG printf("Resolving 6502 sections...\n");
-	ResolveFixups(M6502);		/* fixup 6502 section (if any) */
+	ResolveFixups(M6502);		// Fixup 6502 section (if any)
 
 	return 0;
 }

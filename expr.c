@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for all Atari computers
 // EXPR.C - Expression Analyzer
-// Copyright (C) 199x Landon Dyer, 2011-2017 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2018 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -1064,5 +1064,29 @@ An open question here is do we promote ints to floats as signed or unsigned? It 
 	*a_attr = *sattr;
 
 	return OK;
+}
+
+
+//
+// Count the # of tokens in the passed in expression
+// N.B.: 64-bit constants count as two tokens each
+//
+uint16_t ExpressionLength(TOKEN * tk)
+{
+	uint16_t length;
+
+	for(length=0; tk[length]!=ENDEXPR; length++)
+	{
+		// Add one to length for 2X tokens, two for 3X tokens
+		if (tk[length] == SYMBOL)
+			length++;
+		else if ((tk[length] == CONST) || (tk[length] == FCONST))
+			length += 2;
+	}
+
+	// Add 1 for ENDEXPR
+	length++;
+
+	return length;
 }
 

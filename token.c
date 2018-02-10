@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for all Atari computers
 // TOKEN.C - Token Handling
-// Copyright (C) 199x Landon Dyer, 2011-2017 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2018 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -531,22 +531,12 @@ arg_num:
 							switch ((int)*tk++)
 							{
 							case SYMBOL:
-#if 0
-//								d = (char *)*tk++;
-								d = string[*tk++];
-#else
-								// This fix should be done for strings too
 								d = symbolString[*tk++];
 DEBUG { printf("ExM: SYMBOL=\"%s\"", d); }
-#endif
 								break;
 							case STRING:
-#if 0
-//								d = (char *)*tk++;
-								d = string[*tk++];
-#else
 								d = symbolString[*tk++];
-#endif
+
 								if (dst >= edst)
 									goto overflow;
 
@@ -967,7 +957,7 @@ int TokenizeLine(void)
 
 retry:
 
-	if (cur_inobj == NULL)			// Return EOF if input stack is empty
+	if (cur_inobj == NULL)		// Return EOF if input stack is empty
 		return TKEOF;
 
 	// Get another line of input from the current input source: a file, a
@@ -983,8 +973,8 @@ retry:
 		if ((ln = GetNextLine()) == NULL)
 		{
 DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
-			if (fpop() == 0)				// Pop input level
-				goto retry;					// Try for more lines
+			if (fpop() == 0)	// Pop input level
+				goto retry;		// Try for more lines
 			else
 			{
 				ifent->if_prev = (IFENT *)-1;	//Signal Assemble() that we have reached EOF with unbalanced if/endifs
@@ -992,7 +982,7 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 			}
 		}
 
-		curlineno++;						// Bump line number
+		curlineno++;			// Bump line number
 		lntag = SPACE;
 
 		if (as68_flag)
@@ -1054,7 +1044,7 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 		strcpy(lnbuf, ln);
 
 	// General housekeeping
-	tok = tokeol;		// Set "tok" to EOL in case of error
+	tok = tokeol;			// Set "tok" to EOL in case of error
 	tk.u32 = etok;			// Reset token ptr
 	stuffnull = 0;			// Don't stuff nulls
 	totlines++;				// Bump total #lines assembled
@@ -1202,16 +1192,9 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 			if ((j < 0) || (state < 0))
 			{
 				*tk.u32++ = SYMBOL;
-//#warning
-//problem here: nullspot is a char * but TOKEN is a uint32_t. On a 64-bit
-//system, this will cause all kinds of mischief.
-#if 0
-				*tk++ = (TOKEN)nullspot;
-#else
 				string[stringNum] = nullspot;
 				*tk.u32++ = stringNum;
 				stringNum++;
-#endif
 			}
 			else
 			{
@@ -1219,10 +1202,10 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 				stuffnull = 0;
 			}
 
-			if (v)							// Record attribute token (if any)
+			if (v)			// Record attribute token (if any)
 				*tk.u32++ = (TOKEN)v;
 
-			if (stuffnull)					// Arrange for string termination on next pass
+			if (stuffnull)	// Arrange for string termination on next pass
 				nullspot = ln;
 
 			continue;
@@ -1637,9 +1620,9 @@ dostring:
 	// Terminate line of tokens and return "success."
 
 goteol:
-	tok = etok;							// Set tok to beginning of line
+	tok = etok;				// Set tok to beginning of line
 
-	if (stuffnull)							// Terminate last SYMBOL
+	if (stuffnull)			// Terminate last SYMBOL
 		*nullspot = EOS;
 
 	*tk.u32++ = EOL;

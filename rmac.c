@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for all Atari computers
 // RMAC.C - Main Application Code
-// Copyright (C) 199x Landon Dyer, 2011-2017 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2018 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -323,7 +323,7 @@ int Process(int argc, char ** argv)
 				}
 
 				sy->sattr = DEFINED | EQUATED | ABS;
-				sy->svalue = (*s ? (uint32_t)atoi(s) : 0);
+				sy->svalue = (*s ? (uint64_t)atoi(s) : 0);
 				break;
 			case 'e':				// Redirect error message output
 			case 'E':

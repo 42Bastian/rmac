@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for all Atari computers
 // DEBUG.C - Debugging Messages
-// Copyright (C) 199x Landon Dyer, 2011-2017 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2018 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -9,6 +9,7 @@
 #include "debug.h"
 #include "amode.h"
 #include "direct.h"
+#include "expr.h"
 #include "mark.h"
 #include "sect.h"
 #include "token.h"
@@ -86,46 +87,32 @@ int chdump(CHUNK * ch, int format)
 //
 // Dump fixup records in printable format
 //
-int fudump(CHUNK * ch)
+int fudump(FIXUP * fup)
 {
-	PTR p;
-
-	for(; ch!=NULL;)
+	for(; fup!=NULL;)
 	{
-		p.cp = ch->chptr;
-		uint8_t * ep = ch->chptr + ch->ch_size;
+		uint32_t attr = fup->attr;
+		uint32_t loc = fup->loc;
+		uint16_t file = fup->fileno;
+		uint16_t line = fup->lineno;
 
-		while (p.cp < ep)
+		printf("$%08X $%08X %d.%d: ", attr, loc, (int)file, (int)line);
+
+		if (attr & FU_EXPR)
 		{
-			uint16_t attr = *p.wp++;
-			uint32_t loc = *p.lp++;
-			uint16_t file = *p.wp++;
-			uint16_t line = *p.wp++;
-
-			printf("$%04X $%08X %d.%d: ", (int)attr, loc, (int)file, (int)line);
-
-			if (attr & FU_EXPR)
-			{
-				uint16_t esiz = *p.wp++;
-				printf("(%d long) ", (int)esiz);
-				p.tk = printexpr(p.tk);
-			}
-			else
-			{
-				printf("`%s' ;", (*p.sy)->sname);
-				p.sy++;
-			}
-
-			if ((attr & 0x0F00) == FU_JR)
-			{
-				printf(" *=$%X", *p.lp);
-				p.lp++;
-			}
-
-			printf("\n");
+			uint16_t esiz = ExpressionLength(fup->expr);
+			printf("(%d long) ", (int)esiz);
+			printexpr(fup->expr);
 		}
+		else
+			printf("`%s' ;", fup->symbol->sname);
 
-		ch = ch->chnext;
+		if ((attr & FUMASKRISC) == FU_JR)
+			printf(" *=$%X", fup->orgaddr);
+
+		printf("\n");
+
+		fup = fup->next;
 	}
 
 	return 0;

@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for all Atari computers
 // EXPR.H - Expression Analyzer
-// Copyright (C) 199x Landon Dyer, 2011-2017 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2018 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -36,5 +36,7 @@ int expr1(void);
 int expr2(void);
 int expr(TOKEN *, uint64_t *, WORD *, SYM **);
 int evexpr(TOKEN *, uint64_t *, WORD *, SYM **);
+uint16_t ExpressionLength(TOKEN *);
 
 #endif // __EXPR_H__
+

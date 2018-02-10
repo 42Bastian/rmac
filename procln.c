@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for all Atari computers
 // PROCLN.C - Line Processing
-// Copyright (C) 199x Landon Dyer, 2011-2017 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2018 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -398,13 +398,11 @@ normal:
 		{
 			if ((equtyp == EQUREG) && (sy->sattre & UNDEF_EQUR))
 			{
-//REALLY?				sy->sattre |= ~UNDEF_EQUR;
 				sy->sattre &= ~UNDEF_EQUR;
 				sy->svalue = 0;
 			}
 			else if ((equtyp == CCDEF) && (sy->sattre & UNDEF_CC))
 			{
-//REALLY?				sy->sattre |= ~UNDEF_CC;
 				sy->sattre &= ~UNDEF_CC;
 				sy->svalue = 0;
 			}
@@ -485,8 +483,6 @@ When checking to see if it's already been equated, issue a warning.
 				sy->sattre |= regbank;		// Store register bank
 #endif
 				eattr = ABS | DEFINED | GLOBAL;
-// & what does this $80000080 constant mean???
-//				eval = 0x80000080 + (riscreg) + (registerbank << 8);
 				eval = riscreg;
 				tok++;
 			}
@@ -548,7 +544,7 @@ When checking to see if it's already been equated, issue a warning.
 			else if (expr(exprbuf, &eval, &eattr, &esym) != OK)
 				goto loop;
 		}
-		//equ a equr
+		// equ an equr
 		else if (*tok == SYMBOL)
 		{
 			sy2 = lookup(string[tok[1]], LABEL, j);
@@ -558,7 +554,6 @@ When checking to see if it's already been equated, issue a warning.
 				sy->stype = sy2->stype;
 				sy->sattr = sy2->sattr;
 				sy->sattre = sy2->sattre;
-//ICK				sy->svalue = (sy2->svalue & 0xFFFFF0FF);
 				sy->svalue = sy2->svalue;
 				goto loop;
 			}
@@ -754,7 +749,6 @@ int HandleLabel(char * label, int labelType)
 	{
 		symbol = NewSymbol(label, LABEL, environment);
 		symbol->sattr = 0;
-//		symbol->sattre = RISCSYM;
 		symbol->sattre = 0;
 	}
 	else if (symbol->sattr & DEFINED)

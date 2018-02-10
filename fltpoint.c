@@ -72,7 +72,7 @@ uint32_t FloatToIEEE754(float f)
 	// [+0.5, +1)) and base-2 exponent
 	// d = mantissa * (2 ^ exponent) *exactly* for FLT_RADIX=2
 	// Also, since we want the mantissa to be non-inverted (2's complemented),
-	// we make sure to pass in a positive number (floats/doubles are not 2's
+	// we make sure to pass in a positive number (floats/doubles are *not* 2's
 	// complemented) as we already captured the sign bit above.
 	int32_t exponent;
 	float mantissa = frexpf((f < 0 ? -f : f), &exponent);
@@ -111,7 +111,7 @@ uint64_t DoubleToIEEE754(double d)
 	// and base-2 exponent
 	// d = mantissa * (2 ^ exponent) *exactly* for FLT_RADIX=2
 	// Also, since we want the mantissa to be non-inverted (2's complemented),
-	// we make sure to pass in a positive number (floats/doubles are not 2's
+	// we make sure to pass in a positive number (floats/doubles are *not* 2's
 	// complemented) as we already captured the sign bit above.
 	double mantissa = frexp((d < 0 ? -d : d), &exponent);
 

@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for all Atari computers
 // SECT.H - Code Generation, Fixups and Section Management
-// Copyright (C) 199x Landon Dyer, 2011-2017 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2018 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilized with the kind permission of Landon Dyer
 //
@@ -34,6 +34,14 @@
 						sloc += 8; ch_size += 8; if(orgactive) orgaddr += 8;}
 #define D_rword(w)	{*chptr++=(uint8_t)(w); *chptr++=(uint8_t)((w)>>8); \
 						sloc+=2; ch_size+=2;if(orgactive) orgaddr += 2;}
+
+// Macro for the 56001. Word size on this device is 24 bits wide. I hope that
+// orgaddr += 1 means that the addresses in the device reflect this.
+#define D_dsp(w)    {chcheck(3);*chptr++=(uint8_t)(w>>16); \
+	*chptr++=(uint8_t)(w>>8); *chptr++=(uint8_t)w; \
+	sloc+=1; ch_size += 3; if(orgactive) orgaddr += 1; \
+	dsp_written_data_in_current_org=1;}
+
 // This macro expects to get an array of uint8_ts with the hi bits in a[0] and
 // the low bits in a[11] (Big Endian).
 #define D_extend(a) {memcpy(chptr, a, 12); chptr+=12; sloc+=12, ch_size+=12;\
@@ -56,6 +64,7 @@
 #define SABS         0x2000		// Section is absolute
 #define SPIC         0x1000		// Section is position-independent code
 
+// N.B.: THIS IS NO LONGER TRUE
 // Fixup record a WORD of these bits, followed by a loc and then a pointer
 // to a symbol or an ENDEXPR-terminated postfix expression.
 //
@@ -109,24 +118,38 @@
 // Chunks are used to hold generated code and fixup records
 #define CHUNK  struct _chunk
 CHUNK {
-	CHUNK * chnext;				// Next, previous chunks in section
-	CHUNK * chprev;
-	uint32_t chloc;				// Base addr of this chunk
-	uint32_t challoc;			// # bytes allocated for chunk
-	uint32_t ch_size;			// # bytes chunk actually uses
-	uint8_t * chptr;			// Data for this chunk
+	CHUNK *   chnext;	// Next, previous chunks in section
+	CHUNK *   chprev;
+	uint32_t  chloc;	// Base addr of this chunk
+	uint32_t  challoc;	// # bytes allocated for chunk
+	uint32_t  ch_size;	// # bytes chunk actually uses
+	uint8_t * chptr;	// Data for this chunk
+};
+
+// Fixup records can also hold an expression (if any)
+#define FIXUP struct _fixup
+FIXUP {
+	FIXUP *  next;		// Pointer to next FIXUP
+	uint32_t attr;		// Fixup type
+	uint32_t loc;		// Location in section
+	uint16_t fileno;	// ID of current file
+	uint32_t lineno;	// Current line
+	TOKEN *  expr;		// Pointer to stored expression (if any)
+	SYM *    symbol;	// Pointer to symbol (if any)
+	uint32_t orgaddr;	// Fixup origin address (used for FU_JR)
 };
 
 // Section descriptor
 #define SECT   struct _sect
 SECT {
-	uint16_t scattr;			// Section attributes
-	uint32_t sloc;				// Current loc-in / size-of section
-	uint32_t relocs;			// # of relocations for this section
-	CHUNK * sfcode;				// First chunk in section
-	CHUNK * scode;				// Last chunk in section
-	CHUNK * sffix;				// First fixup chunk
-	CHUNK * sfix;				// Last fixup chunk
+	uint16_t scattr;	// Section attributes
+	uint32_t sloc;		// Current loc-in / size-of section
+	uint32_t relocs;	// # of relocations for this section
+	uint32_t orgaddr;	// Current org'd address ***NEW***
+	CHUNK *  sfcode;	// First chunk in section
+	CHUNK *  scode;		// Last chunk in section
+	FIXUP *  sffix;		// First fixup
+	FIXUP *  sfix;		// Last fixup ***NEW***
 };
 
 // 680x0 defines
@@ -171,7 +194,7 @@ void SwitchSection(int);
 void SaveSection(void);
 int fixtest(int, uint32_t);
 int chcheck(uint32_t);
-int AddFixup(uint16_t, uint32_t, TOKEN *);
+int AddFixup(uint32_t, uint32_t, TOKEN *);
 int ResolveAllFixups(void);
 
 #endif // __SECT_H__

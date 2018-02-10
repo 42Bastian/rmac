@@ -1,6 +1,9 @@
 //
 // Cross-platform floating point handling
 //
+// by James Hammons
+// (C) 2018 Underground Software
+//
 
 #include <stdint.h>
 

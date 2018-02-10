@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for all Atari computers
 // DIRECT.C - Directive Handling
-// Copyright (C) 199x Landon Dyer, 2011-2017 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2018 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -1429,7 +1429,7 @@ int d_comm(void)
 	p = string[tok[1]];
 	tok += 2;
 
-	if (*p == '.')							// Cannot .comm a local symbol
+	if (*p == '.')						// Cannot .comm a local symbol
 		return error(locgl_error);
 
 	if ((sym = lookup(p, LABEL, 0)) == NULL)
@@ -1445,10 +1445,10 @@ int d_comm(void)
 	if (*tok++ != ',')
 		return error(comma_error);
 
-	if (abs_expr(&eval) != OK)				// Parse size of common region
+	if (abs_expr(&eval) != OK)			// Parse size of common region
 		return 0;
 
-	sym->svalue = (uint32_t)eval;			// Install common symbol's size
+	sym->svalue = eval;					// Install common symbol's size
 	at_eol();
 	return 0;
 }
@@ -1688,7 +1688,7 @@ int d_cargs(void)
 			AddToSymbolDeclarationList(symbol);
 
 			symbol->sattr |= (ABS | DEFINED | EQUATED);
-			symbol->svalue = (uint32_t)eval;
+			symbol->svalue = eval;
 			tok += 2;
 
 			// What this does is eat any dot suffixes attached to a symbol. If
@@ -1815,7 +1815,7 @@ int d_cstruct(void)
 			}
 
 			symbol->sattr |= (ABS | DEFINED | EQUATED);
-			symbol->svalue = (uint32_t)eval;
+			symbol->svalue = eval;
 
 			// Check for dot suffixes and adjust space accordingly (longs and
 			// words on an odd boundary get bumped to the next word aligned
