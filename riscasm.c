@@ -22,6 +22,8 @@
 #define DEF_KW				// Declare keyword values
 #include "kwtab.h"			// Incl. generated keyword tables & defs
 
+#define MAXINTERNCC 26		// Maximum internal condition codes
+
 
 unsigned altbankok = 0;		// Ok to use alternate register bank
 unsigned orgactive = 0;		// RISC/6502 org directive active
@@ -30,22 +32,29 @@ unsigned orgwarning = 0;	// Has an ORG warning been issued
 int lastOpcode = -1;		// Last RISC opcode assembled
 uint8_t riscImmTokenSeen;	// The '#' (immediate) token was seen
 
-const char reg_err[] = "missing register R0...R31";
+static const char reg_err[] = "missing register R0...R31";
 
 // Jaguar jump condition names
-const char condname[MAXINTERNCC][5] = {
+static const char condname[MAXINTERNCC][5] = {
 	"NZ", "Z", "NC", "NCNZ", "NCZ", "C", "CNZ", "CZ", "NN", "NNNZ", "NNZ",
 	"N", "N_NZ", "N_Z", "T", "A", "NE", "EQ", "CC", "HS", "HI", "CS", "LO",
 	"PL", "MI", "F"
 };
 
 // Jaguar jump condition numbers
-const char condnumber[] = {
+static const char condnumber[] = {
 	1, 2, 4, 5, 6, 8, 9, 10, 20, 21, 22, 24, 25, 26,
 	0, 0, 1, 2, 4, 4, 5,  8,  8, 20, 24, 31
 };
 
-const struct opcoderecord roptbl[] = {
+// Opcode Specific Data
+struct opcoderecord {
+	uint16_t state;		// Opcode Name (unused)
+	uint16_t type;		// Opcode Type
+	uint16_t param;		// Opcode Parameter
+};
+
+static const struct opcoderecord roptbl[] = {
 	{ MR_ADD,     RI_TWO,    0 },
 	{ MR_ADDC,    RI_TWO,    1 },
 	{ MR_ADDQ,    RI_NUM_32, 2 },
@@ -110,11 +119,25 @@ const struct opcoderecord roptbl[] = {
 	{ MR_STORE,   RI_STORE,  0 }
 };
 
+#define MALF_NUM		0
+#define MALF_EXPR		1
+#define MALF_LPAREN		2
+#define MALF_RPAREN		3
+
+static const char malform1[] = "missing '#'";
+static const char malform2[] = "bad expression";
+static const char malform3[] = "missing ')'";
+static const char malform4[] = "missing '('";
+
+static const char * malformErr[] = {
+	malform1, malform2, malform3, malform4
+};
+
 
 //
 // Convert a string to uppercase
 //
-void strtoupper(char * s)
+static void strtoupper(char * s)
 {
 	while (*s)
 		*s++ &= 0xDF;
@@ -127,7 +150,7 @@ void strtoupper(char * s)
 //
 static inline int MalformedOpcode(int signal)
 {
-	return error("Malformed opcode [internal $%02X]", signal);
+	return error("Malformed opcode, %s", malformErr[signal]);
 }
 
 
@@ -152,9 +175,9 @@ static inline int IllegalIndexedRegisterEqur(SYM * sy)
 
 
 //
-// Build RISC instruction word
+// Build up & deposit RISC instruction word
 //
-void BuildRISCIntructionWord(unsigned short opcode, int reg1, int reg2)
+static void DepositRISCInstructionWord(uint16_t opcode, int reg1, int reg2)
 {
 	// Check for absolute address setting
 	if (!orgwarning && !orgactive)
@@ -165,14 +188,14 @@ void BuildRISCIntructionWord(unsigned short opcode, int reg1, int reg2)
 
 	int value = ((opcode & 0x3F) << 10) + ((reg1 & 0x1F) << 5) + (reg2 & 0x1F);
 	D_word(value);
-//printf("BuildRISC: opcode=$%X, reg1=$%X, reg2=$%X, final=$%04X\n", opcode, reg1, reg2, value);
 }
 
 
 //
-// Get a RISC register
+// Evaluate the RISC register from the token stream. Passed in value is the
+// FIXUP attribute to use if the expression comes back as undefined.
 //
-int GetRegister(WORD rattr)
+static int EvaluateRegisterFromTokenStream(uint32_t attr)
 {
 	uint64_t eval;				// Expression value
 	WORD eattr;					// Expression attributes
@@ -183,12 +206,9 @@ int GetRegister(WORD rattr)
 	if (expr(r_expr, &eval, &eattr, &esym) != OK)
 		return ERROR;
 
-	if ((challoc - ch_size) < 4)
-		chcheck(4L);
-
 	if (!(eattr & DEFINED))
 	{
-		AddFixup((WORD)(FU_WORD | rattr), sloc, r_expr);
+		AddFixup(FU_WORD | attr, sloc, r_expr);
 		return 0;
 	}
 
@@ -214,17 +234,17 @@ int GenerateRISCCode(int state)
 	SYM * sy;
 	int i, commaFound;
 	TOKEN * t;
-	WORD attrflg;
+	uint16_t attrflg;
 	int indexed;				// Indexed register flag
 
 	uint64_t eval;				// Expression value
-	WORD eattr;					// Expression attributes
+	uint16_t eattr;					// Expression attributes
 	SYM * esym;					// External symbol involved in expr.
 	TOKEN r_expr[EXPRSIZE];		// Expression token list
 
 	// Get opcode parameter and type
-	unsigned short parm = (WORD)(roptbl[state - 3000].parm);
-	unsigned type = roptbl[state - 3000].typ;
+	uint16_t parm = roptbl[state - 3000].param;
+	uint16_t type = roptbl[state - 3000].type;
 	riscImmTokenSeen = 0;		// Set to "token not seen yet"
 
 	// Detect whether the opcode parmeter passed determines that the opcode is
@@ -239,16 +259,16 @@ int GenerateRISCCode(int state)
 	// No operand instructions
 	// NOP (57)
 	case RI_NONE:
-		BuildRISCIntructionWord(parm, 0, 0);
+		DepositRISCInstructionWord(parm, 0, 0);
 		break;
 
 	// Single operand instructions (Rd)
 	// ABS, MIRROR, NEG, NOT, PACK, RESMAC, SAT8, SAT16, SAT16S, SAT24, SAT32S,
 	// UNPACK
 	case RI_ONE:
-		reg2 = GetRegister(FU_REGTWO);
+		reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
 		at_eol();
-		BuildRISCIntructionWord(parm, parm >> 6, reg2);
+		DepositRISCInstructionWord(parm, parm >> 6, reg2);
 		break;
 
 	// Two operand instructions (Rs,Rd)
@@ -258,15 +278,15 @@ int GenerateRISCCode(int state)
 		if (parm == 37)
 			altbankok = 1;                      // MOVEFA
 
-		reg1 = GetRegister(FU_REGONE);
+		reg1 = EvaluateRegisterFromTokenStream(FU_REGONE);
 		CHECK_COMMA;
 
 		if (parm == 36)
 			altbankok = 1;                      // MOVETA
 
-		reg2 = GetRegister(FU_REGTWO);
+		reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
 		at_eol();
-		BuildRISCIntructionWord(parm, reg1, reg2);
+		DepositRISCInstructionWord(parm, reg1, reg2);
 		break;
 
 	// Numeric operand (n,Rd) where n = -16..+15
@@ -299,16 +319,13 @@ int GenerateRISCCode(int state)
 			attrflg |= FU_SUB32;
 
 		if (*tok != '#')
-			return MalformedOpcode(0x01);
+			return MalformedOpcode(MALF_NUM);
 
 		tok++;
 		riscImmTokenSeen = 1;
 
 		if (expr(r_expr, &eval, &eattr, &esym) != OK)
-			return MalformedOpcode(0x02);
-
-		if ((challoc - ch_size) < 4)
-			chcheck(4L);
+			return MalformedOpcode(MALF_EXPR);
 
 		if (!(eattr & DEFINED))
 		{
@@ -317,8 +334,8 @@ int GenerateRISCCode(int state)
 		}
 		else
 		{
-			if ((int)eval < reg1 || (int)eval > reg2)
-				return error("constant out of range");
+			if (((int)eval < reg1) || ((int)eval > reg2))
+				return error("constant out of range (%d to %d", reg1, reg2);
 
 			if (parm & SUB32)
 				reg1 = 32 - (int)eval;
@@ -329,15 +346,15 @@ int GenerateRISCCode(int state)
 		}
 
 		CHECK_COMMA;
-		reg2 = GetRegister(FU_REGTWO);
+		reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
 		at_eol();
-		BuildRISCIntructionWord(parm, reg1, reg2);
+		DepositRISCInstructionWord(parm, reg1, reg2);
 		break;
 
 	// Move Immediate--n,Rn--n in Second Word
 	case RI_MOVEI:
 		if (*tok != '#')
-			return MalformedOpcode(0x03);
+			return MalformedOpcode(MALF_NUM);
 
 		tok++;
 		riscImmTokenSeen = 1;
@@ -352,22 +369,19 @@ int GenerateRISCCode(int state)
 		}
 
 		if (expr(r_expr, &eval, &eattr, &esym) != OK)
-			return MalformedOpcode(0x04);
+			return MalformedOpcode(MALF_EXPR);
 
-		if (lastOpcode == RI_JUMP || lastOpcode == RI_JR)
+		if ((lastOpcode == RI_JUMP) || (lastOpcode == RI_JR))
 		{
 			if (legacy_flag)
 			{
 				// User doesn't care, emit a NOP to fix
-				BuildRISCIntructionWord(57, 0, 0);
+				DepositRISCInstructionWord(57, 0, 0);
 				warn("MOVEI following JUMP, inserting NOP to fix your BROKEN CODE");
 			}
 			else
 				warn("MOVEI immediately follows JUMP");
 		}
-
-		if ((challoc - ch_size) < 4)
-			chcheck(4L);
 
 		if (!(eattr & DEFINED))
 		{
@@ -377,18 +391,15 @@ int GenerateRISCCode(int state)
 		else
 		{
 			if (eattr & TDB)
-//{
-//printf("RISCASM: Doing MarkRelocatable for RI_MOVEI (tdb=$%X)...\n", eattr & TDB);
 				MarkRelocatable(cursect, sloc + 2, (eattr & TDB), (MLONG | MMOVEI), NULL);
-//}
 		}
 
-//		val = ((eval >> 16) & 0x0000FFFF) | ((eval << 16) & 0xFFFF0000);
-		val = WORDSWAP32(eval);
 		CHECK_COMMA;
-		reg2 = GetRegister(FU_REGTWO);
+		reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
 		at_eol();
-		D_word((((parm & 0x3F) << 10) + reg2));
+
+		DepositRISCInstructionWord(parm, 0, reg2);
+		val = WORDSWAP32(eval);
 		D_long(val);
 		break;
 
@@ -403,13 +414,13 @@ int GenerateRISCCode(int state)
 		else
 		{
 			parm = 34;
-			reg1 = GetRegister(FU_REGONE);
+			reg1 = EvaluateRegisterFromTokenStream(FU_REGONE);
 		}
 
 		CHECK_COMMA;
-		reg2 = GetRegister(FU_REGTWO);
+		reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
 		at_eol();
-		BuildRISCIntructionWord(parm, reg1, reg2);
+		DepositRISCInstructionWord(parm, reg1, reg2);
 		break;
 
 	// (Rn),Rn = 41 / (R14/R15+n),Rn = 43/44 / (R14/R15+Rn),Rn = 58/59
@@ -418,22 +429,21 @@ int GenerateRISCCode(int state)
 		parm = 41;
 
 		if (*tok != '(')
-			return MalformedOpcode(0x05);
+			return MalformedOpcode(MALF_LPAREN);
 
 		tok++;
 
-        if ((*(tok + 1) == '+') || (*(tok + 1) == '-')) {
-            // Trying to make indexed call
-            if ((*tok == KW_R14 || *tok == KW_R15)) {
-                indexed = (*tok - KW_R0);
-            } else {
-                return IllegalIndexedRegister(*tok);
-            }
-        }
+        if ((tok[1] == '+') || (tok[1] == '-'))
+		{
+			// Trying to make indexed call
+			if ((*tok == KW_R14) || (*tok == KW_R15))
+				indexed = (*tok - KW_R0);
+			else
+				return IllegalIndexedRegister(*tok);
+		}
 
 		if (*tok == SYMBOL)
 		{
-//			sy = lookup((char *)tok[1], LABEL, 0);
 			sy = lookup(string[tok[1]], LABEL, 0);
 
 			if (!sy)
@@ -444,20 +454,21 @@ int GenerateRISCCode(int state)
 
 			if (sy->sattre & EQUATEDREG)
 			{
-				if ((*(tok + 2) == '+') || (*(tok + 2) == '-')) {
-				    if ((sy->svalue & 0x1F) == 14 || (sy->svalue & 0x1F) == 15) {
-				        indexed = (sy->svalue & 0x1F);
-                        tok++;
-				    } else {
-				        return IllegalIndexedRegisterEqur(sy);
-				    }
+				if ((tok[2] == '+') || (tok[2] == '-'))
+				{
+					if ((sy->svalue & 0x1F) == 14 || (sy->svalue & 0x1F) == 15) {
+						indexed = (sy->svalue & 0x1F);
+						tok++;
+					}
+					else
+						return IllegalIndexedRegisterEqur(sy);
 				}
 			}
 		}
 
 		if (!indexed)
 		{
-			reg1 = GetRegister(FU_REGONE);
+			reg1 = EvaluateRegisterFromTokenStream(FU_REGONE);
 		}
 		else
 		{
@@ -470,12 +481,11 @@ int GenerateRISCCode(int state)
 				parm = (WORD)(reg1 - 14 + 58);
 				tok++;
 
-				if (*tok >= KW_R0 && *tok <= KW_R31)
+				if ((*tok >= KW_R0) && (*tok <= KW_R31))
 					indexed = 1;
 
 				if (*tok == SYMBOL)
 				{
-//					sy = lookup((char *)tok[1], LABEL, 0);
 					sy = lookup(string[tok[1]], LABEL, 0);
 
 					if (!sy)
@@ -490,15 +500,12 @@ int GenerateRISCCode(int state)
 
 				if (indexed)
 				{
-					reg1 = GetRegister(FU_REGONE);
+					reg1 = EvaluateRegisterFromTokenStream(FU_REGONE);
 				}
 				else
 				{
 					if (expr(r_expr, &eval, &eattr, &esym) != OK)
-						return MalformedOpcode(0x06);
-
-					if ((challoc - ch_size) < 4)
-						chcheck(4L);
+						return MalformedOpcode(MALF_EXPR);
 
 					if (!(eattr & DEFINED))
 						return error("constant expected after '+'");
@@ -513,8 +520,8 @@ int GenerateRISCCode(int state)
 					}
 					else
 					{
-						if (reg1 < 1 || reg1 > 32)
-							return error("constant in LOAD out of range");
+						if ((reg1 < 1) || (reg1 > 32))
+							return error("constant in LOAD out of range (1-32)");
 
 						if (reg1 == 32)
 							reg1 = 0;
@@ -525,34 +532,34 @@ int GenerateRISCCode(int state)
 			}
 			else
 			{
-				reg1 = GetRegister(FU_REGONE);
+				reg1 = EvaluateRegisterFromTokenStream(FU_REGONE);
 			}
 		}
 
 		if (*tok != ')')
-			return MalformedOpcode(0x07);
+			return MalformedOpcode(MALF_RPAREN);
 
 		tok++;
 		CHECK_COMMA;
-		reg2 = GetRegister(FU_REGTWO);
+		reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
 		at_eol();
-		BuildRISCIntructionWord(parm, reg1, reg2);
+		DepositRISCInstructionWord(parm, reg1, reg2);
 		break;
 
 	// Rn,(Rn) = 47 / Rn,(R14/R15+n) = 49/50 / Rn,(R14/R15+Rn) = 60/61
 	case RI_STORE:
 		parm = 47;
-		reg1 = GetRegister(FU_REGONE);
+		reg1 = EvaluateRegisterFromTokenStream(FU_REGONE);
 		CHECK_COMMA;
 
 		if (*tok != '(')
-			return MalformedOpcode(0x08);
+			return MalformedOpcode(MALF_LPAREN);
 
 		tok++;
 		indexed = 0;
 
-		if ((*tok == KW_R14 || *tok == KW_R15) && (*(tok + 1) != ')'))
-			indexed = (*tok - KW_R0);
+		if (((*tok == KW_R14) || (*tok == KW_R15)) && (tok[1] != ')'))
+			indexed = *tok - KW_R0;
 
 		if (*tok == SYMBOL)
 		{
@@ -567,7 +574,7 @@ int GenerateRISCCode(int state)
 			if (sy->sattre & EQUATEDREG)
 			{
 				if (((sy->svalue & 0x1F) == 14 || (sy->svalue & 0x1F) == 15)
-					&& (*(tok + 2) != ')'))
+					&& (tok[2] != ')'))
 				{
 					indexed = (sy->svalue & 0x1F);
 					tok++;
@@ -577,7 +584,7 @@ int GenerateRISCCode(int state)
 
 		if (!indexed)
 		{
-			reg2 = GetRegister(FU_REGTWO);
+			reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
 		}
 		else
 		{
@@ -590,7 +597,7 @@ int GenerateRISCCode(int state)
 				parm = (WORD)(reg2 - 14 + 60);
 				tok++;
 
-				if (*tok >= KW_R0 && *tok <= KW_R31)
+				if ((*tok >= KW_R0) && (*tok <= KW_R31))
 					indexed = 1;
 
 				if (*tok == SYMBOL)
@@ -609,15 +616,12 @@ int GenerateRISCCode(int state)
 
 				if (indexed)
 				{
-					reg2 = GetRegister(FU_REGTWO);
+					reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
 				}
 				else
 				{
 					if (expr(r_expr, &eval, &eattr, &esym) != OK)
-						return MalformedOpcode(0x09);
-
-					if ((challoc - ch_size) < 4)
-						chcheck(4L);
+						return MalformedOpcode(MALF_EXPR);
 
 					if (!(eattr & DEFINED))
 					{
@@ -636,8 +640,8 @@ int GenerateRISCCode(int state)
 						}
 						else
 						{
-							if (reg2 < 1 || reg2 > 32)
-								return error("constant in STORE out of range");
+							if ((reg2 < 1) || (reg2 > 32))
+								return error("constant in STORE out of range (1-32)");
 
 							if (reg2 == 32)
 								reg2 = 0;
@@ -649,53 +653,53 @@ int GenerateRISCCode(int state)
 			}
 			else
 			{
-				reg2 = GetRegister(FU_REGTWO);
+				reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
 			}
 		}
 
 		if (*tok != ')')
-			return MalformedOpcode(0x0A);
+			return MalformedOpcode(MALF_RPAREN);
 
 		tok++;
 		at_eol();
-		BuildRISCIntructionWord(parm, reg2, reg1);
+		DepositRISCInstructionWord(parm, reg2, reg1);
 		break;
 
 	// LOADB/LOADP/LOADW (Rn),Rn
 	case RI_LOADN:
 		if (*tok != '(')
-			return MalformedOpcode(0x0B);
+			return MalformedOpcode(MALF_LPAREN);
 
 		tok++;
-		reg1 = GetRegister(FU_REGONE);
+		reg1 = EvaluateRegisterFromTokenStream(FU_REGONE);
 
 		if (*tok != ')')
-			return MalformedOpcode(0x0C);
+			return MalformedOpcode(MALF_RPAREN);
 
 		tok++;
 		CHECK_COMMA;
-		reg2 = GetRegister(FU_REGTWO);
+		reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
 		at_eol();
-		BuildRISCIntructionWord(parm, reg1, reg2);
+		DepositRISCInstructionWord(parm, reg1, reg2);
 		break;
 
 	// STOREB/STOREP/STOREW Rn,(Rn)
 	case RI_STOREN:
-		reg1 = GetRegister(FU_REGONE);
+		reg1 = EvaluateRegisterFromTokenStream(FU_REGONE);
 		CHECK_COMMA;
 
 		if (*tok != '(')
-			return MalformedOpcode(0x0D);
+			return MalformedOpcode(MALF_LPAREN);
 
 		tok++;
-		reg2 = GetRegister(FU_REGTWO);
+		reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
 
 		if (*tok != ')')
-			return MalformedOpcode(0x0E);
+			return MalformedOpcode(MALF_RPAREN);
 
 		tok++;
 		at_eol();
-		BuildRISCIntructionWord(parm, reg2, reg1);
+		DepositRISCInstructionWord(parm, reg2, reg1);
 		break;
 
 	// Jump Relative - cc,n - n=-16..+15 words, reg2=cc
@@ -720,17 +724,16 @@ int GenerateRISCCode(int state)
 		{
 			if (*tok == CONST)
 			{
-				// CC using a constant number
-				tok++;
-				uint64_t *tok64 = (uint64_t *)tok;
-				val = (int)*tok64++;
-				tok = (uint32_t *)tok64;
+				// CC using a constant number (O_o)
+				PTR tp;
+				tp.tk = tok + 1;
+				val = *tp.i64++;
+				tok = tp.tk;
 				CHECK_COMMA;
 			}
 			else if (*tok == SYMBOL)
 			{
-				val = 99;
-//				strcpy(scratch, (char *)tok[1]);
+				val = 9999;
 				strcpy(scratch, string[tok[1]]);
 				strtoupper(scratch);
 
@@ -745,9 +748,8 @@ int GenerateRISCCode(int state)
 				}
 
 				// Standard CC was not found, look for an equated one
-				if (val == 99)
+				if (val == 9999)
 				{
-//					ccsym = lookup((char *)tok[1], LABEL, 0);
 					ccsym = lookup(string[tok[1]], LABEL, 0);
 
 					if (ccsym && (ccsym->sattre & EQUATEDCC) && !(ccsym->sattre & UNDEF_CC))
@@ -771,7 +773,7 @@ int GenerateRISCCode(int state)
 			val = 0;
 		}
 
-		if (val < 0 || val > 31)
+		if ((val < 0) || (val > 31))
 			return error("condition constant out of range");
 
 		// Store condition code
@@ -781,10 +783,7 @@ int GenerateRISCCode(int state)
 		{
 			// JR cc,n
 			if (expr(r_expr, &eval, &eattr, &esym) != OK)
-				return MalformedOpcode(0x0F);
-
-			if ((challoc - ch_size) < 4)
-				chcheck(4L);
+				return MalformedOpcode(MALF_EXPR);
 
 			if (!(eattr & DEFINED))
 			{
@@ -796,31 +795,29 @@ int GenerateRISCCode(int state)
 				reg2 = ((int)(eval - ((orgactive ? orgaddr : sloc) + 2))) / 2;
 
 				if ((reg2 < -16) || (reg2 > 15))
-					error("PC relative overflow (outside of -16 to 15)");
+					error("PC relative overflow in JR (outside of -16 to 15)");
 			}
-
-			BuildRISCIntructionWord(parm, reg2, reg1);
 		}
 		else
 		{
 			// JUMP cc, (Rn)
 			if (*tok != '(')
-				return MalformedOpcode(0x10);
+				return MalformedOpcode(MALF_LPAREN);
 
 			tok++;
-			reg2 = GetRegister(FU_REGTWO);
+			reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
 
 			if (*tok != ')')
-				return MalformedOpcode(0x11);
+				return MalformedOpcode(MALF_RPAREN);
 
 			tok++;
 			at_eol();
-			BuildRISCIntructionWord(parm, reg2, reg1);
 		}
 
+		DepositRISCInstructionWord(parm, reg2, reg1);
 		break;
 
-	// Should never get here :-D
+	// We should never get here. If we do, somebody done fucked up. :-D
 	default:
 		return error("Unknown RISC opcode type");
 	}

@@ -6,12 +6,10 @@
 // Source utilised with the kind permission of Landon Dyer
 //
 
-#ifndef __RISCA_H__
-#define __RISCA_H__
+#ifndef __RISCASM_H__
+#define __RISCASM_H__
 
 #include "rmac.h"
-
-#define MAXINTERNCC 26			// Maximum internal condition codes
 
 // RISC Instruction Types
 #define RI_NONE     0x0000		// No Operands - NOP
@@ -36,13 +34,6 @@
 
 #define CHECK_COMMA  if(*tok++ != ',') { error(comma_error); return(ERROR); }
 
-// Opcode Specific Data
-struct opcoderecord {
-   short state;					// Opcode Name
-   unsigned short typ;			// Opcode Type
-   unsigned parm;				// Opcode Parameter
-};
-
 // Globals, externals etc
 extern unsigned orgactive;
 extern unsigned orgaddr;
@@ -53,4 +44,4 @@ extern uint8_t riscImmTokenSeen;
 // Prototypes
 int GenerateRISCCode(int);
 
-#endif // __RISCA_H__
+#endif // __RISCASM_H__
