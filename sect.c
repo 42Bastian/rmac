@@ -727,6 +727,21 @@ int ResolveFixups(int sno)
 			*locp = (uint8_t)eval;
 			break;
 
+		// Fixup a 4-byte float
+		case FU_FLOATSING:
+			warn("FU_FLOATSING missing implementation\n%s", "And you may ask yourself, \"Self, how did I get here?\"");
+			break;
+
+		// Fixup a 8-byte float
+		case FU_FLOATDOUB:
+			warn("FU_FLOATDOUB missing implementation\n%s", "And you may ask yourself, \"Self, how did I get here?\"");
+			break;
+
+		// Fixup a 12-byte float
+		case FU_FLOATEXT:
+			warn("FU_FLOATEXT missing implementation\n%s", "And you may ask yourself, \"Self, how did I get here?\"");
+			break;
+
 		default:
 			// Bad fixup type--this should *never* happen!
 			// Once we call this function, it winds down immediately; it

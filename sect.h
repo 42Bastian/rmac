@@ -98,10 +98,9 @@
 #define FU_DONE      0x8000		// Fixup has been done
 
 // FPU fixups
-// TODO: these are obviously bogus for now!
-#define FU_FLOATSING 0x0D0B		// Fixup 32-bit float
-#define FU_FLOATDOUB 0x0E0B		// Fixup 64-bit float
-#define FU_FLOATEXT  0x0F0B		// Fixup 96-bit float
+#define FU_FLOATSING 0x000A		// Fixup 32-bit float
+#define FU_FLOATDOUB 0x000B		// Fixup 64-bit float
+#define FU_FLOATEXT  0x000C		// Fixup 96-bit float
 
 // Chunks are used to hold generated code and fixup records
 #define CHUNK  struct _chunk
