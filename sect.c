@@ -298,14 +298,10 @@ int AddFixup(uint32_t attr, uint32_t loc, TOKEN * fexpr)
 
 
 //
-// Resolve fixups in a section
+// Resolve fixups in the passed in section
 //
 int ResolveFixups(int sno)
 {
-	uint64_t eval;			// Expression value
-	int reg2;
-	uint16_t flags;
-
 	SECT * sc = &sect[sno];
 
 	// "Cache" first chunk
@@ -328,7 +324,7 @@ int ResolveFixups(int sno)
 		FIXUP * fup = fixup;
 		fixup = fixup->next;
 
-		uint32_t w = fup->attr;		// Fixup long (type+modes+flags)
+		uint32_t w = fup->attr;		// Fixup long (type + modes + flags)
 		uint32_t loc = fup->loc;	// Location to fixup
 		cfileno = fup->fileno;
 		curlineno = fup->lineno;
@@ -365,8 +361,11 @@ int ResolveFixups(int sno)
 		// subtract the chunk's starting location from loc to get the offset
 		// into the current chunk.
 		uint8_t * locp = cch->chptr + (loc - cch->chloc);
+
 		uint16_t eattr = 0;			// Expression attrib
 		SYM * esym = NULL;			// External symbol involved in expr
+		uint64_t eval;				// Expression value
+		uint16_t flags;				// Mark flags
 
 		// Compute expression/symbol value and attributes
 
@@ -404,17 +403,15 @@ int ResolveFixups(int sno)
 
 		// Do the fixup
 		//
-		// If a PC-relative fixup is undefined, its value is *not*
-		// subtracted from the location (that will happen in the linker
-		// when the external reference is resolved).
+		// If a PC-relative fixup is undefined, its value is *not* subtracted
+		// from the location (that will happen in the linker when the external
+		// reference is resolved).
 		//
-		// MWC expects PC-relative things to have the LOC subtracted from
-		// the value, if the value is external (that is, undefined at this
-		// point).
+		// MWC expects PC-relative things to have the LOC subtracted from the
+		// value, if the value is external (that is, undefined at this point).
 		//
-		// PC-relative fixups must be DEFINED and either in the same
-		// section (whereupon the subtraction takes place) or ABS (with no
-		// subtract).
+		// PC-relative fixups must be DEFINED and either in the same section
+		// (whereupon the subtraction takes place) or ABS (with no subtract).
 		if (w & FU_PCREL)
 		{
 			if (eattr & DEFINED)
@@ -537,7 +534,7 @@ int ResolveFixups(int sno)
 				continue;
 			}
 
-			*locp = (uint8_t)((eval >> 8) & 0xFF);
+			*locp = (uint8_t)(eval >> 8);
 			break;
 
 		case FU_BYTEL:
@@ -547,61 +544,63 @@ int ResolveFixups(int sno)
 				continue;
 			}
 
-			*locp = (uint8_t)(eval & 0xFF);
+			*locp = (uint8_t)eval;
 			break;
 
-		// Fixup WORD forward references; the word could be unaligned in
-		// the section buffer, so we have to be careful.
+		// Fixup WORD forward references; the word could be unaligned in the
+		// section buffer, so we have to be careful.
 		case FU_WORD:
 			if ((w & FUMASKRISC) == FU_JR)
 			{
-				if (fup->orgaddr)
-					reg2 = (signed)((eval - (fup->orgaddr + 2)) / 2);
-				else
-					reg2 = (signed)((eval - (loc + 2)) / 2);
+				int reg;
 
-				if ((reg2 < -16) || (reg2 > 15))
+				if (fup->orgaddr)
+					reg = (signed)((eval - (fup->orgaddr + 2)) / 2);
+				else
+					reg = (signed)((eval - (loc + 2)) / 2);
+
+				if ((reg < -16) || (reg > 15))
 				{
 					error("relative jump out of range");
 					break;
 				}
 
-				*locp = (uint8_t)(*locp | ((reg2 >> 3) & 0x03));
+				*locp |= ((uint8_t)reg >> 3) & 0x03;
 				locp++;
-				*locp = (uint8_t)(*locp | ((reg2 & 0x07) << 5));
+				*locp |= ((uint8_t)reg & 0x07) << 5;
 				break;
 			}
 			else if ((w & FUMASKRISC) == FU_NUM15)
 			{
-				if (eval < -16 || eval > 15)
+				if (((int)eval < -16) || ((int)eval > 15))
 				{
-					error("constant out of range");
+					error("constant out of range (-16 - +15)");
 					break;
 				}
 
-				*locp = (uint8_t)(*locp | ((eval >> 3) & 0x03));
+				*locp |= ((uint8_t)eval >> 3) & 0x03;
 				locp++;
-				*locp = (uint8_t)(*locp | ((eval & 0x07) << 5));
+				*locp |= ((uint8_t)eval & 0x07) << 5;
 				break;
 			}
 			else if ((w & FUMASKRISC) == FU_NUM31)
 			{
 				if (eval > 31)
 				{
-					error("constant out of range");
+					error("constant out of range (0-31)");
 					break;
 				}
 
-				*locp = (uint8_t)(*locp | ((eval >> 3) & 0x03));
+				*locp |= ((uint8_t)eval >> 3) & 0x03;
 				locp++;
-				*locp = (uint8_t)(*locp | ((eval & 0x07) << 5));
+				*locp |= ((uint8_t)eval & 0x07) << 5;
 				break;
 			}
 			else if ((w & FUMASKRISC) == FU_NUM32)
 			{
-				if (eval < 1 || eval > 32)
+				if ((eval < 1) || (eval > 32))
 				{
-					error("constant out of range");
+					error("constant out of range (1-32)");
 					break;
 				}
 
@@ -609,34 +608,34 @@ int ResolveFixups(int sno)
 					eval = (32 - eval);
 
 				eval = (eval == 32) ? 0 : eval;
-				*locp = (uint8_t)(*locp | ((eval >> 3) & 0x03));
+				*locp |= ((uint8_t)eval >> 3) & 0x03;
 				locp++;
-				*locp = (uint8_t)(*locp | ((eval & 0x07) << 5));
+				*locp |= ((uint8_t)eval & 0x07) << 5;
 				break;
 			}
 			else if ((w & FUMASKRISC) == FU_REGONE)
 			{
 				if (eval > 31)
 				{
-					error("register value out of range");
+					error("register one value out of range");
 					break;
 				}
 
-				*locp = (uint8_t)(*locp | ((eval >> 3) & 0x03));
+				*locp |= ((uint8_t)eval >> 3) & 0x03;
 				locp++;
-				*locp = (uint8_t)(*locp | ((eval & 0x07) << 5));
+				*locp |= ((uint8_t)eval & 0x07) << 5;
 				break;
 			}
 			else if ((w & FUMASKRISC) == FU_REGTWO)
 			{
 				if (eval > 31)
 				{
-					error("register value out of range");
+					error("register two value out of range");
 					break;
 				}
 
 				locp++;
-				*locp = (uint8_t)(*locp | (eval & 0x1F));
+				*locp |= (uint8_t)eval & 0x1F;
 				break;
 			}
 
