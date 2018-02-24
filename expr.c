@@ -900,11 +900,10 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 
 		// All other binary operators must have two ABS items to work with.
 		// They all produce an ABS value.
+		// Shamus: Is this true? There's at least one counterexample of legit
+		//         code where this assumption fails to produce correct code.
 		default:
 //printf("evexpr(): default\n");
-			// GH - Removed for v1.0.15 as part of the fix for indexed loads.
-			//if ((*sattr & (TEXT|DATA|BSS)) || (*--sattr & (TEXT|DATA|BSS)))
-			//error(seg_error);
 
 			switch ((int)tk.u32[-1])
 			{
@@ -936,7 +935,7 @@ An open question here is do we promote ints to floats as signed or unsigned? It 
 				}
 //printf("%i\n", *sval);
 
-				*sattr = ABS | DEFINED | attr;		// Expr becomes absolute
+//no				*sattr = ABS | DEFINED | attr;		// Expr becomes absolute
 				break;
 
 			case '/':
@@ -974,7 +973,7 @@ An open question here is do we promote ints to floats as signed or unsigned? It 
 				}
 //printf("%i\n", *sval);
 
-				*sattr = ABS | DEFINED | attr;		// Expr becomes absolute
+//no				*sattr = ABS | DEFINED | attr;		// Expr becomes absolute
 				break;
 
 			case '%':
@@ -988,7 +987,7 @@ An open question here is do we promote ints to floats as signed or unsigned? It 
 					return error("mod (%) by zero");
 
 				*sval %= sval[1];
-				*sattr = ABS | DEFINED;			// Expr becomes absolute
+//no				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				break;
 
 			case SHL:
@@ -999,7 +998,7 @@ An open question here is do we promote ints to floats as signed or unsigned? It 
 					return error("floating point numbers not allowed with operator '<<'.");
 
 				*sval <<= sval[1];
-				*sattr = ABS | DEFINED;			// Expr becomes absolute
+//no				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				break;
 
 			case SHR:
@@ -1010,7 +1009,7 @@ An open question here is do we promote ints to floats as signed or unsigned? It 
 					return error("floating point numbers not allowed with operator '>>'.");
 
 				*sval >>= sval[1];
-				*sattr = ABS | DEFINED;			// Expr becomes absolute
+//no				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				break;
 
 			case '&':
@@ -1021,7 +1020,7 @@ An open question here is do we promote ints to floats as signed or unsigned? It 
 					return error("floating point numbers not allowed with operator '&'.");
 
 				*sval &= sval[1];
-				*sattr = ABS | DEFINED;			// Expr becomes absolute
+//no				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				break;
 
 			case '^':
@@ -1032,7 +1031,7 @@ An open question here is do we promote ints to floats as signed or unsigned? It 
 					return error("floating point numbers not allowed with operator '^'.");
 
 				*sval ^= sval[1];
-				*sattr = ABS | DEFINED;			// Expr becomes absolute
+//no				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				break;
 
 			case '|':
@@ -1043,7 +1042,7 @@ An open question here is do we promote ints to floats as signed or unsigned? It 
 					return error("floating point numbers not allowed with operator '|'.");
 
 				*sval |= sval[1];
-				*sattr = ABS | DEFINED;			// Expr becomes absolute
+//no				*sattr = ABS | DEFINED;			// Expr becomes absolute
 				break;
 
 			default:

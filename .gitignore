@@ -23,3 +23,8 @@ bugs8/
 *.zip
 features/
 patches/
+tmp/
+elf/
+tests/
+regression-tests/
+rmac-*
