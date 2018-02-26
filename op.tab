@@ -1,0 +1,11 @@
+#
+#  Jaguar Object Processor mnemonics
+#
+bitmap    3100
+scbitmap  3101
+gpuobj    3102
+branch    3103
+stop      3104
+nop       3105
+jump      3106
+

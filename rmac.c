@@ -40,6 +40,7 @@ int debug;						// [1..9] Enable debugging levels
 int err_flag;					// '-e' specified
 int err_fd;						// File to write error messages to
 int rgpu, rdsp;					// Assembling Jaguar GPU or DSP code
+int robjproc;					// Assembling Jaguar Object Processor code
 int dsp56001;					// Assembling DSP 56001 code
 int list_fd;					// File to write listing to
 int regbank;					// RISC register bank
@@ -53,6 +54,16 @@ char defname[] = "noname.o";	// Default output filename
 int optim_flags[OPT_COUNT];		// Specific optimisations on/off matrix
 int activecpu = CPU_68000;		// Active 68k CPU (68000 by default)
 int activefpu = FPU_NONE;		// Active FPU (none by default)
+
+
+//
+// Convert a string to uppercase
+//
+void strtoupper(char * s)
+{
+	while (*s)
+		*s++ &= 0xDF;
+}
 
 
 //
@@ -271,6 +282,7 @@ int Process(int argc, char ** argv)
 	err_flag = 0;					// Initialise error flag
 	rgpu = 0;						// Initialise GPU assembly flag
 	rdsp = 0;						// Initialise DSP assembly flag
+	robjproc = 0;					// Initialise OP assembly flag
 	lsym_flag = 1;					// Include local symbols in object file
 	regbank = BANK_N;				// No RISC register bank specified
 	orgactive = 0;					// Not in RISC org section

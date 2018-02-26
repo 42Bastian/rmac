@@ -284,6 +284,7 @@ enum
 extern int verb_flag;
 extern int debug;
 extern int rgpu, rdsp;
+extern int robjproc;
 extern int dsp56001;
 extern int err_flag;
 extern int err_fd;
@@ -306,6 +307,7 @@ extern int activecpu;
 extern int activefpu;
 
 // Exported functions
+void strtoupper(char * s);
 char * fext(char *, char *, int);
 int nthpath(char *, int, char *);
 int ParseOptimization(char * optstring);

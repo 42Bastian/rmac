@@ -14,6 +14,7 @@
 #include "fltpoint.h"
 #include <float.h>
 #include <math.h>
+#include <stdio.h>
 
 //
 // Check for IEEE-754 conformance (C99 compilers should be OK here)
@@ -167,5 +168,27 @@ void DoubleToExtended(double d, uint8_t out[])
 	out[9] = (intMant >> 16) & 0xFF;
 	out[10] = (intMant >> 8) & 0xFF;
 	out[11] = intMant & 0xFF;
+}
+
+
+//
+// Convert a host native floating point number to a fixed point number.
+//
+uint64_t DoubleToFixedPoint(double d, int intBits, int fracBits)
+{
+	uint8_t signBit = (signbit(d) ? 1 : 0);
+
+	// Ensure what we're working on is positive...
+	if (d < 0)
+		d *= -1;
+
+	double scaleFactor = (double)(1 << fracBits);
+	uint64_t result = (uint64_t)(d * scaleFactor);
+
+	// Invert the result, if necessary
+	if (signBit == 1)
+		result = (result = 0xFFFFFFFFFFFFFFFFLL) + 1;
+
+	return result;
 }
 

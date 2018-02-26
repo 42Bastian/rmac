@@ -290,7 +290,7 @@ int AddFixup(uint32_t attr, uint32_t loc, TOKEN * fexpr)
 
 	DEBUG { printf("AddFixup: sno=%u, l#=%u, attr=$%X, loc=$%X, expr=%p, sym=%p, org=$%X\n", cursect, fixup->lineno, fixup->attr, fixup->loc, (void *)fixup->expr, (void *)fixup->symbol, fixup->orgaddr);
 		if (symbol != NULL)
-			printf("          name: %s, value: $lX\n", symbol->sname, symbol->svalue);
+			printf("          name: %s, value: $%lX\n", symbol->sname, symbol->svalue);
 	}
 
 	return 0;
@@ -679,9 +679,8 @@ int ResolveFixups(int sno)
 
 			break;
 
-		// Fixup LONG forward references;
-		// the long could be unaligned in the section buffer, so be careful
-		// (again).
+		// Fixup LONG forward references; the long could be unaligned in the
+		// section buffer, so be careful (again).
 		case FU_LONG:
 			flags = MLONG;
 
@@ -700,6 +699,44 @@ int ResolveFixups(int sno)
 				MarkRelocatable(sno, loc, tdb, flags, NULL);
 
 			SETBE32(locp, 0, eval);
+			break;
+
+		// Fixup QUAD forward references
+		// Need to add flags for OP uses... [DONE]
+		case FU_QUAD:
+			// If the symbol is undefined, make sure to pass the symbol in
+			// to the MarkRelocatable() function.
+/*			if (!(eattr & DEFINED))
+				MarkRelocatable(sno, loc, 0, MQUAD, esym);
+			else if (tdb)
+				MarkRelocatable(sno, loc, tdb, MQUAD, NULL);//*/
+
+			if (w & FU_OBJLINK)
+			{
+				uint64_t quad = GETBE64(locp, 0);
+				uint64_t addr = eval;
+
+				if (fup->orgaddr)
+					addr = fup->orgaddr;
+
+//printf("sect.c: FU_OBJLINK quad=%016lX, addr=%016lX ", quad, addr);
+
+				eval = (quad & 0xFFFFFC0000FFFFFFLL) | ((addr & 0x3FFFF8) << 21);
+//printf("(%016lX)\n", eval);
+			}
+			else if (w & FU_OBJDATA)
+			{
+				uint64_t quad = GETBE64(locp, 0);
+				uint64_t addr = eval;
+
+				if (fup->orgaddr)
+					addr = fup->orgaddr;
+
+				eval = (quad & 0x000007FFFFFFFFFFLL) | ((addr & 0xFFFFF8) << 40);
+			}
+
+			SETBE64(locp, 0, eval);
+//printf("(%016lX)\n", eval);
 			break;
 
 		// Fixup a 3-bit "QUICK" reference in bits 9..1

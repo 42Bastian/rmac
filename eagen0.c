@@ -214,8 +214,9 @@ int eaNgen(WORD siz)
 			// 68881/68882/68040 only
 			if (w)
 			{
-				if (tdb)
-					MarkRelocatable(cursect, sloc, tdb, MSINGLE, NULL);
+//Would a floating point value *ever* need to be fixed up as if it were an address? :-P
+//				if (tdb)
+//					MarkRelocatable(cursect, sloc, tdb, MSINGLE, NULL);
 
 				// The value passed back from expr() is an internal C double;
 				// so we have to access it as such then convert it to an
@@ -238,8 +239,9 @@ int eaNgen(WORD siz)
 			// 68881/68882/68040 only
 			if (w)
 			{
-				if (tdb)
-					MarkRelocatable(cursect, sloc, tdb, MDOUBLE, NULL);
+//Would a floating point value *ever* need to be fixed up as if it were an address? :-P
+//				if (tdb)
+//					MarkRelocatable(cursect, sloc, tdb, MDOUBLE, NULL);
 
 				PTR p;
 				p.u64 = &aNexval;
@@ -258,8 +260,9 @@ int eaNgen(WORD siz)
 			// 68881/68882/68040 only
 			if (w)
 			{
-				if (tdb)
-					MarkRelocatable(cursect, sloc, tdb, MEXTEND, NULL);
+//Would a floating point value *ever* need to be fixed up as if it were an address? :-P
+//				if (tdb)
+//					MarkRelocatable(cursect, sloc, tdb, MEXTEND, NULL);
 
 				PTR p;
 				p.u64 = &aNexval;

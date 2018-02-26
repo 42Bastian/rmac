@@ -110,9 +110,10 @@ prgflags	57
 nofpu   65
 .opt    66
 opt     66
+.objproc	67
 
-.if	500
-if	500
+.if		500
+if		500
 .else	501
 else	501
 .endc	502
@@ -120,7 +121,7 @@ endc	502
 .endif	502
 endif	502
 .iif	503
-iif	503
+iif		503
 .macro	504
 macro	504
 .endm	505
@@ -131,3 +132,4 @@ rept	506
 endr	507
 .exitm	510
 exitm	510
+

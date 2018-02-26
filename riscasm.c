@@ -13,6 +13,7 @@
 #include "expr.h"
 #include "mark.h"
 #include "procln.h"
+#include "rmac.h"
 #include "sect.h"
 #include "token.h"
 
@@ -132,16 +133,6 @@ static const char malform4[] = "missing '('";
 static const char * malformErr[] = {
 	malform1, malform2, malform3, malform4
 };
-
-
-//
-// Convert a string to uppercase
-//
-static void strtoupper(char * s)
-{
-	while (*s)
-		*s++ &= 0xDF;
-}
 
 
 //

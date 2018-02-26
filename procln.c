@@ -15,6 +15,7 @@
 #include "listing.h"
 #include "mach.h"
 #include "macro.h"
+#include "op.h"
 #include "riscasm.h"
 #include "sect.h"
 #include "symbol.h"
@@ -33,6 +34,10 @@
 #define DEF_MP					// Include 6502 keyword definitions
 #define DECL_MP					// Include 6502 keyword state machine tables
 #include "6502kw.h"
+
+#define DEF_MO					// Include OP keyword definitions
+#define DECL_MO					// Include OP keyword state machine tables
+#include "opkw.h"
 
 IFENT * ifent;					// Current ifent
 static IFENT ifent0;			// Root ifent
@@ -655,6 +660,38 @@ When checking to see if it's already been equated, issue a warning.
 		if (state >= 3000)
 		{
 			GenerateRISCCode(state);
+			goto loop;
+		}
+	}
+
+	// If we are in OP mode and still in need of a mnemonic then search for one
+	if (robjproc && ((state < 0) || (state >= 1000)))
+	{
+		for(state=0, p=opname; state>=0;)
+		{
+			j = mobase[state] + (int)tolowertab[*p];
+
+			// Reject, character doesn't match
+			if (mocheck[j] != state)
+			{
+				state = -1;					// No match
+				break;
+			}
+
+			// Must accept or reject at EOS
+			if (!*++p)
+			{
+				state = moaccept[j];		// (-1 on no terminal match)
+				break;
+			}
+
+			state = motab[j];
+		}
+
+		// Call OP code generator if we found a mnemonic
+		if (state >= 3100)
+		{
+			GenerateOPCode(state);
 			goto loop;
 		}
 	}

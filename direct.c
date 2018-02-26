@@ -79,6 +79,7 @@ int d_cstruct(void);
 int d_prgflags(void);
 int d_opt(void);
 int d_dsp(void);
+int d_objproc(void);
 void SetLargestAlignment(int);
 
 // Directive handler table
@@ -149,7 +150,8 @@ int (*dirtab[])() = {
 	d_68882,			// 63 .68882
 	d_56001,			// 64 .56001
 	d_nofpu,			// 65 nofpu
-	d_opt,				// 58 .opt
+	d_opt,				// 66 .opt
+	d_objproc,			// 67 .objproc
 };
 
 
@@ -216,8 +218,8 @@ int d_org(void)
 {
 	uint64_t address;
 
-	if (!rgpu && !rdsp && !m6502)
-		return error(".org permitted only in gpu/dsp and 6502 sections");
+	if (!rgpu && !rdsp && !robjproc && !m6502)
+		return error(".org permitted only in GPU/DSP/OP and 6502 sections");
 
 	if (abs_expr(&address) == ERROR)
 	{
@@ -225,7 +227,7 @@ int d_org(void)
 		return ERROR;
 	}
 
-	if (rgpu | rdsp)
+	if (rgpu | rdsp | robjproc)
 	{
 		orgaddr = address;
 		orgactive = 1;
@@ -1066,9 +1068,6 @@ int d_dc(WORD siz)
 		uint16_t tdb = eattr & TDB;
 		uint16_t defined = eattr & DEFINED;
 
-		if ((challoc - ch_size) < 4)
-			chcheck(4);
-
 		switch (siz)
 		{
 		case SIZB:
@@ -1136,6 +1135,7 @@ int d_dc(WORD siz)
 
 				D_long(eval);
 			}
+
 			break;
 		case SIZQ:
 			// 64-bit size
@@ -1144,7 +1144,17 @@ int d_dc(WORD siz)
 
 			// Shamus: We only handle DC.Q type stuff, will have to add fixups
 			//         and stuff later (maybe... might not be needed...)
-			D_quad(eval);
+			// DEFINITELY NEED FIXUPS HERE!
+			if (!defined)
+			{
+				AddFixup(FU_QUAD, sloc, exprbuf);
+				D_quad(0LL);
+			}
+			else
+			{
+				D_quad(eval);
+			}
+
 			break;
 		case SIZS:
 			// 32-bit float size
@@ -1158,8 +1168,9 @@ int d_dc(WORD siz)
 			}
 			else
 			{
-				if (tdb)
-					MarkRelocatable(cursect, sloc, tdb, MSINGLE, NULL);
+//Would this *ever* happen?
+//				if (tdb)
+//					MarkRelocatable(cursect, sloc, tdb, MSINGLE, NULL);
 
 				PTR ptr;
 				ptr.u64 = &eval;
@@ -1180,8 +1191,9 @@ int d_dc(WORD siz)
 			}
 			else
 			{
-				if (tdb)
-					MarkRelocatable(cursect, sloc, tdb, MDOUBLE, NULL);
+//Would this *ever* happen?
+//				if (tdb)
+//					MarkRelocatable(cursect, sloc, tdb, MDOUBLE, NULL);
 
 				PTR ptr;
 				ptr.u64 = &eval;
@@ -1204,8 +1216,9 @@ int d_dc(WORD siz)
 			}
 			else
 			{
-				if (tdb)
-					MarkRelocatable(cursect, sloc, tdb, MEXTEND, NULL);
+//Would this *ever* happen?
+//				if (tdb)
+//					MarkRelocatable(cursect, sloc, tdb, MEXTEND, NULL);
 
 				PTR ptr;
 				ptr.u64 = &eval;
@@ -1483,7 +1496,7 @@ int d_nlist(void)
 //
 int d_68000(void)
 {
-	rgpu = rdsp = 0;
+	rgpu = rdsp = robjproc = 0;
 	// Switching from gpu/dsp sections should reset any ORG'd Address
 	orgactive = 0;
 	orgwarning = 0;
@@ -1601,6 +1614,7 @@ int d_gpu(void)
 
 	rgpu = 1;			// Set GPU assembly
 	rdsp = 0;			// Unset DSP assembly
+	robjproc = 0;		// Unset OP assembly
 	regbank = BANK_N;	// Set no default register bank
 	return 0;
 }
@@ -1626,6 +1640,7 @@ int d_dsp(void)
 
 	rdsp = 1;			// Set DSP assembly
 	rgpu = 0;			// Unset GPU assembly
+	robjproc = 0;		// Unset OP assembly
 	regbank = BANK_N;	// Set no default register bank
 	return 0;
 }
@@ -1873,6 +1888,32 @@ int d_cstruct(void)
 		if (*tok == ',')
 			tok++;
 	}
+}
+
+
+//
+// Define start of OP object list (allows the use of ORG)
+//
+int d_objproc(void)
+{
+	if ((cursect != TEXT) && (cursect != DATA))
+	{
+		error(".objproc can only be used in the TEXT or DATA segments");
+		return ERROR;
+	}
+
+	// If previous section was DSP or 68000 then we need to reset ORG'd
+	// Addresses
+	if (!robjproc)
+	{
+		orgactive = 0;
+		orgwarning = 0;
+	}
+
+	robjproc = 1;		// Set OP assembly
+	rgpu = 0;			// Unset GPU assembly
+	rdsp = 0;			// Unset DSP assembly
+	return OK;
 }
 
 

@@ -76,6 +76,7 @@
 #define FU_6BRA      0x0007		// Fixup 6502-format branch offset
 #define FU_BYTEH     0x0008		// Fixup 6502 high byte of immediate word
 #define FU_BYTEL     0x0009		// Fixup 6502 low byte of immediate word
+#define FU_QUAD      0x000A		// Fixup quad-word (8 bytes)
 
 #define FU_SEXT      0x0010		// Ok to sign extend
 #define FU_PCREL     0x0020		// Subtract PC first
@@ -98,9 +99,14 @@
 #define FU_DONE      0x8000		// Fixup has been done
 
 // FPU fixups
-#define FU_FLOATSING 0x000A		// Fixup 32-bit float
-#define FU_FLOATDOUB 0x000B		// Fixup 64-bit float
-#define FU_FLOATEXT  0x000C		// Fixup 96-bit float
+#define FU_FLOATSING 0x000B		// Fixup 32-bit float
+#define FU_FLOATDOUB 0x000C		// Fixup 64-bit float
+#define FU_FLOATEXT  0x000D		// Fixup 96-bit float
+
+// OP fixups
+#define FU_OBJLINK   0x10000	// Fixup OL link addr (bits 24-42, drop last 3)
+#define FU_OBJDATA   0x20000	// Fixup OL data addr (bits 43-63, drop last 3)
+
 
 // Chunks are used to hold generated code and fixup records
 #define CHUNK  struct _chunk

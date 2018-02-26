@@ -71,9 +71,9 @@ void StopMark(void)
 uint32_t MarkRelocatable(uint16_t section, uint32_t loc, uint16_t to, uint16_t flags, SYM * symbol)
 {
 #ifdef DEBUG_IMAGE_MARKING
-printf("MarkRelocatable: section=%i, loc=$%X, to=$%X, flags=$%x, symbol=$%X\n", section, loc, to, flags, symbol);
+printf("MarkRelocatable: section=%i, loc=$%X, to=$%X, flags=$%x, symbol=%p\n", section, loc, to, flags, symbol);
 if (symbol)
-	printf("      symbol->stype=$%02X, sattr=$%04X, sattre=$%08X, svalue=%i, sname=%s\n", symbol->stype, symbol->sattr, symbol->sattre, symbol->svalue, symbol->sname);
+	printf("      symbol->stype=$%02X, sattr=$%04X, sattre=$%08X, svalue=%li, sname=%s\n", symbol->stype, symbol->sattr, symbol->sattre, symbol->svalue, symbol->sname);
 #endif
 
 	if ((mcalloc - mcused) < MIN_MARK_MEM)
@@ -380,8 +380,12 @@ printf(" validsegment: raddr = $%08X\n", loc);
 			// This tells the linker to do a WORD relocation (otherwise it
 			// defaults to doing a LONG, throwing things off for WORD sized
 			// fixups)
-			if (!(w & MLONG))
+			if (!(w & (MLONG | MQUAD)))
 				rflag |= 0x00000002;
+
+			// Tell the linker that the fixup is an OL QUAD data address
+			if (w & MQUAD)
+				rflag |= 0x00000004;
 
 			if (symbol != NULL)
 			{
@@ -415,19 +419,31 @@ printf("  validsegment(3): rflag = $%08X\n", rflag);
 				if (w & (DATA | BSS))
 				{
 					uint8_t * dp = objImage + BSDHDRSIZE + loc;
+					uint32_t olBitsSave = 0;
 
 					// Bump the start of the section if it's DATA (& not TEXT)
 					if (from == DATA)
 						dp += tsize;
 
 					uint32_t diff = (rflag & 0x02 ? GETBE16(dp, 0) : GETBE32(dp, 0));
+
+					// Special handling for OP (data addr) relocation...
+					if (rflag & 0x04)
+					{
+						olBitsSave = diff & 0x7FF;
+						diff = (diff & 0xFFFFF800) >> 8;
+					}
+
 					DEBUG printf("diff=%uX ==> ", diff);
 #ifdef DEBUG_IMAGE_MARKING
-printf("  validsegment(4): diff = $%08X --> ", diff);
+printf("  validsegment(4): diff = $%08X ", diff);
 #endif
 					if (rflag & 0x01)
 						diff = WORDSWAP32(diff);
 
+#ifdef DEBUG_IMAGE_MARKING
+printf("(sect[TEXT].sloc=$%X) --> ", sect[TEXT].sloc);
+#endif
 					diff += sect[TEXT].sloc;
 
 					if (w == BSS)
@@ -442,11 +458,21 @@ printf("  validsegment(4): diff = $%08X --> ", diff);
 					//       thus leaving a naked semicolon afterwards to
 					//       screw up the if/else structure. This is the price
 					//       you pay when using macros pretending to be code.
-					if (rflag & 0x02)
+					if (rflag & 0x02)		// WORD relocation
 					{
 						SETBE16(dp, 0, diff);
 					}
-					else
+					else if (rflag & 0x04)	// OP data address relocation
+					{
+						// We do it this way because we might have an offset
+						// that is not a multiple of 8 and thus we need this in
+						// place to prevent a bad address at link time. :-P As
+						// a consequence of this, the highest address we can
+						// have here is $1FFFF8.
+						diff = ((diff & 0x001FFFFF) << 11) | olBitsSave;
+						SETBE32(dp, 0, diff);
+					}
+					else					// LONG relocation
 					{
 						SETBE32(dp, 0, diff);
 					}

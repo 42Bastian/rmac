@@ -2,6 +2,8 @@
 68kgen.o
 68ktab.h
 68kmn
+6502kw.h
+opkw.h
 *.o
 *~
 kwtab.h
