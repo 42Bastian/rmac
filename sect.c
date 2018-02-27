@@ -701,16 +701,8 @@ int ResolveFixups(int sno)
 			SETBE32(locp, 0, eval);
 			break;
 
-		// Fixup QUAD forward references
-		// Need to add flags for OP uses... [DONE]
+		// Fixup QUAD forward references (mainly used by the OP assembler)
 		case FU_QUAD:
-			// If the symbol is undefined, make sure to pass the symbol in
-			// to the MarkRelocatable() function.
-/*			if (!(eattr & DEFINED))
-				MarkRelocatable(sno, loc, 0, MQUAD, esym);
-			else if (tdb)
-				MarkRelocatable(sno, loc, tdb, MQUAD, NULL);//*/
-
 			if (w & FU_OBJLINK)
 			{
 				uint64_t quad = GETBE64(locp, 0);
@@ -719,13 +711,16 @@ int ResolveFixups(int sno)
 				if (fup->orgaddr)
 					addr = fup->orgaddr;
 
-//printf("sect.c: FU_OBJLINK quad=%016lX, addr=%016lX ", quad, addr);
 
 				eval = (quad & 0xFFFFFC0000FFFFFFLL) | ((addr & 0x3FFFF8) << 21);
-//printf("(%016lX)\n", eval);
 			}
 			else if (w & FU_OBJDATA)
 			{
+				// If it's in a TEXT or DATA section, be sure to mark for a
+				// fixup later
+				if (tdb)
+					MarkRelocatable(sno, loc, tdb, MQUAD, NULL);
+
 				uint64_t quad = GETBE64(locp, 0);
 				uint64_t addr = eval;
 
@@ -736,7 +731,6 @@ int ResolveFixups(int sno)
 			}
 
 			SETBE64(locp, 0, eval);
-//printf("(%016lX)\n", eval);
 			break;
 
 		// Fixup a 3-bit "QUICK" reference in bits 9..1

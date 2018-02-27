@@ -91,7 +91,8 @@ A: Yes, it will emit NOPs to ensure that bitmaps and scbitmaps are on proper
    memory boundaries, and fixup link addresses as necessary. This is needed
    because of a quirk in how the OP works (it ORs constants on the address
    lines to get the phrases it needs and if they are not zeroes, it will fail
-   in bizarre ways).
+   in bizarre ways). It will also set all <ypos> constants on the correct
+   half-line (as that's how the OP views them).
 
 
 Q: Why can't I define the link addresses for all the objects?

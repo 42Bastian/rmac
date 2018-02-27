@@ -152,7 +152,7 @@ rmac : $(OBJS)
 #
 
 clean:
-	$(rm) $(OBJS) kwgen.o 68kgen.o rmac kwgen 68kgen kwtab.h 68ktab.h mntab.h risckw.h 6502kw.h
+	$(rm) $(OBJS) kwgen.o 68kgen.o rmac kwgen 68kgen kwtab.h 68ktab.h mntab.h risckw.h 6502kw.h opkw.h
 
 #
 # Dependencies

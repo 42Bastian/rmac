@@ -469,8 +469,18 @@ printf("(sect[TEXT].sloc=$%X) --> ", sect[TEXT].sloc);
 						// place to prevent a bad address at link time. :-P As
 						// a consequence of this, the highest address we can
 						// have here is $1FFFF8.
+						uint32_t diffsave = diff;
 						diff = ((diff & 0x001FFFFF) << 11) | olBitsSave;
 						SETBE32(dp, 0, diff);
+						// But we need those 3 bits, otherwise we can get in
+						// trouble with things like OL data that is in the cart
+						// space, and BOOM! So the 2nd phrase of the fixup (it
+						// will *always* have a 2nd phrase) has a few spare
+						// bits, we chuck them in there.
+						uint32_t p2 = GETBE32(dp, 8);
+						p2 &= 0x1FFFFFFF;
+						p2 |= (diffsave & 0x00E00000) << 8;
+						SETBE32(dp, 8, p2);
 					}
 					else					// LONG relocation
 					{
