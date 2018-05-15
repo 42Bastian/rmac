@@ -1315,45 +1315,20 @@ dostring:
 					while (hextab[*ln] >= 0)
 						v = (v << 4) + (int)hextab[*ln++];
 
-					if (*ln == '.')
-					{
-						if (obj_format == BSD)
-						{
-							if ((*(ln + 1) & 0xDF) == 'B')
-							{
-								v &= 0x000000FF;
-								ln += 2;
-							}
-							else if ((*(ln + 1) & 0xDF) == 'W')
-							{
-								v &= 0x0000FFFF;
-								ln += 2;
-							}
-							else if ((*(ln + 1) & 0xDF) == 'L')
-							{
-								v &= 0xFFFFFFFF;
-								ln += 2;
-							}
-						}
-					}
-
 					*tk.u32++ = CONST;
 					*tk.u64++ = v;
 
-					if (obj_format == ALCYON)
+					if (*ln == '.')
 					{
-						if (*ln == '.')
+						if ((*(ln + 1) == 'w') || (*(ln + 1) == 'W'))
 						{
-							if ((*(ln + 1) == 'w') || (*(ln + 1) == 'W'))
-							{
-								*tk.u32++ = DOTW;
-								ln += 2;
-							}
-							else if ((*(ln + 1) == 'l') || (*(ln + 1) == 'L'))
-							{
-								*tk.u32++ = DOTL;
-								ln += 2;
-							}
+							*tk.u32++ = DOTW;
+							ln += 2;
+						}
+						else if ((*(ln + 1) == 'l') || (*(ln + 1) == 'L'))
+						{
+							*tk.u32++ = DOTL;
+							ln += 2;
 						}
 					}
 				}
