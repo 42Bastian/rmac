@@ -15,7 +15,7 @@ addx  NBWL   M_DREG          M_DREG          %1101rrr1ss000rrS   m_abcd    +
 and   NBWL   C_DATA          M_DREG          %1100rrr0sseR1S00   m_ea      +
 -     NBWL   M_DREG          C_ALTMEM        %1100rrr1sseR0S01   m_ea      +
 andi  NBWL   M_IMMED         C_ALTDATA       %00000010sseeeS11   m_ea      +
--     NBWL   M_IMMED         C_ALL030        %00000010sseeeS10   m_ea030   +
+-     NBWL   M_IMMED         C_DATA030       %00000010sseeeS10   m_ea030   +
 -     NB     M_IMMED         M_AM_CCR        %0000001000111100   m_imm8    +
 -     NW     M_IMMED         M_AM_SR         %0000001001111100   m_imm
 
