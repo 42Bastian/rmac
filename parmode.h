@@ -1169,23 +1169,25 @@ CHK_FOR_DISPn:
 			// expr[.L]
 			AMn = ABSL;
 
-			// Defined, absolute values from $FFFF8000..$00007FFF get optimized
-			// to absolute short
-			if (CHECK_OPTS(OPT_ABS_SHORT)
-				&& ((AnEXATTR & (TDB | DEFINED)) == DEFINED)
-				&& (((uint32_t)AnEXVAL + 0x8000) < 0x10000))
-			{
-				AMn = ABSW;
-
-				if (sbra_flag)
-					warn("absolute value from $FFFF8000..$00007FFF optimised to absolute short");
-			}
-
 			// Is .L forced here?
 			if (*tok == DOTL)
 			{
 				tok++;
 				AMn = ABSL;
+			}
+			else
+			{
+				// Defined, absolute values from $FFFF8000..$00007FFF get optimized
+				// to absolute short
+				if (CHECK_OPTS(OPT_ABS_SHORT)
+					&& ((AnEXATTR & (TDB | DEFINED)) == DEFINED)
+					&& (((uint32_t)AnEXVAL + 0x8000) < 0x10000))
+				{
+					AMn = ABSW;
+
+					if (sbra_flag)
+						warn("absolute value from $FFFF8000..$00007FFF optimised to absolute short");
+				}
 			}
 
 			goto AnOK;
