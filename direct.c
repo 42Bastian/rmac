@@ -459,7 +459,7 @@ int d_incbin(void)
 
 	if (*tok != STRING)
 	{
-		error("syntax error; string missing");
+		error("syntax error; file to include missing");
 		return ERROR;
 	}
 

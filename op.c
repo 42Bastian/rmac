@@ -17,23 +17,17 @@
 #include "sect.h"
 #include "token.h"
 
-// Macros to help define things (though largely unnecessary for this assembler)
-#define BITMAP    3100
-#define SCBITMAP  3101
-#define GPUOBJ    3102
-#define BRANCH    3103
-#define STOP      3104
-#define NOP       3105
-#define JUMP      3106
+#define DEF_MO
+#include "opkw.h"		// For MO_* macros
 
 // Function prototypes
-int HandleBitmap(void);
-int HandleScaledBitmap(void);
-int HandleGPUObject(void);
-int HandleBranch(void);
-int HandleStop(void);
-int HandleNOP(void);
-int HandleJump(void);
+static int HandleBitmap(void);
+static int HandleScaledBitmap(void);
+static int HandleGPUObject(void);
+static int HandleBranch(void);
+static int HandleStop(void);
+static int HandleNOP(void);
+static int HandleJump(void);
 
 // OP assembler vars.
 static uint8_t lastObjType;
@@ -55,19 +49,19 @@ int GenerateOPCode(int state)
 
 	switch (state)
 	{
-	case BITMAP:
+	case MO_BITMAP:
 		return HandleBitmap();
-	case SCBITMAP:
+	case MO_SCBITMAP:
 		return HandleScaledBitmap();
-	case GPUOBJ:
+	case MO_GPUOBJ:
 		return HandleGPUObject();
-	case BRANCH:
+	case MO_BRANCH:
 		return HandleBranch();
-	case STOP:
+	case MO_STOP:
 		return HandleStop();
-	case NOP:
+	case MO_NOP:
 		return HandleNOP();
-	case JUMP:
+	case MO_JUMP:
 		return HandleJump();
 	}
 
@@ -104,7 +98,7 @@ static inline uint64_t CheckFlags(char * s)
 // Form: bitmap <data>, <xloc>, <yloc>, <dwidth>, <iwidth>, <iheight>, <bpp>,
 //              <pallete idx>, <flags>, <firstpix>, <pitch>
 //
-int HandleBitmap(void)
+static int HandleBitmap(void)
 {
 	uint64_t xpos = 0;
 	uint64_t ypos = 0;
@@ -203,7 +197,7 @@ int HandleBitmap(void)
 //                <xscale>, <yscale>, <remainder>, <bpp>, <pallete idx>,
 //                <flags>, <firstpix>, <pitch>
 //
-int HandleScaledBitmap(void)
+static int HandleScaledBitmap(void)
 {
 	uint64_t xpos = 0;
 	uint64_t ypos = 0;
@@ -329,7 +323,7 @@ int HandleScaledBitmap(void)
 // Insert GPU object
 // Form: gpuobj <line #>, <userdata> (bits 14-63 of this object)
 //
-int HandleGPUObject(void)
+static int HandleGPUObject(void)
 {
 	uint64_t eval;
 	uint16_t eattr;
@@ -368,7 +362,7 @@ int HandleGPUObject(void)
 //       branch OPFLAG, <link addr>
 //       branch SECHALF, <link addr>
 //
-int HandleBranch(void)
+static int HandleBranch(void)
 {
 	char missingKeyword[] = "missing VC, OPFLAG, or SECHALF in branch";
 	uint32_t cc = 0;
@@ -431,7 +425,7 @@ int HandleBranch(void)
 // Insert a stop object
 // Form: stop
 //
-int HandleStop(void)
+static int HandleStop(void)
 {
 	lastObjType = 4;
 	D_quad(4LL);
@@ -444,7 +438,7 @@ int HandleStop(void)
 // Insert a phrase sized "NOP" in the object list (psuedo-op)
 // Form: nop
 //
-int HandleNOP(void)
+static int HandleNOP(void)
 {
 	uint64_t eval = (orgaddr + 8) & 0x3FFFF8;
 	// This is "branch if VC > 2047". Branch addr is next phrase, so either way
@@ -462,7 +456,7 @@ int HandleNOP(void)
 // Insert an unconditional jump in the object list (psuedo-op)
 // Form: jump <link addr>
 //
-int HandleJump(void)
+static int HandleJump(void)
 {
 	uint64_t eval;
 	uint16_t eattr;
