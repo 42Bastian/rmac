@@ -91,12 +91,12 @@ void InitSection(void)
 //
 void MakeSection(int sno, uint16_t attr)
 {
-	SECT * p = &sect[sno];
-	p->scattr = attr;
-	p->sloc = 0;
-	p->orgaddr = 0;
-	p->scode = p->sfcode = NULL;
-	p->sfix = p->sffix = NULL;
+	SECT * sp = &sect[sno];
+	sp->scattr = attr;
+	sp->sloc = 0;
+	sp->orgaddr = 0;
+	sp->scode = sp->sfcode = NULL;
+	sp->sfix = sp->sffix = NULL;
 }
 
 
@@ -108,15 +108,15 @@ void SwitchSection(int sno)
 {
 	CHUNK * cp;
 	cursect = sno;
-	SECT * p = &sect[sno];
+	SECT * sp = &sect[sno];
 
 	m6502 = (sno == M6502);	// Set 6502-mode flag
 
 	// Copy section vars
-	scattr = p->scattr;
-	sloc = p->sloc;
-	scode = p->scode;
-	orgaddr = p->orgaddr;
+	scattr = sp->scattr;
+	sloc = sp->sloc;
+	scode = sp->scode;
+	orgaddr = sp->orgaddr;
 
 	// Copy code chunk vars
 	if ((cp = scode) != NULL)
@@ -126,6 +126,12 @@ void SwitchSection(int sno)
 		chptr = cp->chptr + ch_size;
 
 		// For 6502 mode, add the last org'd address
+// Why?
+/*
+Because the way this is set up it treats the 6502 assembly space as a single 64K space (+ 16 bytes, for some reason) and just bobbles around inside that space and uses a stack of org "pointers" to show where the data ended up.
+
+This is a piss poor way to handle things, and for fucks sake, we can do better than this!
+*/
 		if (m6502)
 			chptr = cp->chptr + orgaddr;
 	}
@@ -139,11 +145,11 @@ void SwitchSection(int sno)
 //
 void SaveSection(void)
 {
-	SECT * p = &sect[cursect];
+	SECT * sp = &sect[cursect];
 
-	p->scattr = scattr;				// Bailout section vars
-	p->sloc = sloc;
-	p->orgaddr = orgaddr;
+	sp->scattr = scattr;			// Bailout section vars
+	sp->sloc = sloc;
+	sp->orgaddr = orgaddr;
 
 	if (scode != NULL)				// Bailout code chunk
 		scode->ch_size = ch_size;
@@ -710,7 +716,6 @@ int ResolveFixups(int sno)
 
 				if (fup->orgaddr)
 					addr = fup->orgaddr;
-
 
 				eval = (quad & 0xFFFFFC0000FFFFFFLL) | ((addr & 0x3FFFF8) << 21);
 			}

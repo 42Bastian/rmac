@@ -1,7 +1,7 @@
 68kgen
 68kgen.o
 68ktab.h
-68kmn
+68k.tab
 6502kw.h
 opkw.h
 *.o

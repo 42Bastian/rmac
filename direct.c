@@ -218,10 +218,11 @@ int d_org(void)
 {
 	uint64_t address;
 
-	if (!rgpu && !rdsp && !robjproc && !m6502)
-		return error(".org permitted only in GPU/DSP/OP and 6502 sections");
+	if (!rgpu && !rdsp && !robjproc && !m6502 && !dsp56001)
+		return error(".org permitted only in GPU/DSP/OP, 56001 and 6502 sections");
 
-	if (abs_expr(&address) == ERROR)
+	// M56K can leave the expression off the org for some reason :-/
+	if ((abs_expr(&address) == ERROR) && !dsp56001)
 	{
 		error("cannot determine org'd address");
 		return ERROR;
@@ -232,9 +233,9 @@ int d_org(void)
 		orgaddr = address;
 		orgactive = 1;
 	}
-	else
+	else if (m6502)
 	{
-		// 6502.  We also kludge `lsloc' so the listing generator doesn't try
+		// 6502.  We also kludge 'lsloc' so the listing generator doesn't try
 		// to spew out megabytes.
 		if (address > 0xFFFF)
 			return error(range_error);
@@ -251,9 +252,12 @@ int d_org(void)
 		chptr = scode->chptr + address;
 		orgaddr = address;
 		orgactive = 1;
-		at_eol();
+	}
+	else if (dsp56001)
+	{
 	}
 
+	at_eol();
 	return 0;
 }
 
@@ -290,25 +294,39 @@ int d_print(void)
 		case '/':
 			formatting = 1;
 
-			if (tok[1] != SYMBOL)
+			// "X" & "L" get tokenized now... :-/ Probably should look into preventing this kind of thing from happening (was added with DSP56K code)
+			if ((tok[1] != SYMBOL) && (tok[1] != KW_L) && (tok[1] != KW_X))
 				goto token_err;
 
-//			strcpy(prntstr, (char *)tok[2]);
-			strcpy(prntstr, string[tok[2]]);
-
-			switch(prntstr[0])
+			if (tok[1] == KW_L)
 			{
-			case 'l': case 'L': wordlong = 1; break;
-			case 'w': case 'W': wordlong = 0; break;
-			case 'x': case 'X': outtype  = 0; break;
-			case 'd': case 'D': outtype  = 1; break;
-			case 'u': case 'U': outtype  = 2; break;
-			default:
-				error("unknown print format flag");
-				return ERROR;
+				wordlong = 1;
+				tok += 2;
+			}
+			else if (tok[1] == KW_X)
+			{
+				outtype = 0;
+				tok += 2;
+			}
+			else
+			{
+				strcpy(prntstr, string[tok[2]]);
+
+				switch(prntstr[0])
+				{
+				case 'l': case 'L': wordlong = 1; break;
+				case 'w': case 'W': wordlong = 0; break;
+				case 'x': case 'X': outtype  = 0; break;
+				case 'd': case 'D': outtype  = 1; break;
+				case 'u': case 'U': outtype  = 2; break;
+				default:
+					error("unknown print format flag");
+					return ERROR;
+				}
+
+				tok += 3;
 			}
 
-			tok += 3;
 			break;
 		case ',':
 			tok++;
@@ -349,7 +367,7 @@ int d_print(void)
 	return 0;
 
 token_err:
-	error("illegal print token");
+	error("illegal print token [@ '%s']", prntstr);
 	return ERROR;
 }
 
@@ -958,7 +976,7 @@ int d_ds(WORD siz)
 
 	uint64_t eval;
 
-	if (cursect != M6502)
+	if ((cursect & (M6502 | M56KPXYL)) == 0)
 	{
 		if ((siz != SIZB) && (sloc & 1))	// Automatic .even
 			auto_even();
@@ -1036,7 +1054,7 @@ int d_dc(WORD siz)
 				for(p=string[tok[1]]; *p!=EOS; p++)
 					D_byte(*p);
 			}
-			else if(*tok == STRINGA8)
+			else if (*tok == STRINGA8)
 			{
 				for(p=string[tok[1]]; *p!=EOS; p++)
 					D_byte(strtoa8[*p]);
@@ -1496,7 +1514,7 @@ int d_nlist(void)
 //
 int d_68000(void)
 {
-	rgpu = rdsp = robjproc = 0;
+	rgpu = rdsp = robjproc = dsp56001 = 0;
 	// Switching from gpu/dsp sections should reset any ORG'd Address
 	orgactive = 0;
 	orgwarning = 0;
@@ -1586,11 +1604,18 @@ int d_nofpu(void)
 
 
 //
-// DSP56001
+// .56001 - Switch to DSP56001 assembler
 //
 int d_56001(void)
 {
-	return error("Not yet, child. Be patient.");
+	dsp56001 = 1;
+	rgpu = rdsp = robjproc = 0;
+	SaveSection();
+
+	if (obj_format == LOD || obj_format == P56)
+		SwitchSection(M56001P);
+
+	return 0;
 }
 
 
@@ -1615,6 +1640,7 @@ int d_gpu(void)
 	rgpu = 1;			// Set GPU assembly
 	rdsp = 0;			// Unset DSP assembly
 	robjproc = 0;		// Unset OP assembly
+	dsp56001 = 0;		// Unset 56001 assembly
 	regbank = BANK_N;	// Set no default register bank
 	return 0;
 }
@@ -1641,6 +1667,7 @@ int d_dsp(void)
 	rdsp = 1;			// Set DSP assembly
 	rgpu = 0;			// Unset GPU assembly
 	robjproc = 0;		// Unset OP assembly
+	dsp56001 = 0;		// Unset 56001 assembly
 	regbank = BANK_N;	// Set no default register bank
 	return 0;
 }
@@ -1913,6 +1940,7 @@ int d_objproc(void)
 	robjproc = 1;		// Set OP assembly
 	rgpu = 0;			// Unset GPU assembly
 	rdsp = 0;			// Unset DSP assembly
+	dsp56001 = 0;		// Unset 56001 assembly
 	return OK;
 }
 

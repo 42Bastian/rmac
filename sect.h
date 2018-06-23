@@ -10,6 +10,7 @@
 #define __SECT_H__
 
 #include "rmac.h"
+#include "riscasm.h"
 
 // Macros to deposit code in the current section (in Big Endian)
 #define D_byte(b)	{chcheck(1);*chptr++=(uint8_t)(b); sloc++; ch_size++; \
@@ -38,7 +39,7 @@
 	sloc+=2; ch_size+=2;if(orgactive) orgaddr += 2;}
 
 // Macro for the 56001. Word size on this device is 24 bits wide. I hope that
-// orgaddr += 1 means that the addresses in the device reflect this.
+// orgaddr += 1 means that the addresses in the device reflect this. [A: Yes.]
 #define D_dsp(w)	{chcheck(3);*chptr++=(uint8_t)(w>>16); \
 	*chptr++=(uint8_t)(w>>8); *chptr++=(uint8_t)w; \
 	sloc+=1; ch_size += 3; if(orgactive) orgaddr += 1; \
@@ -77,6 +78,8 @@
 #define FU_BYTEH     0x0008		// Fixup 6502 high byte of immediate word
 #define FU_BYTEL     0x0009		// Fixup 6502 low byte of immediate word
 #define FU_QUAD      0x000A		// Fixup quad-word (8 bytes)
+#define FU_56001     0x000B		// Generic fixup code for all 56001 modes
+#define FU_56001_B   0x000C		// Generic fixup code for all 56001 modes (ggn: I have no shame)
 
 #define FU_SEXT      0x0010		// Ok to sign extend
 #define FU_PCREL     0x0020		// Subtract PC first
@@ -99,13 +102,33 @@
 #define FU_DONE      0x8000		// Fixup has been done
 
 // FPU fixups
-#define FU_FLOATSING 0x000B		// Fixup 32-bit float
-#define FU_FLOATDOUB 0x000C		// Fixup 64-bit float
-#define FU_FLOATEXT  0x000D		// Fixup 96-bit float
+#define FU_FLOATSING 0x000D		// Fixup 32-bit float
+#define FU_FLOATDOUB 0x000E		// Fixup 64-bit float
+#define FU_FLOATEXT  0x000F		// Fixup 96-bit float
 
 // OP fixups
 #define FU_OBJLINK   0x10000	// Fixup OL link addr (bits 24-42, drop last 3)
 #define FU_OBJDATA   0x20000	// Fixup OL data addr (bits 43-63, drop last 3)
+
+// DSP56001 fixups
+// TODO: Sadly we don't have any spare bits left inside a 16-bit word
+// so we use the 2nd nibble as control code and
+// stick $B or $C in the lower nibble - then it's picked up as
+// FU_56001 by the fixup routine and then a second switch
+// selects fixup mode. Since we now have 32 bits, we can fix this!
+// [N.B.: This isn't true anymore, we now have 32 bits! :-P]
+#define FU_DSPIMM5    0x090B	// Fixup  5-bit immediate
+#define FU_DSPADR12   0x0A0B	// Fixup 12-bit address
+#define FU_DSPADR24   0x0B0B	// Fixup 24-bit address
+#define FU_DSPADR16   0x0C0B	// Fixup 24-bit address
+#define FU_DSPIMM12   0x0D0B	// Fixup 12-bit immediate
+#define FU_DSPIMM24   0x0E0B	// Fixup 24-bit immediate
+#define FU_DSPIMM8    0x0F0B	// Fixup  8-bit immediate
+#define FU_DSPADR06   0x090C	// Fixup  6-bit address
+#define FU_DSPPP06    0x0A0C	// Fixup  6 bit pp address
+#define FU_DSPIMMFL8  0x0B0C	// Fixup  8-bit immediate float
+#define FU_DSPIMMFL16 0x0C0C	// Fixup 16-bit immediate float
+#define FU_DSPIMMFL24 0x0D0C	// Fixup 24-bit immediate float
 
 
 // Chunks are used to hold generated code and fixup records

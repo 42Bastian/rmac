@@ -80,7 +80,7 @@ void procln(int namc, char ** namv)
 	// alias for previous entry
 	if (namc == 1)
 	{
-		fprintf(kfp, "%s\t%d\n", namv[0], kwnum - 1 + 1000);
+		fprintf(kfp, "%s\t%d\n", namv[0], kwnum - 1 + 2000);
 		return;
 	}
 
@@ -92,21 +92,16 @@ void procln(int namc, char ** namv)
 
 	// output keyword name
 	if (*namv[0] != '-')
-		fprintf(kfp, "%s\t%d\n", namv[0], kwnum + 1000);
+		fprintf(kfp, "%s\t%d\n", namv[0], kwnum + 2000);
 
 	printf("/*%4d %-6s*/  {", kwnum, namv[0]);
 
-	if (*namv[1] == '!')
-		printf("CGSPECIAL");
-	else for(char * s=namv[1], i=0; *s; s++)
-		printf("%sSIZ%c", (i++ ? "|" : ""), *s);
-
-	printf(", %s, %s, ", namv[2], namv[3]);
+	printf("%s, %s, %s, ", namv[1], namv[2], namv[3]);
 
 	// enforce little fascist percent signs
 	if (*namv[4] == '%')
 	{
-		for(i=1, j=0; i<17; i++)
+		for(i=1, j=0; i<25; i++)
 		{
 			j <<= 1;
 
@@ -114,12 +109,12 @@ void procln(int namc, char ** namv)
 				j++;
 		}
 
-		printf("0x%04x, ", j);
+		printf("0x%06x, ", j);
 	}
 	else
 		printf("%s, ", namv[4]);
 
-	if (namc == 7 && *namv[6] == '+')
+	if (namc >= 7 && *namv[6] == '+')
 		printf("%d, ", kwnum + 1);
 	else
 		printf("0, ");

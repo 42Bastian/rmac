@@ -10,6 +10,8 @@
 #include "6502.h"
 #include "amode.h"
 #include "direct.h"
+#include "dsp56k_amode.h"
+#include "dsp56k_mach.h"
 #include "error.h"
 #include "expr.h"
 #include "listing.h"
@@ -38,6 +40,11 @@
 #define DEF_MO					// Include OP keyword definitions
 #define DECL_MO					// Include OP keyword state machine tables
 #include "opkw.h"
+
+#define DEF_DSP					// Include DSP56K keywords definitions
+#define DECL_DSP				// Include DSP56K keyword state machine tables
+#include "dsp56kkw.h"
+
 
 IFENT * ifent;					// Current ifent
 static IFENT ifent0;			// Root ifent
@@ -696,6 +703,93 @@ When checking to see if it's already been equated, issue a warning.
 		}
 	}
 
+	// If we are in 56K mode and still in need of a mnemonic then search for one
+	if (dsp56001 && ((state < 0) || (state >= 1000)))
+	{
+		for(state=0, p=opname; state>=0;)
+		{
+			j = dspbase[state] + (int)tolowertab[*p];
+
+			// Reject, character doesn't match
+			if (dspcheck[j] != state)
+			{
+				state = -1;					// No match
+				break;
+			}
+
+			// Must accept or reject at EOS
+			if (!*++p)
+			{
+				state = dspaccept[j];		// (-1 on no terminal match)
+				break;
+			}
+
+			state = dsptab[j];
+		}
+
+		// Call DSP code generator if we found a mnemonic
+		if (state >= 2000)
+		{
+			LONG parcode;
+			int operands;
+			MNTABDSP * md = &dsp56k_machtab[state - 2000];
+			deposit_extra_ea = 0;   // Assume no extra word needed
+
+			if (md->mnfunc == dsp_mult)
+			{
+				// Special case for multiplication instructions: they require
+				// 3 operands
+				if ((operands = dsp_amode(3)) == ERROR)
+					goto loop;
+			}
+			else if ((md->mnattr & PARMOVE) && md->mn0 != M_AM_NONE)
+			{
+				if (dsp_amode(2) == ERROR)
+					goto loop;
+			}
+			else if ((md->mnattr & PARMOVE) && md->mn0 == M_AM_NONE)
+			{
+				// Instructions that have parallel moves but use no operands
+				// (probably only move). In this case, don't parse addressing
+				// modes--just go straight to parallel parse
+				dsp_am0 = dsp_am1 = M_AM_NONE;
+			}
+			else
+			{
+				// Non parallel move instructions can have up to 4 parameters
+				// (well, only tcc instructions really)
+				if ((operands = dsp_amode(4)) == ERROR)
+					goto loop;
+
+				if (operands == 4)
+				{
+					dsp_tcc4(md->mninst);
+					goto loop;
+				}
+			}
+
+			if (md->mnattr & PARMOVE)
+			{
+				// Check for parallel moves
+				if ((parcode = parmoves(dsp_a1reg)) == ERROR)
+					goto loop;
+			}
+			else
+			{
+				if (*tok != EOL)
+					error("parallel moves not allowed with this instruction");
+
+				parcode = 0;
+			}
+
+			while ((dsp_am0 & md->mn0) == 0 || (dsp_am1 & md->mn1) == 0)
+				md = &dsp56k_machtab[md->mncont];
+
+			(*md->mnfunc)(md->mninst | (parcode << 8));
+			goto loop;
+		}
+	}
+
 	// Invoke macro or complain about bad mnemonic
 	if (state < 0)
 	{
@@ -760,16 +854,11 @@ When checking to see if it's already been equated, issue a warning.
 	// Keep a backup of chptr (used for optimisations during codegen)
 	chptr_opcode = chptr;
 
-	for(;;)
-	{
-		if ((m->mnattr & siz) && (amsk0 & m->mn0) != 0 && (amsk1 & m->mn1) != 0)
-		{
-			(*m->mnfunc)(m->mninst, siz);
-			goto loop;
-		}
-
+	while ((m->mnattr & siz) && (amsk0 & m->mn0) == 0 || (amsk1 & m->mn1) == 0)
 		m = &machtab[m->mncont];
-	}
+
+	(*m->mnfunc)(m->mninst, siz);
+	goto loop;
 }
 
 

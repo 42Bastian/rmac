@@ -219,7 +219,12 @@ PTR
 #define DATA         0x0002		// Relative to data
 #define BSS          0x0004		// Relative to BSS
 #define M6502        0x0008		// 6502/microprocessor (absolute)
+#define M56001P      0x0010		// DSP 56001 Program RAM
+#define M56001X      0x0020		// DSP 56001 X RAM
+#define M56001Y      0x0040		// DSP 56001 Y RAM
+#define M56001L      0x0080		// DSP 56001 L RAM
 #define TDB          (TEXT|DATA|BSS)	// Mask for text+data+bss
+#define M56KPXYL     (M56001P|M56001X|M56001Y|M56001L)	// Mask for 56K stuff
 
 // Sizes
 #define SIZB         0x0001		// .b

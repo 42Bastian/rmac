@@ -1,6 +1,6 @@
 #
-# RMAC - Reboot's Macro Assembler for the Atari Jaguar
-# Copyright (C) 199x Landon Dyer, 2011 Reboot & Friends
+# RMAC - Reboot's Macro Assembler for all Atari computers
+# Copyright (C) 199x Landon Dyer, 2011-2018 Reboot & Friends
 # MAKEFILE for *nix
 #
 
@@ -20,22 +20,21 @@ STD := gnu99
 endif
 
 
-rm = /bin/rm -f
+RM = /bin/rm -f
 CC = $(CROSS)gcc
 HOSTCC = gcc
 
 #CFLAGS = -std=$(STD) -D_DEFAULT_SOURCE -g -D__GCCUNIX__ -I. -O2 -MMD
 CFLAGS = -std=$(STD) -D_DEFAULT_SOURCE -g -D__GCCUNIX__ -I. -O2
 
-SRCS = 6502.c amode.c debug.c direct.c eagen.c error.c expr.c fltpoint.c listing.c mach.c macro.c mark.c object.c op.c procln.c riscasm.c rmac.c sect.c symbol.c token.c
-
-OBJS = 6502.o amode.o debug.o direct.o eagen.o error.o expr.o fltpoint.o listing.o mach.o macro.o mark.o object.o op.o procln.o riscasm.o rmac.o sect.o symbol.o token.o
+OBJS = 6502.o amode.o debug.o direct.o dsp56k.o dsp56k_amode.o dsp56k_mach.o eagen.o error.o expr.o fltpoint.o listing.o mach.o macro.o mark.o object.o op.o procln.o riscasm.o rmac.o sect.o symbol.o token.o
 
 #
 # Build everything
 #
 
-all : mntab.h 68ktab.h kwtab.h risckw.h 6502kw.h opkw.h rmac
+#all: mntab.h 68ktab.h kwtab.h risckw.h 6502kw.h opkw.h dsp56ktab.h rmac
+all: rmac
 	@echo
 	@echo "Don't forget to bump the version number before commiting!"
 	@echo
@@ -45,106 +44,48 @@ all : mntab.h 68ktab.h kwtab.h risckw.h 6502kw.h opkw.h rmac
 # definitions
 #
 
-mntab.h : mntab 68kmn kwgen
-	cat mntab 68kmn | ./kwgen mn >mntab.h
+68ktab.h 68k.tab: 68k.mch 68kgen
+	./68kgen 68k.tab <68k.mch >68ktab.h
 
-68ktab.h 68kmn : 68ktab 68ktab 68kgen
-	./68kgen 68kmn <68ktab >68ktab.h
+dsp56ktab.h dsp56k.tab: dsp56k.mch dsp56kgen
+	./dsp56kgen dsp56k.tab <dsp56k.mch >dsp56ktab.h
 
 
-kwtab.h : kwtab kwgen
-	./kwgen kw <kwtab >kwtab.h
+mntab.h: direct.tab 68k.tab kwgen
+	cat direct.tab 68k.tab | ./kwgen mn >mntab.h
 
-6502kw.h : 6502.tbl kwgen
-	./kwgen mp <6502.tbl >6502kw.h
+kwtab.h: kw.tab kwgen
+	./kwgen kw <kw.tab >kwtab.h
 
-risckw.h : kwtab kwgen
-	./kwgen mr <risctab >risckw.h
+6502kw.h: 6502.tab kwgen
+	./kwgen mp <6502.tab >6502kw.h
 
-opkw.h : op.tab kwgen
+risckw.h: risc.tab kwgen
+	./kwgen mr <risc.tab >risckw.h
+
+opkw.h: op.tab kwgen
 	./kwgen mo <op.tab >opkw.h
+
+# Looks like this is not needed...
+dsp56kkw.h: dsp56k.tab kwgen
+	./kwgen dsp <dsp56k.tab >dsp56kkw.h
 
 #
 # Build tools
 #
 
-kwgen.o : kwgen.c
-	$(HOSTCC) $(CFLAGS) -c kwgen.c
-
-kwgen : kwgen.o
-	$(HOSTCC) $(CFLAGS) -o kwgen kwgen.o
-
-68kgen.o : 68kgen.c
-	$(HOSTCC) $(CFLAGS) -c 68kgen.c
-
-68kgen : 68kgen.o
-	$(HOSTCC) $(CFLAGS) -o 68kgen 68kgen.o
+%gen: %gen.c
+	$(HOSTCC) $(CFLAGS) -c $<
+	$(HOSTCC) $(CFLAGS) -o $*gen $<
 
 #
 # Build RMAC executable
 #
 
-6502.o : 6502.c 6502.h
-	$(CC) $(CFLAGS) -c 6502.c
+%.o: %.c %.h
+	$(CC) $(CFLAGS) -c $<
 
-amode.o : amode.c amode.h
-	$(CC) $(CFLAGS) -c amode.c
-
-debug.o : debug.c debug.h
-	$(CC) $(CFLAGS) -c debug.c
-
-direct.o : direct.c direct.h
-	$(CC) $(CFLAGS) -c direct.c
-
-eagen.o : eagen.c eagen.h eagen0.c
-	$(CC) $(CFLAGS) -c eagen.c
-
-error.o : error.c error.h
-	$(CC) $(CFLAGS) -c error.c
-
-expr.o : expr.c expr.h
-	$(CC) $(CFLAGS) -c expr.c
-
-fltpoint.o : fltpoint.c fltpoint.h
-	$(CC) $(CFLAGS) -c fltpoint.c
-
-listing.o : listing.c listing.h
-	$(CC) $(CFLAGS) -c listing.c
-
-mach.o : mach.c mach.h
-	$(CC) $(CFLAGS) -c mach.c
-
-macro.o : macro.c macro.h
-	$(CC) $(CFLAGS) -c macro.c
-
-mark.o : mark.c mark.h
-	$(CC) $(CFLAGS) -c mark.c
-
-object.o : object.c object.h
-	$(CC) $(CFLAGS) -c object.c
-
-op.o : op.c op.h
-	$(CC) $(CFLAGS) -c op.c
-
-procln.o : procln.c procln.h
-	$(CC) $(CFLAGS) -c procln.c
-
-riscasm.o : riscasm.c riscasm.h
-	$(CC) $(CFLAGS) -c riscasm.c
-
-rmac.o : rmac.c rmac.h
-	$(CC) $(CFLAGS) -c rmac.c
-
-sect.o : sect.c sect.h
-	$(CC) $(CFLAGS) -c sect.c
-
-symbol.o : symbol.c symbol.h
-	$(CC) $(CFLAGS) -c symbol.c
-
-token.o : token.c token.h
-	$(CC) $(CFLAGS) -c token.c
-
-rmac : $(OBJS)
+rmac: $(OBJS)
 	$(CC) $(CFLAGS) -o rmac $(OBJS) -lm
 
 #
@@ -152,30 +93,37 @@ rmac : $(OBJS)
 #
 
 clean:
-	$(rm) $(OBJS) kwgen.o 68kgen.o rmac kwgen 68kgen kwtab.h 68ktab.h mntab.h risckw.h 6502kw.h opkw.h
+	$(RM) $(OBJS) kwgen.o 68kgen.o rmac kwgen 68kgen 68k.tab kwtab.h 68ktab.h mntab.h risckw.h 6502kw.h opkw.h dsp56kgen dsp56kgen.o dsp56k.tab dsp56kkw.h dsp56ktab.h
 
 #
 # Dependencies
 #
 6502.o: 6502.c direct.h rmac.h symbol.h token.h expr.h error.h mach.h \
- procln.h riscasm.h sect.h
-68kgen.o: 68kgen.c
+ procln.h riscasm.h sect.h kwtab.h
+68kgen: 68kgen.c
 amode.o: amode.c amode.h rmac.h symbol.h error.h expr.h mach.h procln.h \
- token.h sect.h kwtab.h mntab.h parmode.h
+ token.h sect.h riscasm.h kwtab.h mntab.h parmode.h
 debug.o: debug.c debug.h rmac.h symbol.h amode.h direct.h token.h expr.h \
- mark.h sect.h
+ mark.h sect.h riscasm.h
 direct.o: direct.c direct.h rmac.h symbol.h token.h 6502.h amode.h \
  error.h expr.h fltpoint.h listing.h mach.h macro.h mark.h procln.h \
  riscasm.h sect.h kwtab.h
+dsp56k.o: dsp56k.c rmac.h symbol.h dsp56k.h sect.h riscasm.h
+dsp56k_amode.o: dsp56k_amode.c dsp56k_amode.h rmac.h symbol.h amode.h \
+ error.h token.h expr.h procln.h sect.h riscasm.h kwtab.h mntab.h
+dsp56k_mach.o: dsp56k_mach.c dsp56k_mach.h rmac.h symbol.h dsp56k_amode.h \
+ amode.h direct.h token.h dsp56k.h sect.h riscasm.h error.h kwtab.h \
+ dsp56ktab.h
+dsp56kgen: dsp56kgen.c
 eagen.o: eagen.c eagen.h rmac.h symbol.h amode.h error.h fltpoint.h \
  mach.h mark.h riscasm.h sect.h token.h eagen0.c
 error.o: error.c error.h rmac.h symbol.h listing.h token.h
 expr.o: expr.c expr.h rmac.h symbol.h direct.h token.h error.h listing.h \
  mach.h procln.h riscasm.h sect.h kwtab.h
 fltpoint.o: fltpoint.c fltpoint.h
-kwgen.o: kwgen.c
+kwgen: kwgen.c
 listing.o: listing.c listing.h rmac.h symbol.h error.h procln.h token.h \
- sect.h version.h
+ sect.h riscasm.h version.h
 mach.o: mach.c mach.h rmac.h symbol.h amode.h direct.h token.h eagen.h \
  error.h expr.h procln.h riscasm.h sect.h kwtab.h 68ktab.h
 macro.o: macro.c macro.h rmac.h symbol.h debug.h direct.h token.h error.h \
@@ -183,20 +131,20 @@ macro.o: macro.c macro.h rmac.h symbol.h debug.h direct.h token.h error.h \
 mark.o: mark.c mark.h rmac.h symbol.h error.h object.h riscasm.h sect.h
 object.o: object.c object.h rmac.h symbol.h 6502.h direct.h token.h \
  error.h mark.h riscasm.h sect.h
-op.o: op.c op.h rmac.h symbol.h direct.h token.h error.h expr.h \
- fltpoint.h mark.h procln.h riscasm.h sect.h
+op.o: op.c op.h direct.h rmac.h symbol.h token.h error.h expr.h \
+ fltpoint.h mark.h procln.h riscasm.h sect.h opkw.h
 procln.o: procln.c procln.h rmac.h symbol.h token.h 6502.h amode.h \
- direct.h error.h expr.h listing.h mach.h macro.h op.h riscasm.h sect.h \
- kwtab.h mntab.h risckw.h 6502kw.h opkw.h
+ direct.h dsp56kkw.h error.h expr.h listing.h mach.h macro.h op.h riscasm.h \
+ sect.h kwtab.h mntab.h risckw.h 6502kw.h opkw.h
 riscasm.o: riscasm.c riscasm.h rmac.h symbol.h amode.h direct.h token.h \
  error.h expr.h mark.h procln.h sect.h risckw.h kwtab.h
 rmac.o: rmac.c rmac.h symbol.h 6502.h debug.h direct.h token.h error.h \
  expr.h listing.h mark.h macro.h object.h procln.h riscasm.h sect.h \
  version.h
-sect.o: sect.c sect.h rmac.h symbol.h 6502.h direct.h token.h error.h \
- expr.h listing.h mach.h mark.h riscasm.h
+sect.o: sect.c sect.h rmac.h symbol.h riscasm.h 6502.h direct.h token.h \
+ error.h expr.h listing.h mach.h mark.h
 symbol.o: symbol.c symbol.h error.h rmac.h listing.h object.h procln.h \
  token.h
 token.o: token.c token.h rmac.h symbol.h direct.h error.h macro.h \
- procln.h sect.h kwtab.h
+ procln.h sect.h riscasm.h kwtab.h
 

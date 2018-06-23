@@ -21,6 +21,9 @@
 #include "sect.h"
 #include "token.h"
 
+#define DEF_KW
+#include "kwtab.h"
+
 #define	UPSEG_SIZE	0x10010L // size of 6502 code buffer, 64K+16bytes
 
 // Internal vars
@@ -50,83 +53,83 @@ char strtoa8[128];	// ASCII to Atari 800 internal conversion table
 #define A65_IMMEDH  12
 #define A65_IMMEDL  13
 
-#define	NMACHOPS 56		// Number of machine ops
-#define	NMODES	14		// Number of addressing modes
-#define	NOP	0xEA		// 6502 NOP instruction
-#define	ILLEGAL	0xFF	// 'Illegal instr' marker
-#define END65	0xFF	// End-of-an-instr-list
+#define	NMACHOPS	56		// Number of machine ops
+#define	NMODES		14		// Number of addressing modes
+#define	NOP			0xEA	// 6502 NOP instruction
+#define	ILLEGAL		0xFF	// 'Illegal instr' marker
+#define END65		0xFF	// End-of-an-instr-list
 
 static char imodes[] =
 {
-	A65_IMMED, 0x69, A65_ABS, 0x6d, A65_ZP, 0x65, A65_INDX, 0x61, A65_INDY, 0x71,
-	A65_ZPX, 0x75, A65_ABSX, 0x7d, A65_ABSY, 0x79, END65,
-	A65_IMMED, 0x29, A65_ABS, 0x2d, A65_ZP, 0x25, A65_INDX, 0x21, A65_INDY, 0x31,
-	A65_ZPX, 0x35, A65_ABSX, 0x3d, A65_ABSY, 0x39, END65,
-	A65_ABS, 0x0e, A65_ZP, 0x06, A65_IMPL, 0x0a, A65_ZPX, 0x16, A65_ABSX,
-	0x1e, END65,
+	A65_IMMED, 0x69, A65_ABS, 0x6D, A65_ZP, 0x65, A65_INDX, 0x61, A65_INDY, 0x71,
+	A65_ZPX, 0x75, A65_ABSX, 0x7D, A65_ABSY, 0x79, END65,
+	A65_IMMED, 0x29, A65_ABS, 0x2D, A65_ZP, 0x25, A65_INDX, 0x21, A65_INDY, 0x31,
+	A65_ZPX, 0x35, A65_ABSX, 0x3D, A65_ABSY, 0x39, END65,
+	A65_ABS, 0x0E, A65_ZP, 0x06, A65_IMPL, 0x0A, A65_ZPX, 0x16, A65_ABSX,
+	0x1E, END65,
 	A65_REL, 0x90, END65,
-	A65_REL, 0xb0, END65,
-	A65_REL, 0xf0, END65,
-	A65_REL, 0xd0, END65,
+	A65_REL, 0xB0, END65,
+	A65_REL, 0xF0, END65,
+	A65_REL, 0xD0, END65,
 	A65_REL, 0x30, END65,
 	A65_REL, 0x10, END65,
 	A65_REL, 0x50, END65,
 	A65_REL, 0x70, END65,
-	A65_ABS, 0x2c, A65_ZP, 0x24, END65,
+	A65_ABS, 0x2C, A65_ZP, 0x24, END65,
 	A65_IMPL, 0x00, END65,
 	A65_IMPL, 0x18, END65,
-	A65_IMPL, 0xd8, END65,
+	A65_IMPL, 0xD8, END65,
 	A65_IMPL, 0x58, END65,
-	A65_IMPL, 0xb8, END65,
-	A65_IMMED, 0xc9, A65_ABS, 0xcd, A65_ZP, 0xc5, A65_INDX, 0xc1, A65_INDY, 0xd1,
-	A65_ZPX, 0xd5, A65_ABSX, 0xdd, A65_ABSY, 0xd9, END65,
-	A65_IMMED, 0xe0, A65_ABS, 0xec, A65_ZP, 0xe4, END65,
-	A65_IMMED, 0xc0, A65_ABS, 0xcc, A65_ZP, 0xc4, END65,
-	A65_ABS, 0xce, A65_ZP, 0xc6, A65_ZPX, 0xd6, A65_ABSX, 0xde, END65,
-	A65_IMPL, 0xca, END65,
+	A65_IMPL, 0xB8, END65,
+	A65_IMMED, 0xC9, A65_ABS, 0xCD, A65_ZP, 0xC5, A65_INDX, 0xC1, A65_INDY, 0xD1,
+	A65_ZPX, 0xD5, A65_ABSX, 0xDD, A65_ABSY, 0xD9, END65,
+	A65_IMMED, 0xE0, A65_ABS, 0xEC, A65_ZP, 0xE4, END65,
+	A65_IMMED, 0xC0, A65_ABS, 0xCC, A65_ZP, 0xC4, END65,
+	A65_ABS, 0xCE, A65_ZP, 0xC6, A65_ZPX, 0xD6, A65_ABSX, 0xDE, END65,
+	A65_IMPL, 0xCA, END65,
 	A65_IMPL, 0x88, END65,
-	A65_IMMED, 0x49, A65_ABS, 0x4d, A65_ZP, 0x45, A65_INDX, 0x41, A65_INDY, 0x51,
-	A65_ZPX, 0x55, A65_ABSX, 0x5d, A65_ABSY, 0x59, END65,
-	A65_ABS, 0xee, A65_ZP, 0xe6, A65_ZPX, 0xf6, A65_ABSX, 0xfe, END65,
-	A65_IMPL, 0xe8, END65,
-	A65_IMPL, 0xc8, END65,
-	A65_ABS, 0x4c, A65_IND, 0x6c, END65,
+	A65_IMMED, 0x49, A65_ABS, 0x4D, A65_ZP, 0x45, A65_INDX, 0x41, A65_INDY, 0x51,
+	A65_ZPX, 0x55, A65_ABSX, 0x5D, A65_ABSY, 0x59, END65,
+	A65_ABS, 0xEE, A65_ZP, 0xE6, A65_ZPX, 0xF6, A65_ABSX, 0xFE, END65,
+	A65_IMPL, 0xE8, END65,
+	A65_IMPL, 0xC8, END65,
+	A65_ABS, 0x4C, A65_IND, 0x6C, END65,
 	A65_ABS, 0x20, END65,
-	A65_IMMED, 0xa9, A65_ABS, 0xad, A65_ZP, 0xa5, A65_INDX, 0xa1, A65_INDY, 0xb1,
-	A65_ZPX, 0xb5, A65_ABSX, 0xbd, A65_ABSY, 0xb9, A65_IMMEDH, 0xa9, A65_IMMEDL, 0xa9, END65,
-	A65_IMMED, 0xa2, A65_ABS, 0xae, A65_ZP, 0xa6, A65_ABSY, 0xbe,
-	A65_ZPY, 0xb6, A65_IMMEDH, 0xa2, A65_IMMEDL, 0xa2, END65,
-	A65_IMMED, 0xa0, A65_ABS, 0xac, A65_ZP, 0xa4, A65_ZPX, 0xb4,
-	A65_ABSX, 0xbc, A65_IMMEDH, 0xa0, A65_IMMEDL, 0xa0, END65,
-	A65_ABS, 0x4e, A65_ZP, 0x46, A65_IMPL, 0x4a, A65_ZPX, 0x56,
-	A65_ABSX, 0x5e, END65,
-	A65_IMPL, 0xea, END65,
-	A65_IMMED, 0x09, A65_ABS, 0x0d, A65_ZP, 0x05, A65_INDX, 0x01, A65_INDY, 0x11,
-	A65_ZPX, 0x15, A65_ABSX, 0x1d, A65_ABSY, 0x19, END65,
+	A65_IMMED, 0xA9, A65_ABS, 0xAD, A65_ZP, 0xA5, A65_INDX, 0xA1, A65_INDY, 0xB1,
+	A65_ZPX, 0xB5, A65_ABSX, 0xBD, A65_ABSY, 0xB9, A65_IMMEDH, 0xA9, A65_IMMEDL, 0xA9, END65,
+	A65_IMMED, 0xA2, A65_ABS, 0xAE, A65_ZP, 0xA6, A65_ABSY, 0xBE,
+	A65_ZPY, 0xB6, A65_IMMEDH, 0xA2, A65_IMMEDL, 0xA2, END65,
+	A65_IMMED, 0xA0, A65_ABS, 0xAC, A65_ZP, 0xA4, A65_ZPX, 0xB4,
+	A65_ABSX, 0xBC, A65_IMMEDH, 0xA0, A65_IMMEDL, 0xA0, END65,
+	A65_ABS, 0x4E, A65_ZP, 0x46, A65_IMPL, 0x4A, A65_ZPX, 0x56,
+	A65_ABSX, 0x5E, END65,
+	A65_IMPL, 0xEA, END65,
+	A65_IMMED, 0x09, A65_ABS, 0x0D, A65_ZP, 0x05, A65_INDX, 0x01, A65_INDY, 0x11,
+	A65_ZPX, 0x15, A65_ABSX, 0x1D, A65_ABSY, 0x19, END65,
 	A65_IMPL, 0x48, END65,
 	A65_IMPL, 0x08, END65,
 	A65_IMPL, 0x68, END65,
 	A65_IMPL, 0x28, END65,
-	A65_ABS, 0x2e, A65_ZP, 0x26, A65_IMPL, 0x2a, A65_ZPX, 0x36,
-	A65_ABSX, 0x3e, END65,
-	A65_ABS, 0x6e, A65_ZP, 0x66, A65_IMPL, 0x6a, A65_ZPX, 0x76,
-	A65_ABSX, 0x7e, END65,
+	A65_ABS, 0x2E, A65_ZP, 0x26, A65_IMPL, 0x2A, A65_ZPX, 0x36,
+	A65_ABSX, 0x3E, END65,
+	A65_ABS, 0x6E, A65_ZP, 0x66, A65_IMPL, 0x6A, A65_ZPX, 0x76,
+	A65_ABSX, 0x7E, END65,
 	A65_IMPL, 0x40, END65,
 	A65_IMPL, 0x60, END65,
-	A65_IMMED, 0xe9, A65_ABS, 0xed, A65_ZP, 0xe5, A65_INDX, 0xe1, A65_INDY, 0xf1,
-	A65_ZPX, 0xf5, A65_ABSX, 0xfd, A65_ABSY, 0xf9, END65,
+	A65_IMMED, 0xE9, A65_ABS, 0xED, A65_ZP, 0xE5, A65_INDX, 0xE1, A65_INDY, 0xF1,
+	A65_ZPX, 0xF5, A65_ABSX, 0xFD, A65_ABSY, 0xF9, END65,
 	A65_IMPL, 0x38, END65,
-	A65_IMPL, 0xf8, END65,
+	A65_IMPL, 0xF8, END65,
 	A65_IMPL, 0x78, END65,
-	A65_ABS, 0x8d, A65_ZP, 0x85, A65_INDX, 0x81, A65_INDY, 0x91, A65_ZPX, 0x95,
-	A65_ABSX, 0x9d, A65_ABSY, 0x99, END65,
-	A65_ABS, 0x8e, A65_ZP, 0x86, A65_ZPY, 0x96, END65,
-	A65_ABS, 0x8c, A65_ZP, 0x84, A65_ZPX, 0x94, END65,
-	A65_IMPL, 0xaa, END65,
-	A65_IMPL, 0xa8, END65,
-	A65_IMPL, 0xba, END65,
-	A65_IMPL, 0x8a, END65,
-	A65_IMPL, 0x9a, END65,
+	A65_ABS, 0x8D, A65_ZP, 0x85, A65_INDX, 0x81, A65_INDY, 0x91, A65_ZPX, 0x95,
+	A65_ABSX, 0x9D, A65_ABSY, 0x99, END65,
+	A65_ABS, 0x8E, A65_ZP, 0x86, A65_ZPY, 0x96, END65,
+	A65_ABS, 0x8C, A65_ZP, 0x84, A65_ZPX, 0x94, END65,
+	A65_IMPL, 0xAA, END65,
+	A65_IMPL, 0xA8, END65,
+	A65_IMPL, 0xBA, END65,
+	A65_IMPL, 0x8A, END65,
+	A65_IMPL, 0x9A, END65,
 	A65_IMPL, 0x98, END65
 };
 
@@ -264,6 +267,14 @@ void m6502cg(int op)
 		amode = A65_IMPL;
 		break;
 
+	case KW_A:
+		if (tok[1] != EOL)
+			goto badmode;
+
+		amode = A65_IMPL;
+		tok++;
+		break;
+
 	case '#':
 		tok++;
 
@@ -307,6 +318,7 @@ void m6502cg(int op)
 			{
 				// (foo),y
 				tok++;
+#if 0
 				p = string[tok[1]];
 
 				// Sleazo tolower() -----------------vvvvvvvvvvv
@@ -315,6 +327,15 @@ void m6502cg(int op)
 
 				tok += 2;
 				amode = A65_INDY;
+#else
+				if (tok[0] == KW_Y)
+					amode = A65_INDY;
+
+				if (tok[1] != EOL)
+					goto badmode;
+
+				tok++;
+#endif
 			}
 			else
 				amode = A65_IND;
@@ -421,6 +442,7 @@ not_coinop:
 		else if (*tok == ',')
 		{
 			tok++;
+#if 0
 			p = string[tok[1]];
 
 			if (*tok != SYMBOL || p[1] != EOS)
@@ -441,6 +463,21 @@ not_coinop:
 				amode = A65_ABSY;
 			else
 				goto badmode;
+#else
+			if (tok[0] == KW_X)
+			{
+				amode = A65_ABSX;
+				tok++;
+			}
+			else if (tok[0] == KW_Y)
+			{
+				amode = A65_ABSY;
+				tok++;
+			}
+
+			if (tok[0] != EOL)
+				goto badmode;
+#endif
 		}
 		else
 			goto badmode;
@@ -568,9 +605,9 @@ badmode:
 			D_rword(eval);
 			break;
 
-			//
-			// Deposit 3 NOPs for illegal things
-			//
+		//
+		// Deposit 3 NOPs for illegal things (why 3? why not 30? or zero?)
+		//
 		default:
 		case ILLEGAL:
 			for(i=0; i<3; i++)
@@ -583,6 +620,7 @@ badmode:
 	if (sloc > 0x10000L)
 		fatal("6502 code pointer > 64K");
 
+//Now why use this instead of at_eol()?
 	if (*tok != EOL)
 		error(extra_stuff);
 }
@@ -609,6 +647,9 @@ void m6502obj(int ofd)
 
 	for(uint16_t * l=&orgmap[0][0]; l<currentorg; l+=2)
 	{
+/*
+Why are we assuming endianness here? This is retarded
+*/
 		exeheader[1] = l[0];
 		exeheader[2] = l[1] - 1;
 

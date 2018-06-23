@@ -36,7 +36,7 @@ char itokcl[] = {
 	CR_STREQ, CR_MACDEF,
 	CR_DATE, CR_TIME,
 	CR_ABSCOUNT, 0,
-	'!', '~', UNMINUS, 0,			// UNARY
+	'!', '~', UNMINUS, UNLT, UNGT, 0,	// UNARY
 	'*', '/', '%', 0,				// MULT
 	'+', '-', 0,					// ADD
 	SHL, SHR, 0,					// SHIFT
@@ -49,6 +49,7 @@ char itokcl[] = {
 
 const char missym_error[] = "missing symbol";
 const char str_error[] = "missing symbol or string";
+const char noflt_error[] = "operator not usable with float";
 
 // Convert expression to postfix
 static PTR evalTokenBuffer;		// Deposit tokens here (this is really a
@@ -125,23 +126,24 @@ int expr0(void)
 //
 int expr1(void)
 {
-	TOKEN t;
-	SYM * sy;
-	char * p, * p2;
+	char * p;
 	WORD w;
-	int j;
 
 	int class = tokenClass[*tok];
 
-	if (*tok == '-' || *tok == '+' || class == UNARY)
+	if (*tok == '-' || *tok == '+' || *tok == '<' || *tok == '>' || class == UNARY)
 	{
-		t = *tok++;
+		TOKEN t = *tok++;
 
 		if (expr2() != OK)
 			return ERROR;
 
 		if (t == '-')
 			t = UNMINUS;
+		else if (t == '<')
+			t = UNLT;
+		else if (t == '>')
+			t = UNGT;
 
 		// With leading + we don't have to deposit anything to the buffer
 		// because there's no unary '+' nor we have to do anything about it
@@ -183,8 +185,9 @@ getsym:
 				return error(missym_error);
 
 			p = string[*tok++];
-			j = (*p == '.' ? curenv : 0);
-			w = ((sy = lookup(p, LABEL, j)) != NULL && (sy->sattr & w) ? 1 : 0);
+			int j = (*p == '.' ? curenv : 0);
+			SYM * sy = lookup(p, LABEL, j);
+			w = ((sy != NULL) && (sy->sattr & w ? 1 : 0));
 			*evalTokenBuffer.u32++ = CONST;
 			*evalTokenBuffer.u64++ = (uint64_t)w;
 			break;
@@ -201,7 +204,7 @@ getsym:
 			if (*tok != SYMBOL && *tok != STRING)
 				return error(str_error);
 
-			p2 = string[tok[1]];
+			char * p2 = string[tok[1]];
 			tok += 2;
 
 			w = (WORD)(!strcmp(p, p2));
@@ -222,9 +225,6 @@ getsym:
 //
 int expr2(void)
 {
-	char * p;
-	SYM * sy;
-	int j;
 	PTR ptk;
 
 	switch (*tok++)
@@ -242,9 +242,10 @@ int expr2(void)
 		tok = ptk.u32;
 		break;
 	case SYMBOL:
-		p = string[*tok++];
-		j = (*p == '.' ? curenv : 0);
-		sy = lookup(p, LABEL, j);
+	{
+		char * p = string[*tok++];
+		int j = (*p == '.' ? curenv : 0);
+		SYM * sy = lookup(p, LABEL, j);
 
 		if (sy == NULL)
 			sy = NewSymbol(p, LABEL, j);
@@ -264,6 +265,7 @@ int expr2(void)
 		symbolPtr[symbolNum] = sy;
 		symbolNum++;
 		break;
+ 	}
 	case STRING:
 		*evalTokenBuffer.u32++ = CONST;
 		*evalTokenBuffer.u64++ = str_value(string[*tok++]);
@@ -494,10 +496,15 @@ thrown away right here. What the hell is it for?
 
 			tok += 2;
 		}
+		// Holy hell... This is likely due to the fact that LSR is mistakenly set as a SUNARY type... Need to fix this... !!! FIX !!!
+		else if (m6502)
+		{
+			*evalTokenBuffer.u32++ = *tok++;
+		}
 		else
 		{
 			// Unknown type here... Alert the user!,
-			error("undefined RISC register in expression");
+			error("undefined RISC register in expression [token=$%X]", *tok);
 			// Prevent spurious error reporting...
 			tok++;
 			return ERROR;
@@ -689,6 +696,30 @@ printf("EVEXPR (-): sym1 = %X, sym2 = %X\n", attr, sattr[1]);
 				*sattr = ABS | DEFINED;			// Expr becomes absolute
 			}
 
+			break;
+
+		case UNLT: // Unary < (get the low byte of a word)
+//printf("evexpr(): UNLT\n");
+			if (*sattr & TDB)
+				return error(seg_error);
+
+			if (*sattr & FLOAT)
+				return error(noflt_error);
+
+			*sval = (int64_t)((*sval) & 0x00FF);
+			*sattr = ABS | DEFINED;			// Expr becomes absolute
+			break;
+
+		case UNGT: // Unary > (get the high byte of a word)
+//printf("evexpr(): UNGT\n");
+			if (*sattr & TDB)
+				return error(seg_error);
+
+			if (*sattr & FLOAT)
+				return error(noflt_error);
+
+			*sval = (int64_t)(((*sval) >> 8) & 0x00FF);
+			*sattr = ABS | DEFINED;			// Expr becomes absolute
 			break;
 
 		case '!':

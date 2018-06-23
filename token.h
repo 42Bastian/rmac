@@ -63,6 +63,8 @@
 #define DOTQ            'Q'			// .q or .Q (essentially an alias for P)
 #define DOTS            'S'			// .s or .S (FPU Single)
 #define ENDEXPR         'E'			// End of expression
+#define UNLT            0x81		// Unary '<' (low byte)
+#define UNGT            0x82		// Unary '>' (high byte)
 
 // ^^ operators
 #define CR_DEFINED      'p'			// ^^defined - is symbol defined?
