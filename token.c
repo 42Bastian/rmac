@@ -1287,6 +1287,10 @@ dostring:
 						case '\\':
 							c = '\\';
 							break;
+						case '{':
+							// If we're evaluating a macro
+							// this is valid because it's
+							// a parameter expansion
 						case '!':
 							// If we're evaluating a macro
 							// this is valid and expands to
