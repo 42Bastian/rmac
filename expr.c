@@ -155,8 +155,16 @@ int expr1(void)
 		switch (*tok++)
 		{
 		case CR_ABSCOUNT:
-			*evalTokenBuffer.u32++ = CONST;
-			*evalTokenBuffer.u64++ = (uint64_t)sect[ABS].sloc;
+			if (cursect != ABS)
+			{
+				*evalTokenBuffer.u32++ = CONST;
+				*evalTokenBuffer.u64++ = sect[ABS].sloc;
+			}
+			else
+			{
+				*evalTokenBuffer.u32++ = CONST;
+				*evalTokenBuffer.u64++ = sloc;
+			}
 			break;
 		case CR_TIME:
 			*evalTokenBuffer.u32++ = CONST;

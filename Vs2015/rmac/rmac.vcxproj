@@ -26,11 +26,13 @@
     <ClCompile Include="..\..\eagen.c" />
     <ClCompile Include="..\..\error.c" />
     <ClCompile Include="..\..\expr.c" />
+    <ClCompile Include="..\..\fltpoint.c" />
     <ClCompile Include="..\..\listing.c" />
     <ClCompile Include="..\..\mach.c" />
     <ClCompile Include="..\..\macro.c" />
     <ClCompile Include="..\..\mark.c" />
     <ClCompile Include="..\..\object.c" />
+    <ClCompile Include="..\..\op.c" />
     <ClCompile Include="..\..\procln.c" />
     <ClCompile Include="..\..\riscasm.c" />
     <ClCompile Include="..\..\rmac.c" />
@@ -45,11 +47,13 @@
     <ClInclude Include="..\..\direct.h" />
     <ClInclude Include="..\..\error.h" />
     <ClInclude Include="..\..\expr.h" />
+    <ClInclude Include="..\..\fltpoint.h" />
     <ClInclude Include="..\..\listing.h" />
     <ClInclude Include="..\..\mach.h" />
     <ClInclude Include="..\..\macro.h" />
     <ClInclude Include="..\..\mark.h" />
     <ClInclude Include="..\..\object.h" />
+    <ClInclude Include="..\..\op.h" />
     <ClInclude Include="..\..\parmode.h" />
     <ClInclude Include="..\..\procln.h" />
     <ClInclude Include="..\..\riscasm.h" />
