@@ -120,6 +120,7 @@ macdef   119
 time  120
 date  121
 abscount  122
+filesize  70
 
 x0    260
 x1    261
