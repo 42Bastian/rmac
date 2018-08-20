@@ -1169,7 +1169,7 @@ CHK_FOR_DISPn:
 			// expr[.L]
 			AMn = ABSL;
 
-			// Is .L forced here?
+			// .L is forced here
 			if (*tok == DOTL)
 			{
 				tok++;
@@ -1177,8 +1177,8 @@ CHK_FOR_DISPn:
 			}
 			else
 			{
-				// Defined, absolute values from $FFFF8000..$00007FFF get optimized
-				// to absolute short
+				// Defined, absolute values from $FFFF8000..$00007FFF get
+				// optimized to absolute short
 				if (CHECK_OPTS(OPT_ABS_SHORT)
 					&& ((AnEXATTR & (TDB | DEFINED)) == DEFINED)
 					&& (((uint32_t)AnEXVAL + 0x8000) < 0x10000))

@@ -854,8 +854,10 @@ When checking to see if it's already been equated, issue a warning.
 	// Keep a backup of chptr (used for optimisations during codegen)
 	chptr_opcode = chptr;
 
-	while ((m->mnattr & siz) && (amsk0 & m->mn0) == 0 || (amsk1 & m->mn1) == 0)
+	while (!(m->mnattr & siz) || (amsk0 & m->mn0) == 0 || (amsk1 & m->mn1) == 0)
 		m = &machtab[m->mncont];
+
+	DEBUG { printf("    68K: mninst=$%X, siz=$%X, mnattr=$%X, amsk0=$%X, mn0=$%X, amsk1=$%X, mn1=$%X\n", m->mninst, siz, m->mnattr, amsk0, m->mn0, amsk1, m->mn1); }
 
 	(*m->mnfunc)(m->mninst, siz);
 	goto loop;
