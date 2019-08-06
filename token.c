@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for all Atari computers
 // TOKEN.C - Token Handling
-// Copyright (C) 199x Landon Dyer, 2011-2018 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2019 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -560,7 +560,8 @@ DEBUG { printf("ExM: SYMBOL=\"%s\"", d); }
 //         to choke on legitimate code... Need to investigate this further
 //         before changing anything else here!
 							case CONST:
-								sprintf(numbuf, "$%lx", (uint64_t)*tk++);
+//								sprintf(numbuf, "$%lx", (uint64_t)*tk++);
+								sprintf(numbuf, "$%" PRIX64, (uint64_t)*tk++);
 								tk++;
 								d = numbuf;
 								break;

@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for all Atari computers
 // OBJECT.H - Writing Object Files
-// Copyright (C) 199x Landon Dyer, 2011-2018 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2019 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //

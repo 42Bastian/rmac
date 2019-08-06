@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for all Atari computers
 // SECT.H - Code Generation, Fixups and Section Management
-// Copyright (C) 199x Landon Dyer, 2011-2018 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2019 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilized with the kind permission of Landon Dyer
 //
@@ -77,9 +77,8 @@
 #define FU_6BRA      0x0007		// Fixup 6502-format branch offset
 #define FU_BYTEH     0x0008		// Fixup 6502 high byte of immediate word
 #define FU_BYTEL     0x0009		// Fixup 6502 low byte of immediate word
-#define FU_QUAD      0x000A		// Fixup quad-word (8 bytes)
-#define FU_56001     0x000B		// Generic fixup code for all 56001 modes
-#define FU_56001_B   0x000C		// Generic fixup code for all 56001 modes (ggn: I have no shame)
+#define FU_QUAD      0x000A		// Fixup quad-word (8 bytes, typically OP)
+#define FU_56001     0x000B		// Fixup code for all 56001 modes
 
 #define FU_SEXT      0x0010		// Ok to sign extend
 #define FU_PCREL     0x0020		// Subtract PC first
@@ -111,24 +110,19 @@
 #define FU_OBJDATA   0x20000	// Fixup OL data addr (bits 43-63, drop last 3)
 
 // DSP56001 fixups
-// TODO: Sadly we don't have any spare bits left inside a 16-bit word
-// so we use the 2nd nibble as control code and
-// stick $B or $C in the lower nibble - then it's picked up as
-// FU_56001 by the fixup routine and then a second switch
-// selects fixup mode. Since we now have 32 bits, we can fix this!
-// [N.B.: This isn't true anymore, we now have 32 bits! :-P]
-#define FU_DSPIMM5    0x090B	// Fixup  5-bit immediate
-#define FU_DSPADR12   0x0A0B	// Fixup 12-bit address
-#define FU_DSPADR24   0x0B0B	// Fixup 24-bit address
-#define FU_DSPADR16   0x0C0B	// Fixup 24-bit address
-#define FU_DSPIMM12   0x0D0B	// Fixup 12-bit immediate
-#define FU_DSPIMM24   0x0E0B	// Fixup 24-bit immediate
-#define FU_DSPIMM8    0x0F0B	// Fixup  8-bit immediate
-#define FU_DSPADR06   0x090C	// Fixup  6-bit address
-#define FU_DSPPP06    0x0A0C	// Fixup  6 bit pp address
-#define FU_DSPIMMFL8  0x0B0C	// Fixup  8-bit immediate float
-#define FU_DSPIMMFL16 0x0C0C	// Fixup 16-bit immediate float
-#define FU_DSPIMMFL24 0x0D0C	// Fixup 24-bit immediate float
+#define FUMASKDSP     0xF00000	// Mask for DSP56001 fuckups^Wfixups
+#define FU_DSPIMM5    0x100000	// Fixup  5-bit immediate
+#define FU_DSPADR12   0x200000	// Fixup 12-bit address
+#define FU_DSPADR24   0x300000	// Fixup 24-bit address
+#define FU_DSPADR16   0x400000	// Fixup 16-bit address
+#define FU_DSPIMM12   0x500000	// Fixup 12-bit immediate
+#define FU_DSPIMM24   0x600000	// Fixup 24-bit immediate
+#define FU_DSPIMM8    0x700000	// Fixup  8-bit immediate
+#define FU_DSPADR06   0x800000	// Fixup  6-bit address
+#define FU_DSPPP06    0x900000	// Fixup  6 bit pp address
+#define FU_DSPIMMFL8  0xA00000	// Fixup  8-bit immediate float
+#define FU_DSPIMMFL16 0xB00000	// Fixup 16-bit immediate float
+#define FU_DSPIMMFL24 0xC00000	// Fixup 24-bit immediate float
 
 
 // Chunks are used to hold generated code and fixup records

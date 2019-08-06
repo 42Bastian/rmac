@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for all Atari computers
 // SECT.C - Code Generation, Fixups and Section Management
-// Copyright (C) 199x Landon Dyer, 2011-2018 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2019 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -262,6 +262,14 @@ int AddFixup(uint32_t attr, uint32_t loc, TOKEN * fexpr)
 		exprlen = ExpressionLength(fexpr);
 	}
 
+	// Second, check to see if it's a DSP56001 fixup, and force the FU_56001
+	// flag into the attributes if so; also save the current org address.
+	if (attr & FUMASKDSP)
+	{
+		attr |= FU_56001;
+		_orgaddr = orgaddr;
+	}
+
 	// Allocate space for the fixup + any expression
 	FIXUP * fixup = malloc(sizeof(FIXUP) + (sizeof(TOKEN) * exprlen));
 
@@ -330,7 +338,7 @@ int ResolveFixups(int sno)
 		FIXUP * fup = fixup;
 		fixup = fixup->next;
 
-		uint32_t w = fup->attr;		// Fixup long (type + modes + flags)
+		uint32_t dw = fup->attr;	// Fixup long (type + modes + flags)
 		uint32_t loc = fup->loc;	// Location to fixup
 		cfileno = fup->fileno;
 		curlineno = fup->lineno;
@@ -376,7 +384,7 @@ int ResolveFixups(int sno)
 		// Compute expression/symbol value and attributes
 
 		// Complex expression
-		if (w & FU_EXPR)
+		if (dw & FU_EXPR)
 		{
 			if (evexpr(fup->expr, &eval, &eattr, &esym) != OK)
 				continue;
@@ -418,7 +426,7 @@ int ResolveFixups(int sno)
 		//
 		// PC-relative fixups must be DEFINED and either in the same section
 		// (whereupon the subtraction takes place) or ABS (with no subtract).
-		if (w & FU_PCREL)
+		if (dw & FU_PCREL)
 		{
 			if (eattr & DEFINED)
 			{
@@ -454,7 +462,7 @@ int ResolveFixups(int sno)
 					}
 				}
 
-				if (sbra_flag && (w & FU_LBRA) && (eval + 0x80 < 0x100))
+				if (sbra_flag && (dw & FU_LBRA) && (eval + 0x80 < 0x100))
 					warn("unoptimized short branch");
 			}
 			else if (obj_format == MWC)
@@ -465,7 +473,7 @@ int ResolveFixups(int sno)
 		}
 
 		// Handle fixup classes
-		switch (w & FUMASK)
+		switch (dw & FUMASK)
 		{
 		// FU_BBRA fixes up a one-byte branch offset.
 		case FU_BBRA:
@@ -518,10 +526,10 @@ int ResolveFixups(int sno)
 				continue;
 			}
 
-			if ((w & FU_PCREL) && ((eval + 0x80) >= 0x100))
+			if ((dw & FU_PCREL) && ((eval + 0x80) >= 0x100))
 				goto rangeErr;
 
-			if (w & FU_SEXT)
+			if (dw & FU_SEXT)
 			{
 				if ((eval + 0x100) >= 0x200)
 					goto rangeErr;
@@ -554,16 +562,20 @@ int ResolveFixups(int sno)
 			break;
 
 		// Fixup WORD forward references; the word could be unaligned in the
-		// section buffer, so we have to be careful.
+		// section buffer, so we have to be careful. (? careful about what?)
 		case FU_WORD:
-			if ((w & FUMASKRISC) == FU_JR)
+			if ((dw & FUMASKRISC) == FU_JR)
 			{
+#if 0
 				int reg;
 
 				if (fup->orgaddr)
 					reg = (signed)((eval - (fup->orgaddr + 2)) / 2);
 				else
 					reg = (signed)((eval - (loc + 2)) / 2);
+#else
+				int reg = (signed)((eval - ((fup->orgaddr ? fup->orgaddr : loc) + 2)) / 2);
+#endif
 
 				if ((reg < -16) || (reg > 15))
 				{
@@ -576,7 +588,7 @@ int ResolveFixups(int sno)
 				*locp |= ((uint8_t)reg & 0x07) << 5;
 				break;
 			}
-			else if ((w & FUMASKRISC) == FU_NUM15)
+			else if ((dw & FUMASKRISC) == FU_NUM15)
 			{
 				if (((int)eval < -16) || ((int)eval > 15))
 				{
@@ -589,7 +601,7 @@ int ResolveFixups(int sno)
 				*locp |= ((uint8_t)eval & 0x07) << 5;
 				break;
 			}
-			else if ((w & FUMASKRISC) == FU_NUM31)
+			else if ((dw & FUMASKRISC) == FU_NUM31)
 			{
 				if (eval > 31)
 				{
@@ -602,7 +614,7 @@ int ResolveFixups(int sno)
 				*locp |= ((uint8_t)eval & 0x07) << 5;
 				break;
 			}
-			else if ((w & FUMASKRISC) == FU_NUM32)
+			else if ((dw & FUMASKRISC) == FU_NUM32)
 			{
 				if ((eval < 1) || (eval > 32))
 				{
@@ -610,7 +622,7 @@ int ResolveFixups(int sno)
 					break;
 				}
 
-				if (w & FU_SUB32)
+				if (dw & FU_SUB32)
 					eval = (32 - eval);
 
 				eval = (eval == 32) ? 0 : eval;
@@ -619,7 +631,7 @@ int ResolveFixups(int sno)
 				*locp |= ((uint8_t)eval & 0x07) << 5;
 				break;
 			}
-			else if ((w & FUMASKRISC) == FU_REGONE)
+			else if ((dw & FUMASKRISC) == FU_REGONE)
 			{
 				if (eval > 31)
 				{
@@ -632,7 +644,7 @@ int ResolveFixups(int sno)
 				*locp |= ((uint8_t)eval & 0x07) << 5;
 				break;
 			}
-			else if ((w & FUMASKRISC) == FU_REGTWO)
+			else if ((dw & FUMASKRISC) == FU_REGTWO)
 			{
 				if (eval > 31)
 				{
@@ -649,7 +661,7 @@ int ResolveFixups(int sno)
 			{
 				flags = MWORD;
 
-				if (w & FU_PCREL)
+				if (dw & FU_PCREL)
 					flags |= MPCREL;
 
 				MarkRelocatable(sno, loc, 0, flags, esym);
@@ -659,7 +671,7 @@ int ResolveFixups(int sno)
 				if (tdb)
 					MarkRelocatable(sno, loc, tdb, MWORD, NULL);
 
-				if (w & FU_SEXT)
+				if (dw & FU_SEXT)
 				{
 					if (eval + 0x10000 >= 0x20000)
 						goto rangeErr;
@@ -667,7 +679,7 @@ int ResolveFixups(int sno)
 				else
 				{
 					// Range-check BRA and DBRA
-					if (w & FU_ISBRA)
+					if (dw & FU_ISBRA)
 					{
 						if (eval + 0x8000 >= 0x10000)
 							goto rangeErr;
@@ -690,7 +702,7 @@ int ResolveFixups(int sno)
 		case FU_LONG:
 			flags = MLONG;
 
-			if ((w & FUMASKRISC) == FU_MOVEI)
+			if ((dw & FUMASKRISC) == FU_MOVEI)
 			{
 				// Long constant in MOVEI # is word-swapped, so fix it here
 				eval = WORDSWAP32(eval);
@@ -709,17 +721,18 @@ int ResolveFixups(int sno)
 
 		// Fixup QUAD forward references (mainly used by the OP assembler)
 		case FU_QUAD:
-			if (w & FU_OBJLINK)
+			if (dw & FU_OBJLINK)
 			{
 				uint64_t quad = GETBE64(locp, 0);
 				uint64_t addr = eval;
 
+//Hmm, not sure how this can be set, since it's only set if it's a DSP56001 fixup or a FU_JR...  :-/
 				if (fup->orgaddr)
 					addr = fup->orgaddr;
 
 				eval = (quad & 0xFFFFFC0000FFFFFFLL) | ((addr & 0x3FFFF8) << 21);
 			}
-			else if (w & FU_OBJDATA)
+			else if (dw & FU_OBJDATA)
 			{
 				// If it's in a TEXT or DATA section, be sure to mark for a
 				// fixup later
@@ -729,6 +742,7 @@ int ResolveFixups(int sno)
 				uint64_t quad = GETBE64(locp, 0);
 				uint64_t addr = eval;
 
+//Hmm, not sure how this can be set, since it's only set if it's a DSP56001 fixup or a FU_JR...  :-/
 				if (fup->orgaddr)
 					addr = fup->orgaddr;
 
@@ -761,6 +775,131 @@ int ResolveFixups(int sno)
 				goto rangeErr;
 
 			*locp = (uint8_t)eval;
+			break;
+
+		// Fixup DSP56001 addresses
+		case FU_56001:
+			switch (dw & FUMASKDSP)
+			{
+			// DSPIMM5 actually is clamped from 0 to 23 for our purposes
+			// and does not use the full 5 bit range.
+			case FU_DSPIMM5:
+				if (eval > 23)
+				{
+					error("immediate value must be between 0 and 23");
+					break;
+				}
+
+				locp[2] |= eval;
+				break;
+
+			// This is a 12-bit address encoded into the lower 12
+			// bits of a DSP word
+			case FU_DSPADR12:
+				if (eval >= 0x1000)
+				{
+					error("address out of range ($000-$FFF)");
+					break;
+				}
+
+				locp[1] |= eval >> 8;
+				locp[2] = eval & 0xFF;
+				break;
+
+			// This is a full DSP word containing Effective Address Extension
+			case FU_DSPADR24:
+			case FU_DSPIMM24:
+				if (eval >= 0x100000)
+				{
+					error("value out of range ($000-$FFFFFF)");
+					break;
+				}
+
+				*locp++ = (uint32_t)eval >> 16;
+				*locp++ = ((uint32_t)eval >> 8) & 0xFF;
+				*locp++ = (uint32_t)eval & 0xFF;
+				break;
+
+			// This is a 16bit absolute address into a 24bit field
+			case FU_DSPADR16:
+				if (eval >= 0x10000)
+				{
+					error("address out of range ($0000-$FFFF)");
+					break;
+				}
+
+				locp[1] = (uint8_t)(eval >> 8);
+				locp[2] = (uint8_t)eval;
+				break;
+
+			// This is 12-bit immediate short data
+			// The upper nibble goes into the last byte's low nibble
+			// while the remainder 8 bits go into the 2nd byte.
+			case FU_DSPIMM12:
+				if (eval >= 0x1000)
+				{
+					error("immediate out of range ($000-$FFF)");
+					break;
+				}
+
+				locp[1] = (uint8_t)eval;
+				locp[2] |= (uint8_t)(eval >> 8);
+				break;
+
+			// This is 8-bit immediate short data
+			// which goes into the middle byte of a DSP word.
+			case FU_DSPIMM8:
+				if (eval >= 0x100)
+				{
+					error("immediate out of range ($00-$FF)");
+					break;
+				}
+
+				locp[1] = (uint8_t)eval;
+				break;
+
+			// This is a 6 bit absoulte short address. It occupies
+			// the low 6 bits of the middle byte of a DSP word.
+			case FU_DSPADR06:
+				if (eval > 63)
+				{
+					error("address must be between 0 and 63");
+					break;
+				}
+
+				locp[1] |= eval;
+				break;
+
+			// This is a 6 bit absoulte short address. It occupies
+			// the low 6 bits of the middle byte of a DSP word.
+			case FU_DSPPP06:
+				if (eval < 0xFFFFFFC0)
+				{
+					error("address must be between $FFC0 and $FFFF");
+					break;
+				}
+
+				locp[1] |= eval & 0x3F;
+				break;
+
+			// Shamus: I'm pretty sure these don't make any sense...
+			case FU_DSPIMMFL8:
+				warn("FU_DSPIMMFL8 missing implementation\n%s", "And you may ask yourself, \"Self, how did I get here?\"");
+				break;
+
+			case FU_DSPIMMFL16:
+				warn("FU_DSPIMMFL16 missing implementation\n%s", "And you may ask yourself, \"Self, how did I get here?\"");
+				break;
+
+			case FU_DSPIMMFL24:
+				warn("FU_DSPIMMFL24 missing implementation\n%s", "And you may ask yourself, \"Self, how did I get here?\"");
+				break;
+
+			// Bad fixup type--this should *never* happen!
+			default:
+				interror(4);
+				// NOTREACHED
+			}
 			break;
 
 		// Fixup a 4-byte float

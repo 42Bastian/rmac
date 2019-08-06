@@ -2,7 +2,7 @@
 // Object Processor assembler
 //
 // by James Hammons
-// (C) 2018 Underground Software
+// (C) 2019 Underground Software
 //
 
 #ifndef __OP_H__

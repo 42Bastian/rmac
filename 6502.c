@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for all Atari computers
 // 6502.C - 6502 Assembler
-// Copyright (C) 199x Landon Dyer, 2011-2018 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2019 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -344,6 +344,7 @@ void m6502cg(int op)
 		{
 			// (foo,x)
 			tok++;
+#if 0
 			p = string[tok[1]];
 
 			// Sleazo tolower() -----------------vvvvvvvvvvv
@@ -351,17 +352,27 @@ void m6502cg(int op)
 				goto badmode;
 
 			tok += 2;
-
 			if (*tok++ != ')')
 				goto badmode;
 
 			amode = A65_INDX;
+#else
+			if (tok[0] == KW_X)
+				amode = A65_INDX;
+
+			if ((tok[1] != ')') || (tok[2] != EOL))
+				goto badmode;
+
+			tok += 2;
+#endif
 		}
 		else
 			goto badmode;
 
 		break;
 
+	// I'm guessing that the form of this is @<expr>(X) or @<expr>(Y), which
+	// I've *never* seen before.  :-/
 	case '@':
 		tok++;
 
@@ -371,6 +382,7 @@ void m6502cg(int op)
 		if (*tok == '(')
 		{
 			tok++;
+#if 0
 			p = string[tok[1]];
 
 			if (*tok != SYMBOL || p[1] != EOS || tok[2] != ')' || tok[3] != EOL)
@@ -386,6 +398,19 @@ void m6502cg(int op)
 				goto badmode;
 
 			tok += 3;		// Past SYMBOL <string> ')' EOL
+#else
+			if ((tok[1] != ')') || (tok[2] != EOL))
+				goto badmode;
+
+			if (tok[0] == KW_X)
+				amode = A65_INDX;
+			else if (tok[0] == KW_Y)
+				amode = A65_INDY;
+			else
+				goto badmode;
+
+			tok += 2;
+#endif
 			zpreq = 1;		// Request zeropage optimization
 		}
 		else if (*tok == EOL)

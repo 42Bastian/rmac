@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for the Atari Jaguar Console System
 // AMODE.C - DSP 56001 Addressing Modes
-// Copyright (C) 199x Landon Dyer, 2011 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2019 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -753,7 +753,7 @@ int dsp_amode(int maxea)
         return ERROR;
 
 
-    // If caller wants only one mode, return just one (ignore comma); 
+    // If caller wants only one mode, return just one (ignore comma);
     // If there is no second addressing mode (no comma), then return just one anyway.
     nmodes = 1;
 

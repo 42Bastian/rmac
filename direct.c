@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for all Atari computers
 // DIRECT.C - Directive Handling
-// Copyright (C) 199x Landon Dyer, 2011-2018 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2019 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -280,7 +280,7 @@ int d_print(void)
 
 	while (*tok != EOL)
 	{
-		switch(*tok)
+		switch (*tok)
 		{
 		case STRING:
 			sprintf(prntstr, "%s", string[tok[1]]);
@@ -312,7 +312,7 @@ int d_print(void)
 			{
 				strcpy(prntstr, string[tok[2]]);
 
-				switch(prntstr[0])
+				switch (prntstr[0])
 				{
 				case 'l': case 'L': wordlong = 1; break;
 				case 'w': case 'W': wordlong = 0; break;
