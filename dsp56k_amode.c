@@ -76,73 +76,73 @@ static inline LONG checkea(const uint32_t termchar, const int strings);
 #define P_ERRORS 3
 
 const char *ea_errors[][12] = {
-    // X:
-    {
-        "unrecognised X: parallel move syntax: expected '(' after 'X:-'",                                       // 0
-        "unrecognised X: parallel move syntax: expected ')' after 'X:-(Rn'",                                    // 1
-        "unrecognised X: parallel move syntax: expected R0-R7 after 'X:-('",                                    // 2
-        "unrecognised X: parallel move syntax: expected N0-N7 after 'X:(Rn+'",                                  // 3
-        "unrecognised X: parallel move syntax: expected same register number in Rn and Nn for 'X:(Rn+Nn)'",     // 4
-        "unrecognised X: parallel move syntax: expected ')' after 'X:(Rn+Nn'",                                  // 5
-        "unrecognised X: parallel move syntax: expected same register number in Rn and Nn for 'X:(Rn)+Nn'",     // 6
-        "unrecognised X: parallel move syntax: expected N0-N7 after 'X:(Rn)+'",                                 // 7
-        "unrecognised X: parallel move syntax: expected same register number in Rn and Nn for 'X:(Rn)-Nn'",     // 8
-        "unrecognised X: parallel move syntax: expected N0-N7 after 'X:(Rn)-'",                                 // 9
-        "unrecognised X: parallel move syntax: expected '+', '-' or ',' after 'X:(Rn)'",                        // 10
-        "unrecognised X: parallel move syntax: expected '+' or ')' after 'X:(Rn'",                              // 11
-    },
-    // Y:
-    {
-        "unrecognised Y: parallel move syntax: expected '(' after 'Y:-'",                                       // 0
-        "unrecognised Y: parallel move syntax: expected ')' after 'Y:-(Rn'",                                    // 1
-        "unrecognised Y: parallel move syntax: expected R0-R7 after 'Y:-('",                                    // 2
-        "unrecognised Y: parallel move syntax: expected N0-N7 after 'Y:(Rn+'",                                  // 3
-        "unrecognised Y: parallel move syntax: expected same register number in Rn and Nn for 'Y:(Rn+Nn)'",     // 4
-        "unrecognised Y: parallel move syntax: expected ')' after 'Y:(Rn+Nn'",                                  // 5
-        "unrecognised Y: parallel move syntax: expected same register number in Rn and Nn for 'Y:(Rn)+Nn'",     // 6
-        "unrecognised Y: parallel move syntax: expected N0-N7 after 'Y:(Rn)+'",                                 // 7
-        "unrecognised Y: parallel move syntax: expected same register number in Rn and Nn for 'Y:(Rn)-Nn'",     // 8
-        "unrecognised Y: parallel move syntax: expected N0-N7 after 'Y:(Rn)-'",                                 // 9
-        "unrecognised Y: parallel move syntax: expected '+', '-' or ',' after 'Y:(Rn)'",                        // 10
-        "unrecognised Y: parallel move syntax: expected '+' or ')' after 'Y:(Rn'",                              // 11
-    },
-    // L:
-    {
-        "unrecognised L: parallel move syntax: expected '(' after 'L:-'",                                       // 0
-        "unrecognised L: parallel move syntax: expected ')' after 'L:-(Rn'",                                    // 1
-        "unrecognised L: parallel move syntax: expected R0-R7 after 'L:-('",                                    // 2
-        "unrecognised L: parallel move syntax: expected N0-N7 after 'L:(Rn+'",                                  // 3
-        "unrecognised L: parallel move syntax: expected same register number in Rn and Nn for 'L:(Rn+Nn)'",     // 4
-        "unrecognised L: parallel move syntax: expected ')' after 'L:(Rn+Nn'",                                  // 5
-        "unrecognised L: parallel move syntax: expected same register number in Rn and Nn for 'L:(Rn)+Nn'",     // 6
-        "unrecognised L: parallel move syntax: expected N0-N7 after 'L:(Rn)+'",                                 // 7
-        "unrecognised L: parallel move syntax: expected same register number in Rn and Nn for 'L:(Rn)-Nn'",     // 8
-        "unrecognised L: parallel move syntax: expected N0-N7 after 'L:(Rn)-'",                                 // 9
-        "unrecognised L: parallel move syntax: expected '+', '-' or ',' after 'L:(Rn)'",                        // 10
-        "unrecognised L: parallel move syntax: expected '+' or ')' after 'L:(Rn'",                              // 11
-    },
-    // P:
-    {
-        "unrecognised P: effective address syntax: expected '(' after 'P:-'",                                       // 0
-        "unrecognised P: effective address syntax: expected ')' after 'P:-(Rn'",                                    // 1
-        "unrecognised P: effective address syntax: expected R0-R7 after 'P:-('",                                    // 2
-        "unrecognised P: effective address syntax: expected N0-N7 after 'P:(Rn+'",                                  // 3
-        "unrecognised P: effective address syntax: expected same register number in Rn and Nn for 'P:(Rn+Nn)'",     // 4
-        "unrecognised P: effective address syntax: expected ')' after 'P:(Rn+Nn'",                                  // 5
-        "unrecognised P: effective address syntax: expected same register number in Rn and Nn for 'P:(Rn)+Nn'",     // 6
-        "unrecognised P: effective address syntax: expected N0-N7 after 'P:(Rn)+'",                                 // 7
-        "unrecognised P: effective address syntax: expected same register number in Rn and Nn for 'P:(Rn)-Nn'",     // 8
-        "unrecognised P: effective address syntax: expected N0-N7 after 'P:(Rn)-'",                                 // 9
-        "unrecognised P: effective address syntax: expected '+', '-' or ',' after 'P:(Rn)'",                        // 10
-        "unrecognised P: effective address syntax: expected '+' or ')' after 'P:(Rn'",                              // 11
-    }
+	// X:
+	{
+		"unrecognised X: parallel move syntax: expected '(' after 'X:-'",                                       // 0
+		"unrecognised X: parallel move syntax: expected ')' after 'X:-(Rn'",                                    // 1
+		"unrecognised X: parallel move syntax: expected R0-R7 after 'X:-('",                                    // 2
+		"unrecognised X: parallel move syntax: expected N0-N7 after 'X:(Rn+'",                                  // 3
+		"unrecognised X: parallel move syntax: expected same register number in Rn and Nn for 'X:(Rn+Nn)'",     // 4
+		"unrecognised X: parallel move syntax: expected ')' after 'X:(Rn+Nn'",                                  // 5
+		"unrecognised X: parallel move syntax: expected same register number in Rn and Nn for 'X:(Rn)+Nn'",     // 6
+		"unrecognised X: parallel move syntax: expected N0-N7 after 'X:(Rn)+'",                                 // 7
+		"unrecognised X: parallel move syntax: expected same register number in Rn and Nn for 'X:(Rn)-Nn'",     // 8
+		"unrecognised X: parallel move syntax: expected N0-N7 after 'X:(Rn)-'",                                 // 9
+		"unrecognised X: parallel move syntax: expected '+', '-' or ',' after 'X:(Rn)'",                        // 10
+		"unrecognised X: parallel move syntax: expected '+' or ')' after 'X:(Rn'",                              // 11
+	},
+	// Y:
+	{
+		"unrecognised Y: parallel move syntax: expected '(' after 'Y:-'",                                       // 0
+		"unrecognised Y: parallel move syntax: expected ')' after 'Y:-(Rn'",                                    // 1
+		"unrecognised Y: parallel move syntax: expected R0-R7 after 'Y:-('",                                    // 2
+		"unrecognised Y: parallel move syntax: expected N0-N7 after 'Y:(Rn+'",                                  // 3
+		"unrecognised Y: parallel move syntax: expected same register number in Rn and Nn for 'Y:(Rn+Nn)'",     // 4
+		"unrecognised Y: parallel move syntax: expected ')' after 'Y:(Rn+Nn'",                                  // 5
+		"unrecognised Y: parallel move syntax: expected same register number in Rn and Nn for 'Y:(Rn)+Nn'",     // 6
+		"unrecognised Y: parallel move syntax: expected N0-N7 after 'Y:(Rn)+'",                                 // 7
+		"unrecognised Y: parallel move syntax: expected same register number in Rn and Nn for 'Y:(Rn)-Nn'",     // 8
+		"unrecognised Y: parallel move syntax: expected N0-N7 after 'Y:(Rn)-'",                                 // 9
+		"unrecognised Y: parallel move syntax: expected '+', '-' or ',' after 'Y:(Rn)'",                        // 10
+		"unrecognised Y: parallel move syntax: expected '+' or ')' after 'Y:(Rn'",                              // 11
+	},
+	// L:
+	{
+		"unrecognised L: parallel move syntax: expected '(' after 'L:-'",                                       // 0
+		"unrecognised L: parallel move syntax: expected ')' after 'L:-(Rn'",                                    // 1
+		"unrecognised L: parallel move syntax: expected R0-R7 after 'L:-('",                                    // 2
+		"unrecognised L: parallel move syntax: expected N0-N7 after 'L:(Rn+'",                                  // 3
+		"unrecognised L: parallel move syntax: expected same register number in Rn and Nn for 'L:(Rn+Nn)'",     // 4
+		"unrecognised L: parallel move syntax: expected ')' after 'L:(Rn+Nn'",                                  // 5
+		"unrecognised L: parallel move syntax: expected same register number in Rn and Nn for 'L:(Rn)+Nn'",     // 6
+		"unrecognised L: parallel move syntax: expected N0-N7 after 'L:(Rn)+'",                                 // 7
+		"unrecognised L: parallel move syntax: expected same register number in Rn and Nn for 'L:(Rn)-Nn'",     // 8
+		"unrecognised L: parallel move syntax: expected N0-N7 after 'L:(Rn)-'",                                 // 9
+		"unrecognised L: parallel move syntax: expected '+', '-' or ',' after 'L:(Rn)'",                        // 10
+		"unrecognised L: parallel move syntax: expected '+' or ')' after 'L:(Rn'",                              // 11
+	},
+	// P:
+	{
+		"unrecognised P: effective address syntax: expected '(' after 'P:-'",                                       // 0
+		"unrecognised P: effective address syntax: expected ')' after 'P:-(Rn'",                                    // 1
+		"unrecognised P: effective address syntax: expected R0-R7 after 'P:-('",                                    // 2
+		"unrecognised P: effective address syntax: expected N0-N7 after 'P:(Rn+'",                                  // 3
+		"unrecognised P: effective address syntax: expected same register number in Rn and Nn for 'P:(Rn+Nn)'",     // 4
+		"unrecognised P: effective address syntax: expected ')' after 'P:(Rn+Nn'",                                  // 5
+		"unrecognised P: effective address syntax: expected same register number in Rn and Nn for 'P:(Rn)+Nn'",     // 6
+		"unrecognised P: effective address syntax: expected N0-N7 after 'P:(Rn)+'",                                 // 7
+		"unrecognised P: effective address syntax: expected same register number in Rn and Nn for 'P:(Rn)-Nn'",     // 8
+		"unrecognised P: effective address syntax: expected N0-N7 after 'P:(Rn)-'",                                 // 9
+		"unrecognised P: effective address syntax: expected '+', '-' or ',' after 'P:(Rn)'",                        // 10
+		"unrecognised P: effective address syntax: expected '+' or ')' after 'P:(Rn'",                              // 11
+	}
 };
 
 enum
 {
-    NUM_NORMAL = 0,
-    NUM_FORCE_LONG = 1,
-    NUM_FORCE_SHORT = 2
+	NUM_NORMAL = 0,
+	NUM_FORCE_LONG = 1,
+	NUM_FORCE_SHORT = 2
 };
 
 //
@@ -150,106 +150,114 @@ enum
 //
 static inline int dsp_parmode(int *am, int *areg, TOKEN * AnEXPR, uint64_t * AnEXVAL, WORD * AnEXATTR, SYM ** AnESYM, LONG *memspace, LONG *perspace, const int operand)
 {
-    if (*tok == KW_A || *tok == KW_B)
-    {
-        *am = M_ACC56;
-        *areg = *tok++;
-        return OK;
-    }
-    else if (*tok == '#')
-    {
-        tok++;
+	if (*tok == KW_A || *tok == KW_B)
+	{
+		*am = M_ACC56;
+		*areg = *tok++;
+		return OK;
+	}
+	else if (*tok == '#')
+	{
+		tok++;
 
-        if (*tok == '<')
-        {
-            // Immediate Short Addressing Mode Force Operator
-            tok++;
-            if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
-                return ERROR;
-            if (*AnEXVAL > 0xfff && *AnEXVAL<-4096)
-                return error("immediate short addressing mode forced but address is bigger than $fff");
-            if ((int32_t)*AnEXVAL <= 0xff && (int32_t)*AnEXVAL>-0x100)
-            {
-                *am = M_DSPIM8;
-                return OK;
-            }
-            *am = M_DSPIM12;
-            return OK;
-        }
-        else if (*tok == '>')
-        {
-            // Immediate Long Addressing Mode Force Operator
-            tok++;
-            if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
-                return ERROR;
-            if ((int32_t)*AnEXVAL > 0xffffff || (int32_t)*AnEXVAL < -0xffffff)
-                return error("long immediate is bigger than $ffffff");
-            *am = M_DSPIM;
-            return OK;
-        }
+		if (*tok == '<')
+		{
+			// Immediate Short Addressing Mode Force Operator
+			tok++;
+			if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
+				return ERROR;
 
-        if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
-            return ERROR;
+			if (*AnEXVAL > 0xFFF && *AnEXVAL < -4096)
+				return error("immediate short addressing mode forced but address is bigger than $FFF");
 
-        if (*AnEXATTR & DEFINED)
-        {
+			if ((int32_t)*AnEXVAL <= 0xFF && (int32_t)*AnEXVAL > -0x100)
+			{
+				*am = M_DSPIM8;
+				return OK;
+			}
+
+			*am = M_DSPIM12;
+			return OK;
+		}
+		else if (*tok == '>')
+		{
+			// Immediate Long Addressing Mode Force Operator
+			tok++;
+
+			if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
+				return ERROR;
+
+			if ((int32_t)*AnEXVAL > 0xFFFFFF || (int32_t)*AnEXVAL < -0xFFFFFF)
+				return error("long immediate is bigger than $FFFFFF");
+
+			*am = M_DSPIM;
+			return OK;
+		}
+
+		if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
+			return ERROR;
+
+		if (*AnEXATTR & DEFINED)
+		{
 			if ((int32_t)*AnEXVAL < 0x100 && (int32_t)*AnEXVAL >= -0x100)
 			{
-				*AnEXVAL &= 0xff;
+				*AnEXVAL &= 0xFF;
 				*am = M_DSPIM8;
 			}
-            else if (*AnEXVAL < 0x1000)
-                *am = M_DSPIM12;
-            else
-                *am = M_DSPIM;
-        }
-        else
-        {
-            // We have no clue what size our immediate will be
-            // so we have to assume the worst
-            *am = M_DSPIM;
-        }
-        return OK;
-    }
-    else if (*tok >= KW_X0 && *tok <= KW_Y1)
-    {
-        *am = M_ALU24;
-        *areg = *tok++;
-        return OK;
-    }
-    else if (*tok == KW_X && *(tok + 1) == ':')
-    {
-        tok = tok + 2;
-        if (*tok == CONST || *tok == FCONST || *tok == SYMBOL)
-        {
-            if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
-                return ERROR;
+			else if (*AnEXVAL < 0x1000)
+				*am = M_DSPIM12;
+			else
+				*am = M_DSPIM;
+		}
+		else
+		{
+			// We have no clue what size our immediate will be
+			// so we have to assume the worst
+			*am = M_DSPIM;
+		}
+
+		return OK;
+	}
+	else if (*tok >= KW_X0 && *tok <= KW_Y1)
+	{
+		*am = M_ALU24;
+		*areg = *tok++;
+		return OK;
+	}
+	else if (*tok == KW_X && *(tok + 1) == ':')
+	{
+		tok = tok + 2;
+
+		if (*tok == CONST || *tok == FCONST || *tok == SYMBOL)
+		{
+			if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
+				return ERROR;
+
 			if (*AnEXATTR & DEFINED)
 			{
-				if (*AnEXVAL > 0xffffff)
-					return error("long address is bigger than $ffffff");
+				if (*AnEXVAL > 0xFFFFFF)
+					return error("long address is bigger than $FFFFFF");
+
 				*memspace = 0 << 6;     // Mark we're on X memory space
 
-				// Check if value is between $ffc0 and $ffff, AKA X:pp
-				{
-					uint32_t temp = (LONG)(((int32_t)(((uint32_t)*AnEXVAL) << (32 - 6))) >> (32 - 6));  // Sign extend 6 to 32 bits
-					if ((temp >= 0xffffffc0                      /* Check for 32bit sign extended number */
-						&& ((int32_t)*AnEXVAL<0))                /* Check if 32bit signed number is negative*/
-						||(*AnEXVAL<0xffff && *AnEXVAL>=0x8000)) /* Check if 16bit number is negative*/
-					{
-						*AnEXVAL = temp;
-						*am = M_DSPPP;
-						*memspace = 0 << 6;          // Mark we're on X memory space
-						*perspace = 0 << 16;         // Mark we're on X peripheral space
-						*areg = *AnEXVAL & 0x3f;     // Since this is only going to get used in dsp_ea_imm5...
-						return OK;
-					}
+				// Check if value is between $FFC0 and $FFFF, AKA X:pp
+				uint32_t temp = (LONG)(((int32_t)(((uint32_t)*AnEXVAL) << (32 - 6))) >> (32 - 6));  // Sign extend 6 to 32 bits
 
+				if ((temp >= 0xFFFFFFC0                      /* Check for 32bit sign extended number */
+					&& ((int32_t)*AnEXVAL < 0))              /* Check if 32bit signed number is negative*/
+					|| (*AnEXVAL < 0xFFFF && *AnEXVAL >= 0x8000)) /* Check if 16bit number is negative*/
+				{
+					*AnEXVAL = temp;
+					*am = M_DSPPP;
+					*memspace = 0 << 6;          // Mark we're on X memory space
+					*perspace = 0 << 16;         // Mark we're on X peripheral space
+					*areg = *AnEXVAL & 0x3F;     // Since this is only going to get used in dsp_ea_imm5...
+					return OK;
 				}
 
 				// If the symbol/expression is defined then check for valid range.
 				// Otherwise the value had better fit or Fixups will bark!
-				if (*AnEXVAL > 0x3f)
+				if (*AnEXVAL > 0x3F)
 				{
 					*am = M_DSPEA;
 					*areg = DSP_EA_ABS;
@@ -266,33 +274,36 @@ static inline int dsp_parmode(int *am, int *areg, TOKEN * AnEXPR, uint64_t * AnE
 				*am = M_DSPEA;
 				*areg = DSP_EA_ABS;
 			}
-            return OK;
-        }
-        else if (*tok == '<')
-        {
-            // X:aa
-            // Short Addressing Mode Force Operator in the case of '<'
-            tok++;
-            if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
-                return ERROR;
+
+			return OK;
+		}
+		else if (*tok == '<')
+		{
+			// X:aa
+			// Short Addressing Mode Force Operator in the case of '<'
+			tok++;
+
+			if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
+				return ERROR;
 
 			// If the symbol/expression is defined then check for valid range.
 			// Otherwise the value had better fit or Fixups will bark!
 			if (*AnEXATTR & DEFINED)
 			{
-				if (*AnEXVAL > 0x3f)
-					return error("short addressing mode forced but address is bigger than $3f");
+				if (*AnEXVAL > 0x3F)
+					return error("short addressing mode forced but address is bigger than $3F");
 			}
-            else
-            {
-                // Mark it as a fixup
-                deposit_extra_ea = DEPOSIT_EXTRA_FIXUP;
-            }
-            *am = M_DSPAA;
-            *memspace = 0 << 6;     // Mark we're on X memory space
-            *areg = (int)*AnEXVAL;     // Since this is only going to get used in dsp_ea_imm5...
-            return OK;
-        }
+			else
+			{
+				// Mark it as a fixup
+				deposit_extra_ea = DEPOSIT_EXTRA_FIXUP;
+			}
+
+			*am = M_DSPAA;
+			*memspace = 0 << 6;     // Mark we're on X memory space
+			*areg = (int)*AnEXVAL;     // Since this is only going to get used in dsp_ea_imm5...
+			return OK;
+		}
 		else if (*tok == '>')
 		{
 			// Long Addressing Mode Force Operator
@@ -302,12 +313,13 @@ static inline int dsp_parmode(int *am, int *areg, TOKEN * AnEXPR, uint64_t * AnE
 			{
 				if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
 					return ERROR;
+
 				if (*AnEXATTR&DEFINED)
 				{
-					if (*AnEXVAL > 0xffffff)
-						return error("long address is bigger than $ffffff");
-					*memspace = 0 << 6;     // Mark we're on X memory space
+					if (*AnEXVAL > 0xFFFFFF)
+						return error("long address is bigger than $FFFFFF");
 
+					*memspace = 0 << 6;     // Mark we're on X memory space
 					*am = M_DSPEA;
 					*areg = DSP_EA_ABS;
 				}
@@ -321,73 +333,75 @@ static inline int dsp_parmode(int *am, int *areg, TOKEN * AnEXPR, uint64_t * AnE
 				return OK;
 			}
 		}
-        else if (*tok == SHL)  // '<<'
-        {
-            // I/O Short Addressing Mode Force Operator
-            // X:pp
-            tok++;
-            if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
-                return ERROR;
+		else if (*tok == SHL)  // '<<'
+		{
+			// I/O Short Addressing Mode Force Operator
+			// X:pp
+			tok++;
+
+			if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
+				return ERROR;
 
 			// If the symbol/expression is defined then check for valid range.
 			// Otherwise the value had better fit or Fixups will bark!
 			if (*AnEXATTR & DEFINED)
 			{
 				*AnEXVAL = (LONG)(((int32_t)(((uint32_t)*AnEXVAL) << (32 - 6))) >> (32 - 6));  // Sign extend 6 to 32 bits
-				if (*AnEXVAL < 0xffffffc0)
-					return error("I/O Short Addressing Mode addresses must be between $ffc0 and $ffff");
+
+				if (*AnEXVAL < 0xFFFFFFC0)
+					return error("I/O Short Addressing Mode addresses must be between $FFC0 and $FFFF");
 			}
-            *am = M_DSPPP;
-            *memspace = 0 << 6;          // Mark we're on X memory space
-            *perspace = 0 << 16;         // Mark we're on X peripheral space
-            *areg = *AnEXVAL & 0x3f;     // Since this is only going to get used in dsp_ea_imm5...
-            return OK;
-        }
 
-        if ((*areg = checkea(0, X_ERRORS)) != ERROR)
-        {
-            // TODO: what if we need M_DSPAA here????
-            *memspace = 0 << 6;     // Mark we're on X memory space
-            *am = M_DSPEA;
-            return OK;
-        }
-        else
-            return ERROR;
+			*am = M_DSPPP;
+			*memspace = 0 << 6;          // Mark we're on X memory space
+			*perspace = 0 << 16;         // Mark we're on X peripheral space
+			*areg = *AnEXVAL & 0x3f;     // Since this is only going to get used in dsp_ea_imm5...
+			return OK;
+		}
 
-    }
-    else if (*tok == KW_Y && *(tok + 1) == ':')
-    {
-        tok = tok + 2;
+		if ((*areg = checkea(0, X_ERRORS)) != ERROR)
+		{
+			// TODO: what if we need M_DSPAA here????
+			*memspace = 0 << 6;     // Mark we're on X memory space
+			*am = M_DSPEA;
+			return OK;
+		}
+		else
+			return ERROR;
+	}
+	else if (*tok == KW_Y && *(tok + 1) == ':')
+	{
+		tok = tok + 2;
 
-        if (*tok == CONST || *tok == FCONST || *tok == SYMBOL)
-        {
-            if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
-                return ERROR;
-            if (*AnEXVAL > 0xffffff)
-                return error("long address is bigger than $ffffff");
-            *memspace = 1 << 6;     // Mark we're on Y memory space
+		if (*tok == CONST || *tok == FCONST || *tok == SYMBOL)
+		{
+			if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
+				return ERROR;
+
+			if (*AnEXVAL > 0xFFFFFF)
+				return error("long address is bigger than $FFFFFF");
+
+			*memspace = 1 << 6;     // Mark we're on Y memory space
 
 			// Check if value is between $ffc0 and $ffff, AKA Y:pp
-			{
-				uint32_t temp = (LONG)(((int32_t)(((uint32_t)*AnEXVAL) << (32 - 6))) >> (32 - 6));  // Sign extend 6 to 32 bits
-				if ((temp >= 0xffffffc0                         /* Check for 32bit sign extended number */
-					&& ((int32_t)*AnEXVAL<0))                   /* Check if 32bit signed number is negative*/
-					|| (*AnEXVAL<0xffff && *AnEXVAL >= 0x8000)) /* Check if 16bit number is negative*/
-				{
-					*AnEXVAL = temp;
-					*am = M_DSPPP;
-					*perspace = 1 << 16;         // Mark we're on X peripheral space
-					*areg = *AnEXVAL & 0x3f;     // Since this is only going to get used in dsp_ea_imm5...
-					return OK;
-				}
+			uint32_t temp = (LONG)(((int32_t)(((uint32_t)*AnEXVAL) << (32 - 6))) >> (32 - 6));  // Sign extend 6 to 32 bits
 
+			if ((temp >= 0xFFFFFFC0                         /* Check for 32bit sign extended number */
+				&& ((int32_t)*AnEXVAL < 0))                 /* Check if 32bit signed number is negative*/
+				|| (*AnEXVAL < 0xFFFF && *AnEXVAL >= 0x8000)) /* Check if 16bit number is negative*/
+			{
+				*AnEXVAL = temp;
+				*am = M_DSPPP;
+				*perspace = 1 << 16;         // Mark we're on X peripheral space
+				*areg = *AnEXVAL & 0x3F;     // Since this is only going to get used in dsp_ea_imm5...
+				return OK;
 			}
 
 			// If the symbol/expression is defined then check for valid range.
 			// Otherwise the value had better fit or Fixups will bark!
 			if (*AnEXATTR & DEFINED)
 			{
-				if (*AnEXVAL > 0x3f)
+				if (*AnEXVAL > 0x3F)
 				{
 					*am = M_DSPEA;
 					*areg = DSP_EA_ABS;
@@ -403,53 +417,56 @@ static inline int dsp_parmode(int *am, int *areg, TOKEN * AnEXPR, uint64_t * AnE
 				*areg = DSP_EA_ABS;
 			}
 
-            return OK;
-        }
-        else if (*tok == '<')
-        {
-            // Y:aa
-            // Short Addressing Mode Force Operator in the case of '<'
-            tok++;
-            if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
-                return ERROR;
+			return OK;
+		}
+		else if (*tok == '<')
+		{
+			// Y:aa
+			// Short Addressing Mode Force Operator in the case of '<'
+			tok++;
+
+			if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
+				return ERROR;
 
 			// If the symbol/expression is defined then check for valid range.
 			// Otherwise the value had better fit or Fixups will bark!
 			if (*AnEXATTR & DEFINED)
 			{
-				if (*AnEXVAL > 0x3f)
+				if (*AnEXVAL > 0x3F)
 				{
-					warn("short addressing mode forced but address is bigger than $3f - switching to long");
+					warn("short addressing mode forced but address is bigger than $3F - switching to long");
 					*am = M_DSPEA;
 					*memspace = 1 << 6;     // Mark we're on Y memory space
 					*areg = DSP_EA_ABS;
 					return OK;
 				}
 			}
-            else
-            {
-                // Mark it as a fixup
-                deposit_extra_ea = DEPOSIT_EXTRA_FIXUP;
-            }
+			else
+			{
+				// Mark it as a fixup
+				deposit_extra_ea = DEPOSIT_EXTRA_FIXUP;
+			}
 
-            *am = M_DSPAA;
-            *memspace = 1 << 6;     // Mark we're on Y memory space
-            *areg = (int)*AnEXVAL;      // Since this is only going to get used in dsp_ea_imm5...
-            return OK;
-        }
-        else if (*tok == '>')
-        {
-            // Long Addressing Mode Force Operator
+			*am = M_DSPAA;
+			*memspace = 1 << 6;     // Mark we're on Y memory space
+			*areg = (int)*AnEXVAL;      // Since this is only going to get used in dsp_ea_imm5...
+			return OK;
+		}
+		else if (*tok == '>')
+		{
+			// Long Addressing Mode Force Operator
 			tok++;
 
 			if (*tok == CONST || *tok == FCONST || *tok == SYMBOL)
 			{
 				if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
 					return ERROR;
+
 				if (*AnEXATTR&DEFINED)
 				{
-					if (*AnEXVAL > 0xffffff)
-						return error("long address is bigger than $ffffff");
+					if (*AnEXVAL > 0xFFFFFF)
+						return error("long address is bigger than $FFFFFF");
+
 					*memspace = 1 << 6;     // Mark we're on Y memory space
 
 					*am = M_DSPEA;
@@ -465,364 +482,389 @@ static inline int dsp_parmode(int *am, int *areg, TOKEN * AnEXPR, uint64_t * AnE
 				return OK;
 			}
 		}
-        else if (*tok == SHL)  // '<<'
-        {
-            // I/O Short Addressing Mode Force Operator
-            // Y:pp
-            tok++;
-            if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
-                return ERROR;
+		else if (*tok == SHL)  // '<<'
+		{
+			// I/O Short Addressing Mode Force Operator
+			// Y:pp
+			tok++;
+
+			if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
+				return ERROR;
 
 			// If the symbol/expression is defined then check for valid range.
 			// Otherwise the value had better fit or Fixups will bark!
 			if (*AnEXATTR & DEFINED)
 			{
 				*AnEXVAL = (LONG)(((int32_t)(((uint32_t)*AnEXVAL) << (32 - 6))) >> (32 - 6));  // Sign extend 6 to 32 bits
-				if (*AnEXVAL < 0xffffffc0)
-					return error("I/O Short Addressing Mode addresses must be between $ffe0 and $1f");
+
+				if (*AnEXVAL < 0xFFFFFFC0)
+					return error("I/O Short Addressing Mode addresses must be between $FFE0 and $1F");
 			}
-	        *am = M_DSPPP;
-            *memspace = 1 << 6;          // Mark we're on Y memory space
-            *perspace = 1 << 16;         // Mark we're on Y peripheral space
-            *areg = *AnEXVAL & 0x3f;     // Since this is only going to get used in dsp_ea_imm5...
-            return OK;
-        }
 
-        if ((*areg = checkea(0, X_ERRORS)) != ERROR)
-        {
-            *memspace = 1 << 6;     // Mark we're on Y memory space
-            *am = M_DSPEA;
-            return OK;
-        }
-        else
-            return ERROR;
-        // TODO: add absolute address checks
+			*am = M_DSPPP;
+			*memspace = 1 << 6;          // Mark we're on Y memory space
+			*perspace = 1 << 16;         // Mark we're on Y peripheral space
+			*areg = *AnEXVAL & 0x3F;     // Since this is only going to get used in dsp_ea_imm5...
+			return OK;
+		}
 
-    }
-    else if (*tok >= KW_X&&*tok <= KW_Y)
-    {
-        *am = M_INP48;
-        *areg = *tok++;
-        return OK;
-    }
-    else if (*tok >= KW_M0 && *tok <= KW_M7)
-    {
-        *am = M_DSPM;
-        *areg = (*tok++) & 7;
-        return OK;
-    }
-    else if (*tok >= KW_R0 && *tok <= KW_R7)
-    {
-        *am = M_DSPR;
-        *areg = (*tok++) - KW_R0;
-        return OK;
-    }
-    else if (*tok >= KW_N0 && *tok <= KW_N7)
-    {
-        *am = M_DSPN;
-        *areg = (*tok++) & 7;
-        return OK;
-    }
-    else if (*tok == KW_A0 || *tok == KW_A1 || *tok == KW_B0 || *tok == KW_B1)
-    {
-        *am = M_ACC24;
-        *areg = *tok++;
-        return OK;
-    }
-    else if (*tok == KW_A2 || *tok == KW_B2)
-    {
-        *am = M_ACC8;
-        *areg = *tok++;
-        return OK;
-    }
-    else if (*tok == '-' && (*(tok + 1) == KW_X0 || *(tok + 1) == KW_X1 || *(tok + 1) == KW_Y0 || *(tok + 1) == KW_Y1))
-    {
-        // '-X0', '-Y0', '-X1' or '-Y1', used in multiplications
-        tok++;
+		if ((*areg = checkea(0, X_ERRORS)) != ERROR)
+		{
+			*memspace = 1 << 6;     // Mark we're on Y memory space
+			*am = M_DSPEA;
+			return OK;
+		}
+		else
+			return ERROR;
+		// TODO: add absolute address checks
+	}
+	else if ((*tok >= KW_X) && (*tok <= KW_Y))
+	{
+		*am = M_INP48;
+		*areg = *tok++;
+		return OK;
+	}
+	else if ((*tok >= KW_M0) && (*tok <= KW_M7))
+	{
+		*am = M_DSPM;
+		*areg = (*tok++) & 7;
+		return OK;
+	}
+	else if ((*tok >= KW_R0) && (*tok <= KW_R7))
+	{
+		*am = M_DSPR;
+		*areg = (*tok++) - KW_R0;
+		return OK;
+	}
+	else if ((*tok >= KW_N0) && (*tok <= KW_N7))
+	{
+		*am = M_DSPN;
+		*areg = (*tok++) & 7;
+		return OK;
+	}
+	else if ((*tok == KW_A0) || (*tok == KW_A1) || (*tok == KW_B0)
+		|| (*tok == KW_B1))
+	{
+		*am = M_ACC24;
+		*areg = *tok++;
+		return OK;
+	}
+	else if ((*tok == KW_A2) || (*tok == KW_B2))
+	{
+		*am = M_ACC8;
+		*areg = *tok++;
+		return OK;
+	}
+	else if ((*tok == '-') && (*(tok + 1) == KW_X0 || *(tok + 1) == KW_X1 || *(tok + 1) == KW_Y0 || *(tok + 1) == KW_Y1))
+	{
+		// '-X0', '-Y0', '-X1' or '-Y1', used in multiplications
+		tok++;
 
-        // Check to see if this is the first operand
-        if (operand != 0)
-            return error("-x0/-x1/-y0/-y1 only allowed in the first operand");
+		// Check to see if this is the first operand
+		if (operand != 0)
+			return error("-x0/-x1/-y0/-y1 only allowed in the first operand");
 
-        *am = M_ALU24;
-        *areg = *tok++;
-        dsp_k = 1 << 2;
-        return OK;
-    }
-    else if (*tok == '+' && (*(tok + 1) == KW_X0 || *(tok + 1) == KW_X1 || *(tok + 1) == KW_Y0 || *(tok + 1) == KW_Y1))
-    {
-        // '+X0', '+Y0', '+X1' or '+Y1', used in multiplications
-        tok++;
+		*am = M_ALU24;
+		*areg = *tok++;
+		dsp_k = 1 << 2;
+		return OK;
+	}
+	else if (*tok == '+' && (*(tok + 1) == KW_X0 || *(tok + 1) == KW_X1 || *(tok + 1) == KW_Y0 || *(tok + 1) == KW_Y1))
+	{
+		// '+X0', '+Y0', '+X1' or '+Y1', used in multiplications
+		tok++;
 
-        // Check to see if this is the first operand
-        if (operand != 0)
-            return error("+x0/+x1/+y0/+y1 only allowed in the first operand");
+		// Check to see if this is the first operand
+		if (operand != 0)
+			return error("+x0/+x1/+y0/+y1 only allowed in the first operand");
 
-        *am = M_ALU24;
-        *areg = *tok++;
-        dsp_k = 0 << 2;
-        return OK;
-    }
-    else if (*tok == '(' || *tok == '-')
-    {
-        // Could be either an expression or ea mode
-        if (*tok + 1 == SYMBOL)
-        {
-            tok++;
+		*am = M_ALU24;
+		*areg = *tok++;
+		dsp_k = 0 << 2;
+		return OK;
+	}
+	else if (*tok == '(' || *tok == '-')
+	{
+		// Could be either an expression or ea mode
+		if (*tok + 1 == SYMBOL)
+		{
+			tok++;
 
-            if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
-                return ERROR;
+			if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
+				return ERROR;
 
-            *am = M_DSPIM;
-            return OK;
-        }
-        if ((*areg = checkea(0, P_ERRORS)) != ERROR)
-        {
-            *am = M_DSPEA;
-            return OK;
-        }
-        else
-            return ERROR;
-        // TODO: add absolute address checks
-        return error("internal assembler error: parmode checking for '(' and '-' does not have absolute address checks yet!");
-    }
-    else if (*tok == KW_P && *(tok + 1) == ':')
-    {
-        tok = tok + 2;
+			*am = M_DSPIM;
+			return OK;
+		}
+
+		if ((*areg = checkea(0, P_ERRORS)) != ERROR)
+		{
+			*am = M_DSPEA;
+			return OK;
+		}
+		else
+			return ERROR;
+
+		// TODO: add absolute address checks
+		return error("internal assembler error: parmode checking for '(' and '-' does not have absolute address checks yet!");
+	}
+	else if (*tok == KW_P && *(tok + 1) == ':')
+	{
+		tok = tok + 2;
+
 		if (*tok == CONST || *tok == FCONST || *tok == SYMBOL)
-        {
-            // Address
-            if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
-                return ERROR;
-            if (*AnEXVAL > 0xffffff)
-                return error("long address is bigger than $ffffff");
-            if (*AnEXVAL > 0x3f)
-            {
-                *am = M_DSPEA;
-                *areg = DSP_EA_ABS;
-            }
-            else
-            {
-                *areg = (int)*AnEXVAL;     // Lame, but what the hell
-                *am = M_DSPAA;
-            }
-            return OK;
-        }
-        else if (*tok == '<')
-        {
-            // X:aa
-            // Short Addressing Mode Force Operator in the case of '<'
-            tok++;
-            if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
-                return ERROR;
-            if (*AnEXVAL > 0x3f)
-                return error("short addressing mode forced but address is bigger than $3f");
-            *am = M_DSPAA;
-            *areg = (int)*AnEXVAL;     // Since this is only going to get used in dsp_ea_imm5...
-            return OK;
-        }
-        else if (*tok == '>')
-        {
-            // Long Addressing Mode Force Operator
-            tok++;
-            // Immediate Short Addressing Mode Force Operator
-            if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
-                return ERROR;
-            if (*AnEXATTR & DEFINED)
-            {
-                if (*AnEXVAL > 0xffffff)
-                    return error("long address is bigger than $ffffff");
-            }
-            *am = M_DSPEA;
-            *areg = DSP_EA_ABS;
-            return OK;
-        }
+		{
+			// Address
+			if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
+				return ERROR;
 
-        if ((*areg = checkea(0, P_ERRORS)) != ERROR)
-        {
-            *am = M_DSPEA;
-            return OK;
-        }
-        else
-            return ERROR;
+			if (*AnEXVAL > 0xFFFFFF)
+				return error("long address is bigger than $FFFFFF");
 
-    }
-    else if (*tok == SHL)
-    {
-        // I/O Short Addressing Mode Force Operator
-        tok++;
-        if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
-            return ERROR;
-        if (*AnEXVAL > 0xfff)
-            return error("I/O short addressing mode forced but address is bigger than $fff");
-        *am = M_DSPABS06;
-        return OK;
-    }
-    else if (*tok == '<')
-    {
-        // Short Addressing Mode Force Operator
-        tok++;
-        if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
-            return ERROR;
-        if (*AnEXATTR & DEFINED)
-        {
-            if (*AnEXVAL > 0xfff)
-                return error("short addressing mode forced but address is bigger than $fff");
-        }
-        *am = M_DSPABS12;
-        return OK;
-    }
-    else if (*tok == '>')
-    {
-        // Long Addressing Mode Force Operator
-        tok++;
-        // Immediate Short Addressing Mode Force Operator
-        if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
-            return ERROR;
-        if (*AnEXATTR & DEFINED)
-        {
-            if (*AnEXVAL > 0xffffff)
-                return error("long address is bigger than $ffffff");
-        }
-        *am = M_DSPEA;
-        *areg = DSP_EA_ABS;
-        return OK;
-    }
+			if (*AnEXVAL > 0x3F)
+			{
+				*am = M_DSPEA;
+				*areg = DSP_EA_ABS;
+			}
+			else
+			{
+				*areg = (int)*AnEXVAL;     // Lame, but what the hell
+				*am = M_DSPAA;
+			}
 
-    else if (*tok == KW_PC || *tok == KW_CCR || *tok == KW_SR || *tok == KW_SP || (*tok >= KW_MR&&*tok <= KW_SS))
-    {
-        *areg = *tok++;
-        *am = M_DSPPCU;
-        return OK;
-    }
-    // expr
-    else
-    {
-        if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
-            return ERROR;
+			return OK;
+		}
+		else if (*tok == '<')
+		{
+			// X:aa
+			// Short Addressing Mode Force Operator in the case of '<'
+			tok++;
 
-        // We'll store M_DSPEA_ABS in areg and if we have
-        // any extra info, it'll go in am
-        if (*AnEXATTR & DEFINED)
-        {
-            *areg = DSP_EA_ABS;
-            if (*AnEXVAL < 0x1000)
-                *am = M_DSPABS12;
-            else if (*AnEXVAL < 0x10000)
-                *am = M_DSPABS16;
-            else if (*AnEXVAL < 0x1000000)
-                *am = M_DSPABS24;
-            else
-                return error("address must be smaller than $1000000");
-            return OK;
-        }
-        else
-        {
-            // Well, we have no opinion on the expression's size, so let's assume the worst
-            *areg = DSP_EA_ABS;
-            *am = M_DSPABS24;
-            return OK;
-        }
-    }
-    return error("internal assembler error: Please report this error message: 'reached the end of dsp_parmode' with the line of code that caused it. Thanks, and sorry for the inconvenience");   // Something bad happened
+			if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
+				return ERROR;
+
+			if (*AnEXVAL > 0x3F)
+				return error("short addressing mode forced but address is bigger than $3F");
+
+			*am = M_DSPAA;
+			*areg = (int)*AnEXVAL;     // Since this is only going to get used in dsp_ea_imm5...
+			return OK;
+		}
+		else if (*tok == '>')
+		{
+			// Long Addressing Mode Force Operator
+			tok++;
+
+			// Immediate Short Addressing Mode Force Operator
+			if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
+				return ERROR;
+
+			if (*AnEXATTR & DEFINED)
+			{
+				if (*AnEXVAL > 0xFFFFFF)
+					return error("long address is bigger than $FFFFFF");
+			}
+
+			*am = M_DSPEA;
+			*areg = DSP_EA_ABS;
+			return OK;
+		}
+
+		if ((*areg = checkea(0, P_ERRORS)) != ERROR)
+		{
+			*am = M_DSPEA;
+			return OK;
+		}
+		else
+			return ERROR;
+	}
+	else if (*tok == SHL)
+	{
+		// I/O Short Addressing Mode Force Operator
+		tok++;
+
+		if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
+			return ERROR;
+
+		if (*AnEXVAL > 0xFFF)
+			return error("I/O short addressing mode forced but address is bigger than $FFF");
+
+		*am = M_DSPABS06;
+		return OK;
+	}
+	else if (*tok == '<')
+	{
+		// Short Addressing Mode Force Operator
+		tok++;
+
+		if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
+			return ERROR;
+
+		if (*AnEXATTR & DEFINED)
+		{
+			if (*AnEXVAL > 0xFFF)
+				return error("short addressing mode forced but address is bigger than $FFF");
+		}
+
+		*am = M_DSPABS12;
+		return OK;
+	}
+	else if (*tok == '>')
+	{
+		// Long Addressing Mode Force Operator
+		tok++;
+
+		// Immediate Short Addressing Mode Force Operator
+		if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
+			return ERROR;
+
+		if (*AnEXATTR & DEFINED)
+		{
+			if (*AnEXVAL > 0xFFFFFF)
+				return error("long address is bigger than $FFFFFF");
+		}
+
+		*am = M_DSPEA;
+		*areg = DSP_EA_ABS;
+		return OK;
+	}
+	else if (*tok == KW_PC || *tok == KW_CCR || *tok == KW_SR || *tok == KW_SP || (*tok >= KW_MR&&*tok <= KW_SS))
+	{
+		*areg = *tok++;
+		*am = M_DSPPCU;
+		return OK;
+	}
+	// expr
+	else
+	{
+		if (expr(AnEXPR, AnEXVAL, AnEXATTR, AnESYM) != OK)
+			return ERROR;
+
+		// We'll store M_DSPEA_ABS in areg and if we have
+		// any extra info, it'll go in am
+		if (*AnEXATTR & DEFINED)
+		{
+			*areg = DSP_EA_ABS;
+
+			if (*AnEXVAL < 0x1000)
+				*am = M_DSPABS12;
+			else if (*AnEXVAL < 0x10000)
+				*am = M_DSPABS16;
+			else if (*AnEXVAL < 0x1000000)
+				*am = M_DSPABS24;
+			else
+				return error("address must be smaller than $1000000");
+
+			return OK;
+		}
+		else
+		{
+			// Well, we have no opinion on the expression's size, so let's assume the worst
+			*areg = DSP_EA_ABS;
+			*am = M_DSPABS24;
+			return OK;
+		}
+	}
+
+	return error("internal assembler error: Please report this error message: 'reached the end of dsp_parmode' with the line of code that caused it. Thanks, and sorry for the inconvenience");   // Something bad happened
 }
+
 
 //
 // Parse all addressing modes except parallel moves
 //
 int dsp_amode(int maxea)
 {
-    LONG dummy;
-    // Initialize global return values
-    nmodes = dsp_a0reg = dsp_a1reg = 0;
-    dsp_am0 = dsp_am1 = M_AM_NONE;
-    dsp_a0expr[0] = dsp_a1expr[0] = ENDEXPR;
-    dsp_a0exval = 0;
-    dsp_a1exval = 0;
-    dsp_a0exattr = dsp_a1exattr = 0;
-    dsp_a0esym = dsp_a1esym = (SYM *)NULL;
-    dsp_a0memspace = dsp_a1memspace = -1;
-    dsp_a0perspace = dsp_a1perspace = -1;
-    dsp_k = 0;
+	LONG dummy;
+	// Initialize global return values
+	nmodes = dsp_a0reg = dsp_a1reg = 0;
+	dsp_am0 = dsp_am1 = M_AM_NONE;
+	dsp_a0expr[0] = dsp_a1expr[0] = ENDEXPR;
+	dsp_a0exval = 0;
+	dsp_a1exval = 0;
+	dsp_a0exattr = dsp_a1exattr = 0;
+	dsp_a0esym = dsp_a1esym = (SYM *)NULL;
+	dsp_a0memspace = dsp_a1memspace = -1;
+	dsp_a0perspace = dsp_a1perspace = -1;
+	dsp_k = 0;
 
-    // If at EOL, then no addr modes at all
-    if (*tok == EOL)
-        return 0;
+	// If at EOL, then no addr modes at all
+	if (*tok == EOL)
+		return 0;
 
-    if (dsp_parmode(&dsp_am0, &dsp_a0reg, dsp_a0expr, &dsp_a0exval, &dsp_a0exattr, &dsp_a0esym, &dsp_a0memspace, &dsp_a0perspace, 0) == ERROR)
-        return ERROR;
+	if (dsp_parmode(&dsp_am0, &dsp_a0reg, dsp_a0expr, &dsp_a0exval, &dsp_a0exattr, &dsp_a0esym, &dsp_a0memspace, &dsp_a0perspace, 0) == ERROR)
+		return ERROR;
 
 
-    // If caller wants only one mode, return just one (ignore comma);
-    // If there is no second addressing mode (no comma), then return just one anyway.
-    nmodes = 1;
+	// If caller wants only one mode, return just one (ignore comma);
+	// If there is no second addressing mode (no comma), then return just one anyway.
+	nmodes = 1;
 
-    if (*tok != ',')
-    {
-        if (dsp_k != 0)
-            return error("-x0/-x1/-y0/-y1 only allowed in multiply operations");
+	if (*tok != ',')
+	{
+		if (dsp_k != 0)
+			return error("-x0/-x1/-y0/-y1 only allowed in multiply operations");
 
-        return 1;
-    }
+		return 1;
+	}
 
-    // Eat the comma
-    tok++;
+	// Eat the comma
+	tok++;
 
-    // Parse second addressing mode
-    if (dsp_parmode(&dsp_am1, &dsp_a1reg, dsp_a1expr, &dsp_a1exval, &dsp_a1exattr, &dsp_a1esym, &dsp_a1memspace, &dsp_a1perspace, 1) == ERROR)
-        return ERROR;
+	// Parse second addressing mode
+	if (dsp_parmode(&dsp_am1, &dsp_a1reg, dsp_a1expr, &dsp_a1exval, &dsp_a1exattr, &dsp_a1esym, &dsp_a1memspace, &dsp_a1perspace, 1) == ERROR)
+		return ERROR;
 
-    if (maxea == 2 || *tok == EOL)
-    {
-        if (dsp_k != 0)
-            return error("-x0/-x1/-y0/-y1 only allowed in multiply operations");
+	if (maxea == 2 || *tok == EOL)
+	{
+		if (dsp_k != 0)
+			return error("-x0/-x1/-y0/-y1 only allowed in multiply operations");
 
-        nmodes = 2;
-        return 2;
-    }
+		nmodes = 2;
+		return 2;
+	}
 
-    if (*tok == ',')
-    {
-        // Only MAC-like or jsset/clr/tst/chg instructions here
-        tok++;
-        if (dsp_parmode(&dsp_am2, &dsp_a2reg, dsp_a2expr, &dsp_a2exval, &dsp_a2exattr, &dsp_a2esym, &dummy, &dummy, 2) == ERROR)
-            return ERROR;
-        if (maxea == 3)
-            return 3;
-        if (*tok != EOL)
-            return error(extra_stuff);
-        nmodes = 3;
-        return 3;
+	if (*tok == ',')
+	{
+		// Only MAC-like or jsset/clr/tst/chg instructions here
+		tok++;
+		if (dsp_parmode(&dsp_am2, &dsp_a2reg, dsp_a2expr, &dsp_a2exval, &dsp_a2exattr, &dsp_a2esym, &dummy, &dummy, 2) == ERROR)
+			return ERROR;
+		if (maxea == 3)
+			return 3;
+		if (*tok != EOL)
+			return error(extra_stuff);
+		nmodes = 3;
+		return 3;
 
-    }
+	}
 
-    // Only Tcc instructions here, and then only those that accept 4 operands
+	// Only Tcc instructions here, and then only those that accept 4 operands
 
-    if (dsp_parmode(&dsp_am2, &dsp_a2reg, dsp_a2expr, &dsp_a2exval, &dsp_a2exattr, &dsp_a2esym, &dummy, &dummy, 2) == ERROR)
-        return ERROR;
+	if (dsp_parmode(&dsp_am2, &dsp_a2reg, dsp_a2expr, &dsp_a2exval, &dsp_a2exattr, &dsp_a2esym, &dummy, &dummy, 2) == ERROR)
+		return ERROR;
 
-    if (*tok++ != ',')
-        return error("expected 4 parameters");
+	if (*tok++ != ',')
+		return error("expected 4 parameters");
 
-    if (dsp_parmode(&dsp_am3, &dsp_a3reg, dsp_a3expr, &dsp_a3exval, &dsp_a3exattr, &dsp_a3esym, &dummy, &dummy, 3) == ERROR)
-        return ERROR;
+	if (dsp_parmode(&dsp_am3, &dsp_a3reg, dsp_a3expr, &dsp_a3exval, &dsp_a3exattr, &dsp_a3esym, &dummy, &dummy, 3) == ERROR)
+		return ERROR;
 
-    if (*tok == EOL)
-    {
-        if (dsp_k != 0)
-            return error("-x0/-x1/-y0/-y1 only allowed in multiply operations");
+	if (*tok == EOL)
+	{
+		if (dsp_k != 0)
+			return error("-x0/-x1/-y0/-y1 only allowed in multiply operations");
 
-        nmodes = 4;
-        return 4;
-    }
-    else
-    {
-        // Tcc instructions do not support parallel moves, so any remaining tokens are garbage
-        return error(extra_stuff);
-    }
+		nmodes = 4;
+		return 4;
+	}
+	else
+	{
+		// Tcc instructions do not support parallel moves, so any remaining tokens are garbage
+		return error(extra_stuff);
+	}
 
-    return error("internal assembler error: Please report this error message: 'reached the end of dsp_amode' with the line of code that caused it. Thanks, and sorry for the inconvenience");   //Something bad happened
-
+	return error("internal assembler error: Please report this error message: 'reached the end of dsp_amode' with the line of code that caused it. Thanks, and sorry for the inconvenience");   //Something bad happened
 }
 
 
@@ -831,43 +873,43 @@ int dsp_amode(int maxea)
 //
 static inline int SDreg(int reg)
 {
-    if (reg >= KW_X0 && reg <= KW_N7)
-        return reg & 0xff;
-    else if (reg >= KW_A0&&reg <= KW_A2)
-        return (8 >> (reg & 7)) | 8;
-    else //if (reg>=KW_R0&&reg<=KW_R7)
-        return reg - KW_R0 + 16;
-    // Handy map for the above:
-    // (values are of course taken from keytab)
-    // Register | Value | Return value
-    //	x0      | 260   | 4
-    //	x1      | 261   | 5
-    //	y0      | 262   | 6
-    //	y1      | 263   | 7
-    //	b0      | 265   | 8
-    //	b2      | 267   | 9
-    //	b1      | 269   | 10
-    //	a       | 270   | 14
-    //	b       | 271   | 15
-    //	n0      | 280   | 24
-    //	n1      | 281   | 25
-    //	n2      | 282   | 26
-    //	n3      | 283   | 27
-    //	n4      | 284   | 28
-    //	n5      | 285   | 29
-    //	n6      | 286   | 30
-    //	n7      | 287   | 31
-    //	a0	    | 136   | 0
-    //	a1	    | 137   | 1
-    //	a2      | 138   | 2
-    //	r0	    | 151   | 16
-    //	r1	    | 152   | 17
-    //	r2	    | 153   | 18
-    //	r3	    | 154   | 19
-    //	r4	    | 155   | 20
-    //	r5	    | 156   | 21
-    //	r6	    | 157   | 22
-    //	r7	    | 158   | 23
+	if (reg >= KW_X0 && reg <= KW_N7)
+		return reg & 0xFF;
+	else if (reg >= KW_A0&&reg <= KW_A2)
+		return (8 >> (reg & 7)) | 8;
+	else //if (reg>=KW_R0&&reg<=KW_R7)
+		return reg - KW_R0 + 16;
+	// Handy map for the above:
+	// (values are of course taken from keytab)
+	// Register | Value | Return value
+	//	x0      | 260   | 4
+	//	x1      | 261   | 5
+	//	y0      | 262   | 6
+	//	y1      | 263   | 7
+	//	b0      | 265   | 8
+	//	b2      | 267   | 9
+	//	b1      | 269   | 10
+	//	a       | 270   | 14
+	//	b       | 271   | 15
+	//	n0      | 280   | 24
+	//	n1      | 281   | 25
+	//	n2      | 282   | 26
+	//	n3      | 283   | 27
+	//	n4      | 284   | 28
+	//	n5      | 285   | 29
+	//	n6      | 286   | 30
+	//	n7      | 287   | 31
+	//	a0	    | 136   | 0
+	//	a1	    | 137   | 1
+	//	a2      | 138   | 2
+	//	r0	    | 151   | 16
+	//	r1	    | 152   | 17
+	//	r2	    | 153   | 18
+	//	r3	    | 154   | 19
+	//	r4	    | 155   | 20
+	//	r5	    | 156   | 21
+	//	r6	    | 157   | 22
+	//	r7	    | 158   | 23
 }
 
 
@@ -876,223 +918,238 @@ static inline int SDreg(int reg)
 //
 static inline LONG check_x_y(LONG ea1, LONG S1)
 {
-    LONG inst;
-    LONG eax_temp, eay_temp;
-    LONG D1, D2, S2, ea2;
-    LONG K_D1, K_D2;
-    LONG w = 1 << 7;		// S1=0, D1=1<<14
-    if ((ea1 & 0x38) == DSP_EA_POSTINC || (ea1 & 0x38) == DSP_EA_POSTINC1 ||
-        (ea1 & 0x38) == DSP_EA_POSTDEC1 || (ea1 & 0x38) == DSP_EA_NOUPD)
-    {
+	LONG inst;
+	LONG eax_temp, eay_temp;
+	LONG D1, D2, S2, ea2;
+	LONG K_D1, K_D2;
+	LONG w = 1 << 7;		// S1=0, D1=1<<14
 
-        switch (ea1 & 0x38)
-        {
-        case DSP_EA_POSTINC: ea1 = (ea1&(~0x38)) | 0x8;break;
-        case DSP_EA_POSTINC1: ea1 = (ea1&(~0x38)) | 0x18;break;
-        case DSP_EA_POSTDEC1: ea1 = (ea1&(~0x38)) | 0x10;break;
-        case DSP_EA_NOUPD: ea1 = (ea1&(~0x38)) | 0x00;break;
-        }
+	if ((ea1 & 0x38) == DSP_EA_POSTINC || (ea1 & 0x38) == DSP_EA_POSTINC1 ||
+		(ea1 & 0x38) == DSP_EA_POSTDEC1 || (ea1 & 0x38) == DSP_EA_NOUPD)
+	{
+		switch (ea1 & 0x38)
+		{
+		case DSP_EA_POSTINC:  ea1 = (ea1 & (~0x38)) | 0x8; break;
+		case DSP_EA_POSTINC1: ea1 = (ea1 & (~0x38)) | 0x18; break;
+		case DSP_EA_POSTDEC1: ea1 = (ea1 & (~0x38)) | 0x10; break;
+		case DSP_EA_NOUPD:    ea1 = (ea1 & (~0x38)) | 0x00; break;
+		}
 
-        if (S1 == 0)
-        {
-            // 'X:eax,D1 Y:eay,D2', 'X:eax,D1 S2,Y:eay'
-            // Check for D1
-            switch (K_D1 = *tok++)
-            {
-            case KW_X0: D1 = 0 << 10; break;
-            case KW_X1: D1 = 1 << 10; break;
-            case KW_A:  D1 = 2 << 10; break;
-            case KW_B:  D1 = 3 << 10; break;
-            default:    return error("unrecognised X:Y: parallel move syntax: expected x0, x1, a or b after 'X:eax,'");
-            }
-        }
-        else
-        {
-            // 'S1,X:eax Y:eay,D2' 'S1,X:eax S2,Y:eay'
-            w = 0;
-            switch (S1)
-            {
-            case 4:  D1 = 0 << 10; break;
-            case 5:  D1 = 1 << 10; break;
-            case 14: D1 = 2 << 10; break;
-            case 15: D1 = 3 << 10; break;
-            default: return error("unrecognised X:Y: parallel move syntax: S1 can only be x0, x1, a or b in 'S1,X:eax'");
-            }
-        }
+		if (S1 == 0)
+		{
+			// 'X:eax,D1 Y:eay,D2', 'X:eax,D1 S2,Y:eay'
+			// Check for D1
+			switch (K_D1 = *tok++)
+			{
+			case KW_X0: D1 = 0 << 10; break;
+			case KW_X1: D1 = 1 << 10; break;
+			case KW_A:  D1 = 2 << 10; break;
+			case KW_B:  D1 = 3 << 10; break;
+			default:    return error("unrecognised X:Y: parallel move syntax: expected x0, x1, a or b after 'X:eax,'");
+			}
+		}
+		else
+		{
+			// 'S1,X:eax Y:eay,D2' 'S1,X:eax S2,Y:eay'
+			w = 0;
 
-        if (*tok == KW_Y)
-        {
-            tok++;
-            // 'X:eax,D1 Y:eay,D2' 'S1,X:eax Y:eay,D2'
-            if (*tok++ != ':')
-                return error("unrecognised X:Y: parallel move syntax: expected ':' after 'X:ea,D1/S1,X:ea Y'");
-            if (*tok++ == '(')
-            {
-                if (*tok >= KW_R0 && *tok <= KW_R7)
-                {
-                    ea2 = (*tok++ - KW_R0);
-                    if (((ea1 & 7) < 4 && ea2 < 4) || ((ea1 & 7) >= 4 && ea2 > 4))
-                        return error("unrecognised X:Y: parallel move syntax: eax and eay register banks must be different in 'X:ea,D1/S1,X:ea Y:eay,D2'");
-                }
-                else
-                    return error("unrecognised X:Y: parallel move syntax: expected 'Rn' after 'X:ea,D1/S1,X:ea Y:('");
-                // If eax register is r0-r3 then eay register is r4-r7.
-                // Encode that to 2 bits (i.e. eay value is 0-3)
-                eax_temp = (ea2 & 3) << 5;  // Store register temporarily
-                if (*tok++ != ')')
-                    return error("unrecognised X:Y: parallel move syntax: expected ')' after 'X:ea,D1/S1,X:ea Y:(Rn'");
-                if (*tok == '+')
-                {
-                    tok++;
-                    if (*tok == ',')
-                    {
-                        // (Rn)+
-                        ea2 = 3 << 12;
-                        tok++;
-                    }
-                    else if (*tok >= KW_N0 && *tok <= KW_N7)
-                    {
-                        // (Rn)+Nn
-                        if ((*tok++ & 7) != ea2)
-                            return error("unrecognised X:Y: parallel move syntax(Same register number expected for Rn, Nn in 'X:ea,D1/S1,X:ea Y:(Rn)+Nn,D')");
-                        ea2 = 1 << 12;
-                        if (*tok++ != ',')
-                            return error("unrecognised X:Y: parallel move syntax: expected ',' after 'X:ea,D1/S1,X:ea Y:(Rn)+Nn'");
-                    }
-                    else
-                        return error("unrecognised X:Y: parallel move syntax: expected ',' or 'Nn' after 'X:ea,D1/S1,X:ea Y:(Rn)+'");
+			switch (S1)
+			{
+			case 4:  D1 = 0 << 10; break;
+			case 5:  D1 = 1 << 10; break;
+			case 14: D1 = 2 << 10; break;
+			case 15: D1 = 3 << 10; break;
+			default: return error("unrecognised X:Y: parallel move syntax: S1 can only be x0, x1, a or b in 'S1,X:eax'");
+			}
+		}
 
-                }
-                else if (*tok == '-')
-                {
-                    // (Rn)-
-                    ea2 = 2 << 12;
-                    tok++;
-                    if (*tok++ != ',')
-                        return error("unrecognised X:Y: parallel move syntax: expected ',' after 'X:ea,D1/S1,X:ea Y:(Rn)-'");
-                }
-                else if (*tok++ == ',')
-                {
-                    // (Rn)
-                    ea2 = 0 << 12;
-                }
-                else
-                    return error("unrecognised X:Y: parallel move syntax: expected ',' after 'X:ea,D1/S1,X:ea Y:eay'");
+		if (*tok == KW_Y)
+		{
+			tok++;
+			// 'X:eax,D1 Y:eay,D2' 'S1,X:eax Y:eay,D2'
+			if (*tok++ != ':')
+				return error("unrecognised X:Y: parallel move syntax: expected ':' after 'X:ea,D1/S1,X:ea Y'");
 
-                ea2 |= eax_temp; // OR eay back from temp
+			if (*tok++ == '(')
+			{
+				if (*tok >= KW_R0 && *tok <= KW_R7)
+				{
+					ea2 = (*tok++ - KW_R0);
 
-                switch (K_D2 = *tok++)
-                {
-                case KW_Y0: D2 = 0 << 8; break;
-                case KW_Y1: D2 = 1 << 8; break;
-                case KW_A:  D2 = 2 << 8; break;
-                case KW_B:  D2 = 3 << 8; break;
-                default:    return error("unrecognised X:Y: parallel move syntax: expected y0, y1, a or b after 'X:ea,D1/S1,X:ea Y:eay,'");
-                }
+					if (((ea1 & 7) < 4 && ea2 < 4) || ((ea1 & 7) >= 4 && ea2 > 4))
+						return error("unrecognised X:Y: parallel move syntax: eax and eay register banks must be different in 'X:ea,D1/S1,X:ea Y:eay,D2'");
+				}
+				else
+					return error("unrecognised X:Y: parallel move syntax: expected 'Rn' after 'X:ea,D1/S1,X:ea Y:('");
 
-                if (*tok != EOL)
-                    return error("unrecognised X:Y: parallel move syntax: expected end-of-line after 'X:ea,D1/S1,X:ea Y:eay,D'");
+				// If eax register is r0-r3 then eay register is r4-r7.
+				// Encode that to 2 bits (i.e. eay value is 0-3)
+				eax_temp = (ea2 & 3) << 5;  // Store register temporarily
 
-                if (S1 == 0)
-                    if (K_D1 == K_D2)
-                        return error("unrecognised X:Y: parallel move syntax: D1 and D2 cannot be the same in 'X:ea,D1 Y:eay,D2'");
+				if (*tok++ != ')')
+					return error("unrecognised X:Y: parallel move syntax: expected ')' after 'X:ea,D1/S1,X:ea Y:(Rn'");
 
-                inst = B16(11000000, 00000000) | w;
-                inst |= ea1 | D1 | ea2 | D2;
-                return inst;
-            }
-            else
-                return error("unrecognised X:Y: parallel move syntax: expected '(Rn)', '(Rn)+', '(Rn)-', '(Rn)+Nn' after 'X:ea,D1/S1,X:ea Y:'");
-        }
-        else if (*tok == KW_Y0 || *tok == KW_Y1 || *tok == KW_A || *tok == KW_B)
-        {
-            // 'X:eax,D1 S2,Y:eay' 'S1,X:eax1 S2,Y:eay'
-            switch (*tok++)
-            {
-            case KW_Y0: S2 = 0 << 8; break;
-            case KW_Y1: S2 = 1 << 8; break;
-            case KW_A:  S2 = 2 << 8; break;
-            case KW_B:  S2 = 3 << 8; break;
-            default: return error("unrecognised X:Y: parallel move syntax: expected y0, y1, a or b after 'X:ea,D1/S1,X:ea Y:eay,'");
-            }
+				if (*tok == '+')
+				{
+					tok++;
 
-            if (*tok++ != ',')
-                return error("unrecognised X:Y: parallel move syntax: expected ',' after 'X:ea,D1/S1,X:ea S2'");
+					if (*tok == ',')
+					{
+						// (Rn)+
+						ea2 = 3 << 12;
+						tok++;
+					}
+					else if (*tok >= KW_N0 && *tok <= KW_N7)
+					{
+						// (Rn)+Nn
+						if ((*tok++ & 7) != ea2)
+							return error("unrecognised X:Y: parallel move syntax(Same register number expected for Rn, Nn in 'X:ea,D1/S1,X:ea Y:(Rn)+Nn,D')");
 
-            if (*tok++ == KW_Y)
-            {
-                // 'X:eax,D1 Y:eay,D2' 'S1,X:eax Y:eay,D2'
-                if (*tok++ != ':')
-                    return error("unrecognised X:Y: parallel move syntax: expected ':' after 'X:ea,D1/S1,X:ea Y'");
-                if (*tok++ == '(')
-                {
-                    if (*tok >= KW_R0 && *tok <= KW_R7)
-                    {
-                        ea2 = (*tok++ - KW_R0);
-                        if (((ea1 & 7) < 4 && ea2 < 4) || ((ea1 & 7) >= 4 && ea2 > 4))
-                            return error("unrecognised X:Y: parallel move syntax: eax and eay register banks must be different in 'X:ea,D1/S1,X:ea S2,Y:eay'");
-                    }
-                    else
-                        return error("unrecognised X:Y: parallel move syntax: expected 'Rn' after 'X:ea,D1/S1,X:ea S2,Y:('");
-                    // If eax register is r0-r3 then eay register is r4-r7.
-                    // Encode that to 2 bits (i.e. eay value is 0-3)
-                    eay_temp = (ea2 & 3) << 5; //Store register temporarily
-                    if (*tok++ != ')')
-                        return error("unrecognised X:Y: parallel move syntax: expected ')' after 'X:ea,D1/S1,X:ea S2,Y:(Rn'");
-                    if (*tok == '+')
-                    {
-                        tok++;
-                        if (*tok == EOL)
-                            // (Rn)+
-                            ea2 = 3 << 12;
-                        else if (*tok >= KW_N0 && *tok <= KW_N7)
-                        {
-                            // (Rn)+Nn
-                            if ((*tok++ & 7) != ea2)
-                                return error("unrecognised X:Y: parallel move syntax(Same register number expected for Rn, Nn in 'X:ea,D1/S1,X:ea S2,Y:(Rn)+Nn')");
-                            ea2 = 1 << 12;
-                            if (*tok != EOL)
-                                return error("unrecognised X:Y: parallel move syntax: expected end-of-line after 'X:ea,D1/S1,X:ea S2,Y:(Rn)+Nn'");
-                        }
-                        else
-                            return error("unrecognised X:Y: parallel move syntax: expected ',' or 'Nn' after 'X:ea,D1/S1,X:ea S2,Y:(Rn)+'");
+						ea2 = 1 << 12;
 
-                    }
-                    else if (*tok == '-')
-                    {
-                        // (Rn)-
-                        ea2 = 2 << 12;
-                        tok++;
-                        if (*tok != EOL)
-                            return error("unrecognised X:Y: parallel move syntax: expected end-of-line after 'X:ea,D1/S1,X:ea S2,Y:(Rn)-'");
-                    }
-                    else if (*tok == EOL)
-                    {
-                        // (Rn)
-                        ea2 = 0 << 12;
-                    }
-                    else
-                        return error("unrecognised X:Y: parallel move syntax: expected end-of-line after 'X:ea,D1/S1,X:ea S2,Y:eay'");
+						if (*tok++ != ',')
+							return error("unrecognised X:Y: parallel move syntax: expected ',' after 'X:ea,D1/S1,X:ea Y:(Rn)+Nn'");
+					}
+					else
+						return error("unrecognised X:Y: parallel move syntax: expected ',' or 'Nn' after 'X:ea,D1/S1,X:ea Y:(Rn)+'");
 
-                    ea2 |= eay_temp; //OR eay back from temp
+				}
+				else if (*tok == '-')
+				{
+					// (Rn)-
+					ea2 = 2 << 12;
+					tok++;
 
-                    inst = B16(10000000, 00000000) | w;
-                    inst |= (ea1 & 0x1f) | D1 | S2 | ea2;
-                    return inst;
-                }
-                else
-                    return error("unrecognised X:Y: parallel move syntax: expected '(Rn)', '(Rn)+', '(Rn)-', '(Rn)+Nn' after 'X:ea,D1/S1,X:ea Y:'");
+					if (*tok++ != ',')
+						return error("unrecognised X:Y: parallel move syntax: expected ',' after 'X:ea,D1/S1,X:ea Y:(Rn)-'");
+				}
+				else if (*tok++ == ',')
+				{
+					// (Rn)
+					ea2 = 0 << 12;
+				}
+				else
+					return error("unrecognised X:Y: parallel move syntax: expected ',' after 'X:ea,D1/S1,X:ea Y:eay'");
 
-            }
-            else
-                return error("unrecognised X:Y: parallel move syntax: expected '(Rn)', '(Rn)+', '(Rn)-', '(Rn)+Nn' in 'X:ea,D1/S1,X:ea'");
-        }
-        else
-            return error("unrecognised X:Y: or X:R parallel move syntax: expected Y:, A or B after 'X:ea,D1/S1,X:ea S2,'");
+				ea2 |= eax_temp; // OR eay back from temp
 
+				switch (K_D2 = *tok++)
+				{
+				case KW_Y0: D2 = 0 << 8; break;
+				case KW_Y1: D2 = 1 << 8; break;
+				case KW_A:  D2 = 2 << 8; break;
+				case KW_B:  D2 = 3 << 8; break;
+				default:    return error("unrecognised X:Y: parallel move syntax: expected y0, y1, a or b after 'X:ea,D1/S1,X:ea Y:eay,'");
+				}
 
-    }
-    return error("unrecognised X:Y: parallel move syntax: expected '(Rn)', '(Rn)+', '(Rn)-', '(Rn)+Nn' in 'X:ea,D1/S1,X:ea'");
+				if (*tok != EOL)
+					return error("unrecognised X:Y: parallel move syntax: expected end-of-line after 'X:ea,D1/S1,X:ea Y:eay,D'");
+
+				if (S1 == 0)
+					if (K_D1 == K_D2)
+						return error("unrecognised X:Y: parallel move syntax: D1 and D2 cannot be the same in 'X:ea,D1 Y:eay,D2'");
+
+				inst = B16(11000000, 00000000) | w;
+				inst |= ea1 | D1 | ea2 | D2;
+				return inst;
+			}
+			else
+				return error("unrecognised X:Y: parallel move syntax: expected '(Rn)', '(Rn)+', '(Rn)-', '(Rn)+Nn' after 'X:ea,D1/S1,X:ea Y:'");
+		}
+		else if (*tok == KW_Y0 || *tok == KW_Y1 || *tok == KW_A || *tok == KW_B)
+		{
+			// 'X:eax,D1 S2,Y:eay' 'S1,X:eax1 S2,Y:eay'
+			switch (*tok++)
+			{
+			case KW_Y0: S2 = 0 << 8; break;
+			case KW_Y1: S2 = 1 << 8; break;
+			case KW_A:  S2 = 2 << 8; break;
+			case KW_B:  S2 = 3 << 8; break;
+			default: return error("unrecognised X:Y: parallel move syntax: expected y0, y1, a or b after 'X:ea,D1/S1,X:ea Y:eay,'");
+			}
+
+			if (*tok++ != ',')
+				return error("unrecognised X:Y: parallel move syntax: expected ',' after 'X:ea,D1/S1,X:ea S2'");
+
+			if (*tok++ == KW_Y)
+			{
+				// 'X:eax,D1 Y:eay,D2' 'S1,X:eax Y:eay,D2'
+				if (*tok++ != ':')
+					return error("unrecognised X:Y: parallel move syntax: expected ':' after 'X:ea,D1/S1,X:ea Y'");
+
+				if (*tok++ == '(')
+				{
+					if (*tok >= KW_R0 && *tok <= KW_R7)
+					{
+						ea2 = (*tok++ - KW_R0);
+
+						if (((ea1 & 7) < 4 && ea2 < 4) || ((ea1 & 7) >= 4 && ea2 > 4))
+							return error("unrecognised X:Y: parallel move syntax: eax and eay register banks must be different in 'X:ea,D1/S1,X:ea S2,Y:eay'");
+					}
+					else
+						return error("unrecognised X:Y: parallel move syntax: expected 'Rn' after 'X:ea,D1/S1,X:ea S2,Y:('");
+					// If eax register is r0-r3 then eay register is r4-r7.
+					// Encode that to 2 bits (i.e. eay value is 0-3)
+					eay_temp = (ea2 & 3) << 5; //Store register temporarily
+
+					if (*tok++ != ')')
+						return error("unrecognised X:Y: parallel move syntax: expected ')' after 'X:ea,D1/S1,X:ea S2,Y:(Rn'");
+
+					if (*tok == '+')
+					{
+						tok++;
+
+						if (*tok == EOL)
+							// (Rn)+
+							ea2 = 3 << 12;
+						else if (*tok >= KW_N0 && *tok <= KW_N7)
+						{
+							// (Rn)+Nn
+							if ((*tok++ & 7) != ea2)
+								return error("unrecognised X:Y: parallel move syntax(Same register number expected for Rn, Nn in 'X:ea,D1/S1,X:ea S2,Y:(Rn)+Nn')");
+
+							ea2 = 1 << 12;
+
+							if (*tok != EOL)
+								return error("unrecognised X:Y: parallel move syntax: expected end-of-line after 'X:ea,D1/S1,X:ea S2,Y:(Rn)+Nn'");
+						}
+						else
+							return error("unrecognised X:Y: parallel move syntax: expected ',' or 'Nn' after 'X:ea,D1/S1,X:ea S2,Y:(Rn)+'");
+
+					}
+					else if (*tok == '-')
+					{
+						// (Rn)-
+						ea2 = 2 << 12;
+						tok++;
+						if (*tok != EOL)
+							return error("unrecognised X:Y: parallel move syntax: expected end-of-line after 'X:ea,D1/S1,X:ea S2,Y:(Rn)-'");
+					}
+					else if (*tok == EOL)
+					{
+						// (Rn)
+						ea2 = 0 << 12;
+					}
+					else
+						return error("unrecognised X:Y: parallel move syntax: expected end-of-line after 'X:ea,D1/S1,X:ea S2,Y:eay'");
+
+					ea2 |= eay_temp; //OR eay back from temp
+
+					inst = B16(10000000, 00000000) | w;
+					inst |= (ea1 & 0x1f) | D1 | S2 | ea2;
+					return inst;
+				}
+				else
+					return error("unrecognised X:Y: parallel move syntax: expected '(Rn)', '(Rn)+', '(Rn)-', '(Rn)+Nn' after 'X:ea,D1/S1,X:ea Y:'");
+			}
+			else
+				return error("unrecognised X:Y: parallel move syntax: expected '(Rn)', '(Rn)+', '(Rn)-', '(Rn)+Nn' in 'X:ea,D1/S1,X:ea'");
+		}
+		else
+			return error("unrecognised X:Y: or X:R parallel move syntax: expected Y:, A or B after 'X:ea,D1/S1,X:ea S2,'");
+	}
+
+	return error("unrecognised X:Y: parallel move syntax: expected '(Rn)', '(Rn)+', '(Rn)-', '(Rn)+Nn' in 'X:ea,D1/S1,X:ea'");
 }
 
 //
@@ -1100,444 +1157,475 @@ static inline LONG check_x_y(LONG ea1, LONG S1)
 //
 static inline LONG parse_x(const int W, LONG inst, const LONG S1, const int check_for_x_y)
 {
-    int immreg;					// Immediate register destination
-    LONG S2, D1, D2;			// Source and Destinations
-    LONG ea1;					// ea bitfields
-    uint32_t termchar = ',';	// Termination character for ea checks
-    int force_imm = NUM_NORMAL;	// Holds forced immediate value (i.e. '<' or '>')
-    ea1 = -1;					// initialise e1 (useful for some code paths)
-    if (W == 0)
-        termchar = EOL;
-    if (*tok == '-')
-    {
-        if (tok[1] == CONST || tok[1] == FCONST)
-        {
-            tok++;
-            dspImmedEXVAL = *tok++;
-            goto x_check_immed;
-        }
-        // This could be either -(Rn), -aa or -ea. Check for immediate first
-        if (tok[1] == SYMBOL)
-        {
-            if (expr(dspImmedEXPR, &dspImmedEXVAL, &dspImmedEXATTR, &dspImmedESYM) == OK)
-            {
-                if (S1 != 0)
-                {
-                x_checkea_right:
+	int immreg;					// Immediate register destination
+	LONG S2, D1, D2;			// Source and Destinations
+	LONG ea1;					// ea bitfields
+	uint32_t termchar = ',';	// Termination character for ea checks
+	int force_imm = NUM_NORMAL;	// Holds forced immediate value (i.e. '<' or '>')
+	ea1 = -1;					// initialise e1 (useful for some code paths)
 
-                    // 'S1,X:ea S2,D2', 'A,X:ea X0,A', 'B,X:ea X0,B', 'S1,X:eax Y:eay,D2', 'S1,X:eax S2,Y:eay'
-                    if (*tok == KW_X0 && tok[1] == ',' && tok[2] == KW_A)
-                    {
-                        // 'A,X:ea X0,A'
-                        if (ea1 == DSP_EA_ABS)
-                            deposit_extra_ea = DEPOSIT_EXTRA_WORD;
-                        if (S1 != 14)
-                            return error("unrecognised X:R parallel move syntax: S1 can only be a in 'a,X:ea x0,a'");
-                        if (ea1 == -1)
-                            return error("unrecognised X:R parallel move syntax: absolute address not allowed in 'a,X:ea x0,a'");
-                        if (ea1 == B8(00110100))
-                            return error("unrecognised X:R parallel move syntax: immediate data not allowed in 'a,X:ea x0,a'");
-                        inst = B16(00001000, 00000000) | ea1 | (0 << 8);
-                        return inst;
-                    }
-                    else if (*tok == KW_X0 && tok[1] == ',' && tok[2] == KW_B)
-                    {
-                        // 'B,X:ea X0,B'
-                        if (ea1 == DSP_EA_ABS)
-                            deposit_extra_ea = DEPOSIT_EXTRA_WORD;
-                        if (S1 != 15)
-                            return error("unrecognised X:R parallel move syntax: S1 can only be b in 'b,X:ea x0,b'");
-                        if (ea1 == -1)
-                            return error("unrecognised X:R parallel move syntax: absolute address not allowed in 'b,X:ea x0,b'");
-                        if (ea1 == B8(00110100))
-                            return error("unrecognised X:R parallel move syntax: immediate data not allowed in 'b,X:ea x0,b'");
-                        inst = B16(00001001, 00000000) | ea1 | (1 << 8);
-                        return inst;
-                    }
-                    else if (*tok == KW_A || *tok == KW_B)
-                    {
-                        // 'S1,X:ea S2,D2', 'S1,X:eax S2,Y:eay'
+	if (W == 0)
+		termchar = EOL;
 
-                        switch (S1)
-                        {
-                        case 4:  D1 = 0 << 10; break;
-                        case 5:  D1 = 1 << 10; break;
-                        case 14: D1 = 2 << 10; break;
-                        case 15: D1 = 3 << 10; break;
-                        default: return error("unrecognised X:R parallel move syntax: S1 can only be x0, x1, a or b in 'S1,X:ea S2,D2'");
-                        }
+	if (*tok == '-')
+	{
+		if (tok[1] == CONST || tok[1] == FCONST)
+		{
+			tok++;
+			dspImmedEXVAL = *tok++;
+			goto x_check_immed;
+		}
 
-                        if (tok[1] == ',' && tok[2] == KW_Y)
-                        {
-                            // 'S1,X:eax S2,Y:eay'
-                            return check_x_y(ea1, S1);
-                        }
+		// This could be either -(Rn), -aa or -ea. Check for immediate first
+		if (tok[1] == SYMBOL)
+		{
+			if (expr(dspImmedEXPR, &dspImmedEXVAL, &dspImmedEXATTR, &dspImmedESYM) == OK)
+			{
+				if (S1 != 0)
+				{
+x_checkea_right:
+					// 'S1,X:ea S2,D2', 'A,X:ea X0,A', 'B,X:ea X0,B', 'S1,X:eax Y:eay,D2', 'S1,X:eax S2,Y:eay'
+					if (*tok == KW_X0 && tok[1] == ',' && tok[2] == KW_A)
+					{
+						// 'A,X:ea X0,A'
+						if (ea1 == DSP_EA_ABS)
+							deposit_extra_ea = DEPOSIT_EXTRA_WORD;
 
-                        // 'S1,X:ea S2,D2'
-                        if (ea1 == DSP_EA_ABS)
-                            deposit_extra_ea = DEPOSIT_EXTRA_WORD;
+						if (S1 != 14)
+							return error("unrecognised X:R parallel move syntax: S1 can only be a in 'a,X:ea x0,a'");
 
-                        switch (*tok++)
-                        {
-                        case KW_A: S2 = 0 << 9; break;
-                        case KW_B: S2 = 1 << 9; break;
-                        default:   return error("unrecognised X:R parallel move syntax: expected a or b after 'S1,X:eax'");
-                        }
-                        if (*tok++ != ',')
-                            return error("unrecognised X:R parallel move syntax: expected ',' after 'S1,X:eax S2'");
+						if (ea1 == -1)
+							return error("unrecognised X:R parallel move syntax: absolute address not allowed in 'a,X:ea x0,a'");
 
-                        if (*tok == KW_Y0 || *tok == KW_Y1)
-                        {
-                            if (*tok++ == KW_Y0)
-                                D2 = 0 << 8;
-                            else
-                                D2 = 1 << 8;
+						if (ea1 == B8(00110100))
+							return error("unrecognised X:R parallel move syntax: immediate data not allowed in 'a,X:ea x0,a'");
 
-                            if (*tok != EOL)
-                                return error("unrecognised X:R parallel move syntax: unexpected text after 'X:eax,D1 S2,S2'");
+						inst = B16(00001000, 00000000) | ea1 | (0 << 8);
+						return inst;
+					}
+					else if (*tok == KW_X0 && tok[1] == ',' && tok[2] == KW_B)
+					{
+						// 'B,X:ea X0,B'
+						if (ea1 == DSP_EA_ABS)
+							deposit_extra_ea = DEPOSIT_EXTRA_WORD;
 
-                            inst = B16(00010000, 00000000) | (0 << 7);
-                            inst |= ea1 | D1 | S2 | D2;
-                            return inst;
-                        }
-                        else
-                            return error("unrecognised X:R parallel move syntax: expected y0 or y1 after 'X:eax,D1 S2,'");
+						if (S1 != 15)
+							return error("unrecognised X:R parallel move syntax: S1 can only be b in 'b,X:ea x0,b'");
 
-                    }
-                    else if (*tok == KW_Y)
-                    {
-                        // 'S1,X:eax Y:eay,D2'
-                        return check_x_y(ea1, S1);
-                    }
-                    else if (*tok == KW_Y0 || *tok == KW_Y1)
-                    {
-                        // 'S1,X:eax S2,Y:eay'
-                        return check_x_y(ea1, S1);
-                    }
-                    else
-                        return error("unrecognised X:Y or X:R parallel move syntax: expected y0 or y1 after 'X:eax,D1/X:ea,D1");
-                }
-                else
-                {
-                    // Only check for aa if we have a defined number in our hands or we've
-                    // been asked to use a short number format. The former case we'll just test
-                    // it to see if it's small enough. The later - it's the programmer's call
-                    // so he'd better have a small address or the fixups will bite him/her in the arse!
-                    if (dspImmedEXATTR&DEFINED || force_imm == NUM_FORCE_SHORT)
-                    {
+						if (ea1 == -1)
+							return error("unrecognised X:R parallel move syntax: absolute address not allowed in 'b,X:ea x0,b'");
 
-                        // It's an immediate, so ea or eax is probably an absolute address
-                        // (unless it's aa if the immediate is small enough)
-                        // 'X:ea,D' or 'X:aa,D' or 'X:ea,D1 S2,D2' or 'X:eax,D1 Y:eay,D2' or 'X:eax,D1 S2,Y:eay'
-                    x_check_immed:
-                        // Check for aa (which is 6 bits zero extended)
-                        if (dspImmedEXVAL < 0x40 && force_imm != NUM_FORCE_LONG)
-                        {
-                            if (W == 1)
-                            {
-                                // It might be X:aa but we're not 100% sure yet.
-                                // If it is, the only possible syntax here is 'X:aa,D'.
-                                // So check ahead to see if EOL follows D, then we're good to go.
-                                if (*tok == ',' && ((*(tok + 1) >= KW_X0 && *(tok + 1) <= KW_N7) || (*(tok + 1) >= KW_R0 && *(tok + 1) <= KW_R7) || (*(tok + 1) >= KW_A0 && *(tok + 1) <= KW_A2)) && *(tok + 2) == EOL)
-                                {
-                                    // Yup, we're good to go - 'X:aa,D' it is
-                                    tok++;
-                                    immreg = SDreg(*tok++);
-                                    inst = inst | (uint32_t)dspImmedEXVAL;
-                                    inst |= ((immreg & 0x18) << (12 - 3)) + ((immreg & 7) << 8);
-                                    inst |= 1 << 7; // W
-                                    return inst;
-                                }
-                            }
-                            else
-                            {
-                                if (*tok == EOL)
-                                {
-                                    // 'S,X:aa'
-                                    inst = inst | (uint32_t)dspImmedEXVAL;
-                                    inst |= ((S1 & 0x18) << (12 - 3)) + ((S1 & 7) << 8);
-                                    return inst;
-                                }
-                                else
-                                {
-                                    // 'S1,X:ea S2,D2', 'A,X:ea X0,A', 'B,X:ea X0,B',
-                                    // 'S1,X:eax Y:eay,D2', 'S1,X:eax S2,Y:eay'
-                                    ea1 = DSP_EA_ABS;
-                                    deposit_extra_ea = DEPOSIT_EXTRA_WORD;
-                                    goto x_checkea_right;
-                                }
-                            }
-                        }
-                    }
+						if (ea1 == B8(00110100))
+							return error("unrecognised X:R parallel move syntax: immediate data not allowed in 'b,X:ea x0,b'");
 
-                    // Well, that settles it - we do have an ea in our hands
-                    if (W == 1)
-                    {
-                        // 'X:ea,D' [... S2,d2]
-                        if (*tok++ != ',')
-                            return error("unrecognised X: parallel move syntax: expected ',' after 'X:ea'");
-                        if ((*tok >= KW_X0 && *tok <= KW_N7) || (*tok >= KW_R0 && *tok <= KW_R7) || (*tok >= KW_A0 && *tok <= KW_A2))
-                        {
-                            D1 = SDreg(*tok++);
-                            if (*tok == EOL)
-                            {
-                                // 'X:ea,D'
-                                inst = inst | B8(01000000) | (1 << 7);
-                                inst |= ((D1 & 0x18) << (12 - 3)) + ((D1 & 7) << 8);
-                                inst |= ea1;
-                                if (ea1 == DSP_EA_ABS)
-                                    deposit_extra_ea = DEPOSIT_EXTRA_WORD;
-                                return inst;
-                            }
-                            else
-                            {
-                                // 'X:ea,D1 S2,D2'
-                                if (*tok == KW_A || *tok == KW_B)
-                                {
-                                    S2 = SDreg(*tok++);
-                                    if (*tok++ != ',')
-                                        return error("unrecognised X:R parallel move syntax: expected comma after X:ea,D1 S2");
-                                    if (*tok == KW_Y0 || *tok == KW_Y1)
-                                    {
-                                        D2 = SDreg(*tok++);
-                                        if (*tok != EOL)
-                                            return error("unrecognised X:R parallel move syntax: expected EOL after X:ea,D1 S2,D2");
-                                        inst = B16(00010000, 00000000) | (1 << 7);
-                                        inst |= ((D1 & 0x8) << (12 - 4)) + ((D1 & 1) << 10);
-                                        inst |= (S2 & 1) << 9;
-                                        inst |= (D2 & 1) << 8;
-                                        inst |= ea1;
-                                        return inst;
-                                    }
-                                    else
-                                        return error("unrecognised X:R parallel move syntax: expected y0,y1 after X:ea,D1 S2,");
-                                }
-                                else
-                                    return error("unrecognised X:R parallel move syntax: expected a,b after X:ea,D1");
-                            }
-                        }
-                        else
-                            return error("unrecognised X: parallel move syntax: expected x0,x1,y0,y1,a0,b0,a2,b2,a1,b1,a,b,r0-r7,n0-n7 after 'X:ea,'");
-                    }
-                    else
-                    {
-                        if (*tok == EOL)
-                        {
-                            // 'S,X:ea'
-                            inst = inst | B8(01000000) | (0 << 7);
-                            inst |= ((S1 & 0x18) << (12 - 3)) + ((S1 & 7) << 8);
-                            inst |= ea1;
-                            if (ea1 == DSP_EA_ABS)
-                                deposit_extra_ea = DEPOSIT_EXTRA_WORD;
-                            return inst;
-                        }
-                        else
-                        {
-                            // 'S1,X:ea S2,D2', 'A,X:ea X0,A', 'B,X:ea X0,B',
-                            // 'S1,X:eax Y:eay,D2', 'S1,X:eax S2,Y:eay'
-                            goto x_checkea_right;
-                        }
-                    }
+						inst = B16(00001001, 00000000) | ea1 | (1 << 8);
+						return inst;
+					}
+					else if (*tok == KW_A || *tok == KW_B)
+					{
+						// 'S1,X:ea S2,D2', 'S1,X:eax S2,Y:eay'
+						switch (S1)
+						{
+						case 4:  D1 = 0 << 10; break;
+						case 5:  D1 = 1 << 10; break;
+						case 14: D1 = 2 << 10; break;
+						case 15: D1 = 3 << 10; break;
+						default: return error("unrecognised X:R parallel move syntax: S1 can only be x0, x1, a or b in 'S1,X:ea S2,D2'");
+						}
 
-                }
-            }
-        }
-        else
-        {
-            // It's not an immediate, check for '-(Rn)'
-            ea1 = checkea(termchar, X_ERRORS);
+						if (tok[1] == ',' && tok[2] == KW_Y)
+						{
+							// 'S1,X:eax S2,Y:eay'
+							return check_x_y(ea1, S1);
+						}
 
-            if (ea1 == ERROR)
-                return ERROR;
+						// 'S1,X:ea S2,D2'
+						if (ea1 == DSP_EA_ABS)
+							deposit_extra_ea = DEPOSIT_EXTRA_WORD;
 
-            goto x_gotea1;
+						switch (*tok++)
+						{
+						case KW_A: S2 = 0 << 9; break;
+						case KW_B: S2 = 1 << 9; break;
+						default:   return error("unrecognised X:R parallel move syntax: expected a or b after 'S1,X:eax'");
+						}
 
-        }
-    }
-    else if (*tok == '#')
-    {
-        tok++;
-        if (expr(dspImmedEXPR, &dspImmedEXVAL, &dspImmedEXATTR, &dspImmedESYM) != OK)
-            return ERROR;
-        // Okay so we have immediate data - mark it down
-        ea1 = DSP_EA_IMM;
-        // Now, proceed to the main code for this branch
-        goto x_gotea1;
-    }
-    else if (*tok == '(')
-    {
-        // Maybe we got an expression here, check for it
-        if (tok[1] == CONST || tok[1] == FCONST || tok[1] == SUNARY || tok[1] == SYMBOL || tok[1] == STRING)
-        {
-            // Evaluate the expression and go to immediate code path
-            expr(dspImmedEXPR, &dspImmedEXVAL, &dspImmedEXATTR, &dspImmedESYM);
-            goto x_check_immed;
-        }
+						if (*tok++ != ',')
+							return error("unrecognised X:R parallel move syntax: expected ',' after 'S1,X:eax S2'");
 
-        // Nope, let's check for ea then
-        ea1 = checkea(termchar, X_ERRORS);
-        if (ea1 == ERROR)
-            return ERROR;
+						if (*tok == KW_Y0 || *tok == KW_Y1)
+						{
+							if (*tok++ == KW_Y0)
+								D2 = 0 << 8;
+							else
+								D2 = 1 << 8;
 
-    x_gotea1:
-        if (W == 1)
-        {
-            if (*tok++ != ',')
-                return error("Comma expected after 'X:(Rn)')");
+							if (*tok != EOL)
+								return error("unrecognised X:R parallel move syntax: unexpected text after 'X:eax,D1 S2,S2'");
 
-            // It might be 'X:(Rn..)..,D' but we're not 100% sure yet.
-            // If it is, the only possible syntax here is 'X:ea,D'.
-            // So check ahead to see if EOL follows D, then we're good to go.
-            if (((*tok >= KW_X0 && *tok <= KW_N7) || (*tok >= KW_R0 && *tok <= KW_R7) || (*tok >= KW_A0 && *tok <= KW_A2)) && *(tok + 1) == EOL)
-            {
-                //'X:ea,D'
-                D1 = SDreg(*tok++);
+							inst = B16(00010000, 00000000) | (0 << 7);
+							inst |= ea1 | D1 | S2 | D2;
+							return inst;
+						}
+						else
+							return error("unrecognised X:R parallel move syntax: expected y0 or y1 after 'X:eax,D1 S2,'");
+					}
+					else if (*tok == KW_Y)
+					{
+						// 'S1,X:eax Y:eay,D2'
+						return check_x_y(ea1, S1);
+					}
+					else if (*tok == KW_Y0 || *tok == KW_Y1)
+					{
+						// 'S1,X:eax S2,Y:eay'
+						return check_x_y(ea1, S1);
+					}
+					else
+						return error("unrecognised X:Y or X:R parallel move syntax: expected y0 or y1 after 'X:eax,D1/X:ea,D1");
+				}
+				else
+				{
+					// Only check for aa if we have a defined number in our hands or we've
+					// been asked to use a short number format. The former case we'll just test
+					// it to see if it's small enough. The later - it's the programmer's call
+					// so he'd better have a small address or the fixups will bite him/her in the arse!
+					if (dspImmedEXATTR&DEFINED || force_imm == NUM_FORCE_SHORT)
+					{
 
-                inst = inst | B8(01000000) | (1 << 7);
-                inst |= ea1;
-                inst |= ((D1 & 0x18) << (12 - 3)) + ((D1 & 7) << 8);
-                return inst;
-            }
-        }
-        else
-        {
-            if (*tok == EOL)
-            {
-                //'S,X:ea'
-                inst = inst | B8(01000000) | (0 << 7);
-                inst |= ea1;
-                inst |= ((S1 & 0x18) << (12 - 3)) + ((S1 & 7) << 8);
-                return inst;
-            }
-            else
-            {
-                goto x_checkea_right;
-            }
-        }
-        // 'X:eax,D1 Y:eay,D2', 'X:eax,D1 S2,Y:eay' or 'X:ea,D1 S2,D2'
-        // Check ahead for S2,D2 - if that's true then we have 'X:ea,D1 S2,D2'
-        if ((*tok == KW_X0 || *tok == KW_X1 || *tok == KW_A || *tok == KW_B) && (*(tok + 1) == KW_A || *(tok + 1) == KW_B) && (*(tok + 2) == ',') && (*(tok + 3) == KW_Y0 || (*(tok + 3) == KW_Y1)))
-        {
-            // 'X:ea,D1 S2,D2'
-            // Check if D1 is x0, x1, a or b
-            switch (*tok++)
-            {
-            case KW_X0: D1 = 0 << 10; break;
-            case KW_X1: D1 = 1 << 10; break;
-            case KW_A:  D1 = 2 << 10; break;
-            case KW_B:  D1 = 3 << 10; break;
-            default:    return error("unrecognised X:R parallel move syntax: expected x0, x1, a or b after 'X:eax,'");
-            }
+						// It's an immediate, so ea or eax is probably an absolute address
+						// (unless it's aa if the immediate is small enough)
+						// 'X:ea,D' or 'X:aa,D' or 'X:ea,D1 S2,D2' or 'X:eax,D1 Y:eay,D2' or 'X:eax,D1 S2,Y:eay'
+x_check_immed:
+						// Check for aa (which is 6 bits zero extended)
+						if (dspImmedEXVAL < 0x40 && force_imm != NUM_FORCE_LONG)
+						{
+							if (W == 1)
+							{
+								// It might be X:aa but we're not 100% sure yet.
+								// If it is, the only possible syntax here is 'X:aa,D'.
+								// So check ahead to see if EOL follows D, then we're good to go.
+								if (*tok == ',' && ((*(tok + 1) >= KW_X0 && *(tok + 1) <= KW_N7) || (*(tok + 1) >= KW_R0 && *(tok + 1) <= KW_R7) || (*(tok + 1) >= KW_A0 && *(tok + 1) <= KW_A2)) && *(tok + 2) == EOL)
+								{
+									// Yup, we're good to go - 'X:aa,D' it is
+									tok++;
+									immreg = SDreg(*tok++);
+									inst = inst | (uint32_t)dspImmedEXVAL;
+									inst |= ((immreg & 0x18) << (12 - 3)) + ((immreg & 7) << 8);
+									inst |= 1 << 7; // W
+									return inst;
+								}
+							}
+							else
+							{
+								if (*tok == EOL)
+								{
+									// 'S,X:aa'
+									inst = inst | (uint32_t)dspImmedEXVAL;
+									inst |= ((S1 & 0x18) << (12 - 3)) + ((S1 & 7) << 8);
+									return inst;
+								}
+								else
+								{
+									// 'S1,X:ea S2,D2', 'A,X:ea X0,A', 'B,X:ea X0,B',
+									// 'S1,X:eax Y:eay,D2', 'S1,X:eax S2,Y:eay'
+									ea1 = DSP_EA_ABS;
+									deposit_extra_ea = DEPOSIT_EXTRA_WORD;
+									goto x_checkea_right;
+								}
+							}
+						}
+					}
 
-            switch (*tok++)
-            {
-            case KW_A: S2 = 0 << 9; break;
-            case KW_B: S2 = 1 << 9; break;
-            default:   return error("unrecognised X:R parallel move syntax: expected a or b after 'X:eax,D1 '");
-            }
+					// Well, that settles it - we do have an ea in our hands
+					if (W == 1)
+					{
+						// 'X:ea,D' [... S2,d2]
+						if (*tok++ != ',')
+							return error("unrecognised X: parallel move syntax: expected ',' after 'X:ea'");
 
-            if (*tok++ != ',')
-                return error("unrecognised X:R parallel move syntax: expected ',' after 'X:eax,D1 S2'");
+						if ((*tok >= KW_X0 && *tok <= KW_N7) || (*tok >= KW_R0 && *tok <= KW_R7) || (*tok >= KW_A0 && *tok <= KW_A2))
+						{
+							D1 = SDreg(*tok++);
 
-            if (*tok == KW_Y0 || *tok == KW_Y1)
-            {
-                if (*tok++ == KW_Y0)
-                    D2 = 0 << 8;
-                else
-                    D2 = 1 << 8;
+							if (*tok == EOL)
+							{
+								// 'X:ea,D'
+								inst = inst | B8(01000000) | (1 << 7);
+								inst |= ((D1 & 0x18) << (12 - 3)) + ((D1 & 7) << 8);
+								inst |= ea1;
 
-                if (*tok != EOL)
-                    return error("unrecognised X:R parallel move syntax: unexpected text after 'X:eax,D1 S2,S2'");
+								if (ea1 == DSP_EA_ABS)
+									deposit_extra_ea = DEPOSIT_EXTRA_WORD;
 
-                inst = B16(00010000, 00000000) | (W << 7);
-                inst |= ea1 | D1 | S2 | D2;
-                return inst;
-            }
-            else
-                return error("unrecognised X:R parallel move syntax: expected y0 or y1 after 'X:eax,D1 S2,'");
+								return inst;
+							}
+							else
+							{
+								// 'X:ea,D1 S2,D2'
+								if (*tok == KW_A || *tok == KW_B)
+								{
+									S2 = SDreg(*tok++);
 
-        }
+									if (*tok++ != ',')
+										return error("unrecognised X:R parallel move syntax: expected comma after X:ea,D1 S2");
 
-        // Check to see if we got eax (which is a subset of ea)
-        if (check_for_x_y)
-        {
-            if ((inst = check_x_y(ea1, 0)) != 0)
-                return inst;
-            else
-            {
-                // Rewind pointer as it might be an expression and check for it
-                tok--;
-                if (expr(dspaaEXPR, &dspaaEXVAL, &dspaaEXATTR, &dspaaESYM) != OK)
-                    return ERROR;
-                // Yes, we have an expression, so we now check for
-                // 'X:ea,D' or 'X:aa,D' or 'X:ea,D1 S2,D2' or 'X:eax,D1 Y:eay,D2' or 'X:eax,D1 S2,Y:eay'
-                goto x_check_immed;
-            }
-        }
-    }
-    else if (*tok == CONST || *tok == FCONST || *tok == SYMBOL)
-    {
-        // Check for immediate address
-        if (expr(dspImmedEXPR, &dspImmedEXVAL, &dspImmedEXATTR, &dspImmedESYM) != OK)
-            return ERROR;
+									if (*tok == KW_Y0 || *tok == KW_Y1)
+									{
+										D2 = SDreg(*tok++);
 
-        // We set ea1 here - if it's aa instead of ea
-        // then it won't be used anyway
-        ea1 = DSP_EA_ABS;
-        if (!(dspImmedEXATTR&DEFINED))
-        {
-            force_imm = NUM_FORCE_LONG;
-            deposit_extra_ea = DEPOSIT_EXTRA_WORD;
-        }
+										if (*tok != EOL)
+											return error("unrecognised X:R parallel move syntax: expected EOL after X:ea,D1 S2,D2");
 
-        goto x_check_immed;
-    }
-    else if (*tok == '>')
-    {
-        // Check for immediate address forced long
-        tok++;
-        if (expr(dspImmedEXPR, &dspImmedEXVAL, &dspImmedEXATTR, &dspImmedESYM) != OK)
-            return ERROR;
-        if (dspImmedEXATTR & DEFINED)
-            if (dspImmedEXVAL > 0xffffff)
-                return error("long address is bigger than $ffffff");
+										inst = B16(00010000, 00000000) | (1 << 7);
+										inst |= ((D1 & 0x8) << (12 - 4)) + ((D1 & 1) << 10);
+										inst |= (S2 & 1) << 9;
+										inst |= (D2 & 1) << 8;
+										inst |= ea1;
+										return inst;
+									}
+									else
+										return error("unrecognised X:R parallel move syntax: expected y0,y1 after X:ea,D1 S2,");
+								}
+								else
+									return error("unrecognised X:R parallel move syntax: expected a,b after X:ea,D1");
+							}
+						}
+						else
+							return error("unrecognised X: parallel move syntax: expected x0,x1,y0,y1,a0,b0,a2,b2,a1,b1,a,b,r0-r7,n0-n7 after 'X:ea,'");
+					}
+					else
+					{
+						if (*tok == EOL)
+						{
+							// 'S,X:ea'
+							inst = inst | B8(01000000) | (0 << 7);
+							inst |= ((S1 & 0x18) << (12 - 3)) + ((S1 & 7) << 8);
+							inst |= ea1;
 
-        deposit_extra_ea = DEPOSIT_EXTRA_WORD;
+							if (ea1 == DSP_EA_ABS)
+								deposit_extra_ea = DEPOSIT_EXTRA_WORD;
 
-        force_imm = NUM_FORCE_LONG;
-        ea1 = DSP_EA_ABS;
-        goto x_check_immed;
-    }
-    else if (*tok == '<')
-    {
-        // Check for immediate address forced short
-        tok++;
-        if (expr(dspImmedEXPR, &dspImmedEXVAL, &dspImmedEXATTR, &dspImmedESYM) != OK)
-            return ERROR;
-        force_imm = NUM_FORCE_SHORT;
-        if (dspImmedEXATTR & DEFINED)
-        {
-            if (dspImmedEXVAL > 0x3f)
-            {
-                warn("short addressing mode forced but address is bigger than $3f - switching to long");
-                force_imm = NUM_FORCE_LONG;
-                deposit_extra_ea = DEPOSIT_EXTRA_WORD;
-                ea1 = DSP_EA_ABS;
-            }
-        }
-        else
-        {
-            // This might end up as something like 'move Y:<adr,register'
-            // so let's mark it as an extra aa fixup here.
-            // Note: we are branching to x_check_immed without a
-            // defined dspImmed so it's going to be 0. It probably
-            // doesn't harm anything.
-            deposit_extra_ea = DEPOSIT_EXTRA_FIXUP;
-        }
+							return inst;
+						}
+						else
+						{
+							// 'S1,X:ea S2,D2', 'A,X:ea X0,A', 'B,X:ea X0,B',
+							// 'S1,X:eax Y:eay,D2', 'S1,X:eax S2,Y:eay'
+							goto x_checkea_right;
+						}
+					}
 
-        goto x_check_immed;
-    }
-    return error("unknown x: addressing mode");
+				}
+			}
+		}
+		else
+		{
+			// It's not an immediate, check for '-(Rn)'
+			ea1 = checkea(termchar, X_ERRORS);
+
+			if (ea1 == ERROR)
+				return ERROR;
+
+			goto x_gotea1;
+
+		}
+	}
+	else if (*tok == '#')
+	{
+		tok++;
+
+		if (expr(dspImmedEXPR, &dspImmedEXVAL, &dspImmedEXATTR, &dspImmedESYM) != OK)
+			return ERROR;
+
+		// Okay so we have immediate data - mark it down
+		ea1 = DSP_EA_IMM;
+		// Now, proceed to the main code for this branch
+		goto x_gotea1;
+	}
+	else if (*tok == '(')
+	{
+		// Maybe we got an expression here, check for it
+		if (tok[1] == CONST || tok[1] == FCONST || tok[1] == SUNARY || tok[1] == SYMBOL || tok[1] == STRING)
+		{
+			// Evaluate the expression and go to immediate code path
+			expr(dspImmedEXPR, &dspImmedEXVAL, &dspImmedEXATTR, &dspImmedESYM);
+			goto x_check_immed;
+		}
+
+		// Nope, let's check for ea then
+		ea1 = checkea(termchar, X_ERRORS);
+
+		if (ea1 == ERROR)
+			return ERROR;
+
+x_gotea1:
+		if (W == 1)
+		{
+			if (*tok++ != ',')
+				return error("Comma expected after 'X:(Rn)')");
+
+			// It might be 'X:(Rn..)..,D' but we're not 100% sure yet.
+			// If it is, the only possible syntax here is 'X:ea,D'.
+			// So check ahead to see if EOL follows D, then we're good to go.
+			if (((*tok >= KW_X0 && *tok <= KW_N7) || (*tok >= KW_R0 && *tok <= KW_R7) || (*tok >= KW_A0 && *tok <= KW_A2)) && *(tok + 1) == EOL)
+			{
+				//'X:ea,D'
+				D1 = SDreg(*tok++);
+
+				inst = inst | B8(01000000) | (1 << 7);
+				inst |= ea1;
+				inst |= ((D1 & 0x18) << (12 - 3)) + ((D1 & 7) << 8);
+				return inst;
+			}
+		}
+		else
+		{
+			if (*tok == EOL)
+			{
+				//'S,X:ea'
+				inst = inst | B8(01000000) | (0 << 7);
+				inst |= ea1;
+				inst |= ((S1 & 0x18) << (12 - 3)) + ((S1 & 7) << 8);
+				return inst;
+			}
+			else
+			{
+				goto x_checkea_right;
+			}
+		}
+
+		// 'X:eax,D1 Y:eay,D2', 'X:eax,D1 S2,Y:eay' or 'X:ea,D1 S2,D2'
+		// Check ahead for S2,D2 - if that's true then we have 'X:ea,D1 S2,D2'
+		if ((*tok == KW_X0 || *tok == KW_X1 || *tok == KW_A || *tok == KW_B) && (*(tok + 1) == KW_A || *(tok + 1) == KW_B) && (*(tok + 2) == ',') && (*(tok + 3) == KW_Y0 || (*(tok + 3) == KW_Y1)))
+		{
+			// 'X:ea,D1 S2,D2'
+			// Check if D1 is x0, x1, a or b
+			switch (*tok++)
+			{
+			case KW_X0: D1 = 0 << 10; break;
+			case KW_X1: D1 = 1 << 10; break;
+			case KW_A:  D1 = 2 << 10; break;
+			case KW_B:  D1 = 3 << 10; break;
+			default:    return error("unrecognised X:R parallel move syntax: expected x0, x1, a or b after 'X:eax,'");
+			}
+
+			switch (*tok++)
+			{
+			case KW_A: S2 = 0 << 9; break;
+			case KW_B: S2 = 1 << 9; break;
+			default:   return error("unrecognised X:R parallel move syntax: expected a or b after 'X:eax,D1 '");
+			}
+
+			if (*tok++ != ',')
+				return error("unrecognised X:R parallel move syntax: expected ',' after 'X:eax,D1 S2'");
+
+			if (*tok == KW_Y0 || *tok == KW_Y1)
+			{
+				if (*tok++ == KW_Y0)
+					D2 = 0 << 8;
+				else
+					D2 = 1 << 8;
+
+				if (*tok != EOL)
+					return error("unrecognised X:R parallel move syntax: unexpected text after 'X:eax,D1 S2,S2'");
+
+				inst = B16(00010000, 00000000) | (W << 7);
+				inst |= ea1 | D1 | S2 | D2;
+				return inst;
+			}
+			else
+				return error("unrecognised X:R parallel move syntax: expected y0 or y1 after 'X:eax,D1 S2,'");
+		}
+
+		// Check to see if we got eax (which is a subset of ea)
+		if (check_for_x_y)
+		{
+			if ((inst = check_x_y(ea1, 0)) != 0)
+				return inst;
+			else
+			{
+				// Rewind pointer as it might be an expression and check for it
+				tok--;
+
+				if (expr(dspaaEXPR, &dspaaEXVAL, &dspaaEXATTR, &dspaaESYM) != OK)
+					return ERROR;
+
+				// Yes, we have an expression, so we now check for
+				// 'X:ea,D' or 'X:aa,D' or 'X:ea,D1 S2,D2' or 'X:eax,D1 Y:eay,D2' or 'X:eax,D1 S2,Y:eay'
+				goto x_check_immed;
+			}
+		}
+	}
+	else if (*tok == CONST || *tok == FCONST || *tok == SYMBOL)
+	{
+		// Check for immediate address
+		if (expr(dspImmedEXPR, &dspImmedEXVAL, &dspImmedEXATTR, &dspImmedESYM) != OK)
+			return ERROR;
+
+		// We set ea1 here - if it's aa instead of ea
+		// then it won't be used anyway
+		ea1 = DSP_EA_ABS;
+
+		if (!(dspImmedEXATTR&DEFINED))
+		{
+			force_imm = NUM_FORCE_LONG;
+			deposit_extra_ea = DEPOSIT_EXTRA_WORD;
+		}
+
+		goto x_check_immed;
+	}
+	else if (*tok == '>')
+	{
+		// Check for immediate address forced long
+		tok++;
+
+		if (expr(dspImmedEXPR, &dspImmedEXVAL, &dspImmedEXATTR, &dspImmedESYM) != OK)
+			return ERROR;
+
+		if (dspImmedEXATTR & DEFINED)
+			if (dspImmedEXVAL > 0xffffff)
+				return error("long address is bigger than $ffffff");
+
+		deposit_extra_ea = DEPOSIT_EXTRA_WORD;
+
+		force_imm = NUM_FORCE_LONG;
+		ea1 = DSP_EA_ABS;
+		goto x_check_immed;
+	}
+	else if (*tok == '<')
+	{
+		// Check for immediate address forced short
+		tok++;
+
+		if (expr(dspImmedEXPR, &dspImmedEXVAL, &dspImmedEXATTR, &dspImmedESYM) != OK)
+			return ERROR;
+
+		force_imm = NUM_FORCE_SHORT;
+
+		if (dspImmedEXATTR & DEFINED)
+		{
+			if (dspImmedEXVAL > 0x3F)
+			{
+				warn("short addressing mode forced but address is bigger than $3F - switching to long");
+				force_imm = NUM_FORCE_LONG;
+				deposit_extra_ea = DEPOSIT_EXTRA_WORD;
+				ea1 = DSP_EA_ABS;
+			}
+		}
+		else
+		{
+			// This might end up as something like 'move Y:<adr,register'
+			// so let's mark it as an extra aa fixup here.
+			// Note: we are branching to x_check_immed without a
+			// defined dspImmed so it's going to be 0. It probably
+			// doesn't harm anything.
+			deposit_extra_ea = DEPOSIT_EXTRA_FIXUP;
+		}
+
+		goto x_check_immed;
+	}
+
+	return error("unknown x: addressing mode");
 }
 
 
@@ -2309,228 +2397,235 @@ LONG checkea_full(const uint32_t termchar, const int strings)
 
 }
 
+
 //
 // Main routine to check parallel move modes.
-// It's quite complex so it's split into a few procedures (in fact most of the above ones).
-// A big effort was made so this can be managable and not too hacky, however one look at
-// the 56001 manual regarding parallel moves and you'll know that this is not an easy
-// problem to deal with!
-// dest=destination register from the main opcode. This must not be the same as D1 or D2
-// and that even goes for stuff like dest=A, D1=A0/1/2!!!
+// It's quite complex so it's split into a few procedures (in fact most of the
+// above ones). A big effort was made so this can be managable and not too
+// hacky, however one look at the 56001 manual regarding parallel moves and
+// you'll know that this is not an easy // problem to deal with!
+// dest=destination register from the main opcode. This must not be the same
+// as D1 or D2 and that even goes for stuff like dest=A, D1=A0/1/2!!!
 //
 LONG parmoves(WORD dest)
 {
-    int force_imm;          // Addressing mode force operator
-    int immreg;             // Immediate register destination
-    LONG inst;              // 16 bit bitfield that has the parallel move opcode
-    LONG S1, S2, D1, D2;    // Source and Destinations
-    LONG ea1;				// ea bitfields
+	int force_imm;          // Addressing mode force operator
+	int immreg;             // Immediate register destination
+	LONG inst;              // 16 bit bitfield that has the parallel move opcode
+	LONG S1, S2, D1, D2;    // Source and Destinations
+	LONG ea1;				// ea bitfields
 
-    if (*tok == EOL)
-    {
-        // No parallel move
-        return B16(00100000, 00000000);
-    }
-    if (*tok == '#')
-    {
-        // '#xxxxxx,D', '#xx,D'
-        tok++;
-        force_imm = NUM_NORMAL;
-        if (*tok == '>')
-        {
-            force_imm = NUM_FORCE_LONG;
-            tok++;
-        }
-        else if (*tok == '<')
-        {
-            force_imm = NUM_FORCE_SHORT;
-            tok++;
-        }
+	if (*tok == EOL)
+	{
+		// No parallel move
+		return B16(00100000, 00000000);
+	}
 
-        if (expr(dspImmedEXPR, &dspImmedEXVAL, &dspImmedEXATTR, &dspImmedESYM) != OK)
-            return ERROR;
+	if (*tok == '#')
+	{
+		// '#xxxxxx,D', '#xx,D'
+		tok++;
+		force_imm = NUM_NORMAL;
 
-        if (*tok++ != ',')
-            return error("expected comma");
+		if (*tok == '>')
+		{
+			force_imm = NUM_FORCE_LONG;
+			tok++;
+		}
+		else if (*tok == '<')
+		{
+			force_imm = NUM_FORCE_SHORT;
+			tok++;
+		}
 
-        if (!((*tok >= KW_X0 && *tok <= KW_N7) || (*tok >= KW_R0 && *tok <= KW_R7) || (*tok >= KW_A0 && *tok <= KW_A2)))
-            return error("expected x0,x1,y0,y1,a0,b0,a2,b2,a1,b1,a,b,r0-r7,n0-n7 after immediate");
-        immreg = SDreg(*tok++);
+		if (expr(dspImmedEXPR, &dspImmedEXVAL, &dspImmedEXATTR, &dspImmedESYM) != OK)
+			return ERROR;
 
-        if (*tok == EOL)
-        {
-            if (!(dspImmedEXATTR & FLOAT))
-            {
-                if (dspImmedEXATTR & DEFINED)
-                {
-                    // From I parallel move:
-                    // "If the destination register D is X0, X1, Y0, Y1, A, or B, the 8-bit immediate short operand
-                    // is interpreted as a signed fraction and is stored in the specified destination register.
-                    // That is, the 8 - bit data is stored in the eight MS bits of the destination operand, and the
-                    // remaining bits of the destination operand D are zeroed."
-                    // The funny bit is that Motorola assembler can parse something like 'move #$FF0000,b' into an
-                    // I (immediate short move) - so let's do that as well then...
-                    if (((immreg >= 4 && immreg <= 7) || immreg == 14 || immreg == 15) && force_imm != NUM_FORCE_LONG)
-                    {
-                        if ((dspImmedEXVAL & 0xffff) == 0)
-                        {
-                            dspImmedEXVAL >>= 16;
-                        }
-                    }
-                    if (force_imm == NUM_FORCE_SHORT)
-                    {
-                        if (dspImmedEXVAL<0xff && (int32_t)dspImmedEXVAL>-0x100)
-                        {
-                            // '#xx,D'
-                            // value fits in 8 bits - immediate move
-                            inst = B16(00100000, 00000000) + (immreg << 8) + (uint32_t)dspImmedEXVAL;
-                            return inst;
-                        }
-                        else
-                        {
-                            warn("forced short immediate value doesn't fit in 8 bits - switching to long");
-                            force_imm = NUM_FORCE_LONG;
-                        }
-                    }
-                    if (force_imm == NUM_FORCE_LONG)
-                    {
-                        // '#xxxxxx,D'
-                        // it can either be
-                        // X or Y Data move. I don't think it matters much
-                        // which of the two it will be, so let's use X.
-                    deposit_immediate_long_with_register:
-                        inst = B16(01000000, 11110100);
-                        inst |= ((immreg & 0x18) << (12 - 3)) + ((immreg & 7) << 8);
-                        deposit_extra_ea = DEPOSIT_EXTRA_WORD;
-                        return inst;
-                    }
-                    if (((int32_t)dspImmedEXVAL < 0x100) && ((int32_t)dspImmedEXVAL >= -0x100))
-                    {
-                        // value fits in 8 bits - immediate move
-                    deposit_immediate_short_with_register:
-                        inst = B16(00100000, 00000000) + (immreg << 8) + (uint32_t)dspImmedEXVAL;
-                        return inst;
-                    }
-                    else
-                    {
-                        // value doesn't fit in 8 bits, so it can either be
-                        // X or Y Data move. I don't think it matters much
-                        // which of the two it will be, so let's use X:.
-                        // TODO: if we're just goto'ing perhaps the logic can be simplified
-                        goto deposit_immediate_long_with_register;
-                    }
-                }
-                else
-                {
-                    if (force_imm != NUM_FORCE_SHORT)
-                    {
-                        // '#xxxxxx,D'
-                        // TODO: if we're just goto'ing perhaps the logic can be simplified
-                        goto deposit_immediate_long_with_register;
-                    }
-                    else
-                    {
-                        // '#xx,D' - I mode
-                        // No visibility of the number so let's add a fixup for this
-                        AddFixup(FU_DSPIMM8, sloc, dspImmedEXPR);
-                        inst = B16(00100000, 00000000);
-                        inst |= ((immreg & 0x18) << (11 - 3)) + ((immreg & 7) << 8);
-                        return inst;
-                    }
+		if (*tok++ != ',')
+			return error("expected comma");
 
-                }
-            }
-            else
-            {
-                // Float constant
-                if (dspImmedEXATTR & DEFINED)
-                {
+		if (!((*tok >= KW_X0 && *tok <= KW_N7) || (*tok >= KW_R0 && *tok <= KW_R7) || (*tok >= KW_A0 && *tok <= KW_A2)))
+			return error("expected x0,x1,y0,y1,a0,b0,a2,b2,a1,b1,a,b,r0-r7,n0-n7 after immediate");
 
-                    double f = *(double *)&dspImmedEXVAL;
-                    // Check direct.c for ossom comments regarding conversion!
-                    dspImmedEXVAL = ((uint32_t)(int32_t)round(f*(1 << 23))) & 0xffffff;
-                    double g;
-                    g = f*(1 << 23);
-                    g = round(g);
+		immreg = SDreg(*tok++);
 
-                    if ((dspImmedEXVAL & 0xffff) == 0)
-                    {
-                        // Value's 16 lower bits are not set so the value can fit in a single byte
-                        // (check parallel I move quoted above)
-                        warn("Immediate value fits inside 8 bits, so using instruction short format");
-                        dspImmedEXVAL >>= 16;
-                        goto deposit_immediate_short_with_register;
-                    }
+		if (*tok == EOL)
+		{
+			if (!(dspImmedEXATTR & FLOAT))
+			{
+				if (dspImmedEXATTR & DEFINED)
+				{
+					// From I parallel move:
+					// "If the destination register D is X0, X1, Y0, Y1, A, or B, the 8-bit immediate short operand
+					// is interpreted as a signed fraction and is stored in the specified destination register.
+					// That is, the 8 - bit data is stored in the eight MS bits of the destination operand, and the
+					// remaining bits of the destination operand D are zeroed."
+					// The funny bit is that Motorola assembler can parse something like 'move #$FF0000,b' into an
+					// I (immediate short move) - so let's do that as well then...
+					if (((immreg >= 4 && immreg <= 7) || immreg == 14 || immreg == 15) && force_imm != NUM_FORCE_LONG)
+					{
+						if ((dspImmedEXVAL & 0xffff) == 0)
+						{
+							dspImmedEXVAL >>= 16;
+						}
+					}
 
-                    if (force_imm == NUM_FORCE_SHORT)
-                    {
-                        if ((dspImmedEXVAL & 0xffff) != 0)
-                        {
-                            warn("Immediate value short format forced but value does not fit inside 8 bits - switching to long format");
-                            goto deposit_immediate_long_with_register;
-                        }
-                        return error("internal assembler error: we haven't implemented floating point constants in parallel mode parser yet!");
-                    }
-                    // If we reach here we either have NUM_FORCE_LONG or nothing, so we might as well store a long.
-                    goto deposit_immediate_long_with_register;
-                }
-                else
-                {
-                    if (force_imm == NUM_FORCE_SHORT)
-                    {
+					if (force_imm == NUM_FORCE_SHORT)
+					{
+						if (dspImmedEXVAL < 0xFF && (int32_t)dspImmedEXVAL > -0x100)
+						{
+							// '#xx,D'
+							// value fits in 8 bits - immediate move
+							inst = B16(00100000, 00000000) + (immreg << 8) + (uint32_t)dspImmedEXVAL;
+							return inst;
+						}
+						else
+						{
+							warn("forced short immediate value doesn't fit in 8 bits - switching to long");
+							force_imm = NUM_FORCE_LONG;
+						}
+					}
+
+					if (force_imm == NUM_FORCE_LONG)
+					{
+						// '#xxxxxx,D'
+						// it can either be
+						// X or Y Data move. I don't think it matters much
+						// which of the two it will be, so let's use X.
+deposit_immediate_long_with_register:
+						inst = B16(01000000, 11110100);
+						inst |= ((immreg & 0x18) << (12 - 3)) + ((immreg & 7) << 8);
+						deposit_extra_ea = DEPOSIT_EXTRA_WORD;
+						return inst;
+					}
+
+					if (((int32_t)dspImmedEXVAL < 0x100) && ((int32_t)dspImmedEXVAL >= -0x100))
+					{
+						// value fits in 8 bits - immediate move
+deposit_immediate_short_with_register:
+						inst = B16(00100000, 00000000) + (immreg << 8) + (uint32_t)dspImmedEXVAL;
+						return inst;
+					}
+					else
+					{
+						// value doesn't fit in 8 bits, so it can either be
+						// X or Y Data move. I don't think it matters much
+						// which of the two it will be, so let's use X:.
+						// TODO: if we're just goto'ing perhaps the logic can be simplified
+						goto deposit_immediate_long_with_register;
+					}
+				}
+				else
+				{
+					if (force_imm != NUM_FORCE_SHORT)
+					{
+						// '#xxxxxx,D'
+						// TODO: if we're just goto'ing perhaps the logic can be simplified
+						goto deposit_immediate_long_with_register;
+					}
+					else
+					{
+						// '#xx,D' - I mode
+						// No visibility of the number so let's add a fixup for this
+						AddFixup(FU_DSPIMM8, sloc, dspImmedEXPR);
+						inst = B16(00100000, 00000000);
+						inst |= ((immreg & 0x18) << (11 - 3)) + ((immreg & 7) << 8);
+						return inst;
+					}
+				}
+			}
+			else
+			{
+				// Float constant
+				if (dspImmedEXATTR & DEFINED)
+				{
+					double f = *(double *)&dspImmedEXVAL;
+					// Check direct.c for ossom comments regarding conversion!
+//N.B.: This is bogus, we need to fix this so it does this the right way... !!! FIX !!!
+					dspImmedEXVAL = ((uint32_t)(int32_t)round(f * (1 << 23))) & 0xFFFFFF;
+					double g;
+					g = f * (1 << 23);
+					g = round(g);
+
+					if ((dspImmedEXVAL & 0xFFFF) == 0)
+					{
+						// Value's 16 lower bits are not set so the value can fit in a single byte
+						// (check parallel I move quoted above)
+						warn("Immediate value fits inside 8 bits, so using instruction short format");
+						dspImmedEXVAL >>= 16;
 						goto deposit_immediate_short_with_register;
-                    }
-                    else
-                    {
-                        // Just deposit a float fixup
-                        AddFixup(FU_DSPIMMFL8, sloc, dspImmedEXPR);
-                        inst = B16(00100000, 00000000);
-                        inst |= ((immreg & 0x18) << (12 - 3)) + ((immreg & 7) << 8);
-                        return inst;
-                    }
-                }
-            }
-        }
-        else
-        {
-            // At this point we can only have '#xxxxxx,D1 S2,D2' (X:R Class I)
+					}
 
-            switch (immreg)
-            {
-            case 4: D1 = 0 << 10;break;  // X0
-            case 5: D1 = 1 << 10;break;  // X1
-            case 14: D1 = 2 << 10;break; // A
-            case 15: D1 = 3 << 10;break; // B
-            default: return error("unrecognised X:R parallel move syntax: D1 can only be x0,x1,a,b in '#xxxxxx,D1 S2,D2'"); break;
-            }
+					if (force_imm == NUM_FORCE_SHORT)
+					{
+						if ((dspImmedEXVAL & 0xFFFF) != 0)
+						{
+							warn("Immediate value short format forced but value does not fit inside 8 bits - switching to long format");
+							goto deposit_immediate_long_with_register;
+						}
 
-            switch (*tok++)
-            {
-            case KW_A: S2 = 0 << 9; break;
-            case KW_B: S2 = 1 << 9; break;
-            default: return error("unrecognised X:R parallel move syntax: S2 can only be A or B in '#xxxxxx,D1 S2,D2'"); break;
-            }
+						return error("internal assembler error: we haven't implemented floating point constants in parallel mode parser yet!");
+					}
 
-            if (*tok++ != ',')
-                return error("unrecognised X:R parallel move syntax: expected comma after '#xxxxxx,D1 S2'");
+					// If we reach here we either have NUM_FORCE_LONG or nothing, so we might as well store a long.
+					goto deposit_immediate_long_with_register;
+				}
+				else
+				{
+					if (force_imm == NUM_FORCE_SHORT)
+					{
+						goto deposit_immediate_short_with_register;
+					}
+					else
+					{
+						// Just deposit a float fixup
+						AddFixup(FU_DSPIMMFL8, sloc, dspImmedEXPR);
+						inst = B16(00100000, 00000000);
+						inst |= ((immreg & 0x18) << (12 - 3)) + ((immreg & 7) << 8);
+						return inst;
+					}
+				}
+			}
+		}
+		else
+		{
+			// At this point we can only have '#xxxxxx,D1 S2,D2' (X:R Class I)
+			switch (immreg)
+			{
+			case 4: D1 = 0 << 10;break;  // X0
+			case 5: D1 = 1 << 10;break;  // X1
+			case 14: D1 = 2 << 10;break; // A
+			case 15: D1 = 3 << 10;break; // B
+			default: return error("unrecognised X:R parallel move syntax: D1 can only be x0,x1,a,b in '#xxxxxx,D1 S2,D2'"); break;
+			}
 
-            switch (*tok++)
-            {
-            case KW_Y0: D2 = 0 << 8; break;
-            case KW_Y1: D2 = 1 << 8; break;
-            default: return error("unrecognised X:R parallel move syntax: D2 can only be Y0 or Y1 in '#xxxxxx,D1 S2,D2'"); break;
-            }
+			switch (*tok++)
+			{
+			case KW_A: S2 = 0 << 9; break;
+			case KW_B: S2 = 1 << 9; break;
+			default: return error("unrecognised X:R parallel move syntax: S2 can only be A or B in '#xxxxxx,D1 S2,D2'"); break;
+			}
 
-            if (*tok != EOL)
-                return error("unrecognised X:R parallel move syntax: expected end-of-line after '#xxxxxx,D1 S2,D2'");
+			if (*tok++ != ',')
+				return error("unrecognised X:R parallel move syntax: expected comma after '#xxxxxx,D1 S2'");
 
-            inst = B16(00010000, 10110100) | D1 | S2 | D2;
-            deposit_extra_ea = DEPOSIT_EXTRA_WORD;
-            return inst;
-        }
-    }
-    else if (*tok == KW_X)
-    {
+			switch (*tok++)
+			{
+			case KW_Y0: D2 = 0 << 8; break;
+			case KW_Y1: D2 = 1 << 8; break;
+			default: return error("unrecognised X:R parallel move syntax: D2 can only be Y0 or Y1 in '#xxxxxx,D1 S2,D2'"); break;
+			}
+
+			if (*tok != EOL)
+				return error("unrecognised X:R parallel move syntax: expected end-of-line after '#xxxxxx,D1 S2,D2'");
+
+			inst = B16(00010000, 10110100) | D1 | S2 | D2;
+			deposit_extra_ea = DEPOSIT_EXTRA_WORD;
+			return inst;
+		}
+	}
+	else if (*tok == KW_X)
+	{
 		if (tok[1] == ',')
 			// Hey look, it's just the register X and not the addressing mode - fall through to general case
 			goto parse_everything_else;
@@ -2538,269 +2633,307 @@ LONG parmoves(WORD dest)
 		tok++;
 
 		if (*tok++ != ':')
-            return error("expected ':' after 'X' in parallel move (i.e. X:)");
+			return error("expected ':' after 'X' in parallel move (i.e. X:)");
 
 		// 'X:ea,D' or 'X:aa,D' or 'X:ea,D1 S2,D2' or 'X:eax,D1 Y:eay,D2' or 'X:eax,D1 S2,Y:eay'
 		return parse_x(1, B16(01000000, 00000000), 0, 1);
-    }
-    else if (*tok == KW_Y)
-    {
+	}
+	else if (*tok == KW_Y)
+	{
 		if (tok[1] == ',')
 			// Hey look, it's just the register y and not the addressing mode - fall through to general case
 			goto parse_everything_else;
 
 		tok++;
+
 		if (*tok++ != ':')
-            return error("expected ':' after 'Y' in parallel move (i.e. Y:)");
+			return error("expected ':' after 'Y' in parallel move (i.e. Y:)");
 
 		// 'Y:ea,D' or 'Y:aa,D'
-        return parse_y(B16(01001000, 10000000), 0, 0, 0);
-    }
-    else if (*tok == KW_L)
-    {
-        // 'L:ea,D' or 'L:aa,D'
-        tok++;
-        if (*tok++ != ':')
-            return error("expected ':' after 'L' in parallel move (i.e. L:)");
+		return parse_y(B16(01001000, 10000000), 0, 0, 0);
+	}
+	else if (*tok == KW_L)
+	{
+		// 'L:ea,D' or 'L:aa,D'
+		tok++;
+		if (*tok++ != ':')
+			return error("expected ':' after 'L' in parallel move (i.e. L:)");
 
-        return parse_l(1, B16(01000000, 11000000), 0);
-    }
-    else if ((*tok >= KW_X0 && *tok <= KW_N7) || (*tok >= KW_R0 && *tok <= KW_R7) || (*tok >= KW_A0 && *tok <= KW_A2) || (*tok >= KW_A10 && *tok <= KW_BA))
-    {
-        // Everything else - brace for impact!
-        // R:   'S,D'
-        // X:   'S,X:ea' 'S,X:aa'
-        // X:R  'S,X:ea S2,D2' 'A,X:ea X0,A' 'B,X:ea X0,B'
-        // Y:   'S,Y:ea' 'S,Y:aa'
-        // R:Y: 'S1,D1 Y:ea,D2' 'S1,D1 S2,Y:ea' 'Y0,A A,Y:ea' 'Y0,B B,Y:ea' 'S1,D1 #xxxxxx,D2' 'Y0,A A,Y:ea' 'Y0,B B,Y:ea'
-        // L:   'S,L:ea' 'S,L:aa'
+		return parse_l(1, B16(01000000, 11000000), 0);
+	}
+	else if ((*tok >= KW_X0 && *tok <= KW_N7) || (*tok >= KW_R0 && *tok <= KW_R7) || (*tok >= KW_A0 && *tok <= KW_A2) || (*tok >= KW_A10 && *tok <= KW_BA))
+	{
+		// Everything else - brace for impact!
+		// R:   'S,D'
+		// X:   'S,X:ea' 'S,X:aa'
+		// X:R  'S,X:ea S2,D2' 'A,X:ea X0,A' 'B,X:ea X0,B'
+		// Y:   'S,Y:ea' 'S,Y:aa'
+		// R:Y: 'S1,D1 Y:ea,D2' 'S1,D1 S2,Y:ea' 'Y0,A A,Y:ea' 'Y0,B B,Y:ea' 'S1,D1 #xxxxxx,D2' 'Y0,A A,Y:ea' 'Y0,B B,Y:ea'
+		// L:   'S,L:ea' 'S,L:aa'
 		LONG L_S1;
 parse_everything_else:
 		L_S1 = *tok++;
 		S1 = SDreg(L_S1);
 
-        if (*tok++ != ',')
-            return error("Comma expected after 'S')");
+		if (*tok++ != ',')
+			return error("Comma expected after 'S')");
 
-        if (*tok == KW_X)
-        {
-            // 'S,X:ea' 'S,X:aa' 'S,X:ea S2,D2' 'S1,X:eax Y:eay,D2' 'S1,X:eax S2,Y:eay'
-            // 'A,X:ea X0,A' 'B,X:ea X0,B'
-            tok++;
-            if (*tok++ != ':')
-                return error("unrecognised X: parallel move syntax: expected ':' after 'S,X'");
-            return parse_x(0, B16(01000000, 00000000), S1, 1);
-        }
-        else if (*tok == KW_Y)
-        {
-            // 'S,Y:ea' 'S,Y:aa'
-            tok++;
-            if (*tok++ != ':')
-                return error("unrecognised Y: parallel move syntax: expected ':' after 'S,Y'");
-            return parse_y(B16(0000000, 00000000), S1, 0, 0);
-        }
-        else if (*tok == KW_L)
-        {
-            // 'S,L:ea' 'S,L:aa'
-            tok++;
-            if (*tok++ != ':')
-                return error("unrecognised L: parallel move syntax: expected ':' after 'S,L'");
-            return parse_l(1, B16(00000000, 00000000), L_S1);
-        }
-        else if ((*tok >= KW_X0 && *tok <= KW_N7) || (*tok >= KW_R0 && *tok <= KW_R7) || (*tok >= KW_A0 && *tok <= KW_A2))
-        {
-            // 'S,D'
-            // 'S1,D1 Y:ea,D2' 'S1,D1 S2,Y:ea' 'S1,D1 #xxxxxx,D2'
-            // 'Y0,A A,Y:ea' 'Y0,B B,Y:ea'
-            D1 = SDreg(*tok++);
-            if (*tok == EOL)
-            {
-                // R 'S,D'
-                inst = B16(00100000, 00000000);
-                inst |= (S1 << 5) | (D1);
-                return inst;
-            }
-            else if (*tok == KW_Y)
-            {
-                // 'S1,D1 Y:ea,D2'
-                tok++;
-                if (*tok++ != ':')
-                    return error("expected ':' after 'Y' in parallel move (i.e. Y:)");
-                return parse_y(B16(00010000, 01000000), S1, D1, 0);
+		if (*tok == KW_X)
+		{
+			// 'S,X:ea' 'S,X:aa' 'S,X:ea S2,D2' 'S1,X:eax Y:eay,D2' 'S1,X:eax S2,Y:eay'
+			// 'A,X:ea X0,A' 'B,X:ea X0,B'
+			tok++;
 
-            }
-            else if (*tok == KW_A || *tok == KW_B || *tok == KW_Y0 || *tok == KW_Y1)
-            {
-                // 'Y0,A A,Y:ea' 'Y0,B B,Y:ea' 'S1,D1 S2,Y:ea'
-                S2 = SDreg(*tok++);
-                if (S1 == 6 && D1 == 14 && S2 == 14)
-                {
-                    // 'Y0,A A,Y:ea'
-                    if (*tok++ != ',')
-                        return error("unrecognised Y: parallel move syntax: expected ',' after Y0,A A");
-                    if (*tok++ != KW_Y)
-                        return error("unrecognised Y: parallel move syntax: expected 'Y' after Y0,A A,");
-                    if (*tok++ != ':')
-                        return error("unrecognised Y: parallel move syntax: expected ':' after Y0,A A,Y");
-                    ea1 = checkea_full(EOL, Y_ERRORS);
-                    if (ea1 == ERROR)
-                        return ERROR;
-                    inst = B16(00001000, 10000000);
-                    inst |= 0 << 8;
-                    inst |= ea1;
-                    return inst;
-                }
-                else if (S1 == 6 && D1 == 15 && S2 == 15)
-                {
-                    // 'Y0,B B,Y:ea'
-                    if (*tok++ != ',')
-                        return error("unrecognised Y: parallel move syntax: expected ',' after Y0,B B");
-                    if (*tok++ != KW_Y)
-                        return error("unrecognised Y: parallel move syntax: expected 'Y' after Y0,B B,");
-                    if (*tok++ != ':')
-                        return error("unrecognised Y: parallel move syntax: expected ':' after Y0,B B,Y");
-                    ea1 = checkea_full(EOL, Y_ERRORS);
-                    if (ea1 == ERROR)
-                        return ERROR;
-                    inst = B16(00001000, 10000000);
-                    inst |= 1 << 8;
-                    inst |= ea1;
-                    return inst;
-                }
-                else if ((S1 == 14 || S1 == 15) && (D1 == 4 || D1 == 5) && (S2 == 6 || S2 == 7 || S2 == 14 || S2 == 15))
-                {
-                    //'S1,D1 S2,Y:ea'
-                    if (*tok++ != ',')
-                        return error("unrecognised Y: parallel move syntax: expected ',' after S1,D1 S2");
-                    if (*tok++ != KW_Y)
-                        return error("unrecognised Y: parallel move syntax: expected 'Y' after S1,D1 S2,");
-                    if (*tok++ != ':')
-                        return error("unrecognised Y: parallel move syntax: expected ':' after S1,D1 S2,Y");
-                    ea1 = checkea_full(EOL, Y_ERRORS);
-                    if (ea1 == ERROR)
-                        return ERROR;
-                    inst = B16(00010000, 01000000);
-                    inst |= (S1 & 1) << 11;
-                    inst |= (D1 & 1) << 10;
-                    inst |= ((S2 & 8) << (10 - 4)) | ((S2 & 1) << 8);
-                    inst |= ea1;
-                    return inst;
-                }
-                else
-                    return error("unrecognised Y: parallel move syntax: only 'Y0,A A,Y:ea' 'Y0,B B,Y:ea' allowed'");
-                // Check for Y:
-            }
-            else if (*tok == '#')
-            {
-                // R:Y: 'S1,D1 #xxxxxx,D2'
-                tok++;
-                if (*tok == '>')
-                {
-                    // Well, forcing an immediate to be 24 bits is legal here
-                    // but then it's the only available option so my guess is that this
-                    // is simply superfluous. So let's just eat the character
-                    tok++;
-                }
-                if (expr(dspaaEXPR, &dspaaEXVAL, &dspaaEXATTR, &dspaaESYM) != OK)
-                    return ERROR;
-                if (dspImmedEXATTR & DEFINED)
-                    if (dspImmedEXVAL > 0xffffff)
-                        return error("immediate is bigger than $ffffff");
-                deposit_extra_ea = DEPOSIT_EXTRA_WORD;
-                if (*tok++ != ',')
-                    return error("Comma expected after 'S1,D1 #xxxxxx')");
-                // S1 is a or b, D1 is x0 or x1 and d2 is y0, y1, a or b
-                switch (*tok++)
-                {
-                case KW_Y0: D2 = 0 << 8; break;
-                case KW_Y1: D2 = 1 << 8; break;
-                case KW_A:  D2 = 2 << 8; break;
-                case KW_B:  D2 = 3 << 8; break;
-                default:    return error("unrecognised R:Y: parallel move syntax: D2 must be y0, y1, a or b in 'S1,D1 #xxxxxx,D2'");
-                }
+			if (*tok++ != ':')
+				return error("unrecognised X: parallel move syntax: expected ':' after 'S,X'");
 
-                if (S1 == 14 || S1 == 15)
-                {
-                    if (D1 == 4 || D1 == 5)
-                    {
-                        inst = B16(00010000, 11110100);
-                        inst |= (S1 & 1) << 11;
-                        inst |= (D1 & 1) << 10;
-                        inst |= D2;
-                        dspImmedEXVAL = dspaaEXVAL;
-                        return inst;
-                    }
-                    else
-                        return error("unrecognised R:Y: parallel move syntax: D1 must be x0 or x1 in 'S1,D1 #xxxxxx,D2'");
-                }
-                else
-                    return error("unrecognised R:Y: parallel move syntax: S1 must be a or b in 'S1,D1 #xxxxxx,D2'");
-            }
-            else
-                return error("unrecognised R:Y: parallel move syntax: Unexpected text after S,D in 'S1,D1 #xxxxxx,D2'");
-        }
-        else
-            return error("unrecognised R:Y: parallel move syntax: Unexpected text after 'S,'");
-    }
-    else if (*tok == '(')
-    {
-        // U: 'ea'
-        // U 'ea' can only be '(Rn)-Nn', '(Rn)+Nn', '(Rn)-' or '(Rn)+'
-        tok++;
-        if (*tok >= KW_R0 && *tok <= KW_R7)
-        {
-            ea1 = (*tok++ - KW_R0);
-        }
-        else
-            return error("unrecognised U parallel move syntax: expected 'Rn' after '('");
-        if (*tok++ != ')')
-            return error("unrecognised U parallel move syntax: expected ')' after '(Rn'");
-        if (*tok == '+')
-        {
-            tok++;
-            if (*tok == EOL)
-                // (Rn)+
-                ea1 |= 3 << 3;
-            else if (*tok >= KW_N0 && *tok <= KW_N7)
-            {
-                // (Rn)+Nn
-                if ((*tok++ & 7) != ea1)
-                    return error("unrecognised U parallel move syntax: Same register number expected for Rn, Nn in '(Rn)+Nn')");
-                ea1 |= 1 << 3;
-                if (*tok != EOL)
-                    return error("unrecognised U parallel move syntax: expected End-Of-Line after '(Rn)+Nn'");
-            }
-            else
-                return error("unrecognised U parallel move syntax: expected End-Of-Line or 'Nn' after '(Rn)+'");
+			return parse_x(0, B16(01000000, 00000000), S1, 1);
+		}
+		else if (*tok == KW_Y)
+		{
+			// 'S,Y:ea' 'S,Y:aa'
+			tok++;
 
-        }
-        else if (*tok == '-')
-        {
-            tok++;
-            if (*tok == EOL)
-            {
-                // (Rn)-
-                ea1 |= 2 << 3;
-                tok++;
-            }
-            else if (*tok >= KW_N0 && *tok <= KW_N7)
-            {
-                // (Rn)-Nn
-                if ((*tok++ & 7) != ea1)
-                    return error("unrecognised U parallel move syntax: Same register number expected for Rn, Nn in '(Rn)-Nn')");
-                ea1 |= 0 << 3;
-                if (*tok != EOL)
-                    return error("unrecognised U parallel move syntax: expected End-Of-Line after '(Rn)-Nn'");
-            }
-        }
+			if (*tok++ != ':')
+				return error("unrecognised Y: parallel move syntax: expected ':' after 'S,Y'");
 
-        inst = B16(00100000, 01000000);
-        inst |= ea1;
-        return inst;
-    }
-    else
-        return error("extra (unexpected) text found");
+			return parse_y(B16(0000000, 00000000), S1, 0, 0);
+		}
+		else if (*tok == KW_L)
+		{
+			// 'S,L:ea' 'S,L:aa'
+			tok++;
 
-    return OK;
+			if (*tok++ != ':')
+				return error("unrecognised L: parallel move syntax: expected ':' after 'S,L'");
+
+			return parse_l(1, B16(00000000, 00000000), L_S1);
+		}
+		else if ((*tok >= KW_X0 && *tok <= KW_N7) || (*tok >= KW_R0 && *tok <= KW_R7) || (*tok >= KW_A0 && *tok <= KW_A2))
+		{
+			// 'S,D'
+			// 'S1,D1 Y:ea,D2' 'S1,D1 S2,Y:ea' 'S1,D1 #xxxxxx,D2'
+			// 'Y0,A A,Y:ea' 'Y0,B B,Y:ea'
+			D1 = SDreg(*tok++);
+
+			if (*tok == EOL)
+			{
+				// R 'S,D'
+				inst = B16(00100000, 00000000);
+				inst |= (S1 << 5) | (D1);
+				return inst;
+			}
+			else if (*tok == KW_Y)
+			{
+				// 'S1,D1 Y:ea,D2'
+				tok++;
+				if (*tok++ != ':')
+					return error("expected ':' after 'Y' in parallel move (i.e. Y:)");
+				return parse_y(B16(00010000, 01000000), S1, D1, 0);
+
+			}
+			else if (*tok == KW_A || *tok == KW_B || *tok == KW_Y0 || *tok == KW_Y1)
+			{
+				// 'Y0,A A,Y:ea' 'Y0,B B,Y:ea' 'S1,D1 S2,Y:ea'
+				S2 = SDreg(*tok++);
+
+				if (S1 == 6 && D1 == 14 && S2 == 14)
+				{
+					// 'Y0,A A,Y:ea'
+					if (*tok++ != ',')
+						return error("unrecognised Y: parallel move syntax: expected ',' after Y0,A A");
+
+					if (*tok++ != KW_Y)
+						return error("unrecognised Y: parallel move syntax: expected 'Y' after Y0,A A,");
+
+					if (*tok++ != ':')
+						return error("unrecognised Y: parallel move syntax: expected ':' after Y0,A A,Y");
+
+					ea1 = checkea_full(EOL, Y_ERRORS);
+
+					if (ea1 == ERROR)
+						return ERROR;
+
+					inst = B16(00001000, 10000000);
+					inst |= 0 << 8;
+					inst |= ea1;
+					return inst;
+				}
+				else if (S1 == 6 && D1 == 15 && S2 == 15)
+				{
+					// 'Y0,B B,Y:ea'
+					if (*tok++ != ',')
+						return error("unrecognised Y: parallel move syntax: expected ',' after Y0,B B");
+
+					if (*tok++ != KW_Y)
+						return error("unrecognised Y: parallel move syntax: expected 'Y' after Y0,B B,");
+
+					if (*tok++ != ':')
+						return error("unrecognised Y: parallel move syntax: expected ':' after Y0,B B,Y");
+
+					ea1 = checkea_full(EOL, Y_ERRORS);
+
+					if (ea1 == ERROR)
+						return ERROR;
+
+					inst = B16(00001000, 10000000);
+					inst |= 1 << 8;
+					inst |= ea1;
+					return inst;
+				}
+				else if ((S1 == 14 || S1 == 15) && (D1 == 4 || D1 == 5) && (S2 == 6 || S2 == 7 || S2 == 14 || S2 == 15))
+				{
+					//'S1,D1 S2,Y:ea'
+					if (*tok++ != ',')
+						return error("unrecognised Y: parallel move syntax: expected ',' after S1,D1 S2");
+
+					if (*tok++ != KW_Y)
+						return error("unrecognised Y: parallel move syntax: expected 'Y' after S1,D1 S2,");
+
+					if (*tok++ != ':')
+						return error("unrecognised Y: parallel move syntax: expected ':' after S1,D1 S2,Y");
+
+					ea1 = checkea_full(EOL, Y_ERRORS);
+
+					if (ea1 == ERROR)
+						return ERROR;
+
+					inst = B16(00010000, 01000000);
+					inst |= (S1 & 1) << 11;
+					inst |= (D1 & 1) << 10;
+					inst |= ((S2 & 8) << (10 - 4)) | ((S2 & 1) << 8);
+					inst |= ea1;
+					return inst;
+				}
+				else
+					return error("unrecognised Y: parallel move syntax: only 'Y0,A A,Y:ea' 'Y0,B B,Y:ea' allowed'");
+				// Check for Y:
+			}
+			else if (*tok == '#')
+			{
+				// R:Y: 'S1,D1 #xxxxxx,D2'
+				tok++;
+
+				if (*tok == '>')
+				{
+					// Well, forcing an immediate to be 24 bits is legal here
+					// but then it's the only available option so my guess is that this
+					// is simply superfluous. So let's just eat the character
+					tok++;
+				}
+
+				if (expr(dspaaEXPR, &dspaaEXVAL, &dspaaEXATTR, &dspaaESYM) != OK)
+					return ERROR;
+
+				if (dspImmedEXATTR & DEFINED)
+					if (dspImmedEXVAL > 0xffffff)
+						return error("immediate is bigger than $ffffff");
+
+				deposit_extra_ea = DEPOSIT_EXTRA_WORD;
+
+				if (*tok++ != ',')
+					return error("Comma expected after 'S1,D1 #xxxxxx')");
+
+				// S1 is a or b, D1 is x0 or x1 and d2 is y0, y1, a or b
+				switch (*tok++)
+				{
+				case KW_Y0: D2 = 0 << 8; break;
+				case KW_Y1: D2 = 1 << 8; break;
+				case KW_A:  D2 = 2 << 8; break;
+				case KW_B:  D2 = 3 << 8; break;
+				default:    return error("unrecognised R:Y: parallel move syntax: D2 must be y0, y1, a or b in 'S1,D1 #xxxxxx,D2'");
+				}
+
+				if (S1 == 14 || S1 == 15)
+				{
+					if (D1 == 4 || D1 == 5)
+					{
+						inst = B16(00010000, 11110100);
+						inst |= (S1 & 1) << 11;
+						inst |= (D1 & 1) << 10;
+						inst |= D2;
+						dspImmedEXVAL = dspaaEXVAL;
+						return inst;
+					}
+					else
+						return error("unrecognised R:Y: parallel move syntax: D1 must be x0 or x1 in 'S1,D1 #xxxxxx,D2'");
+				}
+				else
+					return error("unrecognised R:Y: parallel move syntax: S1 must be a or b in 'S1,D1 #xxxxxx,D2'");
+			}
+			else
+				return error("unrecognised R:Y: parallel move syntax: Unexpected text after S,D in 'S1,D1 #xxxxxx,D2'");
+		}
+		else
+			return error("unrecognised R:Y: parallel move syntax: Unexpected text after 'S,'");
+	}
+	else if (*tok == '(')
+	{
+		// U: 'ea'
+		// U 'ea' can only be '(Rn)-Nn', '(Rn)+Nn', '(Rn)-' or '(Rn)+'
+		tok++;
+
+		if (*tok >= KW_R0 && *tok <= KW_R7)
+		{
+			ea1 = (*tok++ - KW_R0);
+		}
+		else
+			return error("unrecognised U parallel move syntax: expected 'Rn' after '('");
+
+		if (*tok++ != ')')
+			return error("unrecognised U parallel move syntax: expected ')' after '(Rn'");
+
+		if (*tok == '+')
+		{
+			tok++;
+
+			if (*tok == EOL)
+				// (Rn)+
+				ea1 |= 3 << 3;
+			else if (*tok >= KW_N0 && *tok <= KW_N7)
+			{
+				// (Rn)+Nn
+				if ((*tok++ & 7) != ea1)
+					return error("unrecognised U parallel move syntax: Same register number expected for Rn, Nn in '(Rn)+Nn')");
+
+				ea1 |= 1 << 3;
+
+				if (*tok != EOL)
+					return error("unrecognised U parallel move syntax: expected End-Of-Line after '(Rn)+Nn'");
+			}
+			else
+				return error("unrecognised U parallel move syntax: expected End-Of-Line or 'Nn' after '(Rn)+'");
+		}
+		else if (*tok == '-')
+		{
+			tok++;
+
+			if (*tok == EOL)
+			{
+				// (Rn)-
+				ea1 |= 2 << 3;
+				tok++;
+			}
+			else if (*tok >= KW_N0 && *tok <= KW_N7)
+			{
+				// (Rn)-Nn
+				if ((*tok++ & 7) != ea1)
+					return error("unrecognised U parallel move syntax: Same register number expected for Rn, Nn in '(Rn)-Nn')");
+
+				ea1 |= 0 << 3;
+
+				if (*tok != EOL)
+					return error("unrecognised U parallel move syntax: expected End-Of-Line after '(Rn)-Nn'");
+			}
+		}
+
+		inst = B16(00100000, 01000000);
+		inst |= ea1;
+		return inst;
+	}
+	else
+		return error("extra (unexpected) text found");
+
+	return OK;
 }
 

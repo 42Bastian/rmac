@@ -1171,7 +1171,7 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 			}
 
 			// Make j = -1 if user tries to use a RISC register while in 68K mode
-			if (!(rgpu || rdsp) && ((TOKEN)j >= KW_R0 && (TOKEN)j <= KW_R31))
+			if (!(rgpu || rdsp || dsp56001) && ((TOKEN)j >= KW_R0 && (TOKEN)j <= KW_R31))
 			{
 				j = -1;
 			}

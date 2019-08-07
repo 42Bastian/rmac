@@ -54,7 +54,9 @@
 #define D_ZEROFILL(n)	{chcheck(n); memset(chptr, 0, n); chptr+=n; sloc+=n; \
 	ch_size+=n; if (orgactive) orgaddr+=n;}
 
-#define NSECTS       16			// Max. number of sections
+//OK, this is bad, mmkay? The constants defined in rmac.h are used as indices into an array which means that this was never meant to be defined this way--at least if it was, it was a compromise that has come home to bite us all in the ass.  !!! FIX !!!
+//#define NSECTS       16			// Max. number of sections
+#define NSECTS       256			// Max. number of sections
 
 // Tunable (storage) definitions
 #define CH_THRESHOLD    32		// Minimum amount of space in code chunk

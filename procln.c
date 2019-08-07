@@ -587,7 +587,7 @@ When checking to see if it's already been equated, issue a warning.
 		if (list_flag)					// Put value in listing
 			listvalue((uint32_t)eval);
 
-		at_eol();						// Must be at EOL now
+		ErrorIfNotAtEOL();				// Must be at EOL now
 		goto loop;
 	}
 
@@ -782,11 +782,24 @@ When checking to see if it's already been equated, issue a warning.
 				parcode = 0;
 			}
 
+#if 1
 			while ((dsp_am0 & md->mn0) == 0 || (dsp_am1 & md->mn1) == 0)
 				md = &dsp56k_machtab[md->mncont];
 
 			(*md->mnfunc)(md->mninst | (parcode << 8));
 			goto loop;
+#else
+			for(;;)
+			{
+				if ((dsp_am0 & md->mn0) != 0 && (dsp_am1 & md->mn1) != 0)
+				{
+					(*md->mnfunc)(md->mninst|(parcode << 8));
+					goto loop;
+				}
+
+				md = &dsp56k_machtab[md->mncont];
+			}
+#endif
 		}
 	}
 

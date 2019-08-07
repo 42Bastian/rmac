@@ -51,6 +51,7 @@ void ForceUndefinedSymbolsGlobal(void);
 int symtable(void);
 uint32_t sy_assign(uint8_t *, uint8_t *(*)());
 uint32_t sy_assign_ELF(uint8_t *, uint8_t *(*)());
+void DumpLODSymbols(void);
 uint8_t * GetSymbolNameByUID(uint32_t);
 
 #endif // __SYMBOL_H__

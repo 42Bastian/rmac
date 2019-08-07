@@ -9,6 +9,7 @@
 #include "sect.h"
 #include "6502.h"
 #include "direct.h"
+#include "dsp56k.h"
 #include "error.h"
 #include "expr.h"
 #include "listing.h"
@@ -75,11 +76,14 @@ void InitSection(void)
 		MakeSection(i, 0);
 
 	// Construct default sections, make TEXT the current section
-	MakeSection(ABS,   SUSED | SABS | SBSS);	// ABS
-	MakeSection(TEXT,  SUSED | TEXT       );	// TEXT
-	MakeSection(DATA,  SUSED | DATA       );	// DATA
-	MakeSection(BSS,   SUSED | BSS  | SBSS);	// BSS
-	MakeSection(M6502, SUSED | TEXT       );	// 6502 code section
+	MakeSection(ABS,     SUSED | SABS | SBSS);	// ABS
+	MakeSection(TEXT,    SUSED | TEXT       );	// TEXT
+	MakeSection(DATA,    SUSED | DATA       );	// DATA
+	MakeSection(BSS,     SUSED | BSS  | SBSS);	// BSS
+	MakeSection(M6502,   SUSED | TEXT       );	// 6502 code section
+	MakeSection(M56001P, SUSED | SABS       );	// DSP 56001 Program RAM
+	MakeSection(M56001X, SUSED | SABS       );	// DSP 56001 X RAM
+	MakeSection(M56001Y, SUSED | SABS       );	// DSP 56001 Y RAM
 
 	// Switch to TEXT for starters
 	SwitchSection(TEXT);
@@ -128,9 +132,13 @@ void SwitchSection(int sno)
 		// For 6502 mode, add the last org'd address
 // Why?
 /*
-Because the way this is set up it treats the 6502 assembly space as a single 64K space (+ 16 bytes, for some reason) and just bobbles around inside that space and uses a stack of org "pointers" to show where the data ended up.
+Because the way this is set up it treats the 6502 assembly space as a single 64K space (+ 16 bytes, for some unknown reason) and just bobbles around inside that space and uses a stack of org "pointers" to show where the data ended up.
 
-This is a piss poor way to handle things, and for fucks sake, we can do better than this!
+This is a shitty way to handle things, and we can do better than this!  :-P
+
+Really, there's no reason to have the 6502 (or DSP56001 for that matter) have their own private sections for this kind of thing, as there's literally *no* chance that it would be mingled with 68K+ code.  It should be able to use the TEXT, DATA & BSS sections just like the 68K.
+
+Or should it?  After looking at the code, maybe it's better to keep the 56001 sections segregated from the rest.  But we can still make the 6502 stuff better.
 */
 		if (m6502)
 			chptr = cp->chptr + orgaddr;
@@ -267,7 +275,8 @@ int AddFixup(uint32_t attr, uint32_t loc, TOKEN * fexpr)
 	if (attr & FUMASKDSP)
 	{
 		attr |= FU_56001;
-		_orgaddr = orgaddr;
+		// Save the exact spot in this chunk where the fixup should go
+		_orgaddr = chptr - scode->chptr;
 	}
 
 	// Allocate space for the fixup + any expression
@@ -348,6 +357,9 @@ int ResolveFixups(int sno)
 		// This approach is kinda meh as well. I think we can do better
 		// than this.
 		SetFilenameForErrorReporting();
+
+		if ((sno == M56001P) || (sno == M56001X) || (sno == M56001Y) || (sno == M56001L))
+			loc = fup->orgaddr;
 
 		// Search for chunk containing location to fix up; compute a
 		// pointer to the location (in the chunk). Often we will find the
@@ -566,16 +578,7 @@ int ResolveFixups(int sno)
 		case FU_WORD:
 			if ((dw & FUMASKRISC) == FU_JR)
 			{
-#if 0
-				int reg;
-
-				if (fup->orgaddr)
-					reg = (signed)((eval - (fup->orgaddr + 2)) / 2);
-				else
-					reg = (signed)((eval - (loc + 2)) / 2);
-#else
 				int reg = (signed)((eval - ((fup->orgaddr ? fup->orgaddr : loc) + 2)) / 2);
-#endif
 
 				if ((reg < -16) || (reg > 15))
 				{
@@ -727,8 +730,8 @@ int ResolveFixups(int sno)
 				uint64_t addr = eval;
 
 //Hmm, not sure how this can be set, since it's only set if it's a DSP56001 fixup or a FU_JR...  :-/
-				if (fup->orgaddr)
-					addr = fup->orgaddr;
+//				if (fup->orgaddr)
+//					addr = fup->orgaddr;
 
 				eval = (quad & 0xFFFFFC0000FFFFFFLL) | ((addr & 0x3FFFF8) << 21);
 			}
@@ -743,8 +746,8 @@ int ResolveFixups(int sno)
 				uint64_t addr = eval;
 
 //Hmm, not sure how this can be set, since it's only set if it's a DSP56001 fixup or a FU_JR...  :-/
-				if (fup->orgaddr)
-					addr = fup->orgaddr;
+//				if (fup->orgaddr)
+//					addr = fup->orgaddr;
 
 				eval = (quad & 0x000007FFFFFFFFFFLL) | ((addr & 0xFFFFF8) << 40);
 			}
@@ -798,7 +801,7 @@ int ResolveFixups(int sno)
 			case FU_DSPADR12:
 				if (eval >= 0x1000)
 				{
-					error("address out of range ($000-$FFF)");
+					error("address out of range ($0-$FFF)");
 					break;
 				}
 
@@ -809,22 +812,22 @@ int ResolveFixups(int sno)
 			// This is a full DSP word containing Effective Address Extension
 			case FU_DSPADR24:
 			case FU_DSPIMM24:
-				if (eval >= 0x100000)
+				if (eval >= 0x1000000)
 				{
-					error("value out of range ($000-$FFFFFF)");
+					error("value out of range ($0-$FFFFFF)");
 					break;
 				}
 
-				*locp++ = (uint32_t)eval >> 16;
-				*locp++ = ((uint32_t)eval >> 8) & 0xFF;
-				*locp++ = (uint32_t)eval & 0xFF;
+				locp[0] = (uint8_t)((eval >> 16) & 0xFF);
+				locp[1] = (uint8_t)((eval >> 8) & 0xFF);
+				locp[2] = (uint8_t)(eval & 0xFF);
 				break;
 
 			// This is a 16bit absolute address into a 24bit field
 			case FU_DSPADR16:
 				if (eval >= 0x10000)
 				{
-					error("address out of range ($0000-$FFFF)");
+					error("address out of range ($0-$FFFF)");
 					break;
 				}
 
@@ -838,7 +841,7 @@ int ResolveFixups(int sno)
 			case FU_DSPIMM12:
 				if (eval >= 0x1000)
 				{
-					error("immediate out of range ($000-$FFF)");
+					error("immediate out of range ($0-$FFF)");
 					break;
 				}
 
@@ -851,7 +854,7 @@ int ResolveFixups(int sno)
 			case FU_DSPIMM8:
 				if (eval >= 0x100)
 				{
-					error("immediate out of range ($00-$FF)");
+					error("immediate out of range ($0-$FF)");
 					break;
 				}
 
@@ -948,6 +951,12 @@ int ResolveAllFixups(void)
 	ResolveFixups(DATA);
 	DEBUG printf("Resolving 6502 sections...\n");
 	ResolveFixups(M6502);		// Fixup 6502 section (if any)
+	DEBUG printf("Resolving DSP56001 P: sections...\n");
+	ResolveFixups(M56001P);		// Fixup 56001 P: section (if any)
+	DEBUG printf("Resolving DSP56001 X: sections...\n");
+	ResolveFixups(M56001X);		// Fixup 56001 X: section (if any)
+	DEBUG printf("Resolving DSP56001 Y: sections...\n");
+	ResolveFixups(M56001Y);		// Fixup 56001 Y: section (if any)
 
 	return 0;
 }

@@ -178,7 +178,7 @@ void list_setup(void)
 	list_fname = NULL;
 
 	if ((list_fd = open(fnbuf, _OPEN_FLAGS, _PERM_MODE)) < 0)
-		cantcreat(fnbuf);
+		CantCreateFile(fnbuf);
 }
 
 

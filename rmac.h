@@ -137,6 +137,12 @@
 	{ (a)[(r + 0)] = (uint8_t)((v) & 0xFF); \
 	(a)[(r + 1)] = (uint8_t)((v) >> 8); }
 
+// In DSP56001 mode, this is useful:
+#define SETBE24(a, v) \
+	{ (a)[0] = (uint8_t)(((v) >> 16) & 0xFF); \
+	(a)[1] = (uint8_t)(((v) >> 8) & 0xFF); \
+	(a)[2] = (uint8_t)((v) & 0xFF); }
+
 // Byteswap crap
 #define BYTESWAP16(x) ((((x) & 0x00FF) << 8) | (((x) & 0xFF00) >> 8))
 #define BYTESWAP32(x) ((((x) & 0x000000FF) << 24) | (((x) & 0x0000FF00) << 8) | (((x) & 0x00FF0000) >> 8) | (((x) & 0xFF000000) >> 24))
@@ -218,12 +224,13 @@ PTR
 #define TEXT         0x0001		// Relative to text
 #define DATA         0x0002		// Relative to data
 #define BSS          0x0004		// Relative to BSS
+//OK, this is bad, mmkay? These are treated as indices into an array which means that this was never meant to be defined this way--at least if it was, it was a compromise that has come home to bite us all in the ass.  !!! FIX !!!
 #define M6502        0x0008		// 6502/microprocessor (absolute)
 #define M56001P      0x0010		// DSP 56001 Program RAM
 #define M56001X      0x0020		// DSP 56001 X RAM
 #define M56001Y      0x0040		// DSP 56001 Y RAM
 #define M56001L      0x0080		// DSP 56001 L RAM
-#define TDB          (TEXT|DATA|BSS)	// Mask for text+data+bss
+#define TDB          (TEXT|DATA|BSS)	// Mask for TEXT+DATA+BSS
 #define M56KPXYL     (M56001P|M56001X|M56001Y|M56001L)	// Mask for 56K stuff
 
 // Sizes

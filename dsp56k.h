@@ -6,7 +6,8 @@
 // Source utilised with the kind permission of Landon Dyer
 //
 
-#pragma once
+#ifndef __DSP56K_H__
+#define __DSP56K_H__
 
 #include "rmac.h"
 #include "sect.h"
@@ -36,7 +37,8 @@ extern DSP_ORG dsp_orgmap[1024];		// Mark all 56001 org changes
 extern DSP_ORG * dsp_currentorg;
 extern int dsp_written_data_in_current_org;
 
-#define dprintf(...) p_buf += sprintf(p_buf, __VA_ARGS__)
+#define D_printf(...) chptr += sprintf(chptr, __VA_ARGS__)
 
 // Exported functions
 
+#endif	// __DSP56K_H__

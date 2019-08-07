@@ -645,46 +645,39 @@ badmode:
 	if (sloc > 0x10000L)
 		fatal("6502 code pointer > 64K");
 
-//Now why use this instead of at_eol()?
-	if (*tok != EOL)
-		error(extra_stuff);
+	ErrorIfNotAtEOL();
 }
 
 
 //
 // Generate 6502 object output file.
+// ggn: Converted to COM/EXE/XEX output format
 //
-// ggn: converted into a com/exe/xex output format
 void m6502obj(int ofd)
 {
-	uint16_t exeheader[3];
-	int headsize = 6;
-	uint16_t * headpoint = exeheader;
+	uint8_t header[4];
 
 	CHUNK * ch = sect[M6502].scode;
 
-	// If no 6502 code was generated, forget it
+	// If no 6502 code was generated, bail out
 	if ((ch == NULL) || (ch->challoc == 0))
 		return;
 
-	exeheader[0] = 0xFFFF;		// Mandatory for first segment
 	register uint8_t * p = ch->chptr;
+
+	// Write out mandatory $FFFF header
+	header[0] = header[1] = 0xFF;
+	ssize_t unused = write(ofd, header, 2);
 
 	for(uint16_t * l=&orgmap[0][0]; l<currentorg; l+=2)
 	{
-/*
-Why are we assuming endianness here? This is retarded
-*/
-		exeheader[1] = l[0];
-		exeheader[2] = l[1] - 1;
+		SETLE16(header, 0, l[0]);
+		SETLE16(header, 2, l[1] - 1);
 
-		// Write header
-		size_t unused = write(ofd, headpoint, headsize);
+		// Write header for segment
+		unused = write(ofd, header, 4);
+		// Write the segment data
 		unused = write(ofd, p + l[0], l[1] - l[0]);
-
-		// Skip the $FFFF after first segment, it's not mandatory
-		headpoint = &exeheader[1];
-		headsize = 4;
 	}
 }
 

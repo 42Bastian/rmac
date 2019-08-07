@@ -22,9 +22,9 @@ int error(const char *, ...);
 int warn(const char *, ...);
 int fatal(const char *);
 int interror(int);
-void cantcreat(const char *);
+void CantCreateFile(const char *);
 void err_setup(void);
-int at_eol(void);
+int ErrorIfNotAtEOL(void);
 
 #endif // __ERROR_H__
 

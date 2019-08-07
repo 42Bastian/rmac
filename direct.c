@@ -9,6 +9,7 @@
 #include "direct.h"
 #include "6502.h"
 #include "amode.h"
+#include "dsp56k.h"
 #include "error.h"
 #include "expr.h"
 #include "fltpoint.h"
@@ -222,7 +223,9 @@ int d_org(void)
 		return error(".org permitted only in GPU/DSP/OP, 56001 and 6502 sections");
 
 	// M56K can leave the expression off the org for some reason :-/
-	if ((abs_expr(&address) == ERROR) && !dsp56001)
+	// (It's because the expression is non-standard, and so we have to look at
+	// it in isolation)
+	if (!dsp56001 && (abs_expr(&address) == ERROR))
 	{
 		error("cannot determine org'd address");
 		return ERROR;
@@ -255,9 +258,94 @@ int d_org(void)
 	}
 	else if (dsp56001)
 	{
+		// Only mark segments we actually wrote something
+		if (chptr != dsp_currentorg->start && dsp_written_data_in_current_org)
+		{
+			dsp_currentorg->end = chptr;
+			dsp_currentorg++;
+		}
+
+		// Maybe we switched from a non-DSP section (TEXT, DATA, etc) and
+		// scode isn't initialised yet. Not that it's going to be a valid
+		// scenario, but if we try it anyhow it's going to lead to a crash. So
+		// let's fudge a value of 0 and get on with it.
+		orgaddr = (scode != NULL ? sloc : 0);
+		SaveSection();
+
+		if (tok[1] != ':')
+			return error(syntax_error);
+
+		int sectionToSwitch = 0;
+
+		switch (tok[0])
+		{
+		case KW_X:
+			dsp_currentorg->memtype = ORG_X;
+			sectionToSwitch = M56001X;
+			break;
+
+		case KW_Y:
+			dsp_currentorg->memtype = ORG_Y;
+			sectionToSwitch = M56001Y;
+			break;
+
+		case KW_P:
+			dsp_currentorg->memtype = ORG_P;
+			sectionToSwitch = M56001P;
+			break;
+
+		case KW_L:
+			dsp_currentorg->memtype = ORG_L;
+			sectionToSwitch = M56001L;
+			break;
+
+		default:
+			return error("unknown type in ORG");
+		}
+
+		if ((obj_format == LOD) || (obj_format == P56))
+			SwitchSection(sectionToSwitch);
+
+		tok += 2;
+		chcheck(3); // Ensure we got a valid address to write
+		dsp_currentorg->chunk = scode;  // Mark down which chunk this org starts from (will be needed when outputting)
+
+		if (*tok == EOL)
+		{
+			// Well, the user didn't specify an address at all so we'll have to
+			// use the last used address of that section (or 0 if there wasn't one)
+			address = orgaddr;
+			dsp_currentorg->start = chptr;
+			dsp_currentorg->orgadr = orgaddr;
+		}
+		else
+		{
+			if (abs_expr(&address) == ERROR)
+			{
+				error("cannot determine org'd address");
+				return ERROR;
+			}
+
+			dsp_currentorg->start = chptr;
+			dsp_currentorg->orgadr = (uint32_t)address;
+			sect[cursect].orgaddr = (uint32_t)address;
+		}
+
+		if (address > DSP_MAX_RAM)
+		{
+			return error(range_error);
+		}
+
+		dsp_written_data_in_current_org = 0;
+
+		// Copied from 6502 above: kludge `lsloc' so the listing generator
+		// doesn't try to spew out megabytes.
+		lsloc = sloc = (int32_t)address;
+// N.B.: It seems that by enabling this, even though it works elsewhere, will cause symbols to royally fuck up.  Will have to do some digging to figure out why.
+//		orgactive = 1;
 	}
 
-	at_eol();
+	ErrorIfNotAtEOL();
 	return 0;
 }
 
@@ -830,7 +918,7 @@ int d_assert(void)
 			break;
 	}
 
-	at_eol();
+	ErrorIfNotAtEOL();
 	return 0;
 }
 
@@ -1011,7 +1099,7 @@ int d_ds(WORD siz)
 		dep_block(eval, siz, 0, (WORD)(DEFINED | ABS), NULL);
 	}
 
-	at_eol();
+	ErrorIfNotAtEOL();
 	return 0;
 }
 
@@ -1029,7 +1117,9 @@ int d_dc(WORD siz)
 		return error("illegal initialization of section");
 
 	// Do an auto_even if it's not BYTE sized (hmm, should we be doing this???)
-	if (cursect != M6502 && (siz != SIZB) && (sloc & 1))
+	if ((cursect != M6502) && (cursect != M56001P) && (cursect != M56001X)
+		&& (cursect != M56001Y) && (cursect != M56001L)
+		&& (siz != SIZB) && (sloc & 1))
 		auto_even();
 
 	// Check to see if we're trying to set LONGS on a non 32-bit aligned
@@ -1085,6 +1175,138 @@ int d_dc(WORD siz)
 
 		uint16_t tdb = eattr & TDB;
 		uint16_t defined = eattr & DEFINED;
+
+// N.B.: This is awful.  This needs better handling, rather than just bodging something in that, while works, is basically an ugly wart on the assembler.  !!! FIX !!!
+		if (dsp56001)
+		{
+			if (cursect != M56001L)
+			{
+				if (!defined)
+				{
+					AddFixup(FU_DSPIMM24 | FU_SEXT, sloc, exprbuf);
+					D_dsp(0);
+				}
+				else
+				{
+					if (eattr & FLOAT)
+					{
+						double fval = *(double *)&eval;
+
+						if (fval >= 1)
+						{
+							warn("value clamped to +1.");
+							eval = 0x7fffff;
+						}
+						else if (fval <= -1)
+						{
+							warn("value clamped to -1.");
+							eval = 0x800000;
+						}
+						else
+						{
+							// Convert fraction to 24 bits fixed point with sign and rounding
+							// Yeah, that cast to int32_t has to be there because casting
+							// a float to unsigned int is "undefined" according to the C
+							// standard. Which most compilers seem to do the sensible thing
+							// and just cast the f**king value properly, except gcc 4.x.x
+							// for arm (tested on raspbian).
+							// Thanks, C and gcc! Thanks for making me waste a few hours \o/
+							eval = 0;//!!! FIX !!! (uint32_t)(int32_t)round(fval*(1 << 23));
+						}
+					}
+					else
+					{
+						if ((uint32_t)eval + 0x1000000 >= 0x2000000)
+							return error(range_error);
+					}
+
+					// Deposit DSP word (24-bit)
+					D_dsp(eval);
+				}
+			}
+			else
+			{
+				// In L: we deposit stuff to both X: and Y: instead
+				// We will be a bit lazy and require that there is a 2nd value in the same source line.
+				// (Motorola's assembler can parse 12-digit hex values, which we can't do at the moment)
+				// This of course requires to parse 2 values in one pass.
+				// If there isn't another value in this line, assume X: value is 0.
+				int secondword = 0;
+				uint32_t evaly;
+l_parse_loop:
+
+				if (!defined)
+				{
+					AddFixup(FU_DSPIMM24 | FU_SEXT, sloc, exprbuf);
+					D_dsp(0);
+				}
+				else
+				{
+					if (eattr & FLOAT)
+					{
+						float fval = *(float *)&eval;
+						if (fval >= 1)
+						{
+							warn("value clamped to +1.");
+							eval = 0x7fffff;
+						}
+						else if (fval <= -1)
+						{
+							warn("value clamped to -1.");
+							eval = 0x800000;
+						}
+						else
+						{
+							// Convert fraction to 24 bits fixed point with sign and rounding
+							// Yeah, that cast to int32_t has to be there because casting
+							// a float to unsigned int is "undefined" according to the C
+							// standard. Which most compilers seem to do the sensible thing
+							// and just cast the f**king value properly, except gcc 4.x.x
+							// for arm (tested on raspbian).
+							// Thanks, C and gcc! Thanks for making me waste a few hours \o/
+							eval = 0;//!!! FIX !!! (uint32_t)(int32_t)round(fval*(1 << 23));
+						}
+					}
+					else
+					{
+						if (eval + 0x1000000 >= 0x2000000)
+							return error(range_error);
+					}
+
+					// Parse 2nd value if we didn't do this yet
+					if (secondword == 0)
+					{
+						evaly = (uint32_t)eval;
+						secondword = 1;
+
+						if (*tok != ':')
+						{
+							// If we don't have a : then we're probably at EOL,
+							// which means the X: value will be 0
+							eval = 0;
+							ErrorIfNotAtEOL();
+						}
+						else
+						{
+							tok++; // Eat the comma;
+
+							if (expr(exprbuf, &eval, &eattr, NULL) != OK)
+								return 0;
+
+							defined = (WORD)(eattr & DEFINED);
+							goto l_parse_loop;
+						}
+					}
+
+					// Deposit DSP words (24-bit)
+					D_dsp(eval);
+					D_dsp(evaly);
+					sloc--; // We do write 2 DSP words but as far as L: space is concerned we actually advance our counter by one
+				}
+
+			}
+			goto comma;
+		}
 
 		switch (siz)
 		{
@@ -1252,7 +1474,7 @@ comma:
 			break;
 	}
 
-	at_eol();
+	ErrorIfNotAtEOL();
 	return 0;
 }
 
@@ -1480,7 +1702,7 @@ int d_comm(void)
 		return 0;
 
 	sym->svalue = eval;					// Install common symbol's size
-	at_eol();
+	ErrorIfNotAtEOL();
 	return 0;
 }
 
@@ -1612,7 +1834,7 @@ int d_56001(void)
 	rgpu = rdsp = robjproc = 0;
 	SaveSection();
 
-	if (obj_format == LOD || obj_format == P56)
+	if ((obj_format == LOD) || (obj_format == P56))
 		SwitchSection(M56001P);
 
 	return 0;

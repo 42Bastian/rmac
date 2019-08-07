@@ -258,7 +258,7 @@ int GenerateRISCCode(int state)
 	// UNPACK
 	case RI_ONE:
 		reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
-		at_eol();
+		ErrorIfNotAtEOL();
 		DepositRISCInstructionWord(parm, parm >> 6, reg2);
 		break;
 
@@ -276,7 +276,7 @@ int GenerateRISCCode(int state)
 			altbankok = 1;                      // MOVETA
 
 		reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
-		at_eol();
+		ErrorIfNotAtEOL();
 		DepositRISCInstructionWord(parm, reg1, reg2);
 		break;
 
@@ -338,7 +338,7 @@ int GenerateRISCCode(int state)
 
 		CHECK_COMMA;
 		reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
-		at_eol();
+		ErrorIfNotAtEOL();
 		DepositRISCInstructionWord(parm, reg1, reg2);
 		break;
 
@@ -387,7 +387,7 @@ int GenerateRISCCode(int state)
 
 		CHECK_COMMA;
 		reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
-		at_eol();
+		ErrorIfNotAtEOL();
 
 		DepositRISCInstructionWord(parm, 0, reg2);
 		val = WORDSWAP32(eval);
@@ -410,7 +410,7 @@ int GenerateRISCCode(int state)
 
 		CHECK_COMMA;
 		reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
-		at_eol();
+		ErrorIfNotAtEOL();
 		DepositRISCInstructionWord(parm, reg1, reg2);
 		break;
 
@@ -533,7 +533,7 @@ int GenerateRISCCode(int state)
 		tok++;
 		CHECK_COMMA;
 		reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
-		at_eol();
+		ErrorIfNotAtEOL();
 		DepositRISCInstructionWord(parm, reg1, reg2);
 		break;
 
@@ -652,7 +652,7 @@ int GenerateRISCCode(int state)
 			return MalformedOpcode(MALF_RPAREN);
 
 		tok++;
-		at_eol();
+		ErrorIfNotAtEOL();
 		DepositRISCInstructionWord(parm, reg2, reg1);
 		break;
 
@@ -670,7 +670,7 @@ int GenerateRISCCode(int state)
 		tok++;
 		CHECK_COMMA;
 		reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
-		at_eol();
+		ErrorIfNotAtEOL();
 		DepositRISCInstructionWord(parm, reg1, reg2);
 		break;
 
@@ -689,7 +689,7 @@ int GenerateRISCCode(int state)
 			return MalformedOpcode(MALF_RPAREN);
 
 		tok++;
-		at_eol();
+		ErrorIfNotAtEOL();
 		DepositRISCInstructionWord(parm, reg2, reg1);
 		break;
 
@@ -802,7 +802,7 @@ int GenerateRISCCode(int state)
 				return MalformedOpcode(MALF_RPAREN);
 
 			tok++;
-			at_eol();
+			ErrorIfNotAtEOL();
 		}
 
 		DepositRISCInstructionWord(parm, reg2, reg1);

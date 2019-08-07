@@ -177,7 +177,7 @@ static int HandleBitmap(void)
 		}
 	}
 
-	at_eol();
+	ErrorIfNotAtEOL();
 
 	uint64_t p1 = 0x00 | ((ypos * 2) << 3) | (iheight << 14) | (linkAddr << 21) | (dataAddr << 40);
 	uint64_t p2 = xpos | (bpp << 12) | (pitch << 15) | (dwidth << 18) | (iwidth << 28) | (index << 38) | (flags << 45) | (firstpix << 49);
@@ -302,7 +302,7 @@ static int HandleScaledBitmap(void)
 		}
 	}
 
-	at_eol();
+	ErrorIfNotAtEOL();
 
 	uint64_t p1 = 0x01 | ((ypos * 2) << 3) | (iheight << 14) | (linkAddr << 21) | (dataAddr << 40);
 	uint64_t p2 = xpos | (bpp << 12) | (pitch << 15) | (dwidth << 18) | (iwidth << 28) | (index << 38) | (flags << 45) | (firstpix << 49);
@@ -345,7 +345,7 @@ static int HandleGPUObject(void)
 	if (!(eattr & DEFINED))
 		return error("bad expression in data");
 
-	at_eol();
+	ErrorIfNotAtEOL();
 
 	uint64_t p1 = 0x02 | ((ypos * 2) << 3) | (eval << 14);
 
@@ -410,7 +410,7 @@ static int HandleBranch(void)
 	if (!(eattr & DEFINED))
 		AddFixup(FU_QUAD | FU_OBJLINK, sloc, exprbuf);
 
-	at_eol();
+	ErrorIfNotAtEOL();
 
 	uint64_t p1 = 0x03 | (cc << 14) | ((ypos * 2) << 3) | ((eval & 0x3FFFF8) << 21);
 
@@ -468,7 +468,7 @@ static int HandleJump(void)
 	if (!(eattr & DEFINED))
 		AddFixup(FU_QUAD | FU_OBJLINK, sloc, exprbuf);
 
-	at_eol();
+	ErrorIfNotAtEOL();
 
 	// This is "branch if VC < 2047", which pretty much guarantees the branch.
 	uint64_t p1 = 0x03 | (1 << 14) | (0x7FF << 3) | ((eval & 0x3FFFF8) << 21);

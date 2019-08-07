@@ -11,18 +11,21 @@
 #include "listing.h"
 #include "token.h"
 
+// Exported variables
 int errcnt;						// Error count
 char * err_fname;				// Name of error message file
 
+// Internal variables
 static long unused;				// For supressing 'write' warnings
 
 
 //
 // Report error if not at EOL
+//
 // N.B.: Since this should *never* happen, we can feel free to add whatever
 //       diagnostics that will help in tracking down a problem to this function.
 //
-int at_eol(void)
+int ErrorIfNotAtEOL(void)
 {
 	if (*tok != EOL)
 	{
@@ -40,9 +43,9 @@ int at_eol(void)
 //
 // Cannot create a file
 //
-void cantcreat(const char * fn)
+void CantCreateFile(const char * fn)
 {
-	printf("cannot create: '%s'\n", fn);
+	printf("Cannot create file: '%s'\n", fn);
 	exit(1);
 }
 
@@ -66,7 +69,7 @@ void err_setup(void)
 		err_fname = NULL;
 
 		if ((err_fd = open(fnbuf, _OPEN_FLAGS, _PERM_MODE)) < 0)
-			cantcreat(fnbuf);
+			CantCreateFile(fnbuf);
 
 		err_flag = 1;
 	}

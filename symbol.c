@@ -7,6 +7,7 @@
 //
 
 #include "symbol.h"
+#include "dsp56k.h"
 #include "error.h"
 #include "listing.h"
 #include "object.h"
@@ -34,6 +35,9 @@ uint32_t firstglobal; // Index of the first global symbol in an ELF object.
 static uint8_t tdb_text[8] = {
    'a', 't', 'd', '!', 'b', SPACE, SPACE, SPACE
 };
+
+// Internal function prototypes
+static uint16_t WriteLODSection(int, uint16_t);
 
 
 //
@@ -329,6 +333,53 @@ uint32_t sy_assign_ELF(uint8_t * buf, uint8_t *(* construct)())
 	}
 
 	return scount;
+}
+
+
+//
+// Helper function for dsp_lod_symbols
+//
+static uint16_t WriteLODSection(int section, uint16_t symbolCount)
+{
+	for(SYM * sy=sdecl; sy!=NULL; sy=sy->sdecl)
+	{
+		// Export vanilla labels (but don't make them global). An exception is
+		// made for equates, which are not exported unless they are referenced.
+		if (sy->stype == LABEL && lsym_flag
+			&& (sy->sattr & (DEFINED | REFERENCED)) != 0
+			&& (*sy->sname != '.')
+			&& (sy->sattr & GLOBAL) == 0
+			&& (sy->sattr & (section)))
+		{
+			sy->senv = symbolCount++;
+			D_printf("%-19s   I %.6" PRIX64 "\n", sy->sname, sy->svalue);
+		}
+	}
+
+	return symbolCount;
+}
+
+
+//
+// Dump LOD style symbols into the passed in buffer
+//
+void DumpLODSymbols(void)
+{
+	D_printf("_SYMBOL P\n");
+	uint16_t count = WriteLODSection(M56001P, 0);
+
+	D_printf("_SYMBOL X\n");
+	count = WriteLODSection(M56001X, count);
+
+	D_printf("_SYMBOL Y\n");
+	count = WriteLODSection(M56001Y, count);
+
+	D_printf("_SYMBOL L\n");
+	count = WriteLODSection(M56001L, count);
+
+	// TODO: I've seen _SYMBOL N in there but no idea what symbols it needs...
+	//D_printf("_SYMBOL N\n");
+	//WriteLODSection(M56001?, count);
 }
 
 

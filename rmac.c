@@ -10,6 +10,7 @@
 #include "6502.h"
 #include "debug.h"
 #include "direct.h"
+#include "dsp56k.h"
 #include "error.h"
 #include "expr.h"
 #include "listing.h"
@@ -148,6 +149,8 @@ void DisplayHelp(void)
 		"                    a: ALCYON (use this for ST)\n"
 		"                    b: BSD (use this for Jaguar)\n"
 		"                    e: ELF\n"
+		"                    p: P56 (use this for DSP56001 only)\n"
+		"                    l: LOD (use this for DSP56001 only)\n"
 		"                    x: com/exe/xex (Atari 800)\n"
 		"  -i[path]          Directory to search for include files\n"
 		"  -l[filename]      Create an output listing file\n"
@@ -161,6 +164,7 @@ void DisplayHelp(void)
 		"                    6502\n"
 		"                    tom\n"
 		"                    jerry\n"
+		"                    56001\n"
 		"  -n                Don't do things behind your back in RISC assembler\n"
 		"  -o file           Output file name\n"
 		"  +o[value]         Turn a specific optimisation on\n"
@@ -357,6 +361,14 @@ int Process(int argc, char ** argv)
 				case 'e':			// -fe = ELF
 				case 'E':
 					obj_format = ELF;
+					break;
+                case 'l':           // -fl = LOD
+                case 'L':
+                    obj_format = LOD;
+                    break;
+                case 'p':           // -fp = P56
+                case 'P':
+                    obj_format = P56;
 					break;
 				case 'x':			// -fx = COM/EXE/XEX
 				case 'X':
@@ -588,6 +600,7 @@ int Process(int argc, char ** argv)
 	//    -  "foo.o" for linkable output;
 	//    -  "foo.prg" for GEMDOS executable (-p flag).
 	SaveSection();
+	int temp_section = cursect;
 
 	for(i=TEXT; i<=BSS; i<<=1)
 	{
@@ -613,6 +626,20 @@ int Process(int argc, char ** argv)
 		currentorg += 2;
 	}
 
+	// This looks like an awful kludge...  !!! FIX !!!
+	if (temp_section & (M56001P | M56001X | M56001Y))
+	{
+		SwitchSection(temp_section);
+
+		if (chptr != dsp_currentorg->start)
+		{
+			dsp_currentorg->end = chptr;
+			dsp_currentorg++;
+		}
+	}
+
+	SwitchSection(TEXT);
+
 	if (objfname == NULL)
 	{
 		if (firstfname == NULL)
@@ -635,7 +662,7 @@ int Process(int argc, char ** argv)
 	if (errcnt == 0)
 	{
 		if ((fd = open(objfname, _OPEN_FLAGS, _PERM_MODE)) < 0)
-			cantcreat(objfname);
+			CantCreateFile(objfname);
 
 		if (verb_flag)
 		{

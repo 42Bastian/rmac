@@ -172,7 +172,7 @@ int DefineMacro(void)
 	{
 		argno = 0;
 		symlist(defmac2);
-		at_eol();
+		ErrorIfNotAtEOL();
 	}
 
 	// Suck in the macro definition; we're looking for an ENDM symbol on a line

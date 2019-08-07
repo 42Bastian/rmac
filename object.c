@@ -9,11 +9,13 @@
 #include "object.h"
 #include "6502.h"
 #include "direct.h"
+#include "dsp56k.h"
 #include "error.h"
 #include "mark.h"
 #include "riscasm.h"
 #include "sect.h"
 #include "symbol.h"
+#include "version.h"
 
 //#define DEBUG_ELF
 
@@ -55,6 +57,10 @@ See left.		4 & 5	If these bits are set to 0 (PF_PRIVATE), the processes'
 						application but only writable by itself.
 -				6-15 	Currently unused
 */
+
+// Internal function prototypes
+static void WriteLOD(void);
+static void WriteP56(void);
 
 
 //
@@ -351,6 +357,7 @@ int WriteObject(int fd)
 
 		if (strtable == NULL)
 		{
+			free(buf);
 			error("cannot allocate string table memory (in BSD mode)");
 			return ERROR;
 		}
@@ -359,6 +366,8 @@ int WriteObject(int fd)
 
 		// Build object file header
 		chptr = buf;					// Base of header (for D_foo macros)
+		ch_size = 0;
+		challoc = 0x800000;
 		D_long(0x00000107);				// Magic number
 		D_long(sect[TEXT].sloc);		// TEXT size
 		D_long(sect[DATA].sloc);		// DATA size
@@ -440,6 +449,8 @@ int WriteObject(int fd)
 
 		// Build object file header just before the text+data image
 		chptr = buf;				// -> base of header
+		ch_size = 0;
+		challoc = HDRSIZE + tds + symbolMaxSize;
 		D_word(0x601A);				// 00 - magic number
 		D_long(sect[TEXT].sloc);	// 02 - TEXT size
 		D_long(sect[DATA].sloc);	// 06 - DATA size
@@ -592,6 +603,8 @@ for(int j=0; j<i; j++)
 		// If you want to make any sense out of this you'd better take a look
 		// at Executable and Linkable Format on Wikipedia.
 		chptr = buf;
+		ch_size = 0;
+		challoc = 0x600000;
 		D_long(0x7F454C46); // 00 - "<7F>ELF" Magic Number
 		D_byte(0x01); // 04 - 32 vs 64 (1 = 32, 2 = 64)
 		D_byte(0x02); // 05 - Endianness (1 = LE, 2 = BE)
@@ -774,7 +787,174 @@ for(int j=0; j<i; j++)
 		// Just write the object file
 		m6502obj(fd);
 	}
+	else if (obj_format == P56 || obj_format == LOD)
+	{
+		// Allocate 6MB object file image memory
+		uint8_t * buf = malloc(0x600000);
+
+		if (buf == NULL)
+			return error("cannot allocate object file memory (in P56/LOD mode)");
+
+//		objImage = buf;					// Set global object image pointer
+
+		memset(buf, 0, 0x600000);		// Clear allocated memory
+
+		// Iterate through DSP ram buffers
+		chptr = buf;					// -> base of header
+		ch_size = 0;
+		challoc = 0x600000;
+
+		if (obj_format == LOD)
+			WriteLOD();
+		else
+			WriteP56();
+
+		// Write all the things |o/
+		ssize_t unused = write(fd, buf, chptr - buf);
+
+		if (buf)
+			free(buf);
+	}
 
 	return 0;
+}
+
+
+static void WriteLOD(void)
+{
+	D_printf("_START %s 0000 0000 0000 RMAC %01i.%01i.%01i\n\n", firstfname, MAJOR, MINOR, PATCH);
+
+	for(DSP_ORG * l=&dsp_orgmap[0]; l<dsp_currentorg; l++)
+	{
+		if (l->end != l->start)
+		{
+			switch (l->memtype)
+			{
+			case ORG_P: D_printf("_DATA P %.4X\n", l->orgadr); break;
+			case ORG_X: D_printf("_DATA X %.4X\n", l->orgadr); break;
+			case ORG_Y: D_printf("_DATA Y %.4X\n", l->orgadr); break;
+			case ORG_L: D_printf("_DATA L %.4X\n", l->orgadr); break;
+			default:
+				error("Internal error: unknown DSP56001 org'd section");
+				return;
+			}
+
+			CHUNK * cp = l->chunk;
+			uint8_t * p_chunk = l->start;
+			uint8_t * p_chunk_end = p_chunk;
+			uint32_t j = 0;
+
+			while (p_chunk_end != l->end)
+			{
+				if (l->end < (cp->chptr + cp->ch_size) && l->end > cp->chptr)
+				{
+					// If the end of the section is inside the current chunk, just dump everything and stop
+					p_chunk_end = l->end;
+				}
+				else
+				{
+					// If the end of the section is not inside the current chunk, just dump everything from the current chunk and move on to the next
+					p_chunk_end = cp->chptr + cp->ch_size;
+				}
+
+				uint32_t count = (uint32_t)(p_chunk_end - p_chunk);
+
+				for(uint32_t i=0; i<count; i+=3)
+				{
+					if ((j & 7) != 7)
+					{
+						D_printf("%.6X ", (((p_chunk[0] << 8) | p_chunk[1]) << 8) | p_chunk[2]);
+					}
+					else
+					{
+						D_printf("%.6X\n", (((p_chunk[0] << 8) | p_chunk[1]) << 8) | p_chunk[2]);
+					}
+
+					p_chunk += 3;
+					j++;
+				}
+
+				cp = cp->chnext;        // Advance chunk
+
+				if (cp != NULL)
+					p_chunk = cp->chptr;    // Set dump pointer to start of this chunk
+			}
+
+			if ((j & 7) != 0)
+				D_printf("\n");
+		}
+	}
+
+	// Dump the symbol table into the buf
+	DumpLODSymbols();
+
+	D_printf("\n_END %.4X\n", dsp_orgmap[0].orgadr);
+}
+
+
+static void WriteP56(void)
+{
+	for(DSP_ORG * l=&dsp_orgmap[0]; l<dsp_currentorg; l++)
+	{
+		if (l->end == l->start)
+			continue;
+
+		if ((l->memtype < ORG_P) || (l->memtype > ORG_L))
+		{
+			error("Internal error: unknown DSP56001 org'd section");
+			return;
+		}
+
+		CHUNK * cp = l->chunk;
+		uint8_t * p_chunk = l->start;
+		uint8_t * p_chunk_end = p_chunk;
+
+		// Memory type (P, X, Y or L)
+		D_dsp(l->memtype);
+
+		// Chunk start address (in DSP words)
+		D_dsp(l->orgadr);
+
+		// Chunk length (in DSP words)
+		// We'll fill this field after we write the chunk so we can calculate
+		// how long it is (so if the chunk is split into different CHUNKs we
+		// can deal with this during copy)
+		uint8_t * p_buf_len = chptr;
+		chptr += 3;
+
+		// The chunk itself
+		uint32_t chunk_size = 0;
+
+		while (p_chunk_end != l->end)
+		{
+			if (l->end < (cp->chptr + cp->ch_size) && l->end > cp->chptr)
+			{
+				// If the end of the section is inside the current chunk, just
+				// dump everything and stop
+				p_chunk_end = l->end;
+			}
+			else
+			{
+				// If the end of the section is not inside the current chunk,
+				// just dump everything from the current chunk and move on to
+				// the next
+				p_chunk_end = cp->chptr + cp->ch_size;
+			}
+
+			uint32_t current_chunk_size = p_chunk_end - p_chunk;
+			chunk_size += current_chunk_size;
+			memcpy(chptr, p_chunk, current_chunk_size);
+			chptr += current_chunk_size;
+
+			cp = cp->chnext;        // Advance chunk
+
+			if (cp != NULL)
+				p_chunk = cp->chptr;    // Set dump pointer to start of this chunk
+		}
+
+		// Now we can mark the chunk's length (DSP word size is 24-bits, so
+		// the byte count needs to be divided by 3)
+		SETBE24(p_buf_len, chunk_size / 3);
+	}
 }
 
