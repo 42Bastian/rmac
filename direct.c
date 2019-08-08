@@ -1094,9 +1094,32 @@ int d_ds(WORD siz)
 
 		just_bss = 1;					// No data deposited (8-bit CPU mode)
 	}
+	else if (cursect == M56001P || cursect == M56001X || cursect == M56001Y || cursect == M56001L)
+	{
+		// Change segment instead of marking blanks.
+		// Only mark segments we actually wrote something
+		if (chptr != dsp_currentorg->start && dsp_written_data_in_current_org)
+		{
+			dsp_currentorg->end = chptr;
+			dsp_currentorg++;
+			dsp_currentorg->memtype = dsp_currentorg[-1].memtype;
+		}
+
+		listvalue((uint32_t)eval);
+		sloc += (uint32_t)eval;
+
+		// And now let's create a new segment
+		dsp_currentorg->start = chptr;
+		dsp_currentorg->chunk = scode;  // Mark down which chunk this org starts from (will be needed when outputting)
+		sect[cursect].orgaddr = sloc;
+		dsp_currentorg->orgadr = sloc;
+		dsp_written_data_in_current_org = 0;
+
+		just_bss = 1;					// No data deposited
+	}
 	else
 	{
-		dep_block(eval, siz, 0, (WORD)(DEFINED | ABS), NULL);
+		dep_block(eval, siz, 0, (DEFINED | ABS), NULL);
 	}
 
 	ErrorIfNotAtEOL();
@@ -1545,11 +1568,8 @@ int d_init(WORD def_siz)
 //
 int dep_block(uint32_t count, WORD siz, uint32_t eval, WORD eattr, TOKEN * exprbuf)
 {
-	WORD tdb;
-	WORD defined;
-
-	tdb = (WORD)(eattr & TDB);
-	defined = (WORD)(eattr & DEFINED);
+	WORD tdb = eattr & TDB;
+	WORD defined = eattr & DEFINED;
 
 	while (count--)
 	{

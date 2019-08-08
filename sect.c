@@ -159,7 +159,7 @@ void SaveSection(void)
 	sp->sloc = sloc;
 	sp->orgaddr = orgaddr;
 
-	if (scode != NULL)				// Bailout code chunk
+	if (scode != NULL)				// Bailout code chunk (if any)
 		scode->ch_size = ch_size;
 }
 
@@ -218,28 +218,42 @@ void chcheck(uint32_t amt)
 	DEBUG { printf("    amt (adjusted)=%u\n", amt); }
 	SECT * p = &sect[cursect];
 	CHUNK * cp = malloc(sizeof(CHUNK) + amt);
+	int first = 0;
 
-	// First chunk in section
 	if (scode == NULL)
 	{
+		// First chunk in section
 		cp->chprev = NULL;
 		p->sfcode = cp;
+		first = 1;
 	}
-	// Add chunk to other chunks
 	else
 	{
+		// Add second and on to previous chunk
 		cp->chprev = scode;
 		scode->chnext = cp;
 		scode->ch_size = ch_size;	// Save old chunk's globals
 	}
 
 	// Setup chunk and global vars
-	cp->chloc = sloc;
+/*
+So, whenever there's an ORG in a 56K section, it sets sloc TO THE ADDRESS IN THE ORG.  Also, the loc/sloc are incremented by 1s, which means to alias correctly to the byte-oriented memory model we have here, we have to fix that kind of crap.
+*/
+	cp->chloc = sloc; // <-- HERE'S THE PROBLEM FOR 56K  :-/
 	cp->chnext = NULL;
 	challoc = cp->challoc = amt;
 	ch_size = cp->ch_size = 0;
 	chptr = cp->chptr = ((uint8_t *)cp) + sizeof(CHUNK);
 	scode = p->scode = cp;
+
+	// A quick kludge
+/*
+OK, so this is a bit shite, but at least it gets things working the way they should.  The right way to do this is not rely on sloc & friends for the right fixup address but to have an accurate model of the thing.  That will probably come with v2.0.1  :-P
+
+So the problem is, d_org sets sloc to the address of the ORG statement, and that gives an incorrect base for the fixup.  And so when a second (or later) chunk is allocated, it gets set wrong.  Further complicating things is that the orgaddress *does not* get used in a typical way with the DSP56001 code, and, as such, causes incorrect addresses to be generated.  All that has to be dealt with in order to get this right and do away with this kludge.
+*/
+	if (((cursect == M56001P) || (cursect == M56001X) || (cursect == M56001Y)) && !first)
+		cp->chloc = cp->chprev->chloc + cp->chprev->ch_size;
 
 	return;
 }
@@ -276,7 +290,7 @@ int AddFixup(uint32_t attr, uint32_t loc, TOKEN * fexpr)
 	{
 		attr |= FU_56001;
 		// Save the exact spot in this chunk where the fixup should go
-		_orgaddr = chptr - scode->chptr;
+		_orgaddr = chptr - scode->chptr + scode->chloc;
 	}
 
 	// Allocate space for the fixup + any expression
@@ -398,6 +412,7 @@ int ResolveFixups(int sno)
 		// Complex expression
 		if (dw & FU_EXPR)
 		{
+			// evexpr presumably issues the errors/warnings here
 			if (evexpr(fup->expr, &eval, &eattr, &esym) != OK)
 				continue;
 		}
@@ -415,6 +430,8 @@ int ResolveFixups(int sno)
 			// If the symbol is not defined, but global, set esym to sy
 			if ((eattr & (GLOBAL | DEFINED)) == GLOBAL)
 				esym = sy;
+
+			DEBUG { printf("               name: %s, value: $%" PRIX64 "\n", sy->sname, sy->svalue); }
 		}
 
 		uint16_t tdb = eattr & TDB;

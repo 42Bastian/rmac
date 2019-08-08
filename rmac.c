@@ -268,33 +268,35 @@ int Process(int argc, char ** argv)
 	char fnbuf[FNSIZ];				// Filename buffer
 	int i;							// Iterator
 
-	errcnt = 0;						// Initialise error count
-	listing = 0;					// Initialise listing level
-	list_flag = 0;					// Initialise listing flag
-	verb_flag = perm_verb_flag;		// Initialise verbose flag
-	as68_flag = 0;					// Initialise as68 kludge mode
-	glob_flag = 0;					// Initialise .globl flag
-	sbra_flag = 0;					// Initialise short branch flag
-	debug = 0;						// Initialise debug flag
-	searchpath = NULL;				// Initialise search path
-	objfname = NULL;				// Initialise object filename
-	list_fname = NULL;				// Initialise listing filename
-	err_fname = NULL;				// Initialise error filename
-	obj_format = BSD;				// Initialise object format
-	firstfname = NULL;				// Initialise first filename
-	err_fd = ERROUT;				// Initialise error file descriptor
-	err_flag = 0;					// Initialise error flag
-	rgpu = 0;						// Initialise GPU assembly flag
-	rdsp = 0;						// Initialise DSP assembly flag
-	robjproc = 0;					// Initialise OP assembly flag
+	errcnt = 0;						// Initialize error count
+	listing = 0;					// Initialize listing level
+	list_flag = 0;					// Initialize listing flag
+	verb_flag = perm_verb_flag;		// Initialize verbose flag
+	as68_flag = 0;					// Initialize as68 kludge mode
+	glob_flag = 0;					// Initialize .globl flag
+	sbra_flag = 0;					// Initialize short branch flag
+	debug = 0;						// Initialize debug flag
+	searchpath = NULL;				// Initialize search path
+	objfname = NULL;				// Initialize object filename
+	list_fname = NULL;				// Initialize listing filename
+	err_fname = NULL;				// Initialize error filename
+	obj_format = BSD;				// Initialize object format
+	firstfname = NULL;				// Initialize first filename
+	err_fd = ERROUT;				// Initialize error file descriptor
+	err_flag = 0;					// Initialize error flag
+	rgpu = 0;						// Initialize GPU assembly flag
+	rdsp = 0;						// Initialize DSP assembly flag
+	robjproc = 0;					// Initialize OP assembly flag
 	lsym_flag = 1;					// Include local symbols in object file
 	regbank = BANK_N;				// No RISC register bank specified
 	orgactive = 0;					// Not in RISC org section
 	orgwarning = 0;					// No ORG warning issued
-	segpadsize = 2;					// Initialise segment padding size
+	segpadsize = 2;					// Initialize segment padding size
+    dsp_orgmap[0].start = 0;		// Initialize 56001 org initial address
+    dsp_orgmap[0].memtype = ORG_P;	// Initialize 56001 org start segment
 	m6502 = 0;						// 6502 mode off by default
 
-	// Initialise modules
+	// Initialize modules
 	InitSymbolTable();				// Symbol table
 	InitTokenizer();				// Tokenizer
 	InitLineProcessor();			// Line processor

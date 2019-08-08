@@ -7,6 +7,7 @@
 //
 
 #include "debug.h"
+#include "6502.h"
 #include "amode.h"
 #include "direct.h"
 #include "expr.h"
@@ -220,8 +221,6 @@ int mdump(char * start, LONG count, int flg, LONG base)
 				start[i+2] & 0xFF, start[i+3] & 0xFF);
 			i += 4;
 			break;
-		case 3:
-			break;
 		}
 
 		if (base != -1)
@@ -417,6 +416,10 @@ void DumpTokens(TOKEN * tokenBuffer)
 //
 int dump_everything(void)
 {
+	// FFS
+	if ((currentorg[1] - currentorg[0]) == 0)
+		sect[M6502].sfcode = NULL;
+
 	for(int i=1; i<NSECTS; i++)
 	{
 		if (sect[i].scattr & SUSED)
