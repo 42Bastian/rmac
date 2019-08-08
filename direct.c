@@ -1191,28 +1191,7 @@ int d_dc(WORD siz)
 					if (eattr & FLOAT)
 					{
 						double fval = *(double *)&eval;
-
-						if (fval >= 1)
-						{
-							warn("value clamped to +1.");
-							eval = 0x7fffff;
-						}
-						else if (fval <= -1)
-						{
-							warn("value clamped to -1.");
-							eval = 0x800000;
-						}
-						else
-						{
-							// Convert fraction to 24 bits fixed point with sign and rounding
-							// Yeah, that cast to int32_t has to be there because casting
-							// a float to unsigned int is "undefined" according to the C
-							// standard. Which most compilers seem to do the sensible thing
-							// and just cast the f**king value properly, except gcc 4.x.x
-							// for arm (tested on raspbian).
-							// Thanks, C and gcc! Thanks for making me waste a few hours \o/
-							eval = 0;//!!! FIX !!! (uint32_t)(int32_t)round(fval*(1 << 23));
-						}
+						eval = DoubleToDSPFloat(fval);
 					}
 					else
 					{
@@ -1227,10 +1206,11 @@ int d_dc(WORD siz)
 			else
 			{
 				// In L: we deposit stuff to both X: and Y: instead
-				// We will be a bit lazy and require that there is a 2nd value in the same source line.
-				// (Motorola's assembler can parse 12-digit hex values, which we can't do at the moment)
-				// This of course requires to parse 2 values in one pass.
-				// If there isn't another value in this line, assume X: value is 0.
+				// We will be a bit lazy and require that there is a 2nd value
+				// in the same source line. (Motorola's assembler can parse
+				// 12-digit hex values, which we can't do at the moment) This
+				// of course requires to parse 2 values in one pass. If there
+				// isn't another value in this line, assume X: value is 0.
 				int secondword = 0;
 				uint32_t evaly;
 l_parse_loop:
@@ -1245,27 +1225,7 @@ l_parse_loop:
 					if (eattr & FLOAT)
 					{
 						float fval = *(float *)&eval;
-						if (fval >= 1)
-						{
-							warn("value clamped to +1.");
-							eval = 0x7fffff;
-						}
-						else if (fval <= -1)
-						{
-							warn("value clamped to -1.");
-							eval = 0x800000;
-						}
-						else
-						{
-							// Convert fraction to 24 bits fixed point with sign and rounding
-							// Yeah, that cast to int32_t has to be there because casting
-							// a float to unsigned int is "undefined" according to the C
-							// standard. Which most compilers seem to do the sensible thing
-							// and just cast the f**king value properly, except gcc 4.x.x
-							// for arm (tested on raspbian).
-							// Thanks, C and gcc! Thanks for making me waste a few hours \o/
-							eval = 0;//!!! FIX !!! (uint32_t)(int32_t)round(fval*(1 << 23));
-						}
+						eval = DoubleToDSPFloat(fval);
 					}
 					else
 					{
@@ -1305,6 +1265,7 @@ l_parse_loop:
 				}
 
 			}
+
 			goto comma;
 		}
 

@@ -15,6 +15,7 @@
 #include <float.h>
 #include <math.h>
 #include <stdio.h>
+#include "error.h"
 
 //
 // Check for IEEE-754 conformance (C99 compilers should be OK here)
@@ -168,6 +169,27 @@ void DoubleToExtended(double d, uint8_t out[])
 	out[9] = (intMant >> 16) & 0xFF;
 	out[10] = (intMant >> 8) & 0xFF;
 	out[11] = intMant & 0xFF;
+}
+
+
+//
+// Convert a double to a DSP56001 style fixed point float.
+// Seems to be 23 bits of float value with 1 bit (MSB) for the sign.
+//
+uint32_t DoubleToDSPFloat(double d)
+{
+	if (d >= 1)
+	{
+		warn("DSP value clamped to +1.");
+		return 0x7FFFFF;
+	}
+	else if (d <= -1)
+	{
+		warn("DSP value clamped to -1.");
+		return 0x800000;
+	}
+
+	return trunc(round(ldexp(d, 23)));
 }
 
 
