@@ -9,12 +9,12 @@
 
 int eaNgen(WORD siz)
 {
-	uint32_t vbd, v = (uint32_t)aNexval;
-	WORD wbd, w = (WORD)(aNexattr & DEFINED);
-	WORD tdbbd, tdb = (WORD)(aNexattr & TDB);
-	vbd = (uint32_t)aNbdexval;
-	wbd = (WORD)(aNbdexattr & DEFINED);
-	tdbbd = (WORD)(aNbdexattr & TDB);
+	uint32_t v = (uint32_t)aNexval;
+	WORD w = (WORD)(aNexattr & DEFINED);
+	WORD tdb = (WORD)(aNexattr & TDB);
+	uint32_t vbd = (uint32_t)aNbdexval;
+	WORD wbd = (WORD)(aNbdexattr & DEFINED);
+	WORD tdbbd = (WORD)(aNbdexattr & TDB);
 	uint8_t extDbl[12];
 
 	switch (amN)
@@ -31,6 +31,7 @@ int eaNgen(WORD siz)
 	case AM_NONE:
 		// This is a performance hit, though
 		break;
+
 	case ADISP:
 		// expr(An)
 		if (w)
@@ -82,6 +83,7 @@ int eaNgen(WORD siz)
 		}
 
 		break;
+
 	case PCDISP:
 		if (w)
 		{
@@ -104,6 +106,7 @@ int eaNgen(WORD siz)
 		}
 
 		break;
+
 	case AINDEXED:
 		// Compute ixreg and size+scale
 		w = (WORD)((aNixreg << 12) | aNixsiz);
@@ -129,6 +132,7 @@ int eaNgen(WORD siz)
 		}
 
 		break;
+
 	case PCINDEXED:
 		// Compute ixreg and size+scale
 		w = (WORD)((aNixreg << 12) | aNixsiz);
@@ -155,6 +159,7 @@ int eaNgen(WORD siz)
 		}
 
 		break;
+
 	case IMMED:
 		switch (siz)
 		{
@@ -176,6 +181,7 @@ int eaNgen(WORD siz)
 			}
 
 			break;
+
 		case SIZW:
 		case SIZN:
 			if (w)
@@ -195,6 +201,7 @@ int eaNgen(WORD siz)
 			}
 
 			break;
+
 		case SIZL:
 			if (w)
 			{
@@ -210,6 +217,7 @@ int eaNgen(WORD siz)
 			}
 
 			break;
+
 		case SIZS:
 			// 68881/68882/68040 only
 			if (w)
@@ -235,6 +243,7 @@ int eaNgen(WORD siz)
 			}
 
     		break;
+
 		case SIZD:
 			// 68881/68882/68040 only
 			if (w)
@@ -256,6 +265,7 @@ int eaNgen(WORD siz)
 			}
 
 			break;
+
 		case SIZX:
 			// 68881/68882/68040 only
 			if (w)
@@ -271,22 +281,29 @@ int eaNgen(WORD siz)
 			}
 			else
 			{
+				// Why would this be anything other than a floating point
+				// expression???  Even if there were an undefined symbol in
+				// the expression, how would that be relevant?  I can't see
+				// any use case where this would make sense.
 				AddFixup(FU_FLOATDOUB, sloc, aNexpr);
 				memset(extDbl, 0, 12);
 				D_extend(extDbl);
 			}
 
 			break;
+
 		default:
 			// IMMED size problem
 			interror(1);
 		}
 
 		break;
+
     case SIZP:
 		// 68881/68882/68040 only
 		return error("Sorry, .p constant format is not implemented yet!");
 		break;
+
 	case ABSW:
 		if (w) // Defined
 		{
@@ -305,6 +322,7 @@ int eaNgen(WORD siz)
 		}
 
 		break;
+
 	case ABSL:
 		if (w) // Defined
 		{
@@ -320,12 +338,15 @@ int eaNgen(WORD siz)
 		}
 
 		break;
+
 	case DINDW:
 		D_word((0x190 | (aNixreg << 12)));
 		break;
+
 	case DINDL:
 		D_word((0x990 | (aNixreg << 12)));
 		break;
+
 	case ABASE:
 	case MEMPOST:
 	case MEMPRE:
@@ -333,6 +354,7 @@ int eaNgen(WORD siz)
 	case PCMPOST:
 	case PCMPRE:
 		D_word(aNexten);
+
 		// Deposit bd (if not suppressed)
 		if ((aNexten & 0x0030) == EXT_BDSIZE0)
 		{
@@ -355,7 +377,7 @@ int eaNgen(WORD siz)
 			else
 			{
 				// Arrange for fixup later on
-				AddFixup(FU_WORD | FU_SEXT, sloc, aNbexpr);
+				AddFixup(FU_WORD | FU_SEXT | FU_PCRELX, sloc, aNbexpr);
 				D_word(0);
 			}
 		}
@@ -377,6 +399,7 @@ int eaNgen(WORD siz)
 				D_long(0);
 			}
 		}
+
 		// Deposit od (if not suppressed)
 		if ((aNexten & 7) == EXT_IISPRE0 || (aNexten & 7) == EXT_IISPREN
 			|| (aNexten & 7) == EXT_IISNOIN || (aNexten & 7) == EXT_IISPOSN)
@@ -426,6 +449,7 @@ int eaNgen(WORD siz)
 
 		break;
 		//return error("unsupported 68020 addressing mode");
+
 	default:
 		// Bad addressing mode in ea gen
 		interror(3);

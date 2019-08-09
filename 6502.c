@@ -667,7 +667,7 @@ void m6502obj(int ofd)
 
 	// Write out mandatory $FFFF header
 	header[0] = header[1] = 0xFF;
-	ssize_t unused = write(ofd, header, 2);
+	uint32_t unused = write(ofd, header, 2);
 
 	for(uint16_t * l=&orgmap[0][0]; l<currentorg; l+=2)
 	{

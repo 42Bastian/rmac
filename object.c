@@ -321,7 +321,7 @@ int WriteObject(int fd)
 	uint8_t * buf;			// Scratch area
 	uint8_t * p;			// Temporary ptr
 	LONG trsize, drsize;	// Size of relocations
-	long unused;			// For supressing 'write' warnings
+	uint32_t unused;		// For supressing 'write' warnings
 
 	if (verb_flag)
 	{
@@ -810,7 +810,7 @@ for(int j=0; j<i; j++)
 			WriteP56();
 
 		// Write all the things |o/
-		ssize_t unused = write(fd, buf, chptr - buf);
+		unused = write(fd, buf, chptr - buf);
 
 		if (buf)
 			free(buf);

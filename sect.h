@@ -84,6 +84,7 @@
 
 #define FU_SEXT      0x0010		// Ok to sign extend
 #define FU_PCREL     0x0020		// Subtract PC first
+#define FU_PCRELX    0x1000000	// 030 variant
 #define FU_EXPR      0x0040		// Expression (not symbol) follows
 
 #define FU_GLOBAL    0x0080		// Mark global symbol

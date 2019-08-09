@@ -455,12 +455,18 @@ int ResolveFixups(int sno)
 		//
 		// PC-relative fixups must be DEFINED and either in the same section
 		// (whereupon the subtraction takes place) or ABS (with no subtract).
-		if (dw & FU_PCREL)
+		if ((dw & FU_PCREL) || (dw & FU_PCRELX))
 		{
 			if (eattr & DEFINED)
 			{
 				if (tdb == sno)
+				{
 					eval -= loc;
+
+					// In this instruction the PC is located a DWORD away
+					if (dw & FU_PCRELX)
+						eval += 2;
+				}
 				else if (tdb)
 				{
 					// Allow cross-section PCREL fixups in Alcyon mode
@@ -483,6 +489,10 @@ int ResolveFixups(int sno)
 						}
 
 						eval -= loc;
+
+						// In this instruction the PC is located a DWORD away
+						if (dw & FU_PCRELX)
+							eval += 2;
 					}
 					else
 					{
@@ -495,8 +505,15 @@ int ResolveFixups(int sno)
 					warn("unoptimized short branch");
 			}
 			else if (obj_format == MWC)
+			{
 				eval -= loc;
 
+				// In this instruction the PC is located a DWORD away
+				if (dw & FU_PCRELX)
+					eval += 2;
+			}
+
+			// Be sure to clear any TDB flags, since we handled it just now
 			tdb = 0;
 			eattr &= ~TDB;
 		}
