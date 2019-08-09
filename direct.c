@@ -1074,11 +1074,11 @@ int d_ds(WORD siz)
 		return 0;
 
 	// Check to see if the value being passed in is negative (who the hell does
-	// that?--nobody does; it's the code gremlins, or rum, that does it)
-	// N.B.: Since 'eval' is of type uint32_t, if it goes negative, it will have
-	//       its high bit set.
+	// that?--nobody does; it's the code gremlins, or rum, what does it)
+	// N.B.: Since 'eval' is of type uint32_t, if it goes negative, it will
+	//       have its high bit set.
 	if (eval & 0x80000000)
-		return error("negative sizes not allowed");
+		return error("negative sizes not allowed in DS");
 
 	// In non-TDB section (BSS, ABS and M6502) just advance the location
 	// counter appropriately. In TDB sections, deposit (possibly large) chunks
@@ -1128,7 +1128,7 @@ int d_ds(WORD siz)
 
 
 //
-// dc.b, dc.w / dc, dc.l, dc.i, dc.q, dc.d
+// dc.b, dc.w / dc, dc.l, dc.i, dc.q, dc.d, dc.s, dc.x
 //
 int d_dc(WORD siz)
 {
@@ -1312,6 +1312,7 @@ l_parse_loop:
 			}
 
 			break;
+
 		case SIZW:
 		case SIZN:
 			if (!defined)
@@ -1335,6 +1336,7 @@ l_parse_loop:
 			}
 
 			break;
+
 		case SIZL:
 			// Shamus: Why can't we do longs in 6502 mode?
 			if (m6502)
@@ -1342,11 +1344,7 @@ l_parse_loop:
 
 			if (!defined)
 			{
-				if (movei)
-					AddFixup(FU_LONG | FU_MOVEI, sloc, exprbuf);
-				else
-					AddFixup(FU_LONG, sloc, exprbuf);
-
+				AddFixup(FU_LONG | (movei ? FU_MOVEI : 0), sloc, exprbuf);
 				D_long(0);
 			}
 			else
@@ -1361,34 +1359,33 @@ l_parse_loop:
 			}
 
 			break;
+
 		case SIZQ:
 			// 64-bit size
 			if (m6502)
 				return error(in_6502mode);
 
-			// Shamus: We only handle DC.Q type stuff, will have to add fixups
-			//         and stuff later (maybe... might not be needed...)
 			// DEFINITELY NEED FIXUPS HERE!
 			if (!defined)
 			{
 				AddFixup(FU_QUAD, sloc, exprbuf);
-				D_quad(0LL);
-			}
-			else
-			{
-				D_quad(eval);
+				eval = 0;
 			}
 
+			D_quad(eval);
 			break;
+
 		case SIZS:
 			// 32-bit float size
 			if (m6502)
 				return error(in_6502mode);
 
+/* Seems to me that if something is undefined here, then that should be an error.  Likewise for the D & X variants. */
 			if (!defined)
 			{
-				AddFixup(FU_FLOATSING, sloc, exprbuf);
-				D_long(0);
+//				AddFixup(FU_FLOATSING, sloc, exprbuf);
+//				D_long(0);
+				return error("labels not allowed in floating point expressions");
 			}
 			else
 			{
@@ -1403,6 +1400,7 @@ l_parse_loop:
 			}
 
 			break;
+
 		case SIZD:
 			// 64-bit double size
 			if (m6502)
@@ -1410,8 +1408,9 @@ l_parse_loop:
 
 			if (!defined)
 			{
-				AddFixup(FU_FLOATDOUB, sloc, exprbuf);
-				D_quad(0LL);
+//				AddFixup(FU_FLOATDOUB, sloc, exprbuf);
+//				D_quad(0LL);
+				return error("labels not allowed in floating point expressions");
 			}
 			else
 			{
@@ -1426,6 +1425,7 @@ l_parse_loop:
 			}
 
 			break;
+
 		case SIZX:
 			if (m6502)
 				return error(in_6502mode);
@@ -1435,8 +1435,9 @@ l_parse_loop:
 
 			if (!defined)
 			{
-				AddFixup(FU_FLOATEXT, sloc, exprbuf);
-				D_extend(extDbl);
+//				AddFixup(FU_FLOATEXT, sloc, exprbuf);
+//				D_extend(extDbl);
+				return error("labels not allowed in floating point expressions");
 			}
 			else
 			{
