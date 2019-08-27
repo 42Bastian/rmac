@@ -4,7 +4,7 @@ RMAC
 =====================
 Reference Manual
 ================
-version 1.7.0
+version 2.0.0
 =============
 
 © and notes
@@ -17,7 +17,7 @@ the accuracy of printed or duplicated material after the date of publication and
 disclaims liability for changes, errors or omissions.*
 
 
-*Copyright © 2011-2017, Reboot*
+*Copyright © 2011-2019, Reboot*
 
 *All rights reserved.*
 
@@ -38,8 +38,10 @@ runs on the any POSIX compatible platform and the Atari ST. It was initially wri
 at Atari Corporation by programmers who needed a high performance assembler
 for their work. Then, more than 20 years later, because there was still a need for
 such an assembler and what was available wasn't up to expectations, Subqmod
-and eventually Reboot continued work on the freely released source, adding Jaguar extensions
-and fixing bugs.
+and eventually Reboot continued work on the freely released source, adding Jaguar
+extensions and fixing bugs. Over time the assembler has been extended by adding
+support for Motorola's 68020/30/40/60, 68881/2, DSP56001 CPUs as well as Atari's
+Object Processor (OP) found on the Atari Jaguar.
 
 RMAC is intended to be used by programmers who write mostly in assembly language.
 It was not originally a back-end to a C compiler, therefore it
@@ -118,32 +120,65 @@ Switch               Description
 ===================  ===========
 -dname\ *[=value]*   Define symbol, with optional value.
 -e\ *[file[.err]]*   Direct error messages to the specified file.
--fa                  ALCYON output object file format (implied with **-ps** is enabled).
+-fa                  ALCYON output object file format (implied when **-ps** is enabled).
 -fb                  BSD COFF output object file format.
 -fe                  ELF output object file format.
 -fx                  Atari 800 com/exe/xex output object file format.
 -i\ *path*           Set include-file directory search path.
 -l\ *[file[prn]]*    Construct and direct assembly listing to the specified file.
 -l\ *\*[filename]*   Create an output listing file without pagination
--o\ *file[.o]*       Direct object code output to the specified file.
+-m\ *cpu*            Switch CPU type
+
+                      `68000 - MC68000`
+
+                      `68020 - MC68020`
+
+                      `68030 - MC68030`
+
+                      `68040 - MC68040`
+
+                      `68060 - MC68060`
+
+                      `68881 - MC68881`
+
+                      `68882 - MC68882`
+
+                      `56001 - DSP56001`
+
+                      `6502 - MOS 6502`
+
+                      `tom - Jaguar GPU JRISC`
+
+                      `jerry - Jaguar DSP JRISC`
+
+                      -o\ *file[.o]*       Direct object code output to the specified file.
 +/~oall              Turn all optimisations on/off
-+o\ *0-3*            Enable specific optimisation
-~o\ *0-3*            Disable specific optimisation
++o\ *0-7*            Enable specific optimisation
+~o\ *0-7*            Disable specific optimisation
 
                       `0: Absolute long adddresses to word`
                       
-                      `1: move.l #x,dn/an to moveq`
+                      `1: move.l #x,Dn/An to moveq`
 
-                      `2: Word branches to short
+                      `2: Word branches to short`
                       
-                      `3: Outer displacement 0(an) to (an)`                      
+                      `3: Outer displacement 0(An) to (An)`
+
+                      `4: lea to addq`
+
+                      `5: Base displacement ([bd,An,Xn],od) etc to ([An,Xn],od)`
+
+                      `6: Convert null short branches to NOP`
+
+                      `7: Convert clr.l Dn to moveq #0,Dn`
 -p                   Produce an executable (**.prg**) output file.
 -ps                  Produce an executable (**.prg**) output file with symbols.
+-px                  Produce an executable (**.prg**) output file with extended symbols.
 -q                   Make RMAC resident in memory (Atari ST only).
 -r *size*            automatically pad the size of each
                      segment in the output file until the size is an integral multiple of the
                      specified boundary. Size is a letter that specifies the desired boundary.
-					 
+                     
                       `-rw Word (2 bytes, default alignment)`
 
                       `-rl Long (4 bytes)`
@@ -316,9 +351,9 @@ the following important exceptions:
 
     ::
 
-     60xx   1: bra.s.2  ;forward branch
-     xxxxxxxx  dc.l .2  ;forward reference
-     60FE  .2: bra.s.2  ;backward reference
+     60xx      1: bra.s.2  ;forward branch
+     xxxxxxxx     dc.l .2  ;forward reference
+     60FE     .2: bra.s.2  ;backward reference
 
  * Forward branches (including **BSR**\s) are never optimized to their short forms.
    To get a short forward branch it is necessary to explicitly use the ".s" suffix in
@@ -358,7 +393,7 @@ necessary to make other assemblers' source code assemble.
 * Labels require colons (even labels that begin in column 1).
 
 * Conditional assembly directives are called **if**, **else** and **endif**.
-  Devpac and vasm called these
+  Devpac and vasm call these
   **ifne**, **ifeq** (etc.), and **endc**.
 * The tilde (~) character is an operator, and back-quote (`) is an illegal character.
   AS68 permitted the tilde and back-quote characters in symbols.
@@ -372,9 +407,6 @@ necessary to make other assemblers' source code assemble.
 
                                 * = expression
 
-* The **ds** directive is not permitted in the text or data segments;
-  an error message is issued. Use **dcb** instead to reserve large blocks of
-  initialized storage.
 * Back-slashes in strings are "electric" characters that are used to escape C-like
   character codes. Watch out for GEMDOS path names in ASCII constants -
   you will have to convert them to double-backslashes.
@@ -382,49 +414,50 @@ necessary to make other assemblers' source code assemble.
   force the expression evaluation as you wish.
 * Mark your segments across files.
   Branching to a code segment that could be identified as BSS will cause a "Error: cannot initialize non-storage (BSS) section"
+* In 68020+ mode **Zan** and **Zri** (register suppression) is not supported.
 * rs.b/rs.w/rs.l/rscount/rsreset can be simulated in rmac using abs.
   For example the following source:
 
-  ::
+   ::
 
-   rsreset
-   label1: rs.w 1
-   label2: rs.w 10
-   label3: rs.l 5
-   label4: rs.b 2
+    rsreset
+    label1: rs.w 1
+    label2: rs.w 10
+    label3: rs.l 5
+    label4: rs.b 2
    
-   size_so_far equ rscount
+    size_so_far equ rscount
 
   can be converted to:
 
-  ::
+   ::
 
-   abs
-   label1: ds.w 1
-   label2: ds.w 10
-   label3: ds.l 5
-   label4: ds.b 2
+    abs
+    label1: ds.w 1
+    label2: ds.w 10
+    label3: ds.l 5
+    label4: ds.b 2
    
-   size_so_far equ ^^abscount
+    size_so_far equ ^^abscount
 * A rare case: if your macro contains something like:
 
-  ::
+   ::
 
-   macro test
-   move.l #$\1,d0
-   endm
+    macro test
+    move.l #$\1,d0
+    endm
 
-   test 10
+    test 10
 
   then by the assembler's design this will fail as the parameters are automatically converted to hex. Changing the code like this works:
 
-  ::
+   ::
 
-   macro test
-   move.l #\1,d0
-   endm
+    macro test
+    move.l #\1,d0
+    endm
 
-   test $10
+    test $10
 
 `Text File Format`_
 '''''''''''''''''''
@@ -463,6 +496,13 @@ begins a comment field which extends to the end of the line.
 The label, if it appears, must be terminated with a single or double colon. If
 it is terminated with a double colon it is automatically declared global. It is illegal
 to declare a confined symbol global (see: `Symbols and Scope`_).
+
+As an addition, the exclamation mark character (**!**) can be placed at the very first
+character of a line to disbale all optimisations for that specific line, i.e.
+
+  ::
+      
+      !label: operator operand(s)  ; comment
 
 `Equates`_
 ''''''''''
@@ -515,7 +555,7 @@ collisions.
      ::
 
       reallyLongSymbolName .reallyLongConfinedSymbolName
-      a10 ret move dc frog aa6 a9 ????
+      a10 ret  move  dc  frog  aa6 a9 ????
       .a1 .ret .move .dc .frog .a9 .9 ????
       .0  .00  .000 .1  .11. .111 . ._
       _frog ?zippo? sys$syetem atari Atari ATARI aTaRi
@@ -571,12 +611,19 @@ and may not be used as symbols (e.g. labels, equates, or the names of macros):
 
    ::
 
+      Common:
       equ set reg
+      MC68000:
       sr ccr pc sp ssp usp
       d0 d1 d2 d3 d4 d5 d6 d7
       a0 a1 a2 a3 a4 a5 a6 a7
+      Tom/Jerry:
       r0 r1 r2 r3 r4 r5 r6 r7
       r8 r9 r10 r11 r12 rl3 r14 ri5
+      6502:
+      **TODO**
+      DSP56001:
+      **TODO**
 
 `Constants`_
 ''''''''''''
@@ -735,9 +782,9 @@ pointers to the label "zip":
 `Unary Operators`_
 ''''''''''''''''''
 
-================================    ========================================
+================================    ==========================================
 Operator                            Description
-================================    ========================================
+================================    ==========================================
 **-**                               Unary minus (2's complement).
 **!**                               Logical (boolean) NOT.
 **~**                               Tilde: bitwise not (l's complement).
@@ -746,7 +793,8 @@ Operator                            Description
 **^^streq** *stringl*,*string2*     True if the strings are equal.
 **^^macdef** *macroName*            True if the macro is defined.
 **^^abscount**                      Returns the size of current .abs section
-================================    ========================================
+**^^filesize** *string_filename*    Returns the file size of supplied filename
+================================    ==========================================
 
  * The boolean operators generate the value 1 if the expression is true, and 0 if it is not.
 
@@ -781,8 +829,8 @@ Operator     Description
  * The "<>" and "!=" operators are synonyms.
 
  * Note that the modulo operator (%) is also used to introduce binary constants
-     (see: `Constants`_). A percent sign should be followed by at least one space if
-     it is meant to be a modulo operator, and is followed by a '0' or '1'.
+   (see: `Constants`_). A percent sign should be followed by at least one space if
+   it is meant to be a modulo operator, and is followed by a '0' or '1'.
 
 `Special Forms`_
 ''''''''''''''''
@@ -872,6 +920,7 @@ described in the chapter on `6502 Support`_.
 
    If the location counter for the current section is odd, make it even by adding
    one to it. In text and data sections a zero byte is deposited if necessary.
+
 **.long**
 
    Align the program counter to the next integral long boundary (4 bytes).
@@ -879,6 +928,7 @@ described in the chapter on `6502 Support`_.
    segments and are actually part of the TEXT or DATA segments.
    Therefore, to align GPU/DSP code, align the current section before and
    after the GPU/DSP code.
+
 **.phrase**
 
    Align the program counter to the next integral phrase boundary (8 bytes).
@@ -886,6 +936,7 @@ described in the chapter on `6502 Support`_.
    segments and are actually part of the TEXT or DATA segments.
    Therefore, to align GPU/DSP code, align the current section before and
    after the GPU/DSP code.
+
 **.dphrase**
 
    Align the program counter to the next integral double phrase boundary (16
@@ -893,6 +944,7 @@ described in the chapter on `6502 Support`_.
    segments and are actually part of the TEXT or DATA segments.
    Therefore, to align GPU/DSP code, align the current section before and
    after the GPU/DSP code.
+
 **.qphrase**
 
    Align the program counter to the next integral quad phrase boundary (32
@@ -900,7 +952,8 @@ described in the chapter on `6502 Support`_.
    segments and are actually part of the TEXT or DATA segments.
    Therefore, to align GPU/DSP code, align the current section before and
    after the GPU/DSP code.
-**.assert** *expression* [,\ *expression*...]
+
+   **.assert** *expression* [,\ *expression*...]
 
    Assert that the conditions are true (non-zero). If any of the comma-seperated
    expressions evaluates to zero an assembler warning is issued. For example:
@@ -920,6 +973,27 @@ described in the chapter on `6502 Support`_.
    be assembled into the BSS-segment, but symbols may be defined and storage
    may be reserved with the **.ds** directive. Each assembly starts out in the text
    segment.
+
+**.68000**
+**.68020**
+**.68030**
+**.68040**
+**.68060**
+
+   Enable different flavours of the MC68000 family of CPUs. Bear in mind that not all
+   instructions and addressing modes are available in all CPUs so the correct CPU
+   should be selected at all times. Notice that it is possible to switch CPUs
+   during assembly.
+
+**.68881**
+**.68882**
+
+   Enable FPU support. Note that *.68882* is on by default when selecting *.68030*.
+
+**.56001**
+
+   Switch to Motorola DSP56001 mode.
+
 **.abs** [*location*]
 
    Start an absolute section, beginning with the specified location (or zero, if
@@ -1001,6 +1075,7 @@ described in the chapter on `6502 Support`_.
    thus confined symbols cannot be made common. The linker groups all common
    regions of the same name; the largest size determines the real size of the
    common region when the file is linked.
+
 **.ccdef** *expression*
 
    Allows you to define names for the condition codes used by the JUMP
@@ -1010,18 +1085,20 @@ described in the chapter on `6502 Support`_.
    
      Always .ccdef 0
      . . .
-          jump Always,(r3) ; ‘Always’ is actually 0
+          jump Always,(r3) ; 'Always' is actually 0
 
 **.ccundef** *regname*
 
    Undefines a register name (regname) previously assigned using the
    .CCDEF directive. This is only implemented in GPU and DSP code
    sections.     
+
 **.dc.i** *expression*
 
    This directive generates long data values and is similar to the DC.L
    directive, except the high and low words are swapped. This is provided
    for use with the GPU/DSP MOVEI instruction.
+
 **.dc**\ [.\ *size*] *expression* [, *expression*...]
 
    Deposit initialized storage in the current section. If the specified size is word
@@ -1029,21 +1106,25 @@ described in the chapter on `6502 Support`_.
    is .b, then strings that are not part of arithmetic expressions are deposited
    byte-by-byte. If no size is specified, the default is .w. This directive cannot be
    used in the BSS section.
+
 **.dcb**\ [.\ *size*] *expression1*, *expression2*
 
    Generate an initialized block of *expression1* bytes, words or longwords of the
    value *expression2*. If the specified size is word or long, the assembler will
    execute .even before generating data. If no size is specified, the default is **.w**.
    This directive cannot be used in the BSS section.
+
 **.ds**\ [.\ *size*] *expression*
 
    Reserve space in the current segment for the appropriate number of bytes,
    words or longwords. If no size is specified, the default size is .w. If the size
    is word or long, the assembler will execute .even before reserving space.
+
 **.dsp**
 
    Switch to Jaguar DSP assembly mode. This directive must be used
    within the TEXT or DATA segments.
+
 **.init**\ [.\ *size*] [#\ *expression*,]\ *expression*\ [.\ *size*] [,...]
 
    Generalized initialization directive. The size specified on the directive becomes
@@ -1062,6 +1143,7 @@ described in the chapter on `6502 Support`_.
 
    No auto-alignment is performed within the line, but a **.even** is done once
    (before the first value is deposited) if the default size is word or long.
+
 **.cargs** [#\ *expression*,] *symbol*\ [.\ *size*] [, *symbol*\ [.\ *size*].. .]
 
    Compute stack offsets to C (and other language) arguments. Each symbol is
@@ -1094,6 +1176,7 @@ described in the chapter on `6502 Support`_.
    the superior file. This statement is not required, nor are warning messages
    generated if it is missing at the end of a file. This directive may be used inside
    conditional assembly, macros or **.rept** blocks.
+
 **.equr** *expression*
 
    Allows you to name a register. This is only implemented for GPU/DSP
@@ -1235,9 +1318,11 @@ described in the chapter on `6502 Support`_.
 
    Switch to Jaguar GPU assembly mode. This directive must be used
    within the TEXT or DATA segments.
+
 **.gpumain**
 
    No. Just... no. Don't ask about it. Ever.
+
 **.prgflags** *value*
 
    Sets ST executable .PRG field *PRGFLAGS* to *value*. *PRGFLAGS* is a bit field defined as follows:
@@ -1245,7 +1330,7 @@ described in the chapter on `6502 Support`_.
 ============ ======  =======
 Definition   Bit(s)  Meaning
 ============ ======  =======
-PF_FASTLOAD  0 	     If set, clear only the BSS area on program load, otherwise clear the entire heap. 
+PF_FASTLOAD  0       If set, clear only the BSS area on program load, otherwise clear the entire heap. 
 PF_TTRAMLOAD 1       If set, the program may be loaded into alternative RAM, otherwise it must be loaded into standard RAM. 
 PF_TTRAMMEM  2       If set, the program's Malloc() requests may be satisfied from alternative RAM, otherwise they must be satisfied from standard RAM. 
 --           3       Currently unused.
@@ -1256,6 +1341,7 @@ See left.    4 & 5   If these bits are set to 0 (PF_PRIVATE), the processes' ent
 **.regequ** *expression*
    Essentially the same as **.EQUR.** Included for compatibility with the GASM
    assembler.
+
 **.regundef**
    Essentially the same as **.EQURUNDEF.** Included for compatibility with
    the GASM assembler.
@@ -1298,6 +1384,37 @@ Assembler Syntax                         Description
 *bdisp*\ (PC, *Xi*\ )                    Program counter indexed
 #\ *imm*                                 Immediate
 =====================================    ===========================================
+
+`68020+ Addressing Modes`_
+''''''''''''''''''''''''''
+
+The following addressing modes are only valid for 68020 and newer CPUs. In these
+modes most of the parameters like Base Displacement (**bd**), Outer Displacement
+(**od**), Base Register (**An**) and Index Register (**Xn**) can be omitted. RMAC
+will detect this and *suppress* the registers in the produced code.
+
+Other assemblers
+use a special syntax to denote register suppression like **Zan** to suppress the Base
+Register and **Rin** to suppress the Index Register. RMAC has no support for this
+behaviour nor needs it to suppress registers.
+
+In addition, other assemblers will allow reordering of the parameters (for example
+([*An*,\ *bd*])). This is not allowed in RMAC.
+
+Also noteworthy is that the Index Register can be an address or data register.
+
+To avoid internal confusion the 68040/68060 registers *DC*, *IC* and *BC* are named
+*DC40*, *IC40* and *BC40* respectively.
+
+======================================================    =============================================================
+Assembler Syntax                                          Description
+======================================================    =============================================================
+*bd*\ (*An*, *Xi*\ [.\ *size*][*\*scale*])                Address register indirect indexed
+([*bd*,\ *An*],\ *Xn*\[.\ *siz*][*\*scale*],\ *od*)       Register indirect preindexed with outer displacement
+([*bd*,\ *An*,\ *Xn*\[.\ *siz*][*\*scale*],\ *od*)        Register indirect postindexed with outer displacement
+([*bd*,\ *PC*],\ *Xn*\[.\ *siz*][*\*scale*],\ *od*)       Program counter indirect preindexed with outer displacement
+([*bd*,\ *PC*,\ *Xn*\[.\ *siz*][*\*scale*],\ *od*)        Program counter indirect postindexed with outer displacement
+======================================================    =============================================================
 
 `Branches`_
 '''''''''''
@@ -1344,24 +1461,26 @@ The assembler provides "creature comforts" when it processes 68000 mnemonics:
  * **CLR.x An** will really generate **SUB.x An,An**.
 
  * **ADD**, **SUB** and **CMP** with an address register will really generate **ADDA**,
- **SUBA** and **CMPA**.
+   **SUBA** and **CMPA**.
 
  * The **ADD**, **AND**, **CMP**, **EOR**, **OR** and **SUB** mnemonics with immediate
- first operands will generate the "I" forms of their instructions (**ADDI**, etc.) if
- the second operand is not register direct.
+   first operands will generate the "I" forms of their instructions (**ADDI**, etc.) if
+   the second operand is not register direct.
 
  * All shift instructions with no count value assume a count of one.
 
  * **MOVE.L** is optimized to **MOVEQ** if the immediate operand is defined and
- in the range -128...127. However, **ADD** and **SUB** are never translated to
- their quick forms; **ADDQ** and **SUBQ** must be explicit.
+   in the range -128...127. However, **ADD** and **SUB** are never translated to
+   their quick forms; **ADDQ** and **SUBQ** must be explicit.
 
  * In GPU/DSP code sections, you can use JUMP (Rx) in place of JUMP T, (Rx) and JR
   (Rx) in place of JR T,(Rx).
+
  * RMAC tests all GPU/DSP restrictions and corrects them wherever possible (such as
   inserting a NOP instruction when needed).
- * The “(Rx+N)” addressing mode for GPU/DSP instructions is optimized to “(Rx)”
-  when “N” is zero.
+
+ * The *(Rx+N)* addressing mode for GPU/DSP instructions is optimized to *(Rx)*
+   when *N* is zero.
 
 `Macros`_
 =========
@@ -1385,7 +1504,8 @@ or an assembler directive. (The name may begin with a period - macros cannot
 be made confined the way labels or equated symbols can be). The formal argument
 list is optional; it is specified with a comma-seperated list of valid symbol names.
 Note that there is no comma between the name of the macro and the name of the
-first formal argument.
+first formal argument. It is not advised to begin an argument name with a numeric
+value.
 
 A macro body begins on the line after the **.macro** directive. All instructions
 and directives, except other macro definitions, are legal inside the body.
@@ -1596,8 +1716,8 @@ common in bitmap-graphics routines). For example:
 `Jaguar GPU/DSP Mode`_
 ======================
 
-RMAC will generate code for the Atari jaguar GPU and DSP custom RISC (Reduced
-Instruction Set Computer) processors. See the Atari Jaguar Software reference Manual – Tom
+RMAC will generate code for the Atari Jaguar GPU and DSP custom RISC (Reduced
+Instruction Set Computer) processors. See the Atari Jaguar Software reference Manual - Tom
 & Jerry for a complete listing of Jaguar GPU and DSP assembler mnemonics and addressing
 modes.
 
@@ -1616,7 +1736,174 @@ The following condition codes for the GPU/DSP JUMP and JR instructions are built
    HI (Higher)      = %00101
    T (True)         = %00000
 
-                   
+`Jaguar Object Processor Mode`_
+===============================
+
+`What is it?`_
+''''''''''''''
+
+An assembler to generate object lists for the Atari Jaguar's Object processor.
+
+
+`Why is it here?`_
+''''''''''''''''''
+
+To really utilize the OP properly, it needs an assembler. Otherwise, what
+happens is you end up writing an assembler in your code to assemble the OP
+list, and that's a real drag--something that *should* be handled by a proper
+assembler.
+
+
+`How do I use it?`_
+''''''''''''''''''''
+
+The OP assembler works similarly to the RISC assembler; to enter the OP
+assembler, you put the .objproc directive in your code (N.B.: like the RISC
+assembler, it only works in a TEXT or DATA section). From there, you build
+the OP list how you want it and go from there. A few caveats: you will want
+to put a .org directive at the top of your list, and labels that you want to
+be able to address in 68xxx code (for moving from a data section to an
+address where it will be executed by the OP, for example) should be created
+in .68xxx mode.
+
+
+`What are the opcodes?`_
+''''''''''''''''''''''''
+
+They are **bitmap**, **scbitmap**, **gpuobj**, **branch**, **stop**, **nop**, and **jump**. **nop** and **jump**
+are psuedo-ops, they are there as a convenience to the coder.
+
+
+`What are the proper forms for these opcodes?`_
+'''''''''''''''''''''''''''''''''''''''''''''''
+
+They are as follows:
+
+**bitmap** *data addr*, *xloc*, *yloc*, *dwidth*, *iwidth*, *iheight*, *bpp*,
+*pallete idx*, *flags*, *firstpix*, *pitch*
+
+**scbitmap** *data addr*, *xloc*, *yloc*, *dwidth*, *iwidth*, *iheight*,
+*xscale*, *yscale*, *remainder*, *bpp*, *pallete idx*,
+*flags*, *firstpix*, *pitch*
+
+**gpuobj** *line #*, *userdata* (bits 14-63 of this object)
+
+**branch** VC *condition (<, =, >)* *line #*, *link addr*
+
+**branch** OPFLAG, *link addr*
+
+**branch** SECHALF, *link addr*
+
+**stop**
+
+**nop**
+
+**jump** *link addr*
+
+Note that the *flags* field in bitmap and scbitmap objects consist of the
+following: **REFLECT**, **RMW**, **TRANS**, **RELEASE**. They can be in any order (and
+should be separated by whitespace **only**), and you can only put a maximum of
+four of them in. Further note that with bitmap and scbitmap objects, all the
+parameters after *data addr* are optional--if they are omitted, they will
+use defaults (mostly 0, but 1 is the default for pitch). Also, in the
+scbitmap object, the *xscale*, *yscale*, and *remainder* fields can be
+floating point constants/expressions. *data addr* can refer to any address
+defined (even external!) and the linker (rln v1.6.0 or greater) will
+properly fix up the address.
+
+
+`What do they do?`_
+'''''''''''''''''''
+
+Pretty much what you expect. It's beyond the scope of this little note to
+explain the Jaguar's Object Processor and how it operates, so you'll have to
+seek explanations for how they work elsewhere.
+
+
+`Why do I want to put a *.org* directive at the top of my list?`_
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+You want to put a *.org* directive at the top of your list because otherwise
+the assembler will not know where in memory the object list is supposed
+go--then when you move it to its destination, the object link addresses will
+all be wrong and it won't work.
+
+
+`Why would I copy my object list to another memory location?`_
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+Simple: because the OP destroys the list as it uses it to render the screen.
+If you don't keep a fresh copy stashed away somewhere to refresh it before
+the next frame is rendered, what you see on the screen will not be what you
+expect, as the OP has scribbled all over it!
+
+
+`Does the assembler do anything behind my back?`_
+'''''''''''''''''''''''''''''''''''''''''''''''''
+
+Yes, it will emit **NOP** s to ensure that bitmaps and scbitmaps are on proper
+memory boundaries, and fixup link addresses as necessary. This is needed
+because of a quirk in how the OP works (it ORs constants on the address
+lines to get the phrases it needs and if they are not zeroes, it will fail
+in bizarre ways). It will also set all *ypos* constants on the correct
+half-line (as that's how the OP views them).
+
+
+`Why can't I define the link addresses for all the objects?`_
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+You really, *really* don't want to do this. Trust me on this one.
+
+`How about an example of an object list?`_
+''''''''''''''''''''''''''''''''''''''''''
+
+    ::
+
+                objList = $10000
+                bRam = $20000
+        ;
+                .68000
+        objects:            ; This is the label you will use to address this in 68K code
+                .objproc    ; Engage the OP assembler
+                .org    objList ; Tell the OP assembler where the list will execute
+        ;
+                branch      VC < 69, .stahp     ; Branch to the STOP object if VC < 69
+                branch      VC > 241, .stahp    ; Branch to the STOP object if VC > 241
+                bitmap      bRAM, 22, 70, 24, 24, 22, 4
+                bitmap      bRAM, 20+96+96, 70, 24, 24, 22, 4, 0, REFLECT
+                scbitmap    tms, 20, 70, 1, 1, 8, 3.0, 3.0, 2.9999, 0, 0, TRANS
+                scbitmap    tmsShadow, 23, 73, 1, 1, 8, 3.0, 3.0, 2.9999, 0, 3, TRANS
+                bitmap      sbRelBM, 30, 108, 3, 3, 8, 0, 1, TRANS
+                bitmap      txt1BM, 46, 132, 3, 3, 8, 0, 2, TRANS
+                bitmap      txt2BM, 46, 148, 3, 3, 8, 0, 2, TRANS
+                bitmap      txt3BM, 22, 164, 3, 3, 8, 0, 2, TRANS
+                jump        .haha
+        .stahp:
+                stop
+        .haha:
+                jump        .stahp
+
+
+`DSP 56001 Mode`_
+=================
+
+RMAC fully supports Motorola's DSP56001 as used on the Atari Falcon and can output
+binary code in the two most popular formats: *.lod* (ASCII dump, supported by the
+Atari Falcon XBIOS) and *.p56* (binary equivalent of *.lod*)
+
+`Differences from Motorola's assembler`_
+''''''''''''''''''''''''''''''''''''''''
+
+- and #xxx,reg alias with andi
+- move/movec/movep/movem alias
+- local labels
+- macros
+- macros + local labels
+- x: x:r r:y x:y rigidness
+- no dsm support - it sucks
+- in l: dc cannot be 12 digits, split them in two and in the same line, separated by :
+- Rigid syntax - no reordering allowed
+
 `6502 Support`_
 ===============
 RMAC will generate code for the Motorola 6502 microprocessor. This chapter
@@ -1772,145 +2059,185 @@ order, along with a short description of what may have caused the problem.
 **.cargs syntax**
 
     Syntax error in **.cargs** directive.
+
 **.comm symbol already defined**
 
     You tried to ``.comm`` a symbol that was already defined.
+
 **.ds permitted only in BSS**
 
     You tried to use ``.ds`` in the text or data section.
+
 **.init not permitted in BSS or ABS**
 
     You tried to use ``.init`` in the BSS or ABS section.
+
 **.org permitted only in .6502 section**
 
     You tried to use ``.org`` in a 68000 section.
+
 **Cannot create:** *filename*
 
     The assembler could not create the indicated filename.
+
 **External quick reference**
 
     You tried to make the immediate operand of a **moveq**, **subq** or **addq** instruction external.
+
 **PC-relative expr across sections**
 
     You tried to make a PC-relative reference to a location contained in another
     section.
+
 **[bwsl] must follow '.' in symbol**
 
     You tried to follow a dot in a symbol name with something other than one of
     the four characters 'B', 'W', 'S' or 'L'.
+
 **addressing mode syntax**
 
     You made a syntax error in an addressing mode.
+
 **assert failure**
 
     One of your **.assert** directives failed!
+
 **bad (section) expression**
 
-    You tried to mix and match sections in an expression
+    You tried to mix and match sections in an expression.
+
 **bad 6502 addressing mode**
 
     The 6502 mnemonic will not work with the addressing mode you specified.
+
 **bad expression**
 
     There's a syntax error in the expression you typed.
+
 **bad size specified**
 
   You tried to use an inappropriate size suffix for the instruction. Check your
   68000 manual for allowable sizes.
+
 **bad size suffix**
 
   You can't use .b (byte) mode with the **movem** instruction.
+
 **cannot .globl local symbol**
 
   You tried to make a confined symbol global or common.
+
 **cannot initialize non-storage (BSS) section**
 
   You tried to generate instructions (or data, with dc) in the BSS or ABS section.
+
 **cannot use '.b' with an address register**
 
   You tried to use a byte-size suffix with an address register. The 68000 does not
   perform byte-sized address register operations.
+
 **directive illegal in .6502 section**
 
   You tried to use a 68000-oriented directive in the 6502 section.
+
 **divide by zero**
 
   The expression you typed involves a division by zero.
+
 **expression out of range**
 
   The expression you typed is out of range for its application.
+
 **external byte reference**
 
   You tried to make a byte-sized reference to an external symbol, which the
-  object file format will not allow
+  object file format will not allow.
+
 **external short branch**
 
   You tried to make a short branch to an external symbol, which the linker cannot
   handle.
+
 **extra (unexpected) text found after addressing mode**
 
   RMAC thought it was done processing a line, but it ran up against "extra"
   stuff. Be sure that any comment on the line begins with a semicolon, and check
   for dangling commas, etc.
+
 **forward or undefined .assert**
 
   The expression you typed after a **.assert** directive had an undefined value.
   Remember that RMAC is one-pass.
+
 **hit EOF without finding matching .endif**
 
   The assembler fell off the end of last input file without finding a **.endif** to
   match an . it. You probably forgot a **.endif** somewhere.
+
 **illegal 6502 addressing mode**
 
   The 6502 instruction you typed doesn't work with the addressing mode you
   specified.
+
 **illegal absolute expression**
 
   You can't use an absolute-valued expression here.
+
 **illegal bra.s with zero offset**
 
   You can't do a short branch to the very next instruction (read your 68000
   manual).
+
 **illegal byte-sized relative reference**
 
   The object file format does not permit bytes contain relocatable values; you
   tried to use a byte-sized relocatable expression in an immediate addressing
   mode.
+
 **illegal character**
 
  Your source file contains a character that RMAC doesn't allow. (most
  control characters fall into this category).
+
 **illegal initialization of section**
 
  You tried to use .dc or .dcb in the BSS or ABS sections.
+
 **illegal relative address**
 
  The relative address you specified is illegal because it belongs to a different
  section.
+
 **illegal word relocatable (in .PRG mode)**
 
  You can't have anything other than long relocatable values when you're gener-
  ating a **.PRG** file.
+
 **inappropriate addressing mode**
 
  The mnemonic you typed doesn't work with the addressing modes you specified.
  Check your 68000 manual for allowable combinations.
+
 **invalid addressing mode**
 
  The combination of addressing modes you picked for the **movem** instruction
  are not implemented by the 68000. Check your 68000 reference manual for
  details.
+
 **invalid symbol following ^^**
 
  What followed the ^^ wasn't a valid symbol at all.
+
 **mis-nested .endr**
 
  The assembler found a **.endr** directive when it wasn't prepared to find one.
  Check your repeat-block nesting.
+
 **mismatched .else**
 
  The assembler found a **.else** directive when it wasn't prepared to find one.
  Check your conditional assembly nesting.
+
 **mismatched .endif**
 
  The assembler found a **.endif** directive when it wasn't prepared to find one.
@@ -1938,70 +2265,88 @@ order, along with a short description of what may have caused the problem.
 
  The assembler expected to see a symbol/filename/string (etc...), but found
  something else instead. In most cases the problem should be obvious.
+
 **misuse of '.', not allowed in symbols**
 
  You tried to use a dot (.) in the middle of a symbol name.
+
 **mod (%) by zero**
 
  The expression you typed involves a modulo by zero.
+
 **multiple formal argument definition**
 
   The list of formal parameter names you supplied for a macro definition includes
   two identical names.
+
 **multiple macro definition**
 
   You tried to define a macro which already had a definition.
+
 **non-absolute byte reference**
 
   You tried to make a byte reference to a relocatable value, which the object file
   format does not allow.
+
 **non-absolute byte value**
 
   You tried to dc.b or dcb.b a relocatable value. Byte relocatable values are
   not permitted by the object file format.
+
 **register list order**
 
   You tried to specify a register list like **D7-D0**, which is illegal. Remember
   that the first register number must be less than or equal to the second register
   number.
+
 **register list syntax**
 
   You made an error in specifying a register list for a **.reg** directive or a **.movem**
   instruction.
+
 **symbol list syntax**
 
   You probably forgot a comma between the names of two symbols in a symbol
   list, or you left a comma dangling on the end of the line.
+
 **syntax error**
 
   This is a "catch-all" error.
+
 **undefined expression**
 
   The expression has an undefined value because of a forward reference, or an
   undefined or external symbol.
+
 **unimplemented addressing mode**
 
   You tried to use 68020 "square-bracket" notation for a 68020 addressing mode.
   RMAC does not support 68020 addressing modes.
+
 **unimplemented directive**
 
   You have found a directive that didn't appear in the documentation. It doesn't
   work.
+
 **unimplemented mnemonic**
 
-  You've found an assembler for documentation) bug.
+  You've found a bug.
+
 **unknown symbol following ^^**
 
   You followed a ^^ with something other than one of the names defined, ref-
   erenced or streq.
+
 **unsupported 68020 addressing mode**
 
   The assembler saw a 68020-type addressing mode. RMAC does not assem-
   ble code for the 68020 or 68010.
+
 **unterminated string**
 
   You specified a string starting with a single or double quote, but forgot to type
   the closing quote.
+
 **write error**
 
   The assembler had a problem writing an object file. This is usually caused by
