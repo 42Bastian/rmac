@@ -12,6 +12,10 @@
 #include "rmac.h"
 #include "token.h"
 
+// Imported variables
+
+extern char * label_defined;
+
 // Exported variables
 extern TOKEN exprbuf[];
 extern SYM * symbolPtr[];

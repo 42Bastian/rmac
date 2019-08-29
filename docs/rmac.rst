@@ -171,6 +171,10 @@ Switch               Description
                       `6: Convert null short branches to NOP`
 
                       `7: Convert clr.l Dn to moveq #0,Dn`
+
+                      `8: Convert adda.w/l #x,Dy to addq.w/l #x,Dy`
+
+                      `9: Convert adda.w/l #x,Dy to lea x(Dy),Dy`
 -p                   Produce an executable (**.prg**) output file.
 -ps                  Produce an executable (**.prg**) output file with symbols.
 -px                  Produce an executable (**.prg**) output file with extended symbols.
@@ -1894,15 +1898,23 @@ Atari Falcon XBIOS) and *.p56* (binary equivalent of *.lod*)
 `Differences from Motorola's assembler`_
 ''''''''''''''''''''''''''''''''''''''''
 
-- and #xxx,reg alias with andi
-- move/movec/movep/movem alias
-- local labels
-- macros
-- macros + local labels
-- x: x:r r:y x:y rigidness
-- no dsm support - it sucks
-- in l: dc cannot be 12 digits, split them in two and in the same line, separated by :
-- Rigid syntax - no reordering allowed
+- Motorola's assembler aliases **and #xxx,reg** with **andi #xxx,reg** and can
+  distinguish between the two. rmac needs the user to be explicit and will
+  generate an error if the programmer tries to use syntax from one instruction
+  to the other.
+- Similarly Motorola's assembler can alias **move** with **movec**, **movep** 
+  and **movem**. rmac also not accept such aliasing and generate an error.
+- Motorola's assembler uses the underscore character (*_*) to define local
+  labels. In order for rmac to maintain a uniform syntax across all platforms,
+  such labels will not be treated as local.
+- Macros syntax is different from Motorola's assembler. This includes local
+  labels inside macros. The user is encouraged to study the `Macros`_ section
+  and compare syntactical differences.
+- Motorola's assembler allows reordering of addressing modes **x:**, **x:r**,
+  **r:y**, **x:y**. rmac will only accept syntax as is defined on the reference
+  manual.
+- In **l:** section a dc value cannot be 12 hex digits like Motorola's assmebler.
+  Instead, the value needs to be split into two parts separated by **:**.
 
 `6502 Support`_
 ===============

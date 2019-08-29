@@ -51,6 +51,7 @@ int d_abs(void);
 int d_comm(void);
 int d_dc(WORD);
 int d_ds(WORD);
+int d_dsm(WORD);
 int d_dcb(WORD);
 int d_globl(void);
 int d_gpu(void);
@@ -153,6 +154,7 @@ int (*dirtab[])() = {
 	d_nofpu,			// 65 nofpu
 	d_opt,				// 66 .opt
 	d_objproc,			// 67 .objproc
+	d_dsm,				// 68 .dsm
 };
 
 
@@ -1124,6 +1126,51 @@ int d_ds(WORD siz)
 
 	ErrorIfNotAtEOL();
 	return 0;
+}
+
+
+//
+// dsm[.siz] expression
+// Define modulo storage
+// Quoting the Motorola assembler manual:
+// "The DSM directive reserves a block of memory the length of which in words is equal to
+// the value of <expression>.If the runtime location counter is not zero, this directive first
+// advances the runtime location counter to a base address that is a multiple of 2k, where
+// 2k >= <expression>."
+// The kicker of course is written a few sentences after:
+// "<label>, if present, will be assigned the value of the runtime location counter after a valid
+// base address has been established."
+//
+int d_dsm(WORD siz)
+{
+	TOKEN * tok_current = tok;  // Keep track of where tok was when we entered this procedure
+	uint64_t eval;
+
+	if (abs_expr(&eval) != OK)
+ 		return 0;
+
+	// Round up to the next highest power of 2
+	// Nicked from https://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
+	eval--;
+	eval |= eval >> 1;
+	eval |= eval >> 2;
+	eval |= eval >> 4;
+	eval |= eval >> 8;
+	eval |= eval >> 16;
+
+	int units_to_skip;
+	units_to_skip = eval + 1 - sloc;
+	sloc += units_to_skip;		// Bump up sloc - TODO: check if this goes over the RAM limits?
+
+	// If a label has been defined in the same line as dsm, its value also needs to be adjusted
+	if (label_defined)
+	{
+		SYM * label = lookup(label_defined, LABEL, 0);
+		label->svalue += units_to_skip;
+	}
+
+	tok = tok_current;		// Rewind tok back to where it was
+	return d_ds(siz);		// And let d_ds take over from here
 }
 
 

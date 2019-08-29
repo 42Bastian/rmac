@@ -314,7 +314,6 @@ uint32_t DepositELFSymbol(uint8_t * ptr, uint32_t name, uint32_t addr, uint32_t 
 //
 int WriteObject(int fd)
 {
-	LONG t;					// Scratch long
 	LONG tds;				// TEXT & DATA segment size
 	int i;					// Temporary int
 	CHUNK * cp;				// Chunk (for gather)
@@ -484,6 +483,9 @@ int WriteObject(int fd)
 			sy_assign(buf + HDRSIZE + tds, AddSymEntry);
 			chptr = buf + 0x0E;			// Point to symbol table size entry
 			D_long(symsize);
+
+			if (verb_flag)
+				printf("Symbol table: %d bytes\n", symsize);
 		}
 
 		// Write out the header + text & data + symbol table (if any)

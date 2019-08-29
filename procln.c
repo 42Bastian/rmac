@@ -53,6 +53,7 @@ int disabled;					// Assembly conditionally disabled
 int just_bss;					// 1, ds.b in microprocessor mode
 uint32_t pcloc;					// Value of "PC" at beginning of line
 SYM * lab_sym;					// Label on line (or NULL)
+char * label_defined;			// The name of the last label defined in current line (if any)
 
 const char extra_stuff[] = "extra (unexpected) text found after addressing mode";
 const char comma_error[] = "missing comma";
@@ -186,6 +187,7 @@ DEBUG { printf("Assemble: Found TKEOF flag...\n"); }
 
 	state = -3;								// No keyword (just EOL)
 	label = NULL;							// No label
+	label_defined = NULL;					// No label defined yet
 	lab_sym = NULL;							// No (exported) label
 	equate = NULL;							// No equate
 	tk = tok;								// Save first token in line
@@ -232,6 +234,8 @@ as68label:
 		{
 			if (HandleLabel(label, labtyp) != 0)
 				goto loop;
+
+			label_defined = label;
 
 			goto as68label;
 		}
@@ -363,6 +367,8 @@ as68label:
 				{
 					if (HandleLabel(label, labtyp) != 0)
 						goto loop;
+
+					label_defined = label;
 				}
 
 				HandleRept();
@@ -597,6 +603,8 @@ When checking to see if it's already been equated, issue a warning.
 		// Non-zero == error occurred
 		if (HandleLabel(label, labtyp) != 0)
 			goto loop;
+
+		label_defined = label;
 	}
 
 	// Punt on EOL
