@@ -124,7 +124,8 @@ uint8_t * AddSymEntry(register uint8_t * buf, SYM * sym, int globflag)
 		w |= AL_EXTERN | AL_GLOBAL;	// Common symbol
 		w &= ~AL_BSS;		// They're not BSS in Alcyon object files
 	}
-	else if (w1 & DEFINED)
+
+	if (w1 & DEFINED)
 	{
 		if (globflag)		// Export the symbol
 			w |= AL_GLOBAL;
@@ -218,12 +219,7 @@ uint8_t * AddELFSymEntry(uint8_t * buf, SYM * sym, int globflag)
 
 	register WORD w1 = sym->sattr;
 
-	if (w1 & COMMON)
-	{
-		//w |= AL_EXTERN | AL_GLOBAL;	// common symbol
-		//w &= ~AL_BSS;		// they're not BSS in Alcyon object files
-	}
-	else if (w1 & DEFINED)
+	if (w1 & DEFINED)
 	{
 		if (globflag)		// Export the symbol
 			st_info |= 16;   //STB_GLOBAL (1<<4)
