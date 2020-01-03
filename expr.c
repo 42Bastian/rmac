@@ -35,7 +35,7 @@ char itokcl[] = {
 	CR_DEFINED, CR_REFERENCED,		// SUNARY (special unary)
 	CR_STREQ, CR_MACDEF,
 	CR_DATE, CR_TIME,
-	CR_ABSCOUNT, 0,
+	CR_ABSCOUNT, CR_FILESIZE, 0,
 	'!', '~', UNMINUS, UNLT, UNGT, 0,	// UNARY
 	'*', '/', '%', 0,				// MULT
 	'+', '-', 0,					// ADD
@@ -165,6 +165,44 @@ int expr1(void)
 				*evalTokenBuffer.u32++ = CONST;
 				*evalTokenBuffer.u64++ = sloc;
 			}
+			break;
+		case CR_FILESIZE:
+			if (*tok++ != STRING)
+				return error("^^FILESIZE expects filename inside string");
+
+			*evalTokenBuffer.u32++ = CONST;
+			// @@copypasted from d_incbin, maybe factor this out somehow?
+			// Attempt to open the include file in the current directory, then (if that
+			// failed) try list of include files passed in the enviroment string or by
+			// the "-d" option.
+			int fd, i;
+			char buf1[256];
+
+			if ((fd = open(string[*tok], _OPEN_INC)) < 0)
+			{
+				for(i=0; nthpath("RMACPATH", i, buf1)!= 0; i++)
+				{
+					fd = strlen(buf1);
+					
+					// Append path char if necessary
+					if ((fd > 0) && (buf1[fd - 1] != SLASHCHAR))
+						strcat(buf1, SLASHSTRING);
+					
+					strcat(buf1, string[*tok]);
+					
+					if ((fd = open(buf1, _OPEN_INC)) >= 0)
+						goto allright;
+				}
+				
+				return error("cannot open: \"%s\"", string[tok[1]]);
+			}
+
+allright:
+			*evalTokenBuffer.u64++ = (uint64_t)lseek(fd, 0L, SEEK_END);
+			close(fd);
+
+			// Advance tok because of consumed string token
+			tok++;
 			break;
 		case CR_TIME:
 			*evalTokenBuffer.u32++ = CONST;

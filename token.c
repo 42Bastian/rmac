@@ -604,6 +604,9 @@ DEBUG { printf("ExM: SYMBOL=\"%s\"", d); }
 							case CR_ABSCOUNT:
 								d = "^^abscount";
 								break;
+							case CR_FILESIZE:
+								d = "^^filesize";
+								break;
 							case CR_DATE:
 								d = "^^date";
 								break;
@@ -1731,6 +1734,8 @@ void DumpToken(TOKEN t)
 		printf("[ENDEXPR]");
 	else if (t == CR_ABSCOUNT)
 		printf("[CR_ABSCOUNT]");
+	else if (t == CR_FILESIZE)
+		printf("[CR_FILESIZE]");
 	else if (t == CR_DEFINED)
 		printf("[CR_DEFINED]");
 	else if (t == CR_REFERENCED)
@@ -1835,6 +1840,8 @@ void DumpTokenBuffer(void)
 			printf("[ENDEXPR]");
 		else if (*t == CR_ABSCOUNT)
 			printf("[CR_ABSCOUNT]");
+		else if (*t == CR_FILESIZE)
+			printf("[CR_FILESIZE]");
 		else if (*t == CR_DEFINED)
 			printf("[CR_DEFINED]");
 		else if (*t == CR_REFERENCED)

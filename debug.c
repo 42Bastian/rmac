@@ -383,6 +383,8 @@ void DumpTokens(TOKEN * tokenBuffer)
 			printf("[ENDEXPR]");
 		else if (*t == CR_ABSCOUNT)
 			printf("[CR_ABSCOUNT]");
+		else if (*t == CR_FILESIZE)
+			printf("[CR_FILESIZE]");
 		else if (*t == CR_DEFINED)
 			printf("[CR_DEFINED]");
 		else if (*t == CR_REFERENCED)

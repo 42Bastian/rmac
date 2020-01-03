@@ -74,7 +74,8 @@
 #define CR_TIME         'x'			// ^^time - DOS format time
 #define CR_DATE         'y'			// ^^date - DOS format date
 #define CR_ABSCOUNT     'z'			// ^^abscount - count the number of bytes
-									// defined in curent .abs section
+									// defined in current .abs section
+#define CR_FILESIZE     'F'			// ^^filesize - return the size in bytes of a file
 
 // Character Attributes
 #define ILLEG           0			// Illegal character (unused)
