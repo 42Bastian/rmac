@@ -183,17 +183,17 @@ int expr1(void)
 				for(i=0; nthpath("RMACPATH", i, buf1)!= 0; i++)
 				{
 					fd = strlen(buf1);
-					
+
 					// Append path char if necessary
 					if ((fd > 0) && (buf1[fd - 1] != SLASHCHAR))
 						strcat(buf1, SLASHSTRING);
-					
+
 					strcat(buf1, string[*tok]);
-					
+
 					if ((fd = open(buf1, _OPEN_INC)) >= 0)
 						goto allright;
 				}
-				
+
 				return error("cannot open: \"%s\"", string[tok[1]]);
 			}
 
