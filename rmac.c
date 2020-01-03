@@ -1,7 +1,7 @@
 //
 // RMAC - Reboot's Macro Assembler for all Atari computers
 // RMAC.C - Main Application Code
-// Copyright (C) 199x Landon Dyer, 2011-2019 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2020 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -205,7 +205,7 @@ void DisplayVersion(void)
 		"| |  | | | | | | (_| | (__ \n"
 		"|_|  |_| |_| |_|\\__,_|\\___|\n"
 		"\nReboot's Macro Assembler\n"
-		"Copyright (C) 199x Landon Dyer, 2011-2019 Reboot\n"
+		"Copyright (C) 199x Landon Dyer, 2011-2020 Reboot\n"
 		"V%01i.%01i.%01i %s (%s)\n\n", MAJOR, MINOR, PATCH, __DATE__, PLATFORM);
 }
 
