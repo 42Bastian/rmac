@@ -1077,9 +1077,9 @@ int d_ds(WORD siz)
 
 	// Check to see if the value being passed in is negative (who the hell does
 	// that?--nobody does; it's the code gremlins, or rum, what does it)
-	// N.B.: Since 'eval' is of type uint32_t, if it goes negative, it will
+	// N.B.: Since 'eval' is of type uint64_t, if it goes negative, it will
 	//       have its high bit set.
-	if (eval & 0x80000000)
+	if (eval & 0x8000000000000000)
 		return error("negative sizes not allowed in DS");
 
 	// In non-TDB section (BSS, ABS and M6502) just advance the location
@@ -1096,7 +1096,7 @@ int d_ds(WORD siz)
 
 		just_bss = 1;					// No data deposited (8-bit CPU mode)
 	}
-	else if (cursect == M56001P || cursect == M56001X || cursect == M56001Y || cursect == M56001L)
+	else if (cursect & M56KPXYL)
 	{
 		// Change segment instead of marking blanks.
 		// Only mark segments we actually wrote something
@@ -1125,7 +1125,7 @@ int d_ds(WORD siz)
 	}
 
 	ErrorIfNotAtEOL();
-	return 0;
+	return OK;
 }
 
 
