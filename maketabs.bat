@@ -1,31 +1,37 @@
-rem @echo off
+@echo off
 REM Check for file dates and build .h files if needed
 
-SET FILE1=68ktab
+SET FILE1=68k.mch
 SET FILE2=68ktab.h
 if not exist %FILE2% GOTO BUILD
 for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
 if %NEWEST%==%FILE1% GOTO BUILD
 
-SET FILE1=mntab
+SET FILE1=direct.tab
 SET FILE2=mntab.h
 if not exist %FILE2% GOTO BUILD
 for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
 if %NEWEST%==%FILE1% GOTO BUILD
 
-SET FILE1=kwtab
+SET FILE1=kw.tab
 SET FILE2=kwtab.h
 if not exist %FILE2% GOTO BUILD
 for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
 if %NEWEST%==%FILE1% GOTO BUILD
 
-SET FILE1=risctab
+SET FILE1=risc.tab
 SET FILE2=risckw.h
 if not exist %FILE2% GOTO BUILD
 for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
 if %NEWEST%==%FILE1% GOTO BUILD
 
-SET FILE1=6502.tbl
+SET FILE1=dsp56k.tab
+SET FILE2=dsp56ktab.h
+if not exist %FILE2% GOTO BUILD
+for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
+if %NEWEST%==%FILE1% GOTO BUILD
+
+SET FILE1=6502.tab
 SET FILE2=6502kw.h
 if not exist %FILE2% GOTO BUILD
 for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
@@ -43,12 +49,16 @@ GOTO END
 
 echo Generating files...
 
-68kgen 68kmn <68ktab >68ktab.h
-type mntab 68kmn | kwgen mn >mntab.h
-kwgen kw <kwtab >kwtab.h
-kwgen mr <risctab >risckw.h
-kwgen mp <6502.tbl >6502kw.h
+68kgen 68k.tab <68k.mch >68ktab.h
+dsp56kgen dsp56k.tab <dsp56k.mch >dsp56ktab.h
+type direct.tab 68k.tab | kwgen mn >mntab.h
+kwgen kw <kw.tab >kwtab.h
+kwgen mr <risc.tab >risckw.h
+kwgen dsp <dsp56k.tab >dsp56kkw.h
+kwgen mp <6502.tab >6502kw.h
+kwgen mp <6502.tab >6502kw.h
 kwgen mo <op.tab >opkw.h
+
 
 rem touch files that include these header files so they'll recompile
 echo Generating tables...
@@ -59,6 +69,7 @@ copy /b mach.c +,, >NUL
 copy /b procln.c +,, >NUL
 copy /b riscasm.c +,, >NUL
 copy /b token.c +,, >NUL
+copy /b dsp56k_mach.c +,, >NUL
 
 :END
 

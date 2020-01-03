@@ -950,7 +950,6 @@ int TokenizeLine(void)
 	uint8_t c;					// Random char
 	uint64_t v;					// Random value
 	uint32_t cursize = 0;		// Current line's size (.b, .w, .l, .s, .q, .d)
-	double f;					// Random float
 	uint8_t * nullspot = NULL;	// Spot to clobber for SYMBOL termination
 	int stuffnull;				// 1:terminate SYMBOL '\0' at *nullspot
 	uint8_t c1;
