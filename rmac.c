@@ -146,7 +146,7 @@ void DisplayHelp(void)
 		"  -dsymbol[=value]  Define symbol (with optional value, default=0)\n"
 		"  -e[errorfile]     Send error messages to file, not stdout\n"
 		"  -f[format]        Output object file format\n"
-		"                    a: ALCYON (use this for ST)\n"
+		"                    a: ALCYON\n"
 		"                    b: BSD (use this for Jaguar)\n"
 		"                    e: ELF\n"
 		"                    p: P56 (use this for DSP56001 only)\n"
