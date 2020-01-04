@@ -218,6 +218,7 @@ PTR
 #define EQUATED      0x0800		// Symbol was equated
 #define SDECLLIST    0x0400		// Symbol is on 'sdecl'-order list
 #define FLOAT        0x0200		// Symbol is a floating point value
+#define RISCREG      0x0100		// Symbol is a RISC register
 
 // Expression spaces, ORed with symbol and expression attributes above
 #define ABS          0x0000		// In absolute space

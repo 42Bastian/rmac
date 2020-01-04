@@ -417,7 +417,7 @@ int expr(TOKEN * otk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 		{
 			*evalTokenBuffer.u32++ = CONST;
 			*evalTokenBuffer.u64++ = *a_value = (*tok - KW_R0);
-			*a_attr = ABS | DEFINED;
+			*a_attr = ABS | DEFINED | RISCREG;
 
 			if (a_esym != NULL)
 				*a_esym = NULL;
@@ -522,19 +522,19 @@ be converted from a linked list into an array).
 			symbolNum++;
 #endif
 
-			if (symbol->sattr & DEFINED)
-				*a_value = symbol->svalue;
-			else
-				*a_value = 0;
+			*a_value = (symbol->sattr & DEFINED ? symbol->svalue : 0);
+			*a_attr = (WORD)(symbol->sattr & ~GLOBAL);
 
 /*
 All that extra crap that was put into the svalue when doing the equr stuff is
 thrown away right here. What the hell is it for?
 */
 			if (symbol->sattre & EQUATEDREG)
+			{
 				*a_value &= 0x1F;
-
-			*a_attr = (WORD)(symbol->sattr & ~GLOBAL);
+				*a_attr |= RISCREG; // Mark it as a register, 'cause it is
+				*a_esym = symbol;
+			}
 
 			if ((symbol->sattr & (GLOBAL | DEFINED)) == GLOBAL
 				&& a_esym != NULL)

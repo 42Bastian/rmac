@@ -229,7 +229,7 @@ int GenerateRISCCode(int state)
 	int indexed;				// Indexed register flag
 
 	uint64_t eval;				// Expression value
-	uint16_t eattr;					// Expression attributes
+	uint16_t eattr;				// Expression attributes
 	SYM * esym;					// External symbol involved in expr.
 	TOKEN r_expr[EXPRSIZE];		// Expression token list
 
@@ -325,8 +325,14 @@ int GenerateRISCCode(int state)
 		}
 		else
 		{
+			if (esym && (esym->sattre & EQUATEDREG))
+				return error("equated register seen for immediate value");
+
+			if (eattr & RISCREG)
+				return error("register seen for immediate value");
+
 			if (((int)eval < reg1) || ((int)eval > reg2))
-				return error("constant out of range (%d to %d", reg1, reg2);
+				return error("constant out of range (%d to %d)", reg1, reg2);
 
 			if (parm & SUB32)
 				reg1 = 32 - (int)eval;
