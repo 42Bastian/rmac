@@ -52,6 +52,7 @@ uint32_t AllocateMark(void);
 uint32_t MarkImage(register uint8_t * mp, uint32_t siz, uint32_t tsize, int okflag);
 uint32_t MarkBSDImage(uint8_t *, uint32_t, uint32_t, int);
 uint32_t CreateELFRelocationRecord(uint8_t *, uint8_t *, uint16_t section);
+uint32_t MarkABSImage(uint8_t * mp, uint32_t siz, uint32_t tsize, int reqseg);
 
 #endif // __MARK_H__
 

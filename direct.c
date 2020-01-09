@@ -154,7 +154,7 @@ int (*dirtab[])() = {
 	d_nofpu,			// 65 nofpu
 	d_opt,				// 66 .opt
 	d_objproc,			// 67 .objproc
-	d_dsm,				// 68 .dsm
+	(void *)d_dsm,			// 68 .dsm
 };
 
 
@@ -221,8 +221,8 @@ int d_org(void)
 {
 	uint64_t address;
 
-	if (!rgpu && !rdsp && !robjproc && !m6502 && !dsp56001)
-		return error(".org permitted only in GPU/DSP/OP, 56001 and 6502 sections");
+	if (!rgpu && !rdsp && !robjproc && !m6502 && !dsp56001 && !(obj_format == RAW))
+		return error(".org permitted only in GPU/DSP/OP, 56001, 6502 and 68k (with -fr switch) sections");
 
 	// M56K can leave the expression off the org for some reason :-/
 	// (It's because the expression is non-standard, and so we have to look at
@@ -345,6 +345,17 @@ int d_org(void)
 		lsloc = sloc = (int32_t)address;
 // N.B.: It seems that by enabling this, even though it works elsewhere, will cause symbols to royally fuck up.  Will have to do some digging to figure out why.
 //		orgactive = 1;
+	}
+	else
+	{
+		// If we get here we assume it's 68k with RAW output, so this is allowed
+		if (orgactive)
+		{
+			return error("In 68k mode only one .org statement is allowed");
+		}
+
+		org68k_address = address;
+		org68k_active = 1;
 	}
 
 	ErrorIfNotAtEOL();

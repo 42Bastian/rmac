@@ -177,12 +177,12 @@
 enum
 {
 ALCYON,				// Alcyon/DRI C object format
-MWC, 				// Mark Williams object format
 BSD, 				// BSD object format
 ELF, 				// ELF object format
 LOD,				// DSP 56001 object format
 P56,				// DSP 56001 object format
 XEX, 				// COM/EXE/XEX/whatever a8 object format
+RAW,				// Output at absolute address
 };
 
 // Assembler token
@@ -318,6 +318,8 @@ extern LONG PRGFLAGS;
 extern int optim_flags[OPT_COUNT];
 extern int activecpu;
 extern int activefpu;
+extern uint32_t org68k_address;
+extern int org68k_active;
 
 // Exported functions
 void strtoupper(char * s);

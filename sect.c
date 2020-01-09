@@ -450,9 +450,6 @@ int ResolveFixups(int sno)
 		// from the location (that will happen in the linker when the external
 		// reference is resolved).
 		//
-		// MWC expects PC-relative things to have the LOC subtracted from the
-		// value, if the value is external (that is, undefined at this point).
-		//
 		// PC-relative fixups must be DEFINED and either in the same section
 		// (whereupon the subtraction takes place) or ABS (with no subtract).
 		if ((dw & FU_PCREL) || (dw & FU_PCRELX))
@@ -470,7 +467,7 @@ int ResolveFixups(int sno)
 				else if (tdb)
 				{
 					// Allow cross-section PCREL fixups in Alcyon mode
-					if (prg_flag)
+					if (prg_flag || (obj_format == RAW))
 					{
 						switch (tdb)
 						{
@@ -503,14 +500,6 @@ int ResolveFixups(int sno)
 
 				if (sbra_flag && (dw & FU_LBRA) && (eval + 0x80 < 0x100))
 					warn("unoptimized short branch");
-			}
-			else if (obj_format == MWC)
-			{
-				eval -= loc;
-
-				// In this instruction the PC is located a DWORD away
-				if (dw & FU_PCRELX)
-					eval += 2;
 			}
 
 			// Be sure to clear any TDB flags, since we handled it just now

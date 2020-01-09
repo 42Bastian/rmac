@@ -4,7 +4,7 @@ RMAC
 =====================
 Reference Manual
 ================
-version 2.0.4
+version 2.0.8
 =============
 
 © and notes
@@ -123,6 +123,7 @@ Switch               Description
 -fa                  ALCYON output object file format (implied when **-ps** is enabled).
 -fb                  BSD COFF output object file format.
 -fe                  ELF output object file format.
+-fr                  Absolute address. Source code is required to have one .org statement.
 -fx                  Atari 800 com/exe/xex output object file format.
 -i\ *path*           Set include-file directory search path.
 -l\ *[file[prn]]*    Construct and direct assembly listing to the specified file.
@@ -153,8 +154,8 @@ Switch               Description
 
                       -o\ *file[.o]*       Direct object code output to the specified file.
 +/~oall              Turn all optimisations on/off
-+o\ *0-7*            Enable specific optimisation
-~o\ *0-7*            Disable specific optimisation
++o\ *0-9*            Enable specific optimisation
+~o\ *0-9*            Disable specific optimisation
 
                       `0: Absolute long adddresses to word`
                       
@@ -625,9 +626,15 @@ and may not be used as symbols (e.g. labels, equates, or the names of macros):
       r0 r1 r2 r3 r4 r5 r6 r7
       r8 r9 r10 r11 r12 rl3 r14 ri5
       6502:
-      **TODO**
+      x y a
       DSP56001:
-      **TODO**
+      x x0 x1 x2 y y0 y1 y2
+      a a0 a1 a2 b b0 b1 b2 ab ba
+      mr omr la lc ssh ssl ss
+      n0 n1 n2 n3 n4 n5 n6 n7
+      m0 m1 m2 m3 m4 m5 m6 m7
+      r0 r1 r2 r3 r4 r5 r6 r7
+      
 
 `Constants`_
 ''''''''''''
@@ -998,6 +1005,13 @@ described in the chapter on `6502 Support`_.
 
    Switch to Motorola DSP56001 mode.
 
+**.org** *location* [*X:*/*Y:*/*P:*/*L:*]
+   This directive sets the value of the location counter (or **pc**) to location, an
+   expression that must be defined and absolute. It is legal to use the directive in
+   the following modes: 6502, Tom, Jerry, OP, 56001 and 680x0 (only with -fr switch).
+   Especially for the 56001 mode the *location* field **must** be prefixed with the
+   intended section (*X:*, *Y:*, *P:* or *L:*).
+   
 **.abs** [*location*]
 
    Start an absolute section, beginning with the specified location (or zero, if
@@ -1913,7 +1927,7 @@ Atari Falcon XBIOS) and *.p56* (binary equivalent of *.lod*)
 - Motorola's assembler allows reordering of addressing modes **x:**, **x:r**,
   **r:y**, **x:y**. rmac will only accept syntax as is defined on the reference
   manual.
-- In **l:** section a dc value cannot be 12 hex digits like Motorola's assmebler.
+- In **L:** section a dc value cannot be 12 hex digits like Motorola's assmebler.
   Instead, the value needs to be split into two parts separated by **:**.
 
 `6502 Support`_
@@ -1966,7 +1980,7 @@ y,\ *expr*     indexed Y
    This directive leaves the 6502 segment and returns to the 68000's text segment.
    68000 instructions may be assembled as normal.
 **.org** *location*
-   This directive is only legal in the 6502 section. It sets the value of the location
+   This directive sets the value of the location
    counter (or **pc**) to location, an expression that must be defined, absolute, and
    less than $10000.
 
@@ -2083,10 +2097,6 @@ order, along with a short description of what may have caused the problem.
 **.init not permitted in BSS or ABS**
 
     You tried to use ``.init`` in the BSS or ABS section.
-
-**.org permitted only in .6502 section**
-
-    You tried to use ``.org`` in a 68000 section.
 
 **Cannot create:** *filename*
 

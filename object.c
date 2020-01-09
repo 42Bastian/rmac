@@ -327,7 +327,9 @@ int WriteObject(int fd)
 
 	// Write requested object file...
 	if ((obj_format == BSD) || ((obj_format == ALCYON) && (prg_flag == 0)))
-    {
+	{
+		ch_size = 0;
+
 		// Force BSD format (if it was ALCYON format)
 		obj_format = BSD;
 
@@ -425,6 +427,8 @@ int WriteObject(int fd)
 	}
 	else if (obj_format == ALCYON)
 	{
+		ch_size = 0;
+
 		if (verb_flag)
 		{
 			if (prg_flag)
@@ -435,6 +439,7 @@ int WriteObject(int fd)
 
 		// Assign index numbers to the symbols, get # of symbols (we assume
 		// that all symbols can potentially be extended, hence the x28)
+		// (To clarify: 28 bytes is the size of an extended symbol)
 		uint32_t symbolMaxSize = sy_assign(NULL, NULL) * 28;
 
 		// Alloc memory for header + text + data, symbol and relocation
@@ -807,13 +812,52 @@ for(int j=0; j<i; j++)
 		else
 			WriteP56();
 
-		// Write all the things |o/
+		// Write all the things \o/
 		unused = write(fd, buf, chptr - buf);
 
 		if (buf)
 			free(buf);
 	}
+	else if (obj_format == RAW)
+	{
+		if (!org68k_active)
+		{
+			return error("cannot output absolute binary without a starting address (.org or command line)");
+		}
 
+		// Alloc memory for text + data construction.
+		tds = sect[TEXT].sloc + sect[DATA].sloc;
+		buf = malloc(tds);
+		chptr = buf;
+
+		// Construct text and data segments; fixup relocatable longs;
+		// finally write the text + data
+
+		p = buf;
+		objImage = buf;					// Set global object image pointer
+
+		for (i = TEXT; i <= DATA; i++)
+		{
+			for (cp = sect[i].sfcode; cp != NULL; cp = cp->chnext)
+			{
+				memcpy(p, cp->chptr, cp->ch_size);
+				p += cp->ch_size;
+			}
+		}
+
+		if (MarkABSImage(buf, tds, sect[TEXT].sloc, TEXT) != OK)  // Do TEXT relocation table
+		{
+			return ERROR;
+		}
+		if (MarkABSImage(buf, tds, sect[TEXT].sloc, DATA) != OK) // Do DATA relocation table
+		{
+			return ERROR;
+		}
+
+		// Write out the header + text & data + symbol table (if any)
+		unused = write(fd, buf, tds);
+
+	}
 	return 0;
 }
 

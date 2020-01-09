@@ -509,6 +509,161 @@ printf("  rsize = $%X\n", rsize);
 
 
 //
+// Make mark image for RAW file
+//
+uint32_t MarkABSImage(uint8_t * mp, uint32_t siz, uint32_t tsize, int reqseg)
+{
+	uint16_t from = 0;			// Section fixups are currently FROM
+	uint32_t rsize = 0;			// Relocation table size (written to mp)
+	int validsegment = 0;		// We are not yet in a valid segment...
+
+	// Initialize relocation table point (for D_foo macros)
+	chptr = mp;
+
+	// Run through all the relocation mark chunks
+	for(MCHUNK * mch=firstmch; mch!=NULL; mch=mch->mcnext)
+	{
+		for (PTR p = mch->mcptr;;)
+		{
+			SYM * symbol = NULL;
+			uint16_t w = *p.wp++;	// Next mark entry
+
+			// If we hit the end of a chunk, go get the next one
+			if (w & MCHEND)
+				break;
+
+			// Get the rest of the mark record
+			uint32_t loc = *p.lp++;	// Mark location
+
+			// Maybe change "from" section
+			if (w & MCHFROM)
+			{
+				from = *p.wp++;
+
+				if (((reqseg == TEXT) && (from == TEXT))
+				|| ((reqseg == DATA) && (from == DATA)))
+					validsegment = 1;
+				else
+					validsegment = 0;
+			}
+
+			// Maybe includes a symbol
+			if (w & MSYMBOL)
+				symbol = *p.sy++;
+
+			if (!validsegment)
+				continue;
+
+			uint32_t rflag = 0x00000040;	// Absolute relocation
+
+			if (w & MPCREL)
+				rflag = 0x000000A0;			// PC-relative relocation
+
+			// This flag tells the linker to WORD swap the LONG when doing the
+			// relocation.
+			if (w & MMOVEI)
+				rflag |= 0x00000001;
+
+			// This tells the linker to do a WORD relocation (otherwise it
+			// defaults to doing a LONG, throwing things off for WORD sized
+			// fixups)
+			if (!(w & (MLONG | MQUAD)))
+				rflag |= 0x00000002;
+
+			// Tell the linker that the fixup is an OL QUAD data address
+			if (w & MQUAD)
+				rflag |= 0x00000004;
+
+			if (symbol != NULL)
+			{
+				return error("Unresolved symbol when outputting raw image");
+			}
+			else
+			{
+				w &= TDB;				// Set reloc flags to segment
+
+				switch (w)
+				{
+				case TEXT: rflag |= 0x00000400; break;
+				case DATA: rflag |= 0x00000600; break;
+				case BSS:  rflag |= 0x00000800; break;
+				}
+
+				// Fix relocation by adding in start of TEXT segment, since it's
+				// currently relative to the start of the DATA (or BSS) segment
+				uint8_t * dp = objImage + loc;
+				uint32_t olBitsSave = 0;
+
+				// Bump the start of the section if it's DATA (& not TEXT)
+				if (from == DATA)
+					dp += tsize;
+
+				uint32_t diff = (rflag & 0x02 ? GETBE16(dp, 0) : GETBE32(dp, 0));
+
+				if (w & (DATA | BSS))
+				{
+					// Special handling for OP (data addr) relocation...
+					if (rflag & 0x04)
+					{
+						olBitsSave = diff & 0x7FF;
+						diff = (diff & 0xFFFFF800) >> 8;
+					}
+
+					if (rflag & 0x01)
+						diff = WORDSWAP32(diff);
+
+					diff += sect[TEXT].sloc;
+
+					if (w == BSS)
+						diff += sect[DATA].sloc;
+				}
+				if ((rflag & 0x02) == 0)
+				{
+					diff += org68k_address;
+				}
+
+				if (rflag & 0x01)
+					diff = WORDSWAP32(diff);
+                
+				// Make sure to deposit the correct size payload
+				// Check comments in MarkBSDImage for more candid moments
+				if (rflag & 0x02)		// WORD relocation
+				{
+					SETBE16(dp, 0, diff);
+				}
+				else if (rflag & 0x04)	// OP data address relocation
+				{
+					// We do it this way because we might have an offset
+					// that is not a multiple of 8 and thus we need this in
+					// place to prevent a bad address at link time. :-P As
+					// a consequence of this, the highest address we can
+					// have here is $1FFFF8.
+					uint32_t diffsave = diff;
+					diff = ((diff & 0x001FFFFF) << 11) | olBitsSave;
+					SETBE32(dp, 0, diff);
+					// But we need those 3 bits, otherwise we can get in
+					// trouble with things like OL data that is in the cart
+					// space, and BOOM! So the 2nd phrase of the fixup (it
+					// will *always* have a 2nd phrase) has a few spare
+					// bits, we chuck them in there.
+					uint32_t p2 = GETBE32(dp, 8);
+					p2 &= 0x1FFFFFFF;
+					p2 |= (diffsave & 0x00E00000) << 8;
+					SETBE32(dp, 8, p2);
+				}
+				else					// LONG relocation
+				{
+					SETBE32(dp, 0, diff);
+				}
+			}
+		}
+	}
+
+	return OK;
+}
+
+
+//
 // Make relocation record for ELF .o file.
 // Returns the size of the relocation record.
 //

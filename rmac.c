@@ -55,7 +55,8 @@ char defname[] = "noname.o";	// Default output filename
 int optim_flags[OPT_COUNT];		// Specific optimisations on/off matrix
 int activecpu = CPU_68000;		// Active 68k CPU (68000 by default)
 int activefpu = FPU_NONE;		// Active FPU (none by default)
-
+int org68k_active = 0;			// .org switch for 68k (only with RAW output format)
+uint32_t org68k_address;		// .org for 68k
 
 //
 // Convert a string to uppercase
@@ -152,6 +153,7 @@ void DisplayHelp(void)
 		"                    p: P56 (use this for DSP56001 only)\n"
 		"                    l: LOD (use this for DSP56001 only)\n"
 		"                    x: com/exe/xex (Atari 800)\n"
+		"                    r: absolute address"
 		"  -i[path]          Directory to search for include files\n"
 		"  -l[filename]      Create an output listing file\n"
 		"  -l*[filename]     Create an output listing file without pagination\n"
@@ -174,10 +176,9 @@ void DisplayHelp(void)
 		"  ~o[value]         Turn a specific optimisation off\n"
 		"  +oall             Turn all optimisations on\n"
 		"  ~oall             Turn all optimisations off\n"
-		"  -p                Create an ST .prg (without symbols)\n"
-		"  -ps               Create an ST .prg (with symbols)\n"
-		"  -px               Create an ST .prg (with exsymbols)\n"
-		"                    Forces -fa\n"
+		"  -p                Create an ST .prg (without symbols). Forces -fa\n"
+		"  -ps               Create an ST .prg (with symbols). Forces -fa\n"
+		"  -px               Create an ST .prg (with exsymbols). Forces -fa\n"
 		"  -r[size]          Pad segments to boundary size specified\n"
 		"                    w: word (2 bytes, default alignment)\n"
 		"                    l: long (4 bytes)\n"
@@ -368,6 +369,10 @@ int Process(int argc, char ** argv)
 				case 'X':
 					obj_format = XEX;
 					break;
+                case 'r':           // -fr = Absolute address
+                case 'R':
+                    obj_format = RAW;
+                    break;
 				default:
 					printf("-f: unknown object format specified\n");
 					errcnt++;
