@@ -230,7 +230,7 @@ int GenerateRISCCode(int state)
 
 	uint64_t eval;				// Expression value
 	uint16_t eattr;				// Expression attributes
-	SYM * esym;					// External symbol involved in expr.
+	SYM * esym = NULL;			// External symbol involved in expr.
 	TOKEN r_expr[EXPRSIZE];		// Expression token list
 
 	// Get opcode parameter and type
