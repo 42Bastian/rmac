@@ -249,18 +249,14 @@ int d_6502()
 void m6502cg(int op)
 {
 	register int amode;		// (Parsed) addressing mode
-	register int i;
-	uint64_t eval;			// Expression value
-	WORD eattr;				// Expression attributes
-	int zpreq;				// 1, optimize instr to zero-page form
-	register char * p;		// (Temp) string usage
+	uint64_t eval = -1;		// Expression value
+	WORD eattr = 0;			// Expression attributes
+	int zpreq = 0;			// 1 = optimize instr to zero-page form
 	ch_size = 0;			// Reset chunk size on every instruction
 
 	//
 	// Parse 6502 addressing mode
 	//
-	zpreq = 0;
-
 	switch (tok[0])
 	{
 	case EOL:
@@ -271,8 +267,8 @@ void m6502cg(int op)
 		if (tok[1] != EOL)
 			goto badmode;
 
-		amode = A65_IMPL;
 		tok++;
+		amode = A65_IMPL;
 		break;
 
 	case '#':
@@ -281,28 +277,19 @@ void m6502cg(int op)
 		if (*tok == '>')
 		{
 			tok++;
-
-			if (expr(exprbuf, &eval, &eattr, NULL) < 0)
-				return;
-
 			amode = A65_IMMEDH;
-			break;
 		}
 		else if (*tok == '<')
 		{
 			tok++;
-
-			if (expr(exprbuf, &eval, &eattr, NULL) < 0)
-				return;
-
 			amode = A65_IMMEDL;
-			break;
 		}
+		else
+			amode = A65_IMMED;
 
 		if (expr(exprbuf, &eval, &eattr, NULL) < 0)
 			return;
 
-		amode = A65_IMMED;
 		break;
 
 	case '(':
@@ -318,53 +305,21 @@ void m6502cg(int op)
 			{
 				// (foo),y
 				tok++;
-#if 0
-				p = string[tok[1]];
-
-				// Sleazo tolower() -----------------vvvvvvvvvvv
-				if (*tok != SYMBOL || p[1] != EOS || (*p | 0x20) != 'y')
-					goto badmode;
-
-				tok += 2;
 				amode = A65_INDY;
-#else
-				if (tok[0] == KW_Y)
-					amode = A65_INDY;
 
-				if (tok[1] != EOL)
+				if (tok[0] != KW_Y)
 					goto badmode;
 
 				tok++;
-#endif
 			}
 			else
 				amode = A65_IND;
 		}
-		else if (*tok == ',')
+		else if ((tok[0] == ',') && (tok[1] == KW_X) && (tok[2] == ')'))
 		{
 			// (foo,x)
-			tok++;
-#if 0
-			p = string[tok[1]];
-
-			// Sleazo tolower() -----------------vvvvvvvvvvv
-			if (*tok != SYMBOL || p[1] != EOS || (*p | 0x20) != 'x')
-				goto badmode;
-
-			tok += 2;
-			if (*tok++ != ')')
-				goto badmode;
-
+			tok += 3;
 			amode = A65_INDX;
-#else
-			if (tok[0] == KW_X)
-				amode = A65_INDX;
-
-			if ((tok[1] != ')') || (tok[2] != EOL))
-				goto badmode;
-
-			tok += 2;
-#endif
 		}
 		else
 			goto badmode;
@@ -382,23 +337,7 @@ void m6502cg(int op)
 		if (*tok == '(')
 		{
 			tok++;
-#if 0
-			p = string[tok[1]];
 
-			if (*tok != SYMBOL || p[1] != EOS || tok[2] != ')' || tok[3] != EOL)
-				goto badmode;
-
-			i = (*p | 0x20);	// Sleazo tolower()
-
-			if (i == 'x')
-				amode = A65_INDX;
-			else if (i == 'y')
-				amode = A65_INDY;
-			else
-				goto badmode;
-
-			tok += 3;		// Past SYMBOL <string> ')' EOL
-#else
 			if ((tok[1] != ')') || (tok[2] != EOL))
 				goto badmode;
 
@@ -410,7 +349,6 @@ void m6502cg(int op)
 				goto badmode;
 
 			tok += 2;
-#endif
 			zpreq = 1;		// Request zeropage optimization
 		}
 		else if (*tok == EOL)
@@ -421,88 +359,30 @@ void m6502cg(int op)
 		break;
 
 	default:
-		//
-		// Short-circuit
-		//   x,foo
-		//   y,foo
-		//
-		p = string[tok[1]];
-		// ggn: the following code is effectively disabled as it would make
-		//      single letter labels not work correctly (would not identify the
-		//      label properly). And from what I understand it's something to
-		//      keep compatibility with the coinop assembler which is probably
-		//      something we don't care about much :D
-#if 0
-		if (*tok == SYMBOL && p[1] == EOS && tok[2] == ',')
-		{
-			tok += 3;		// Past: SYMBOL <string> ','
-			i = (*p | 0x20);
-
-			if (i == 'x')
-				amode = A65_ABSX;
-			else if (i == 'y')
-				amode = A65_ABSY;
-			else
-				goto not_coinop;
-
-			if (expr(exprbuf, &eval, &eattr, NULL) < 0)
-				return;
-
-			if (*tok != EOL)
-				goto badmode;
-
-			zpreq = 1;
-			break;
-		}
-
-not_coinop:
-#endif
+		//   <expr>
+		//   <expr>,x
+		//   <expr>,y
 		if (expr(exprbuf, &eval, &eattr, NULL) < 0)
 			return;
 
-		zpreq = 1;
+		zpreq = 1;		// Request zeropage optimization
 
-		if (*tok == EOL)
+		if (tok[0] == EOL)
 			amode = A65_ABS;
-		else if (*tok == ',')
+		else if (tok[0] == ',')
 		{
 			tok++;
-#if 0
-			p = string[tok[1]];
 
-			if (*tok != SYMBOL || p[1] != EOS)
-				goto badmode;
-
-			tok += 2;
-
-			//
-			// Check for X or Y index register;
-			// the OR with 0x20 is a sleazo conversion
-			// to lower-case that actually works.
-			//
-			i = *p | 0x20;	// Oooh, this is slimey (but fast!)
-
-			if (i == 'x')
-				amode = A65_ABSX;
-			else if (i == 'y')
-				amode = A65_ABSY;
-			else
-				goto badmode;
-#else
 			if (tok[0] == KW_X)
 			{
-				amode = A65_ABSX;
 				tok++;
+				amode = A65_ABSX;
 			}
 			else if (tok[0] == KW_Y)
 			{
-				amode = A65_ABSY;
 				tok++;
+				amode = A65_ABSY;
 			}
-
-			if (tok[0] != EOL)
-				goto badmode;
-#endif
 		}
 		else
 			goto badmode;
@@ -519,17 +399,17 @@ badmode:
 	//   o  ZPX or ZPY is illegal, or
 	//   o  expr is zeropage && zeropageRequest && expression is defined
 	//
-	if (inf[op][amode] == ILLEGAL	// If current op is illegal,
-		|| (eval < 0x100			// or expr must be zero-page
-		&& zpreq != 0				// amode must request zero-page opt.
-		&& (eattr & DEFINED)))		// and the expression must be defined
+	if ((inf[op][amode] == ILLEGAL)	// If current op is illegal OR
+		|| (zpreq					// amode requested a zero-page optimize
+			&& (eval < 0x100)		// and expr is zero-page
+			&& (eattr & DEFINED)))	// and the expression is defined
 	{
-		i = abs2zp[amode];			// i = zero-page translation of amode
+		int i = abs2zp[amode];		// Get zero-page translation of amode
 #ifdef DO_DEBUG
 		DEBUG printf(" OPT: op=%d amode=%d i=%d inf[op][i]=%d\n",
 					 op, amode, i, inf[op][i]);
 #endif
-		if (i >= 0 && (inf[op][i] & 0xFF) != ILLEGAL) // Use it if it's legal
+		if (i >= 0 && (inf[op][i] & 0xFF) != ILLEGAL) // & use it if it's legal
 			amode = i;
 	}
 
@@ -635,8 +515,9 @@ badmode:
 		//
 		default:
 		case ILLEGAL:
-			for(i=0; i<3; i++)
-				D_byte(NOP);
+			D_byte(NOP);
+			D_byte(NOP);
+			D_byte(NOP);
 
 			error("illegal 6502 addressing mode");
 	}
