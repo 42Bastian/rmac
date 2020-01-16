@@ -845,8 +845,13 @@ When checking to see if it's already been equated, issue a warning.
 	if (amode(1) < 0)				// Parse 0, 1 or 2 addr modes
 		goto loop;
 
-	if (*tok != EOL)
-		error(extra_stuff);
+	// Check that we're at EOL
+	// The only exception is ptestr/ptestw instructions
+	// that have 3 or 4 operands and are not handled by
+	// amode(). (yes, we're taking a performance hit here sadly)
+	if (m->mnfunc != m_ptestr && m->mnfunc != m_ptestw)
+		if (*tok != EOL)
+			error(extra_stuff);
 
 	amsk0 = amsktab[am0];
 	amsk1 = amsktab[am1];

@@ -111,7 +111,8 @@ nofpu   65
 .opt    66
 opt     66
 .objproc	67
-
+.dsm	68
+dsm	68
 .if		500
 if		500
 .else	501

@@ -85,7 +85,9 @@ int m_pflushan(WORD inst, WORD siz);
 int m_pload(WORD inst, WORD siz, WORD extension);
 int m_pmove(WORD inst, WORD siz);
 int m_pmovefd(WORD inst, WORD siz);
-int m_ptest(WORD inst, WORD siz);
+int m_ptest(WORD inst, WORD siz, WORD extension);
+int m_ptestr(WORD inste, WORD siz);
+int m_ptestw(WORD inste, WORD siz);
 int m_ptrapcc(WORD inst, WORD siz);
 int m_ploadr(WORD inst, WORD siz);
 int m_ploadw(WORD inst, WORD siz);
@@ -2400,6 +2402,9 @@ int m_pload(WORD inst, WORD siz, WORD extension)
 		if ((a0exattr & DEFINED) == 0)
 			return error("constant value must be defined");
 
+		if (a0exval>7)
+		return error("constant value must be between 0 and 7");
+
 		inst = (2 << 3) | (uint16_t)a0exval;
 		break;
 	}
@@ -2563,18 +2568,101 @@ int m_ptrapcc(WORD inst, WORD siz)
 
 
 //
-// ptestr, ptestw (68030)
+// ptestr, ptestw (68030, 68040)
+// TODO See comment on m_pmove about 68851 support
+// TODO quite a good chunk of the 030 code is copied from m_pload, perhaps merge these somehow?
 //
-int m_ptest(WORD inst, WORD siz)
+int m_ptest(WORD inst, WORD siz, WORD extension)
 {
-	CHECKNO30;
+	uint64_t eval;
+
+	if (activecpu != CPU_68030 && activecpu != CPU_68040)
+		return error(unsupport);
 
 	if (activecpu == CPU_68030)
-		return error("Not implemented yet.");
-	else if (activecpu == CPU_68040)
+	{
+		inst |= am1;
+		D_word(inst);
+
+		switch (am0)
+		{
+		case CREG:
+			if (a0reg == KW_SFC - KW_SFC)
+				extension |= 0;
+			else if (a0reg == KW_DFC - KW_SFC)
+				extension |= 1;
+			else
+				return error("illegal control register specified");
+			break;
+		case DREG:
+			extension |= (1 << 3) | a0reg;
+			break;
+		case IMMED:
+			if ((a0exattr & DEFINED) == 0)
+				return error("constant value must be defined");
+
+			if (a0exval > 7)
+				return error("constant value must be between 0 and 7");
+
+			extension |= (2 << 3) | (uint16_t)a0exval;
+			break;
+		}
+
+		// Operand 3 must be an immediate
+		CHECK_COMMA
+
+		if (*tok++ != '#')
+			return error("ptest level must be immediate");
+
+		// Let's be a bit inflexible here and demand that this
+		// is fully defined at this stage. Otherwise we'd have
+		// to arrange for a bitfield fixup, which would mean
+		// polluting the bitfields and codebase with special
+		// cases that might most likely never be used.
+		// So if anyone gets bit by this: sorry for being a butt!
+		if (abs_expr(&eval) != OK)
+			return OK;      // We're returning OK because error() has already been called and error count has been increased
+
+		if (eval > 7)
+			return error("ptest level must be between 0 and 7");
+
+		extension |= eval << 10;
+
+		// Operand 4 is optional and must be an address register
+
+		if (*tok != EOL)
+		{
+			CHECK_COMMA
+
+			if ((*tok >= KW_A0) && (*tok <= KW_A7))
+			{
+				extension |= (1 << 8) | ((*tok++ & 7) << 4);
+			}
+			else
+			{
+				return error("fourth parameter must be an address register");
+			}
+		}
+
+		ErrorIfNotAtEOL();
+
+		D_word(extension);
+		return OK;
+	}
+	else
 		return error("Not implemented yet.");
 
 	return ERROR;
+}
+
+int m_ptestr(WORD inst, WORD siz)
+{
+	return m_ptest(inst, siz, (1 << 15) | (0 << 9));
+}
+
+int m_ptestw(WORD inst, WORD siz)
+{
+	return m_ptest(inst, siz, (1 << 15) | (1 << 9));
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3155,14 +3243,7 @@ int m_fsmove(WORD inst, WORD siz)
 	if (!(activefpu & (FPU_68040 | FPU_68060)))
 		return error("Unsupported in current FPU");
 
-	return error("Not implemented yet.");
-
-#if 0
-	if (activefpu == FPU_68040)
-		return gen_fpu(inst, siz, B8(01100100), FPU_P_EMUL);
-	else
-		return error("Unsupported in current FPU");
-#endif
+	return gen_fpu(inst, siz, B8(01100100), FPU_FPSP);
 }
 
 
@@ -3171,14 +3252,7 @@ int m_fdmove(WORD inst, WORD siz)
 	if (!(activefpu & (FPU_68040 | FPU_68060)))
 		return error("Unsupported in current FPU");
 
-	return error("Not implemented yet.");
-
-#if 0
-	if (activefpu == FPU_68040)
-		return gen_fpu(inst, siz, B8(01100100), FPU_P_EMUL);
-	else
-		return error("Unsupported in current FPU");
-#endif
+	return gen_fpu(inst, siz, B8(01100100), FPU_FPSP);
 }
 
 

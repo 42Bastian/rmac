@@ -12,6 +12,10 @@
 #include "rmac.h"
 #include "token.h"
 
+// Imported functions
+int m_ptestr(WORD inste, WORD siz);
+int m_ptestw(WORD inste, WORD siz);
+
 // Exported variables
 extern const char comma_error[];
 extern const char locgl_error[];

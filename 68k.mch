@@ -710,8 +710,8 @@ psgs    BN   C_MOVES         M_AM_NONE       %111100000101101    m_fscc
 pscs    BN   C_MOVES         M_AM_NONE       %111100000101110    m_fscc
 pscc    BN   C_MOVES         M_AM_NONE       %111100000101111    m_fscc
 
-ptestr N     M_FC            M_IMMED         %1111000000eeeeee   m_ptest
-ptestw N     M_FC            M_IMMED         %1111000000eeeeee   m_ptest
+ptestr N     M_FC            C_PMOVE         %1111000000eeeeee   m_ptestr
+ptestw N     M_FC            C_PMOVE         %1111000000eeeeee   m_ptestw
 
 ptrapbs WLN  M_IMMED|M_AM_NONE         M_AM_NONE       %1111000001100000   m_ptrapcc
 ptrapbc WLN  M_IMMED|M_AM_NONE         M_AM_NONE       %1111000001100001   m_ptrapcc
