@@ -326,6 +326,10 @@ int eaNgen(WORD siz)
 	case ABSL:
 		if (w) // Defined
 		{
+			if (optim_pc)
+				if (aNexattr&(DEFINED | REFERENCED | EQUATED) == DEFINED | REFERENCED)
+					return error("relocation not allowed");
+
 			if (tdb)
 				MarkRelocatable(cursect, sloc, tdb, MLONG, NULL);
 

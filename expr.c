@@ -180,7 +180,7 @@ int expr1(void)
 
 			if ((fd = open(string[*tok], _OPEN_INC)) < 0)
 			{
-				for(i=0; nthpath("RMACPATH", i, buf1)!= 0; i++)
+				for(i=0; nthpath("RMACPATH", i, buf1)!=0; i++)
 				{
 					fd = strlen(buf1);
 

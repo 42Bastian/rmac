@@ -53,6 +53,7 @@ char * cmdlnexec;				// Executable name, pointer to ARGV[0]
 char * searchpath;				// Search path for include files
 char defname[] = "noname.o";	// Default output filename
 int optim_flags[OPT_COUNT];		// Specific optimisations on/off matrix
+int optim_pc = 0;				// Enforce PC relative
 int activecpu = CPU_68000;		// Active 68k CPU (68000 by default)
 int activefpu = FPU_NONE;		// Active FPU (none by default)
 int org68k_active = 0;			// .org switch for 68k (only with RAW output format)
@@ -173,6 +174,7 @@ void DisplayHelp(void)
 		"                    o7: clr.l Dx to moveq #0,Dx                 (off)\n"
 		"                    o8: adda.w/l #x,Dy to addq.w/l #x,Dy        (off)\n"
 		"                    o9: adda.w/l #x,Dy to lea x(Dy),Dy          (off)\n"
+		"                    op: Enforce PC relative                     (off)\n"
 		"  ~o[value]         Turn a specific optimisation off\n"
 		"  +oall             Turn all optimisations on\n"
 		"  ~oall             Turn all optimisations off\n"
@@ -232,6 +234,12 @@ int ParseOptimization(char * optstring)
 	}
 	else if (optstring[1] == 'o' || optstring[1] == 'O') // Turn on specific optimisation
 	{
+		if (optstring[2] == 'p' || optstring[2] == 'P')
+		{
+			optim_pc = 1;
+			return OK;
+		}
+
 		int opt_no = atoi(&optstring[2]);
 
 		if ((opt_no >= 0) && (opt_no < OPT_COUNT))

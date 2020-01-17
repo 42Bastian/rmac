@@ -316,6 +316,7 @@ extern int legacy_flag;
 extern int prg_flag;	// 1 = write ".PRG" relocatable executable
 extern LONG PRGFLAGS;
 extern int optim_flags[OPT_COUNT];
+extern int optim_pc;
 extern int activecpu;
 extern int activefpu;
 extern uint32_t org68k_address;

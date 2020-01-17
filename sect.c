@@ -415,12 +415,30 @@ int ResolveFixups(int sno)
 			// evexpr presumably issues the errors/warnings here
 			if (evexpr(fup->expr, &eval, &eattr, &esym) != OK)
 				continue;
+
+			if (optim_pc)
+				if (eattr & REFERENCED)
+					if (eattr & DEFINED)
+						if (!(eattr & EQUATED))
+						{
+							error("relocation not allowed");
+							continue;
+						}
 		}
 		// Simple symbol
 		else
 		{
 			SYM * sy = fup->symbol;
 			eattr = sy->sattr;
+
+			if (optim_pc)
+				if (eattr & REFERENCED)
+					if (eattr & DEFINED)
+						if (!(eattr & EQUATED))
+						{
+							error("relocation not allowed");
+							continue;
+						}
 
 			if (eattr & DEFINED)
 				eval = sy->svalue;

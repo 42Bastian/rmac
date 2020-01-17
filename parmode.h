@@ -81,7 +81,7 @@
 		}
 		else if ((*tok >= KW_D0) && (*tok <= KW_D7))
 		{
-			//Since index register isn't used here, store register number in this field
+			// Since index register isn't used here, store register number in this field
 			AnIXREG = *tok++ & 7;                                // (Dn)
 
 			if (*tok == ')')
@@ -1168,6 +1168,14 @@ CHK_FOR_DISPn:
 		{
 			// expr[.L]
 			AMn = ABSL;
+
+			// When PC relative is enforced, check for any symbols that aren't 
+			// EQU'd, in this case it's an illegal mode
+			if (optim_pc)
+				if (AnEXATTR & REFERENCED)
+					if (AnEXATTR & DEFINED)
+						if (!(AnEXATTR & EQUATED))
+							return error("relocation not allowed");
 
 			// .L is forced here
 			if (*tok == DOTL)
