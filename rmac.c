@@ -50,7 +50,7 @@ int endian;						// Host processor endianess (0 = LE, 1 = BE)
 char * objfname;				// Object filename pointer
 char * firstfname;				// First source filename
 char * cmdlnexec;				// Executable name, pointer to ARGV[0]
-char * searchpath;				// Search path for include files
+char * searchpath = NULL;		// Search path for include files
 char defname[] = "noname.o";	// Default output filename
 int optim_flags[OPT_COUNT];		// Specific optimisations on/off matrix
 int optim_pc = 0;				// Enforce PC relative
@@ -154,7 +154,7 @@ void DisplayHelp(void)
 		"                    p: P56 (use this for DSP56001 only)\n"
 		"                    l: LOD (use this for DSP56001 only)\n"
 		"                    x: com/exe/xex (Atari 800)\n"
-		"                    r: absolute address"
+		"                    r: absolute address\n"
 		"  -i[path]          Directory to search for include files\n"
 		"  -l[filename]      Create an output listing file\n"
 		"  -l*[filename]     Create an output listing file without pagination\n"
@@ -393,8 +393,26 @@ int Process(int argc, char ** argv)
 				break;
 			case 'i':				// Set directory search path
 			case 'I':
+			{
 				searchpath = argv[argno] + 2;
+
+				// Check to see if include paths actually exist
+				if (strlen(searchpath) > 0)
+				{
+					DIR * test = opendir(searchpath);
+
+					if (test == NULL)
+					{
+						printf("Invalid include path: %s\n", searchpath);
+						errcnt++;
+						return errcnt;
+					}
+
+					closedir(test);
+				}
+
 				break;
+			}
 			case 'l':				// Produce listing file
 			case 'L':
 				if (*(argv[argno] + 2) == '*')

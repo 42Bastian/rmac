@@ -153,6 +153,7 @@
 // Non-target specific stuff
 //
 #include <inttypes.h>
+#include <dirent.h>
 #include "symbol.h"
 
 #define BYTE         uint8_t
