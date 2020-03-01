@@ -173,14 +173,16 @@ uint8_t * AddBSDSymEntry(uint8_t * buf, SYM * sym, int globflag)
 	{
 		z = 0x02000000;					// Set equated flag
 	}
-	else
+
+	// If a symbol is both EQUd and flagged as TBD then we let
+	// the later take precedence. Otherwise the linker will not even
+	// bother trying to relocate the address during link time
+
+	switch (w1 & TDB)
 	{
-		switch (w1 & TDB)
-		{
-		case TEXT: z = 0x04000000; break;	// Set TEXT segment flag
-		case DATA: z = 0x06000000; break;	// Set DATA segment flag
-		case BSS : z = 0x08000000; break;	// Set BSS segment flag
-		}
+	case TEXT: z = 0x04000000; break;	// Set TEXT segment flag
+	case DATA: z = 0x06000000; break;	// Set DATA segment flag
+	case BSS : z = 0x08000000; break;	// Set BSS segment flag
 	}
 
 	if (globflag)

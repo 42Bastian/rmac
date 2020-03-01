@@ -25,7 +25,7 @@ if not exist %FILE2% GOTO BUILD
 for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
 if %NEWEST%==%FILE1% GOTO BUILD
 
-SET FILE1=dsp56k.tab
+SET FILE1=dsp56k.mch
 SET FILE2=dsp56ktab.h
 if not exist %FILE2% GOTO BUILD
 for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
