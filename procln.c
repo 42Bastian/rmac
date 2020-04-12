@@ -486,6 +486,11 @@ When checking to see if it's already been equated, issue a warning.
 						registerbank = BANK_0;
 					else if (*(uint64_t *)tok == 1)
 						registerbank = BANK_1;
+
+					// Advance half-way through the 64-bit const.
+					// The code below, expecting a regular token,
+					// will advance past the second half.
+					tok++;
 				}
 
 #ifdef DEBODGE_REGBANK
