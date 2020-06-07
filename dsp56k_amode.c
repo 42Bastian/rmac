@@ -21,7 +21,7 @@
 #include "mntab.h"
 
 // Address-mode information
-int nmodes;						// Number of addr'ing modes found
+//int nmodes;						// Number of addr'ing modes found
 int dsp_am0;					// Addressing mode
 int dsp_a0reg;					// Register
 TOKEN dsp_a0expr[EXPRSIZE];		// Expression
@@ -61,6 +61,9 @@ TOKEN dspaaEXPR[EXPRSIZE];		// Expression
 uint64_t dspaaEXVAL;			// Expression's value
 WORD  dspaaEXATTR;				// Expression's attribute
 SYM * dspaaESYM;				// External symbol involved in expr
+
+LONG dsp_a0perspace;                      // Peripheral space (X, Y - used in movep)
+LONG dsp_a1perspace;                      // Peripheral space (X, Y - used in movep)
 
 int dsp_k;                          // Multiplications sign
 

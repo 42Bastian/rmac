@@ -95,41 +95,41 @@ MNTABDSP {
 };
 
 // Addressing mode variables, output of dsp_amode()
-int dsp_am0;					// Addressing mode
-int dsp_a0reg;					// Register
-int dsp_am1;					// Addressing mode
-int dsp_a1reg;					// Register
-int dsp_am2;					// Addressing mode
-int dsp_a2reg;					// Register
-int dsp_am3;					// Addressing mode
-int dsp_a3reg;					// Register
+extern int dsp_am0;					// Addressing mode
+extern int dsp_a0reg;					// Register
+extern int dsp_am1;					// Addressing mode
+extern int dsp_a1reg;					// Register
+extern int dsp_am2;					// Addressing mode
+extern int dsp_a2reg;					// Register
+extern int dsp_am3;					// Addressing mode
+extern int dsp_a3reg;					// Register
 
-TOKEN dsp_a0expr[EXPRSIZE];		// Expression
-uint64_t dsp_a0exval;			// Expression's value
-WORD dsp_a0exattr;				// Expression's attribute
-SYM * dsp_a0esym;				// External symbol involved in expr
-LONG dsp_a0memspace;			// Addressing mode's memory space (P, X, Y)
-LONG dsp_a0perspace;			// Peripheral space (X, Y - used in movep)
-TOKEN dsp_a1expr[EXPRSIZE];		// Expression
-uint64_t dsp_a1exval;			// Expression's value
-WORD dsp_a1exattr;				// Expression's attribute
-SYM * dsp_a1esym;				// External symbol involved in expr
-LONG dsp_a1memspace;			// Addressing mode's memory space (P, X, Y)
-LONG dsp_a1perspace;			// Peripheral space (X, Y - used in movep)
-TOKEN dsp_a2expr[EXPRSIZE];		// Expression
-uint64_t dsp_a2exval;			// Expression's value
-WORD dsp_a2exattr;				// Expression's attribute
-SYM * dsp_a2esym;				// External symbol involved in expr
-TOKEN dsp_a3expr[EXPRSIZE];		// Expression
-uint64_t dsp_a3exval;			// Expression's value
-WORD dsp_a3exattr;				// Expression's attribute
-SYM * dsp_a3esym;				// External symbol involved in expr
-int dsp_k;						// Multiplications sign
-TOKEN dspImmedEXPR[EXPRSIZE];	// Expression
-uint64_t dspImmedEXVAL;			// Expression's value
-WORD  dspImmedEXATTR;			// Expression's attribute
-SYM * dspImmedESYM;				// External symbol involved in expr
-int  deposit_extra_ea;			// Optional effective address extension
+extern TOKEN dsp_a0expr[EXPRSIZE];		// Expression
+extern uint64_t dsp_a0exval;			// Expression's value
+extern WORD dsp_a0exattr;				// Expression's attribute
+extern SYM * dsp_a0esym;				// External symbol involved in expr
+extern LONG dsp_a0memspace;			// Addressing mode's memory space (P, X, Y)
+extern LONG dsp_a0perspace;			// Peripheral space (X, Y - used in movep)
+extern TOKEN dsp_a1expr[EXPRSIZE];		// Expression
+extern uint64_t dsp_a1exval;			// Expression's value
+extern WORD dsp_a1exattr;				// Expression's attribute
+extern SYM * dsp_a1esym;				// External symbol involved in expr
+extern LONG dsp_a1memspace;			// Addressing mode's memory space (P, X, Y)
+extern LONG dsp_a1perspace;			// Peripheral space (X, Y - used in movep)
+extern TOKEN dsp_a2expr[EXPRSIZE];		// Expression
+extern uint64_t dsp_a2exval;			// Expression's value
+extern WORD dsp_a2exattr;				// Expression's attribute
+extern SYM * dsp_a2esym;				// External symbol involved in expr
+extern TOKEN dsp_a3expr[EXPRSIZE];		// Expression
+extern uint64_t dsp_a3exval;			// Expression's value
+extern WORD dsp_a3exattr;				// Expression's attribute
+extern SYM * dsp_a3esym;				// External symbol involved in expr
+extern int dsp_k;						// Multiplications sign
+extern TOKEN dspImmedEXPR[EXPRSIZE];	// Expression
+extern uint64_t dspImmedEXVAL;			// Expression's value
+extern WORD  dspImmedEXATTR;			// Expression's attribute
+extern SYM * dspImmedESYM;				// External symbol involved in expr
+extern int deposit_extra_ea;			// Optional effective address extension
 
 
 // Extra ea deposit modes
