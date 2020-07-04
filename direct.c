@@ -559,7 +559,7 @@ int d_noclear(void)
 
 
 //
-// Include binary file
+// Include binary file (can add addition size & position params, comma separated)
 //
 int d_incbin(void)
 {
@@ -586,6 +586,7 @@ int d_incbin(void)
 	// failed) try list of include files passed in the enviroment string or by
 	// the "-d" option.
 	TOKEN filename = tok[1];
+
 	if ((fd = open(string[filename], _OPEN_INC)) < 0)
 	{
 		for(i=0; nthpath("RMACPATH", i, buf1)!=0; i++)
@@ -608,6 +609,7 @@ int d_incbin(void)
 allright:
 
 	tok += 2;
+
 	if (*tok != EOL)
 	{
 		// Check size parameter (can be omitted)
@@ -637,6 +639,7 @@ allright:
 						close(fd);
 						return ERROR;
 					}
+
 					lseek(fd, pos, SEEK_SET);
 					size -= pos;
 				}
@@ -658,6 +661,7 @@ allright:
 		size = lseek(fd, 0L, SEEK_END);
 		pos = lseek(fd, 0L, SEEK_SET);
 	}
+
 	chcheck(size);
 
 	DEBUG { printf("INCBIN: File '%s' is %li bytes.\n", string[filename], size); }

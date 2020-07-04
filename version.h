@@ -15,7 +15,7 @@
 
 #define MAJOR   2		// Major version number
 #define MINOR   0		// Minor version number
-#define PATCH   15		// Patch release number
+#define PATCH   16		// Patch release number
 
 #endif // __VERSION_H__
 
