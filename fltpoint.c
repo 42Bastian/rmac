@@ -189,7 +189,8 @@ uint32_t DoubleToDSPFloat(double d)
 		return 0x800000;
 	}
 
-	return trunc(round(ldexp(d, 23)));
+	// The casts are here because some compilers do weird shit.  See bug #149.
+	return (uint32_t)((int32_t)trunc(round(ldexp(d, 23))));
 }
 
 
