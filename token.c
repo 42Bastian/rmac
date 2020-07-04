@@ -792,7 +792,7 @@ int fpop(void)
 	if (numUnmatched > 0)
 		warn("missing %d .endif(s)", numUnmatched);
 
-	tok = inobj->in_otok;	// Restore tok and otok
+	tok = inobj->in_otok;	// Restore tok and etok
 	etok = inobj->in_etok;
 
 	switch (inobj->in_type)
@@ -1044,7 +1044,13 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 	// macro-type blocks, since it is expensive to unconditionally copy every
 	// line.
 	if (lnsave)
+	{
+		// Sanity check
+		if (strlen(ln) > LNSIZ)
+			return error("line too long (%d, max %d)", strlen(ln), LNSIZ);
+
 		strcpy(lnbuf, ln);
+	}
 
 	// General housekeeping
 	tok = tokeol;			// Set "tok" to EOL in case of error
@@ -1075,6 +1081,12 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 	//  o  handle multiple-character tokens (constants, strings, etc.).
 	for(; *ln!=EOS;)
 	{
+		// Check to see if there's enough space in the token buffer
+		if (tk.cp >= ((uint8_t *)(&tokbuf[TOKBUFSIZE])))
+		{
+			return error("token buffer overrun");
+		}
+
 		// Skip whitespace, handle EOL
 		while (chrtab[*ln] & WHITE)
 			ln++;
