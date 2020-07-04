@@ -25,7 +25,7 @@ CC = $(CROSS)gcc
 HOSTCC = gcc
 
 #CFLAGS = -std=$(STD) -D_DEFAULT_SOURCE -g -D__GCCUNIX__ -I. -O2 -MMD
-CFLAGS = -std=$(STD) -D_DEFAULT_SOURCE -g -D__GCCUNIX__ -I. -O2
+CFLAGS = -std=$(STD) -D_DEFAULT_SOURCE -g -D__GCCUNIX__ -I. -O2 -fcommon
 
 OBJS = 6502.o amode.o debug.o direct.o dsp56k.o dsp56k_amode.o dsp56k_mach.o eagen.o error.o expr.o fltpoint.o listing.o mach.o macro.o mark.o object.o op.o procln.o riscasm.o rmac.o sect.o symbol.o token.o
 
