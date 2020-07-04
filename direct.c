@@ -565,7 +565,7 @@ int d_incbin(void)
 {
 	int fd;
 	int bytes = 0;
-	long pos, size, bytesRead;
+	uint64_t pos, size, bytesRead;
 	char buf1[256];
 	int i;
 
@@ -585,7 +585,8 @@ int d_incbin(void)
 	// Attempt to open the include file in the current directory, then (if that
 	// failed) try list of include files passed in the enviroment string or by
 	// the "-d" option.
-	if ((fd = open(string[tok[1]], _OPEN_INC)) < 0)
+	TOKEN filename = tok[1];
+	if ((fd = open(string[filename], _OPEN_INC)) < 0)
 	{
 		for(i=0; nthpath("RMACPATH", i, buf1)!=0; i++)
 		{
@@ -595,29 +596,78 @@ int d_incbin(void)
 			if (fd > 0 && buf1[fd - 1] != SLASHCHAR)
 				strcat(buf1, SLASHSTRING);
 
-			strcat(buf1, string[tok[1]]);
+			strcat(buf1, string[filename]);
 
 			if ((fd = open(buf1, _OPEN_INC)) >= 0)
 				goto allright;
 		}
 
-		return error("cannot open: \"%s\"", string[tok[1]]);
+		return error("cannot open: \"%s\"", string[filename]);
 	}
 
 allright:
 
-	size = lseek(fd, 0L, SEEK_END);
-	pos = lseek(fd, 0L, SEEK_SET);
+	tok += 2;
+	if (*tok != EOL)
+	{
+		// Check size parameter (can be omitted)
+		if (*tok++ == ',')
+		{
+			if (*tok != ',')
+			{
+				if (abs_expr(&size) != OK)
+				{
+					close(fd);
+					return ERROR;
+				}
+			}
+			else
+				size = lseek(fd, 0L, SEEK_END);
+		}
+
+		// Check offset parameter (can be omitted)
+		if (*tok != EOL)
+		{
+			if (*tok++ == ',')
+			{
+				if (*tok != EOL)
+				{
+					if (abs_expr(&pos) != OK)
+					{
+						close(fd);
+						return ERROR;
+					}
+					lseek(fd, pos, SEEK_SET);
+					size -= pos;
+				}
+				else
+				{
+					// offset parameter omitted, so it's 0
+					pos = lseek(fd, 0L, SEEK_SET);
+				}
+			}
+			else
+				return(comma_error);
+		}
+		else
+			pos = lseek(fd, 0L, SEEK_SET);
+	}
+	else
+	{
+		//size_pos_fallthrough:
+		size = lseek(fd, 0L, SEEK_END);
+		pos = lseek(fd, 0L, SEEK_SET);
+	}
 	chcheck(size);
 
-	DEBUG { printf("INCBIN: File '%s' is %li bytes.\n", string[tok[1]], size); }
+	DEBUG { printf("INCBIN: File '%s' is %li bytes.\n", string[filename], size); }
 
 	char * fileBuffer = (char *)malloc(size);
 	bytesRead = read(fd, fileBuffer, size);
 
 	if (bytesRead != size)
 	{
-		error("was only able to read %li bytes from binary file (%s, %li bytes)", bytesRead, string[tok[1]], size);
+		error("was only able to read %li bytes from binary file (%s, %li bytes)", bytesRead, string[filename], size);
 		return ERROR;
 	}
 
