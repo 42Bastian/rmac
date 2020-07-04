@@ -650,14 +650,14 @@ allright:
 				}
 			}
 			else
-				return(comma_error);
+				return error(comma_error);
 		}
 		else
 			pos = lseek(fd, 0L, SEEK_SET);
 	}
 	else
 	{
-		//size_pos_fallthrough:
+		// size & pos not given, so assume offset of 0 and all of the binary
 		size = lseek(fd, 0L, SEEK_END);
 		pos = lseek(fd, 0L, SEEK_SET);
 	}
