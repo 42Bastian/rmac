@@ -157,11 +157,11 @@ Switch               Description
 +o\ *0-9*            Enable specific optimisation
 ~o\ *0-9*            Disable specific optimisation
 
-                      `0: Absolute long adddresses to word`
+                      `0: Absolute long adddresses to word (on by default)`
                       
-                      `1: move.l #x,Dn/An to moveq`
+                      `1: move.l #x,Dn/An to moveq (on by default)`
 
-                      `2: Word branches to short`
+                      `2: Word branches to short (on by default)`
                       
                       `3: Outer displacement 0(An) to (An)`
 
@@ -176,6 +176,8 @@ Switch               Description
                       `8: Convert adda.w/l #x,Dy to addq.w/l #x,Dy`
 
                       `9: Convert adda.w/l #x,Dy to lea x(Dy),Dy`
+
+                      'p: Enforce PC relative'
 -p                   Produce an executable (**.prg**) output file.
 -ps                  Produce an executable (**.prg**) output file with symbols.
 -px                  Produce an executable (**.prg**) output file with extended symbols.
@@ -1006,12 +1008,29 @@ described in the chapter on `6502 Support`_.
    Switch to Motorola DSP56001 mode.
 
 **.org** *location* [*X:*/*Y:*/*P:*/*L:*]
+
    This directive sets the value of the location counter (or **pc**) to location, an
    expression that must be defined and absolute. It is legal to use the directive in
    the following modes: 6502, Tom, Jerry, OP, 56001 and 680x0 (only with -fr switch).
    Especially for the 56001 mode the *location* field **must** be prefixed with the
    intended section (*X:*, *Y:*, *P:* or *L:*).
+
+**.opt** *"+On"*
+**.opt** *"~On"*
+**.opt** *"+Oall"*
+**.opt** *"~Oall"*
    
+   These directives control the optimisations that rmac applies to the source
+   automatically. Each directive is applied immediately from the line encountered
+   onwards. So it is possible to turn specific optimisations on and off globally
+   (when placed at the start of the first file) or locally (by turning desired
+   optimisations on and off at certain parts of the source). For a list of the
+   optimisations (*n*) available please consult the table in section `The Command Line`_.
+   **all**, as expected, turns all available optimisations on or off.
+
+   Lastly, as a "creature comfort" feature, if the first column of any line is prefixed
+   with an exclamation mark (*!*) then for that line all optimisations are turned off.
+
 **.abs** [*location*]
 
    Start an absolute section, beginning with the specified location (or zero, if
@@ -1282,6 +1301,21 @@ described in the chapter on `6502 Support`_.
    search path, as specified by -i on the commandline, or' by the 'RMACPATH'
    enviroment string, is traversed.
 
+**.incbin** "*file*" [, [*size*], [*offset*]]
+
+   Include a file as a binary. This can be thought of a series of **dc.b** statements
+   that match the binary bytes of the included file, inserted at the location of the 
+   directive. The directive is not allowed in a BSS section. Optional parameters
+   control the amount of bytes to be included and offset from the start of the file.
+   All the following lines are valid:
+
+              ::   
+                .incbin "test.bin"          ; Include the whole file
+                .incbin "test.bin",,$30     ; Skip the first 48 bytes
+                .incbin "test.bin",$70,$30  ; Include $70 bytes starting at offset $30
+                .incbin "test.bin",$48      ; Include the file starting at offset 48 till the end
+                .incbin "test.bin",,        ; Include the whole file
+
 **.eject**
 
    Issue a page eject in the listing file.
@@ -1491,6 +1525,12 @@ The assembler provides "creature comforts" when it processes 68000 mnemonics:
    in the range -128...127. However, **ADD** and **SUB** are never translated to
    their quick forms; **ADDQ** and **SUBQ** must be explicit.
 
+ * All optimisations are controllable using the **.opt** directive. Refer to its
+   description in section `Directives`_. 
+
+ * All optimisations are turned off for any source line that has an exclamation mark
+   (*!*) on their first column.
+ 
  * In GPU/DSP code sections, you can use JUMP (Rx) in place of JUMP T, (Rx) and JR
   (Rx) in place of JR T,(Rx).
 
