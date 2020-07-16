@@ -4,8 +4,8 @@ RMAC
 =====================
 Reference Manual
 ================
-version 2.0.8
-=============
+version 2.0.18
+==============
 
 © and notes
 ===========
@@ -17,7 +17,7 @@ the accuracy of printed or duplicated material after the date of publication and
 disclaims liability for changes, errors or omissions.*
 
 
-*Copyright © 2011-2019, Reboot*
+*Copyright © 2011-2020, Reboot*
 
 *All rights reserved.*
 
@@ -902,12 +902,12 @@ code if the debugging code is referenced, as in:
 
                lea    string,a0            ; AO -> message
                jsr    debug                ; print a message
-               its                         ; and return
+               rts                         ; and return
         string: dc.b  "Help me, Spock!",0  ; (the message)
                     .
                     .
                     .
-               .iif ^^defined debug, .include "debug.s"
+               .iif ^^referenced debug, .include "debug.s"
 
 The **jsr** statement references the symbol debug. Near the end of the source file, the
 "**.iif**" statement includes the file "**debug.s**" if the symbol debug was referenced.
@@ -1532,10 +1532,10 @@ The assembler provides "creature comforts" when it processes 68000 mnemonics:
    (*!*) on their first column.
  
  * In GPU/DSP code sections, you can use JUMP (Rx) in place of JUMP T, (Rx) and JR
-  (Rx) in place of JR T,(Rx).
+   (Rx) in place of JR T,(Rx).
 
  * RMAC tests all GPU/DSP restrictions and corrects them wherever possible (such as
-  inserting a NOP instruction when needed).
+   inserting a NOP instruction when needed).
 
  * The *(Rx+N)* addressing mode for GPU/DSP instructions is optimized to *(Rx)*
    when *N* is zero.

@@ -465,11 +465,16 @@ int m_adda(WORD inst, WORD siz)
 				// Immediate is between 1 and 8 so let's convert to addq
 				return m_addq(B16(01010000, 00000000), siz);
 	if (CHECK_OPTS(OPT_ADDA_LEA))
-		if (a0exval > 8)
+		if (a0exval > 8 && (a0exval+0x8000)<0x10000)
  		{
-			// Immediate is larger than 8 so let's convert to lea
+			// Immediate is larger than 8 and word size so let's convert to lea
 			am0 = ADISP;    // Change addressing mode
 			a0reg = a1reg;  // In ADISP a0reg is used instead of a1reg!
+			if (!(inst & (1 << 14)))
+			{
+				// We have a suba #x,AREG so let's negate the value
+				a0exval = -a0exval;
+			}
 			return m_lea(B16(01000001, 11011000), SIZW);
 		}
 	}
