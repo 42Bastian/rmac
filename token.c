@@ -22,7 +22,7 @@
 
 
 int lnsave;					// 1; strcpy() text of current line
-uint16_t curlineno;			// Current line number (64K max currently)
+uint32_t curlineno;			// Current line number (64K max currently)
 int totlines;				// Total # of lines
 int mjump_align = 0;		// mjump alignment flag
 char lntag;					// Line tag
@@ -1082,7 +1082,7 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 	for(; *ln!=EOS;)
 	{
 		// Check to see if there's enough space in the token buffer
-		if (tk.cp >= ((uint8_t *)(&tokbuf[TOKBUFSIZE])))
+		if (tk.cp >= ((uint8_t *)(&tokbuf[TOKBUFSIZE])) - 20)
 		{
 			return error("token buffer overrun");
 		}

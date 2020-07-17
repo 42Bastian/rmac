@@ -26,7 +26,7 @@
 
 // Tunable definitions
 #define LNSIZ           1024		// Maximum size of a line of text
-#define TOKBUFSIZE      400			// Size of token-line buffer
+#define TOKBUFSIZE      4096		// Size of token-line buffer
 #define QUANTUM         4096L		// # bytes to eat at a time from a file
 #define LNBUFSIZ        (QUANTUM*2)	// Size of file's buffer
 #define KWSIZE          7			// Maximum size of keyword in kwtab.h
@@ -154,7 +154,7 @@ IREPT {
 
 // Exported variables
 extern int lnsave;
-extern uint16_t curlineno;
+extern uint32_t curlineno;
 extern char * curfname;
 extern WORD cfileno;
 extern TOKEN * tok;
