@@ -32,7 +32,7 @@ int m6502;						// 1, assembling 6502 code
 int as68_flag;					// as68 kludge mode
 int glob_flag;					// Assume undefined symbols are global
 int lsym_flag;					// Include local symbols in object file
-int sbra_flag;					// Warn about possible short branches
+int optim_warn_flag;			// Warn about possible short branches
 int prg_flag;					// !=0, produce .PRG executable (2=symbols)
 int prg_extend;					// !=0, output extended .PRG symbols
 int legacy_flag;				// Do stuff like insert code in RISC assembler
@@ -53,7 +53,6 @@ char * cmdlnexec;				// Executable name, pointer to ARGV[0]
 char * searchpath = NULL;		// Search path for include files
 char defname[] = "noname.o";	// Default output filename
 int optim_flags[OPT_COUNT];		// Specific optimisations on/off matrix
-int optim_pc = 0;				// Enforce PC relative
 int activecpu = CPU_68000;		// Active 68k CPU (68000 by default)
 int activefpu = FPU_NONE;		// Active FPU (none by default)
 int org68k_active = 0;			// .org switch for 68k (only with RAW output format)
@@ -164,17 +163,17 @@ void DisplayHelp(void)
 		"  -o file           Output file name\n"
 		"  +o[value]         Turn a specific optimisation on\n"
 		"                    Available optimisation values and default settings:\n"
-		"                    o0: Absolute long adddresses to word        (on)\n"
-		"                    o1: move.l #x,dn/an to moveq                (on)\n"
-		"                    o2: Word branches to short                  (on)\n"
-		"                    o3: Outer displacement 0(an) to (an)        (off)\n"
-		"                    o4: lea size(An),An to addq #size,An        (off)\n"
-		"                    o5: Absolute long base displacement to word (off)\n"
-		"                    o6: Null branches to NOP                    (off)\n"
-		"                    o7: clr.l Dx to moveq #0,Dx                 (off)\n"
-		"                    o8: adda.w/l #x,Dy to addq.w/l #x,Dy        (off)\n"
-		"                    o9: adda.w/l #x,Dy to lea x(Dy),Dy          (off)\n"
-		"                    op: Enforce PC relative                     (off)\n"
+		"                    o0: Absolute long addresses to word                      (on)\n"
+		"                    o1: move.l #x,dn/an to moveq                             (on)\n"
+		"                    o2: Word branches to short                               (on)\n"
+		"                    o3: Outer displacement 0(an) to (an)                     (off)\n"
+		"                    o4: lea size(An),An to addq #size,An                     (off)\n"
+		"                    o5: 68020+ Absolute long base/outer displacement to word (off)\n"
+		"                    o6: Null branches to NOP                                 (off)\n"
+		"                    o7: clr.l Dx to moveq #0,Dx                              (off)\n"
+		"                    o8: adda.w/l #x,Dy to addq.w/l #x,Dy                     (off)\n"
+		"                    o9: adda.w/l #x,Dy to lea x(Dy),Dy                       (off)\n"
+		"                    op: Enforce PC relative                                  (off)\n"
 		"  ~o[value]         Turn a specific optimisation off\n"
 		"  +oall             Turn all optimisations on\n"
 		"  ~oall             Turn all optimisations off\n"
@@ -220,40 +219,54 @@ int ParseOptimization(char * optstring)
 {
 	int onoff = 0;
 
-	if (*optstring == '+')
-		onoff = 1;
-	else if (*optstring != '~')
-		return ERROR;
+	while (*optstring)
+	{
+		if (*optstring == '+')
+			onoff = 1;
+		else if (*optstring != '~')
+			return ERROR;
 
-	if ((optstring[2] == 'a' || optstring[2] == 'A')
-		&& (optstring[3] == 'l' || optstring[3] == 'L')
-		&& (optstring[4] == 'l' || optstring[4] == 'L'))
-	{
-		memset(optim_flags, onoff, OPT_COUNT * sizeof(int));
-		return OK;
-	}
-	else if (optstring[1] == 'o' || optstring[1] == 'O') // Turn on specific optimisation
-	{
-		if (optstring[2] == 'p' || optstring[2] == 'P')
+		if ((optstring[2] == 'a' || optstring[2] == 'A')
+			&& (optstring[3] == 'l' || optstring[3] == 'L')
+			&& (optstring[4] == 'l' || optstring[4] == 'L'))
 		{
-			optim_pc = 1;
-			return OK;
+			memset(optim_flags, onoff, OPT_COUNT * sizeof(int));
+			optstring += 5;
 		}
-
-		int opt_no = atoi(&optstring[2]);
-
-		if ((opt_no >= 0) && (opt_no < OPT_COUNT))
+		else if (optstring[1] == 'o' || optstring[1] == 'O') // Turn on specific optimisation
 		{
-			optim_flags[opt_no] = onoff;
-			return OK;
+			if (optstring[2] == 'p' || optstring[2] == 'P')
+			{
+				optim_flags[OPT_PC_RELATIVE] = onoff;
+				optstring += 3;
+			}
+			else
+			{
+				int opt_no = atoi(&optstring[2]);
+				if ((opt_no >= 0) && (opt_no < OPT_COUNT))
+				{
+					optim_flags[opt_no] = onoff;
+					optstring += 3;
+					// If opt_no is 2 digits then consume an extra character.
+					// Sounds a bit sleazy but we know we're not going to hit
+					// more than 100 optimisation switches so this should be fine.
+					// If we do hit that number then it'll probably be time to burn
+					// the whole codebase and start from scratch.
+					if (opt_no > 9)
+						optstring++;
+				}
+				else
+					return ERROR;
+			}
 		}
 		else
+		{
 			return ERROR;
+		}
+		if (*optstring == ',')
+			optstring++;
 	}
-	else
-	{
-		return ERROR;
-	}
+	return OK;
 }
 
 
@@ -275,7 +288,7 @@ int Process(int argc, char ** argv)
 	verb_flag = perm_verb_flag;		// Initialize verbose flag
 	as68_flag = 0;					// Initialize as68 kludge mode
 	glob_flag = 0;					// Initialize .globl flag
-	sbra_flag = 0;					// Initialize short branch flag
+	optim_warn_flag = 0;			// Initialize short branch flag
 	debug = 0;						// Initialize debug flag
 	searchpath = NULL;				// Initialize search path
 	objfname = NULL;				// Initialize object filename
@@ -522,9 +535,9 @@ int Process(int argc, char ** argv)
 				default: segpadsize = 2; break;	// Effective autoeven();
 				}
 				break;
-			case 's':				// Warn about possible short branches
+			case 's':				// Warn about possible short branches and applied optimisations
 			case 'S':
-				sbra_flag = 1;
+				optim_warn_flag = 1;
 				break;
 			case 'u':				// Make undefined symbols .globl
 			case 'U':

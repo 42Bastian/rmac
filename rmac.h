@@ -284,13 +284,14 @@ enum
 	OPT_ABS_SHORT     = 0,
 	OPT_MOVEL_MOVEQ   = 1,
 	OPT_BSR_BCC_S     = 2,
-	OPT_INDIRECT_DISP = 3,
+	OPT_OUTER_DISP    = 3,
 	OPT_LEA_ADDQ      = 4,
-	OPT_BASE_DISP     = 5,
+	OPT_020_DISP      = 5,		// 020+ base and outer displacements (bd, od) absolute long to short
 	OPT_NULL_BRA      = 6,
 	OPT_CLR_DX        = 7,
 	OPT_ADDA_ADDQ     = 8,
 	OPT_ADDA_LEA      = 9,
+	OPT_PC_RELATIVE   = 10,		// Enforce PC relative
 	OPT_COUNT   // Dummy, used to count number of optimisation switches
 };
 
@@ -311,13 +312,12 @@ extern int m6502;
 extern int list_flag;
 extern int glob_flag;
 extern int lsym_flag;
-extern int sbra_flag;
+extern int optim_warn_flag;
 extern int obj_format;
 extern int legacy_flag;
 extern int prg_flag;	// 1 = write ".PRG" relocatable executable
 extern LONG PRGFLAGS;
 extern int optim_flags[OPT_COUNT];
-extern int optim_pc;
 extern int activecpu;
 extern int activefpu;
 extern uint32_t org68k_address;

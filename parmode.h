@@ -322,7 +322,7 @@ AMn_IXN:                 // Handle any indexed (tok -> a comma)
 			{
 				expr(AnBEXPR, &AnBEXVAL, &AnBEXATTR, &AnESYM);
 
-				if (CHECK_OPTS(OPT_BASE_DISP) && AnBEXVAL == 0 && AnEXATTR != 0)
+				if (CHECK_OPTS(OPT_020_DISP) && AnBEXVAL == 0 && AnEXATTR != 0)
 				{
 					// bd=0 so let's optimise it out
 					AnEXTEN|=EXT_BDSIZE0;
@@ -346,12 +346,13 @@ AMn_IXN:                 // Handle any indexed (tok -> a comma)
 					{
 						// Defined, absolute values from $FFFF8000..$00007FFF
 						// get optimized to absolute short
-						if (CHECK_OPTS(OPT_ABS_SHORT)
+						if (CHECK_OPTS(OPT_020_DISP)
 							&& ((AnBEXATTR & (TDB | DEFINED)) == DEFINED)
 							&& (((uint32_t)AnBEXVAL + 0x8000) < 0x10000))
 						{
 							AnEXTEN |= EXT_BDSIZEW;
-							warn("absolute value in base displacement ranging $FFFF8000..$00007FFF optimised to absolute short");
+							if (optim_warn_flag)
+								warn("absolute value in base displacement ranging $FFFF8000..$00007FFF optimised to absolute short");
 						}
 						else
 						{
@@ -467,8 +468,7 @@ AMn_IXN:                 // Handle any indexed (tok -> a comma)
 			else if (*tok == ']')
 			{
 				// PC and Xn is suppressed
-				AnREG = 6 << 3;		// stuff 110 to mode field
-				//AnEXTEN|=EXT_BS|EXT_IS;
+				AnREG = 6 << 3;		// stuff 110b to mode field
 				AnEXTEN |= EXT_BS;
 			}
 			else
@@ -479,16 +479,16 @@ AMn_IXN:                 // Handle any indexed (tok -> a comma)
 			// At a crossroads here. We can accept either ([bd,An/PC],... or ([bd,An/PC,Xn*scale],...
 			if (*tok == ']')
 			{
-				//([bd,An/PC],Xn,od)
+				// ([bd,An/PC],Xn,od)
 				// Check for Xn
 				tok++;
 
 				if (*tok == ')')
 				{
-					//Xn and od are non existent, get out of jail free card
+					// Xn and od are non existent, get out of jail free card
 					tok++;
 					AMn = MEMPRE;			// ([bc,An,Xn],od) with no Xn and od
-					AnEXTEN |= EXT_IS | EXT_IISPREN;	//Suppress Xn and od
+					AnEXTEN |= EXT_IS | EXT_IISPREN;	// Suppress Xn and od
 					goto AnOK;
 				}
 				else if (*tok != ',')
@@ -510,7 +510,7 @@ AMn_IXN:                 // Handle any indexed (tok -> a comma)
 				}
 				else
 				{
-					//No index found, suppress it
+					// No index found, suppress it
 					AnEXTEN |= EXT_IS;
 					tok--;					// Rewind tok to point to the comma
 					goto IS_SUPPRESSEDn;	// https://xkcd.com/292/ - what does he know anyway?
@@ -605,7 +605,7 @@ CHECKODn:
 				if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
 					goto badmode;
 
-				if (CHECK_OPTS(OPT_BASE_DISP) && (AnEXATTR & DEFINED) && (AnEXVAL == 0))
+				if (CHECK_OPTS(OPT_020_DISP) && (AnEXATTR & DEFINED) && (AnEXVAL == 0))
 				{
 					// od=0 so optimise it out
 					AMn = MEMPOST;		 // let's say it's ([bd,An],Xn,od) with od=0 then
@@ -643,13 +643,14 @@ CHECKODn:
 
 					// Defined, absolute values from $FFFF8000..$00007FFF get
 					// optimized to absolute short
-					if (CHECK_OPTS(OPT_ABS_SHORT)
+					if (CHECK_OPTS(OPT_020_DISP)
 						&& ((AnEXATTR & (TDB | DEFINED)) == DEFINED)
 						&& (((uint32_t)AnEXVAL + 0x8000) < 0x10000))
 					{
 						AnEXTEN |= EXT_IISPOSW; // Word outer displacement
 						AMn = MEMPOST;
-						warn("outer displacement absolute value from $FFFF8000..$00007FFF optimised to absolute short");
+						if (optim_warn_flag)
+							warn("absolute value in outer displacement ranging $FFFF8000..$00007FFF optimised to absolute short");
 					}
 
 				}
@@ -694,7 +695,7 @@ IS_SUPPRESSEDn:
 
 				expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM);
 
-				if (CHECK_OPTS(OPT_BASE_DISP) && (AnEXVAL == 0))
+				if (CHECK_OPTS(OPT_020_DISP) && (AnEXVAL == 0))
 				{
 					// od=0 so optimise it out
 					AMn = MEMPOST;		 // let's say it's ([bd,An],Xn,od) with od=0 then
@@ -725,12 +726,13 @@ IS_SUPPRESSEDn:
 					}
 					// Defined, absolute values from $FFFF8000..$00007FFF get
 					// optimized to absolute short
-					else if (CHECK_OPTS(OPT_BASE_DISP)
+					else if (CHECK_OPTS(OPT_020_DISP)
 						&& ((AnEXATTR & (TDB | DEFINED)) == DEFINED)
 						&& (((uint32_t)AnEXVAL + 0x8000) < 0x10000))
 					{
 						//AnEXTEN|=EXT_IISNOIW; // Word outer displacement with IS suppressed
-						warn("outer displacement absolute value from $FFFF8000..$00007FFF optimised to absolute short");
+						if (optim_warn_flag)
+							warn("outer displacement absolute value from $FFFF8000..$00007FFF optimised to absolute short");
 					}
 				}
 
@@ -858,7 +860,7 @@ IS_SUPPRESSEDn:
 					if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
 						goto badmode;
 
-					if (CHECK_OPTS(OPT_BASE_DISP) && (AnEXVAL == 0) && (AnEXATTR & DEFINED))
+					if (CHECK_OPTS(OPT_020_DISP) && (AnEXVAL == 0) && (AnEXATTR & DEFINED))
 					{
 						// od=0 so optimise it out
 						AMn = MEMPRE;		 // let's say it's ([bd,An],Xn,od) with od=0 then
@@ -889,12 +891,13 @@ IS_SUPPRESSEDn:
 
 						// Defined, absolute values from $FFFF8000..$00007FFF
 						// get optimized to absolute short
-						if (CHECK_OPTS(OPT_BASE_DISP)
+						if (CHECK_OPTS(OPT_020_DISP)
 							&& ((AnEXATTR & (TDB | DEFINED)) == DEFINED)
 							&& (((uint32_t)AnEXVAL + 0x8000) < 0x10000))
 						{
 							expr_size = EXT_IISPREW;
-							warn("outer displacement absolute value from $FFFF8000..$00007FFF optimised to absolute short");
+							if (optim_warn_flag)
+								warn("outer displacement absolute value from $FFFF8000..$00007FFF optimised to absolute short");
 						}
 					}
 
@@ -1171,7 +1174,7 @@ CHK_FOR_DISPn:
 
 			// When PC relative is enforced, check for any symbols that aren't 
 			// EQU'd, in this case it's an illegal mode
-			if (optim_pc)
+			if (CHECK_OPTS(OPT_PC_RELATIVE))
 				if (AnEXATTR & REFERENCED)
 					if (AnEXATTR & DEFINED)
 						if (!(AnEXATTR & EQUATED))
@@ -1193,7 +1196,7 @@ CHK_FOR_DISPn:
 				{
 					AMn = ABSW;
 
-					if (sbra_flag)
+					if (optim_warn_flag)
 						warn("absolute value from $FFFF8000..$00007FFF optimised to absolute short");
 				}
 			}

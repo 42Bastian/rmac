@@ -416,7 +416,7 @@ int ResolveFixups(int sno)
 			if (evexpr(fup->expr, &eval, &eattr, &esym) != OK)
 				continue;
 
-			if (optim_pc)
+			if (CHECK_OPTS(OPT_PC_RELATIVE))
 				if (eattr & REFERENCED)
 					if (eattr & DEFINED)
 						if (!(eattr & EQUATED))
@@ -431,7 +431,7 @@ int ResolveFixups(int sno)
 			SYM * sy = fup->symbol;
 			eattr = sy->sattr;
 
-			if (optim_pc)
+			if (CHECK_OPTS(OPT_PC_RELATIVE))
 				if (eattr & REFERENCED)
 					if (eattr & DEFINED)
 						if (!(eattr & EQUATED))
@@ -516,7 +516,7 @@ int ResolveFixups(int sno)
 					}
 				}
 
-				if (sbra_flag && (dw & FU_LBRA) && (eval + 0x80 < 0x100))
+				if (optim_warn_flag && (dw & FU_LBRA) && (eval + 0x80 < 0x100))
 					warn("unoptimized short branch");
 			}
 
@@ -543,11 +543,13 @@ int ResolveFixups(int sno)
 
 			if (eval == 0)
 			{
-				if (CHECK_OPTS(OPT_NULL_BRA))
+				if (*locp) // optim_flags[OPT_NULL_BRA] is stored there, check the comment in mach.s under m_br
 				{
 					// Just output a NOP
 					*locp++ = 0x4E;
 					*locp = 0x71;
+					if (optim_warn_flag)
+						warn("bra.s with zero offset converted to NOP");
 					continue;
 				}
 				else

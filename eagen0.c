@@ -40,7 +40,7 @@ int eaNgen(WORD siz)
 			if (tdb)
 				MarkRelocatable(cursect, sloc, tdb, MWORD, NULL);
 
-			if ((v == 0) && CHECK_OPTS(OPT_INDIRECT_DISP) && !movep)
+			if ((v == 0) && CHECK_OPTS(OPT_OUTER_DISP) && !movep)
 			{
 				// If expr is 0, size optimise the opcode. Generally the lower
 				// 6 bits of the opcode for expr(ax) are 101rrr where rrr=the
@@ -64,7 +64,7 @@ int eaNgen(WORD siz)
 					chptr_opcode[1] |= 0x0080 & 255;          // slap in 010 bits
 				}
 
-				if (sbra_flag)
+				if (optim_warn_flag)
 					warn("0(An) converted to (An)");
 
 				return OK;
@@ -326,7 +326,7 @@ int eaNgen(WORD siz)
 	case ABSL:
 		if (w) // Defined
 		{
-			if (optim_pc)
+			if (CHECK_OPTS(OPT_PC_RELATIVE))
 				if (aNexattr&(DEFINED | REFERENCED | EQUATED) == DEFINED | REFERENCED)
 					return error("relocation not allowed");
 
