@@ -416,14 +416,11 @@ int ResolveFixups(int sno)
 			if (evexpr(fup->expr, &eval, &eattr, &esym) != OK)
 				continue;
 
-			if (CHECK_OPTS(OPT_PC_RELATIVE))
-				if (eattr & REFERENCED)
-					if (eattr & DEFINED)
-						if (!(eattr & EQUATED))
-						{
-							error("relocation not allowed");
-							continue;
-						}
+			if ((CHECK_OPTS(OPT_PC_RELATIVE)) && (eattr & REFERENCED) && (eattr & DEFINED) && (!(eattr & EQUATED)))
+			{
+				error("relocation not allowed");
+				continue;
+			}
 		}
 		// Simple symbol
 		else
@@ -431,14 +428,11 @@ int ResolveFixups(int sno)
 			SYM * sy = fup->symbol;
 			eattr = sy->sattr;
 
-			if (CHECK_OPTS(OPT_PC_RELATIVE))
-				if (eattr & REFERENCED)
-					if (eattr & DEFINED)
-						if (!(eattr & EQUATED))
-						{
-							error("relocation not allowed");
-							continue;
-						}
+			if ((CHECK_OPTS(OPT_PC_RELATIVE)) && (eattr & REFERENCED) && (eattr & DEFINED) && (!(eattr & EQUATED)))
+			{
+				error("relocation not allowed");
+				continue;
+			}
 
 			if (eattr & DEFINED)
 				eval = sy->svalue;
@@ -548,8 +542,10 @@ int ResolveFixups(int sno)
 					// Just output a NOP
 					*locp++ = 0x4E;
 					*locp = 0x71;
+
 					if (optim_warn_flag)
 						warn("bra.s with zero offset converted to NOP");
+
 					continue;
 				}
 				else
@@ -904,8 +900,8 @@ int ResolveFixups(int sno)
 				locp[1] = (uint8_t)eval;
 				break;
 
-			// This is a 6 bit absoulte short address. It occupies
-			// the low 6 bits of the middle byte of a DSP word.
+			// This is a 6 bit absoulte short address. It occupies the low 6
+			// bits of the middle byte of a DSP word.
 			case FU_DSPADR06:
 				if (eval > 63)
 				{
@@ -916,8 +912,8 @@ int ResolveFixups(int sno)
 				locp[1] |= eval;
 				break;
 
-			// This is a 6 bit absoulte short address. It occupies
-			// the low 6 bits of the middle byte of a DSP word.
+			// This is a 6 bit absoulte short address. It occupies the low 6
+			// bits of the middle byte of a DSP word.
 			case FU_DSPPP06:
 				if (eval < 0xFFFFFFC0)
 				{

@@ -322,10 +322,10 @@ AMn_IXN:                 // Handle any indexed (tok -> a comma)
 			{
 				expr(AnBEXPR, &AnBEXVAL, &AnBEXATTR, &AnESYM);
 
-				if (CHECK_OPTS(OPT_020_DISP) && AnBEXVAL == 0 && AnEXATTR != 0)
+				if (CHECK_OPTS(OPT_020_DISP) && (AnBEXVAL == 0) && (AnEXATTR != 0))
 				{
-					// bd=0 so let's optimise it out
-					AnEXTEN|=EXT_BDSIZE0;
+					// bd = 0 so let's optimise it out
+					AnEXTEN |= EXT_BDSIZE0;
 				}
 				else if (*tok == DOTL)
 				{
@@ -351,6 +351,7 @@ AMn_IXN:                 // Handle any indexed (tok -> a comma)
 							&& (((uint32_t)AnBEXVAL + 0x8000) < 0x10000))
 						{
 							AnEXTEN |= EXT_BDSIZEW;
+
 							if (optim_warn_flag)
 								warn("absolute value in base displacement ranging $FFFF8000..$00007FFF optimised to absolute short");
 						}
@@ -607,7 +608,7 @@ CHECKODn:
 
 				if (CHECK_OPTS(OPT_020_DISP) && (AnEXATTR & DEFINED) && (AnEXVAL == 0))
 				{
-					// od=0 so optimise it out
+					// od = 0 so optimise it out
 					AMn = MEMPOST;		 // let's say it's ([bd,An],Xn,od) with od=0 then
 					AnEXTEN |= EXT_IISPOSN; // No outer displacement
 					tok++;
@@ -896,6 +897,7 @@ IS_SUPPRESSEDn:
 							&& (((uint32_t)AnEXVAL + 0x8000) < 0x10000))
 						{
 							expr_size = EXT_IISPREW;
+
 							if (optim_warn_flag)
 								warn("outer displacement absolute value from $FFFF8000..$00007FFF optimised to absolute short");
 						}
@@ -1172,13 +1174,10 @@ CHK_FOR_DISPn:
 			// expr[.L]
 			AMn = ABSL;
 
-			// When PC relative is enforced, check for any symbols that aren't 
+			// When PC relative is enforced, check for any symbols that aren't
 			// EQU'd, in this case it's an illegal mode
-			if (CHECK_OPTS(OPT_PC_RELATIVE))
-				if (AnEXATTR & REFERENCED)
-					if (AnEXATTR & DEFINED)
-						if (!(AnEXATTR & EQUATED))
-							return error("relocation not allowed");
+			if ((CHECK_OPTS(OPT_PC_RELATIVE)) && (AnEXATTR & REFERENCED) && (AnEXATTR & DEFINED) && (!(AnEXATTR & EQUATED)))
+				return error("relocation not allowed");
 
 			// .L is forced here
 			if (*tok == DOTL)

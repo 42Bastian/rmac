@@ -327,8 +327,10 @@ int eaNgen(WORD siz)
 		if (w) // Defined
 		{
 			if (CHECK_OPTS(OPT_PC_RELATIVE))
-				if (aNexattr&(DEFINED | REFERENCED | EQUATED) == DEFINED | REFERENCED)
+			{
+				if (aNexattr & (DEFINED | REFERENCED | EQUATED) == DEFINED | REFERENCED)
 					return error("relocation not allowed");
+			}
 
 			if (tdb)
 				MarkRelocatable(cursect, sloc, tdb, MLONG, NULL);

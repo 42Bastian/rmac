@@ -354,8 +354,10 @@ int m_lea(WORD inst, WORD siz)
 	{
 		inst = B16(01010000, 01001000) | (((uint16_t)a0exval & 7) << 9) | (a0reg);
 		D_word(inst);
+
 		if (optim_warn_flag)
 			warn("lea size(An),An converted to addq #size,An");
+
 		return OK;
 	}
 
@@ -462,27 +464,33 @@ int m_adda(WORD inst, WORD siz)
 	if ((a0exattr & DEFINED) && (am0 == IMMED))
 	{
 		if (CHECK_OPTS(OPT_ADDA_ADDQ))
-			if (a0exval > 1 && a0exval <= 8)
+		{
+			if ((a0exval > 1) && (a0exval <= 8))
 			{
 				// Immediate is between 1 and 8 so let's convert to addq
 				return m_addq(B16(01010000, 00000000), siz);
+
 				if (optim_warn_flag)
 					warn("adda/suba size(An),An converted to addq/subq #size,An");
 			}
+		}
+
 		if (CHECK_OPTS(OPT_ADDA_LEA))
-			if (a0exval > 8 && (a0exval + 0x8000) < 0x10000)
+		{
+			if ((a0exval > 8) && ((a0exval + 0x8000) < 0x10000))
 			{
 				// Immediate is larger than 8 and word size so let's convert to lea
 				am0 = ADISP;    // Change addressing mode
 				a0reg = a1reg;  // In ADISP a0reg is used instead of a1reg!
+
 				if (!(inst & (1 << 14)))
 				{
 					// We have a suba #x,AREG so let's negate the value
 					a0exval = -a0exval;
 				}
 
-				// We're going to rely on +o4 for this, so let's ensure that it's on,
-				// even just for this instruction
+				// We're going to rely on +o4 for this, so let's ensure that
+				// it's on, even just for this instruction
 				int return_value;
 				int temp_flag = optim_flags[OPT_LEA_ADDQ];
 				optim_flags[OPT_LEA_ADDQ] = 1;				// Temporarily save switch state
@@ -490,6 +498,7 @@ int m_adda(WORD inst, WORD siz)
 				optim_flags[OPT_LEA_ADDQ] = temp_flag;		// Restore switch state
 				return return_value;
 			}
+		}
 	}
 
 	inst |= am0 | a0reg | lwsiz_8[siz] | reg_9[a1reg];
@@ -946,18 +955,21 @@ int m_br(WORD inst, WORD siz)
 	{
 		// .B
 		AddFixup(FU_BBRA | FU_PCREL | FU_SEXT, sloc, a0expr);
-		// So here we have a small issue: this bra.s could be zero offset, but we can never know.
-		// Because unless we know beforehand that the offset will be zero (i.e. "bra.s +0"), it's
-		// going to be a label below this instruction! We do have an optimisation flag that can
-		// check against this during fixups, but we cannot rely on the state of the flag after
-		// all the file(s) have been processed because its state might have changed multiple times
-		// during file parsing. (Yes, there's a very low chance that this will ever happen but
-		// it's not zero!). So, we can use the byte that is going to be filled during fixups
-		// to store the state of the optimisation flag and read it during that stage so each bra.s
-		// will have its state stored neatly. Sleazy? Eh, who cares, like this will ever happen ;)
-		// One final note: we'd better be damn sure that the flag's value is less than 256 or
-		// magical stuff will happen!
-		D_word(inst|optim_flags[OPT_NULL_BRA]);
+		// So here we have a small issue: this bra.s could be zero offset, but
+		// we can never know. Because unless we know beforehand that the
+		// offset will be zero (i.e. "bra.s +0"), it's going to be a label
+		// below this instruction! We do have an optimisation flag that can
+		// check against this during fixups, but we cannot rely on the state
+		// of the flag after all the file(s) have been processed because its
+		// state might have changed multiple times during file parsing. (Yes,
+		// there's a very low chance that this will ever happen but it's not
+		// zero!). So, we can use the byte that is going to be filled during
+		// fixups to store the state of the optimisation flag and read it
+		// during that stage so each bra.s will have its state stored neatly.
+		// Sleazy? Eh, who cares, like this will ever happen ;)
+		// One final note: we'd better be damn sure that the flag's value is
+		// less than 256 or magical stuff will happen!
+		D_word(inst | optim_flags[OPT_NULL_BRA]);
 		return OK;
 	}
 	else

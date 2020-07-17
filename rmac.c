@@ -243,15 +243,17 @@ int ParseOptimization(char * optstring)
 			else
 			{
 				int opt_no = atoi(&optstring[2]);
+
 				if ((opt_no >= 0) && (opt_no < OPT_COUNT))
 				{
 					optim_flags[opt_no] = onoff;
 					optstring += 3;
+
 					// If opt_no is 2 digits then consume an extra character.
 					// Sounds a bit sleazy but we know we're not going to hit
-					// more than 100 optimisation switches so this should be fine.
-					// If we do hit that number then it'll probably be time to burn
-					// the whole codebase and start from scratch.
+					// more than 100 optimisation switches so this should be
+					// fine. If we do hit that number then it'll probably be
+					// time to burn the whole codebase and start from scratch.
 					if (opt_no > 9)
 						optstring++;
 				}
@@ -263,6 +265,7 @@ int ParseOptimization(char * optstring)
 		{
 			return ERROR;
 		}
+
 		if (*optstring == ',')
 			optstring++;
 	}
