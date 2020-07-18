@@ -55,6 +55,7 @@
 	// ([bd,PC,Xn[.siz][*scale]],od)
 	else if (*tok == '(')
 	{
+		int ea_PC = 0;				// Flag that let us know if we have PC or An relative ea
 		tok++;
 
 		if ((*tok >= KW_A0) && (*tok <= KW_A7))
@@ -364,15 +365,15 @@ AMn_IXN:                 // Handle any indexed (tok -> a comma)
 
 				if (*tok == ',')
 					tok++;
-				//else
-				//	return error("Comma expected after base displacement");
 			}
 
-			// Check for address register or PC, suppress base register
-			// otherwise
+			// Check for address register or PC, 
+			// suppress base register otherwise
 
 			if (*tok == KW_PC)
 			{					// ([bd,PC,...
+				ea_PC = 3;				// Set flag in order to set proper value to AMn below when we can make a decision on ea
+										// (why "3"? Well, MEMPOST is 3 away from PCMPOST, etc. Have a look at amode.h)
 				AnREG = (7 << 3) | 3;	// PC is special case - stuff 011 to register field and 111 to the mode field
 				tok++;
 			}
@@ -488,7 +489,7 @@ AMn_IXN:                 // Handle any indexed (tok -> a comma)
 				{
 					// Xn and od are non existent, get out of jail free card
 					tok++;
-					AMn = MEMPRE;			// ([bc,An,Xn],od) with no Xn and od
+					AMn = MEMPRE + ea_PC;				// ([bc,An,Xn],od) with no Xn and od
 					AnEXTEN |= EXT_IS | EXT_IISPREN;	// Suppress Xn and od
 					goto AnOK;
 				}
@@ -592,7 +593,7 @@ AMn_IXN:                 // Handle any indexed (tok -> a comma)
 				if (*tok == ')')	// ([bd,An/PC],Xn)
 				{
 					// od is non existent, get out of jail free card
-					AMn = MEMPOST;		// let's say it's ([bd,An],Xn,od) with od=0 then
+					AMn = MEMPOST + ea_PC;	// let's say it's ([bd,An],Xn,od) with od=0 then
 					AnEXTEN |= EXT_IISPOSN; // No outer displacement
 					tok++;
 					goto AnOK;
@@ -609,20 +610,20 @@ CHECKODn:
 				if (CHECK_OPTS(OPT_020_DISP) && (AnEXATTR & DEFINED) && (AnEXVAL == 0))
 				{
 					// od = 0 so optimise it out
-					AMn = MEMPOST;		 // let's say it's ([bd,An],Xn,od) with od=0 then
-					AnEXTEN |= EXT_IISPOSN; // No outer displacement
+					AMn = MEMPOST + ea_PC;		// let's say it's ([bd,An],Xn,od) with od=0 then
+					AnEXTEN |= EXT_IISPOSN;		// No outer displacement
 					tok++;
 					goto AnOK;
 				}
 
 				// ([bd,An/PC],Xn,od)
-					// Is .W forced here?
+				// Is .W forced here?
 				if (*tok == DOTW)
 				{
 					tok++;
 					// od[.W]
 					AnEXTEN |= EXT_IISPOSW; // Word outer displacement
-					AMn = MEMPOST;
+					AMn = MEMPOST + ea_PC;
 				}
 				else
 				{
@@ -650,7 +651,7 @@ CHECKODn:
 						AnBEXPR[i] = 'E';
 					}
 
-					AMn = MEMPOST;
+					AMn = MEMPOST + ea_PC;
 
 					// Defined, absolute values from $FFFF8000..$00007FFF get
 					// optimized to absolute short
@@ -659,7 +660,7 @@ CHECKODn:
 						&& (((uint32_t)AnEXVAL + 0x8000) < 0x10000))
 					{
 						AnEXTEN |= EXT_IISPOSW; // Word outer displacement
-						AMn = MEMPOST;
+						AMn = MEMPOST + ea_PC;
 						if (optim_warn_flag)
 							warn("absolute value in outer displacement ranging $FFFF8000..$00007FFF optimised to absolute short");
 					}
@@ -680,7 +681,7 @@ IS_SUPPRESSEDn:
 				if (*tok == ')')	// ([bd,An/PC],Xn)
 				{
 					// od is non existent, get out of jail free card
-					AMn = MEMPOST;		// let's say it's ([bd,An],Xn,od) with od=0 then
+					AMn = MEMPOST + ea_PC;		// let's say it's ([bd,An],Xn,od) with od=0 then
 					AnEXTEN |= EXT_IISNOIN; // No outer displacement
 					tok++;
 					goto AnOK;
@@ -698,7 +699,7 @@ IS_SUPPRESSEDn:
 				if (CHECK_OPTS(OPT_020_DISP) && (AnEXVAL == 0))
 				{
 					// od=0 so optimise it out
-					AMn = MEMPOST;		 // let's say it's ([bd,An],Xn,od) with od=0 then
+					AMn = MEMPOST + ea_PC;		 // let's say it's ([bd,An],Xn,od) with od=0 then
 					AnEXTEN |= EXT_IISNOIN; // No outer displacement
 					tok++;
 					goto AnOK;
@@ -709,19 +710,19 @@ IS_SUPPRESSEDn:
 				{
 					// expr.L
 					tok++;
-					AMn = MEMPOST;
+					AMn = MEMPOST + ea_PC;
 					AnEXTEN |= EXT_IISNOIL; // Long outer displacement with IS suppressed
 				}
 				else
 				{
 					// expr[.W][]
 					AnEXTEN |= EXT_IISNOIW; // Word outer displacement with IS suppressed
-					AMn = MEMPRE;
+					AMn = MEMPRE + ea_PC;;
 
 					if (*tok == DOTW)
 					{
 						//AnEXTEN|=EXT_IISNOIW; // Word outer displacement
-						AMn = MEMPOST;
+						AMn = MEMPOST + ea_PC;
 						tok++;
 					}
 					// Defined, absolute values from $FFFF8000..$00007FFF get
@@ -846,8 +847,7 @@ IS_SUPPRESSEDn:
 				if (*tok == ')')	// ([bd,An/PC,Xn]...
 				{
 					// od is non existent, get out of jail free card
-					//AnEXVAL=0;		// zero outer displacement
-					AMn = MEMPRE;			// let's say it's ([bd,An,Xn],od) with od suppressed then
+					AMn = MEMPRE + ea_PC;			// let's say it's ([bd,An,Xn],od) with od suppressed then
 					AnEXTEN |= EXT_IISPREN; // No outer displacement
 					tok++;
 					goto AnOK;
@@ -863,7 +863,7 @@ IS_SUPPRESSEDn:
 					if (CHECK_OPTS(OPT_020_DISP) && (AnEXVAL == 0) && (AnEXATTR & DEFINED))
 					{
 						// od=0 so optimise it out
-						AMn = MEMPRE;		 // let's say it's ([bd,An],Xn,od) with od=0 then
+						AMn = MEMPRE + ea_PC;		 // let's say it's ([bd,An],Xn,od) with od=0 then
 						AnEXTEN |= EXT_IISPRE0; // No outer displacement
 						tok++;
 						goto AnOK;
@@ -874,14 +874,14 @@ IS_SUPPRESSEDn:
 				if (*tok == DOTL)
 				{
 					// expr.L
-					AMn = MEMPRE;
+					AMn = MEMPRE + ea_PC;
 					tok++;
 					AnEXTEN |= EXT_IISPREL;
 				}
 				else
 				{
 					// expr.[W]
-					AMn = MEMPRE;
+					AMn = MEMPRE + ea_PC;
 					int expr_size = EXT_IISPREW; // Assume we have a .w value
 
 					if ((AnEXVAL + 0x8000) > 0x10000)
@@ -972,7 +972,6 @@ IS_SUPPRESSEDn:
 						// Our expression is techically a base displacement,
 						// so let's copy it to the relevant variables so
 						// eagen0.c can pick it up properly
-						//AnBEXPR = AnEXPR;
 						AnBEXVAL = AnEXVAL;
 						AnBEXATTR = AnEXATTR;
 
@@ -999,7 +998,7 @@ IS_SUPPRESSEDn:
 								}
 							}
 							// Check for scale
-							if (*tok == '*')		// ([bd,An/PC],Xn*...)
+							if (*tok == '*')		// (d16,An,Dn[.size][*scale])
 							{						// scale: *1, *2, *4, *8
 								tok++;
 

@@ -77,7 +77,7 @@
 #define C_CTRL       0x000007E4L
 #define C_ALT        0x000001FFL
 #define C_ALL030     0x0003FFFFL
-#define C_ALT030     0x0003F1FFL
+#define C_ALT030     0x000071FDL
 #define C_FPU030     0x0003FFECL    /* (An), #<data>, (An)+, (d16,An), (d16,PC), (d8, An, Xn), (d8, PC, Xn), (bd, An, Xn), An(bd, PC, Xn), ([bd, An, Xn], od), An([bd, PC, Xn], od), ([bd, An], Xn, od), An([bd, PC], Xn, od) */
 #define C_CTRL030    0x0003F7E4L
 #define C_DATA030    0x0003FFFDL
