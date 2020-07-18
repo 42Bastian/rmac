@@ -616,13 +616,15 @@ CHECKODn:
 					if (*tok == DOTL)
 						tok++;				// Doesn't matter, we're going for .L anyway
 
+					WORD od_ea = 0;
+
 					// od.L
 					if (!(AnEXTEN & EXT_BS))
-						AnEXTEN |= EXT_IISPOSL; // Long outer displacement
+						od_ea = EXT_IISPOSL; // Long outer displacement
 					else
 					{
 						// bd is suppressed, so sticking the od size in bd
-						AnEXTEN |= EXT_BDSIZEL;
+						od_ea = EXT_BDSIZEL;
 						// And of course the expression has to be copied to
 						// AnBEXPR instead of AnEXPR. Yay. :-/
 						int i = 0;
@@ -644,11 +646,12 @@ CHECKODn:
 						&& ((AnEXATTR & (TDB | DEFINED)) == DEFINED)
 						&& (((uint32_t)AnEXVAL + 0x8000) < 0x10000))
 					{
-						AnEXTEN |= EXT_IISPOSW; // Word outer displacement
+						od_ea = EXT_IISPOSW; // Word outer displacement
 						AMn = MEMPOST + ea_PC;
 						if (optim_warn_flag)
 							warn("absolute value in outer displacement ranging $FFFF8000..$00007FFF optimised to absolute short");
 					}
+					AnEXTEN |= od_ea;
 				}
 
 				// Check for final closing parenthesis
