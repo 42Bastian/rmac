@@ -31,9 +31,6 @@ uint64_t a0exval;			// Expression's value
 WORD a0exattr;				// Expression's attribute
 int a0ixreg;				// Index register
 int a0ixsiz;				// Index register size (and scale)
-TOKEN a0oexpr[EXPRSIZE];	// Outer displacement expression
-uint64_t a0oexval;			// Outer displacement value
-WORD a0oexattr;				// Outer displacement attribute
 SYM * a0esym;				// External symbol involved in expr
 TOKEN a0bexpr[EXPRSIZE];	// Base displacement expression
 uint64_t a0bexval;			// Base displacement value
@@ -49,9 +46,6 @@ uint64_t a1exval;			// Expression's value
 WORD a1exattr;				// Expression's attribute
 int a1ixreg;				// Index register
 int a1ixsiz;				// Index register size (and scale)
-TOKEN a1oexpr[EXPRSIZE];	// Outer displacement expression
-uint64_t a1oexval;			// Outer displacement value
-WORD a1oexattr;				// Outer displacement attribute
 SYM * a1esym;				// External symbol involved in expr
 TOKEN a1bexpr[EXPRSIZE];	// Base displacement expression
 uint64_t a1bexval;			// Base displacement value
@@ -83,8 +77,8 @@ int amode(int acount)
 	// Initialize global return values
 	nmodes = a0reg = a1reg = 0;
 	am0 = am1 = AM_NONE;
-	a0expr[0] = a0oexpr[0] = a1expr[0] = a1oexpr[0] = ENDEXPR;
-	a0exattr = a0oexattr = a1exattr = a1oexattr = 0;
+	a0expr[0] = a1expr[0] = ENDEXPR;
+	a0exattr = a1exattr = 0;
 	a0esym = a1esym = NULL;
 	a0bexpr[0] = a1bexpr[0] = ENDEXPR;
 	a0bexval = a1bexval = 0;
@@ -108,9 +102,6 @@ int amode(int acount)
 	#define AnEXPR    a0expr
 	#define AnEXVAL   a0exval
 	#define AnEXATTR  a0exattr
-	#define AnOEXPR   a0oexpr
-	#define AnOEXVAL  a0oexval
-	#define AnOEXATTR a0oexattr
 	#define AnESYM    a0esym
 	#define AMn_IX0   am0_ix0
 	#define AMn_IXN   am0_ixn
@@ -150,9 +141,6 @@ int amode(int acount)
 	#define AnEXPR    a1expr
 	#define AnEXVAL   a1exval
 	#define AnEXATTR  a1exattr
-	#define AnOEXPR   a1oexpr
-	#define AnOEXVAL  a1oexval
-	#define AnOEXATTR a1oexattr
 	#define AnESYM    a1esym
 	#define AMn_IX0   am1_ix0
 	#define AMn_IXN   am1_ixn
