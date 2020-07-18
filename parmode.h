@@ -518,15 +518,13 @@ AMn_IXN:                 // Handle any indexed (tok -> a comma)
 					goto IS_SUPPRESSEDn;	// https://xkcd.com/292/ - what does he know anyway?
 				}
 
-				// Check for size
+				// Check for Xn size
 				// ([bd,An/PC],Xn.W/L...)
 				switch ((int)*tok)
 				{
 				// Index reg size: <empty> | .W | .L
 				case DOTW:
 					tok++;
-					break;
-				default:
 					break;
 				case DOTL:
 					AnEXTEN |= EXT_L;
@@ -535,9 +533,11 @@ AMn_IXN:                 // Handle any indexed (tok -> a comma)
 				case DOTB:
 					// .B not allowed here...
 					goto badmode;
+				default:
+					break;
 				}
 
-				// Check for scale
+				// Check for Xn scale
 				if (*tok == '*')                   // ([bd,An/PC],Xn*...)
 				{                                  // scale: *1, *2, *4, *8
 					tok++;
@@ -546,47 +546,32 @@ AMn_IXN:                 // Handle any indexed (tok -> a comma)
 					{
 						if (expr(scaleexpr, &scaleval, &scaleattr, &scaleesym) != OK)
 							return error("scale factor expression must evaluate");
-
-						switch (scaleval)
-						{
-						case 1:
-							break;
-						case 2:
-							AnIXSIZ |= TIMES2;
-							break;
-						case 4:
-							AnIXSIZ |= TIMES4;
-							break;
-						case 8:
-							AnIXSIZ |= TIMES8;
-							break;
-						default:
-							goto badmode;
-						}
 					}
-					else if (*tok++ != CONST)
-						goto badmode;
-					else
+					else if (*tok == CONST)
 					{
-						switch ((int)*tok++)
-						{
-						case 1:
-							break;
-						case 2:
-							AnIXSIZ |= TIMES2;
-							break;
-						case 4:
-							AnIXSIZ |= TIMES4;
-							break;
-						case 8:
-							AnIXSIZ |= TIMES8;
-							break;
-						default:
-							goto badmode;
-						}
-
+						scaleval = (int)*tok++;
 						tok++;  // Take into account that constants are 64-bit
 					}
+					else
+						goto badmode;
+
+					switch (scaleval)
+					{
+					case 1:
+						break;
+					case 2:
+						AnIXSIZ |= TIMES2;
+						break;
+					case 4:
+						AnIXSIZ |= TIMES4;
+						break;
+					case 8:
+						AnIXSIZ |= TIMES8;
+						break;
+					default:
+						goto badmode;
+					}
+					
 				}
 
 				// Check for od
