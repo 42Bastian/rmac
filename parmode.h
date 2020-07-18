@@ -616,9 +616,21 @@ CHECKODn:
 				}
 
 				// ([bd,An/PC],Xn,od)
-				if (*tok == DOTL)
+					// Is .W forced here?
+				if (*tok == DOTW)
 				{
-					// expr.L
+					tok++;
+					// od[.W]
+					AnEXTEN |= EXT_IISPOSW; // Word outer displacement
+					AMn = MEMPOST;
+				}
+				else
+				{
+					// Is .L forced here?
+					if (*tok == DOTL)
+						tok++;				// Doesn't matter, we're going for .L anyway
+
+					// od.L
 					if (!(AnEXTEN & EXT_BS))
 						AnEXTEN |= EXT_IISPOSL; // Long outer displacement
 					else
@@ -633,14 +645,12 @@ CHECKODn:
 						{
 							AnBEXPR[i] = AnEXPR[i];
 							i++;
-						}
-						while (AnEXPR[i] != 'E');
+						} while (AnEXPR[i] != 'E');
 
 						AnBEXPR[i] = 'E';
 					}
 
 					AMn = MEMPOST;
-					tok++;
 
 					// Defined, absolute values from $FFFF8000..$00007FFF get
 					// optimized to absolute short
@@ -653,17 +663,6 @@ CHECKODn:
 						if (optim_warn_flag)
 							warn("absolute value in outer displacement ranging $FFFF8000..$00007FFF optimised to absolute short");
 					}
-
-				}
-				else
-				{
-					// expr[.W]
-					AnEXTEN |= EXT_IISPOSW; // Word outer displacement
-					AMn = MEMPOST;
-
-					// Is .W forced here?
-					if (*tok == DOTW)
-						tok++;
 				}
 
 				// Check for final closing parenthesis
