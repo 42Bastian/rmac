@@ -167,7 +167,7 @@ Switch               Description
 
                       `4: lea to addq`
 
-                      `5: Base displacement ([bd,An,Xn],od) etc to ([An,Xn],od)`
+                      `5: 68020+ Absolute long base/outer displacement to word`
 
                       `6: Convert null short branches to NOP`
 
@@ -1530,7 +1530,17 @@ The assembler provides "creature comforts" when it processes 68000 mnemonics:
 
  * All optimisations are turned off for any source line that has an exclamation mark
    (*!*) on their first column.
- 
+
+ * Optimisation switches 0, 1 and 2 are turned on by default for legacy reasons.
+   All other levels are off by default. (refer to section `The Command Line`_
+   for a description of all the switches).
+
+ * Optimisation warnings are off by default. Invoke RMAC with the *-s* switch to
+   turn on warnings in console and listing output.
+
+ * In DSP56001 mode size optimisations are on by default. Currently there is no
+   way to disable this behaviour.
+
  * In GPU/DSP code sections, you can use JUMP (Rx) in place of JUMP T, (Rx) and JR
    (Rx) in place of JR T,(Rx).
 
