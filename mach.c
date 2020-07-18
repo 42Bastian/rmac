@@ -796,7 +796,10 @@ int m_move(WORD inst, WORD size)
 int m_move30(WORD inst, WORD size)
 {
 	int siz = (int)size;
-	inst |= siz_12[siz] | reg_9[a1reg & 7] | a0reg | extra_addressing[am0 - ABASE];
+	if (am0 > ABASE)
+		inst |= siz_12[siz] | reg_9[a1reg & 7] | a0reg | extra_addressing[am0 - ABASE];
+	else
+		inst |= siz_12[siz] | reg_9[a1reg & 7] | a0reg | extra_addressing[am1 - ABASE] << 3;
 
 	D_word(inst);
 
