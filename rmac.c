@@ -50,7 +50,7 @@ int endian;						// Host processor endianess (0 = LE, 1 = BE)
 char * objfname;				// Object filename pointer
 char * firstfname;				// First source filename
 char * cmdlnexec;				// Executable name, pointer to ARGV[0]
-char * searchpath = NULL;		// Search path for include files
+char searchpath[512] = { 0 };	// Search path for include files
 char defname[] = "noname.o";	// Default output filename
 int optim_flags[OPT_COUNT];		// Specific optimisations on/off matrix
 int activecpu = CPU_68000;		// Active 68k CPU (68000 by default)
@@ -284,6 +284,7 @@ int Process(int argc, char ** argv)
 	int fd;							// File descriptor
 	char fnbuf[FNSIZ];				// Filename buffer
 	int i;							// Iterator
+	int current_path_index = 0;		// Iterator for search paths
 
 	errcnt = 0;						// Initialize error count
 	listing = 0;					// Initialize listing level
@@ -293,7 +294,6 @@ int Process(int argc, char ** argv)
 	glob_flag = 0;					// Initialize .globl flag
 	optim_warn_flag = 0;			// Initialize short branch flag
 	debug = 0;						// Initialize debug flag
-	searchpath = NULL;				// Initialize search path
 	objfname = NULL;				// Initialize object filename
 	list_fname = NULL;				// Initialize listing filename
 	err_fname = NULL;				// Initialize error filename
@@ -410,23 +410,28 @@ int Process(int argc, char ** argv)
 			case 'i':				// Set directory search path
 			case 'I':
 			{
-				searchpath = argv[argno] + 2;
+				strcat(searchpath, argv[argno] + 2);
+                strcat(searchpath, ";");
 
 				// Check to see if include paths actually exist
-				if (strlen(searchpath) > 0)
+				char current_path[256];
+				for (i = current_path_index; nthpath("RMACPATH", i, current_path) != 0; i++)
 				{
-					DIR * test = opendir(searchpath);
-
-					if (test == NULL)
+					if (strlen(current_path) > 0)
 					{
-						printf("Invalid include path: %s\n", searchpath);
-						errcnt++;
-						return errcnt;
+						DIR* test = opendir(current_path);
+
+						if (test == NULL)
+						{
+							printf("Invalid include path: %s\n", current_path);
+							errcnt++;
+							return errcnt;
+						}
+
+						closedir(test);
 					}
-
-					closedir(test);
 				}
-
+				current_path_index = i-1;
 				break;
 			}
 			case 'l':				// Produce listing file

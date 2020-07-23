@@ -2438,7 +2438,6 @@ int m_pload(WORD inst, WORD siz, WORD extension)
 			inst = 1;
 		else
 			return error("illegal control register specified");
-
 		break;
 	case DREG:
 		inst = (1 << 3) | a0reg;

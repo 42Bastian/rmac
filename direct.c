@@ -584,7 +584,7 @@ int d_incbin(void)
 
 	// Attempt to open the include file in the current directory, then (if that
 	// failed) try list of include files passed in the enviroment string or by
-	// the "-d" option.
+	// the "-i" option.
 	TOKEN filename = tok[1];
 
 	if ((fd = open(string[filename], _OPEN_INC)) < 0)

@@ -21,7 +21,6 @@
 #include "mntab.h"
 
 // Address-mode information
-//int nmodes;						// Number of addr'ing modes found
 int dsp_am0;					// Addressing mode
 int dsp_a0reg;					// Register
 TOKEN dsp_a0expr[EXPRSIZE];		// Expression

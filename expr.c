@@ -169,7 +169,6 @@ int expr1(void)
 		case CR_FILESIZE:
 			if (*tok++ != STRING)
 				return error("^^FILESIZE expects filename inside string");
-
 			*evalTokenBuffer.u32++ = CONST;
 			// @@copypasted from d_incbin, maybe factor this out somehow?
 			// Attempt to open the include file in the current directory, then (if that
