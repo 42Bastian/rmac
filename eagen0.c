@@ -328,7 +328,7 @@ int eaNgen(WORD siz)
 		{
 			if (CHECK_OPTS(OPT_PC_RELATIVE))
 			{
-				if (aNexattr & (DEFINED | REFERENCED | EQUATED) == DEFINED | REFERENCED)
+				if ((aNexattr & (DEFINED | REFERENCED | EQUATED)) == (DEFINED | REFERENCED))
 					return error("relocation not allowed");
 			}
 

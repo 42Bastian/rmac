@@ -796,6 +796,7 @@ int m_move(WORD inst, WORD size)
 int m_move30(WORD inst, WORD size)
 {
 	int siz = (int)size;
+
 	if (am0 > ABASE)
 		inst |= siz_12[siz] | reg_9[a1reg & 7] | a0reg | extra_addressing[am0 - ABASE];
 	else

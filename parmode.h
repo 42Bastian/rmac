@@ -367,8 +367,8 @@ AMn_IXN:                 // Handle any indexed (tok -> a comma)
 					tok++;
 			}
 
-			// Check for address register or PC, 
-			// suppress base register otherwise
+			// Check for address register or PC, suppress base register
+			// otherwise
 
 			if (*tok == KW_PC)
 			{					// ([bd,PC,...
@@ -571,7 +571,7 @@ AMn_IXN:                 // Handle any indexed (tok -> a comma)
 					default:
 						goto badmode;
 					}
-					
+
 				}
 
 				// Check for od
@@ -633,7 +633,8 @@ CHECKODn:
 						{
 							AnBEXPR[i] = AnEXPR[i];
 							i++;
-						} while (AnEXPR[i] != 'E');
+						}
+						while (AnEXPR[i] != 'E');
 
 						AnBEXPR[i] = 'E';
 					}
@@ -648,6 +649,7 @@ CHECKODn:
 					{
 						od_ea = EXT_IISPOSW; // Word outer displacement
 						AMn = MEMPOST + ea_PC;
+
 						if (optim_warn_flag)
 							warn("absolute value in outer displacement ranging $FFFF8000..$00007FFF optimised to absolute short");
 					}
