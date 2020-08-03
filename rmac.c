@@ -415,11 +415,12 @@ int Process(int argc, char ** argv)
 
 				// Check to see if include paths actually exist
 				char current_path[256];
-				for (i = current_path_index; nthpath("RMACPATH", i, current_path) != 0; i++)
+
+				for(i=current_path_index; nthpath("RMACPATH", i, current_path)!=0; i++)
 				{
 					if (strlen(current_path) > 0)
 					{
-						DIR* test = opendir(current_path);
+						DIR * test = opendir(current_path);
 
 						if (test == NULL)
 						{
@@ -431,7 +432,8 @@ int Process(int argc, char ** argv)
 						closedir(test);
 					}
 				}
-				current_path_index = i-1;
+
+				current_path_index = i - 1;
 				break;
 			}
 			case 'l':				// Produce listing file
