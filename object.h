@@ -33,6 +33,14 @@ enum ELFSectionNames
 	ES_SYMTAB, ES_STRTAB
 };
 
+//
+// ELF special section indices (field st_shndx)
+// Lifted from glibc (https://sourceware.org/git/?p=glibc.git;a=blob;f=elf/elf.h)
+//
+#define SHN_UNDEF       0               /* Undefined section */
+#define SHN_ABS         0xFFF1          /* Associated symbol is absolute */
+#define SHN_COMMON      0xFFF2          /* Associated symbol is common */
+
 // Exported variables.
 extern uint8_t * objImage;
 extern int elfHdrNum[];

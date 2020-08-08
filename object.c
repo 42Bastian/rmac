@@ -224,7 +224,7 @@ uint8_t * AddELFSymEntry(uint8_t * buf, SYM * sym, int globflag)
 	if (w1 & DEFINED)
 	{
 		if (globflag)		// Export the symbol
-			st_info |= 16;   //STB_GLOBAL (1<<4)
+			st_info |= 16;  // STB_GLOBAL (1<<4)
 	}
 	else if (w1 & (GLOBAL | REFERENCED))
 		st_info |= 16;
@@ -232,7 +232,7 @@ uint8_t * AddELFSymEntry(uint8_t * buf, SYM * sym, int globflag)
 	D_byte(st_info);
 	D_byte(0);				// st_other
 
-	uint16_t st_shndx = 0xFFF1;	// Assume absolute (equated) number
+	uint16_t st_shndx = SHN_ABS;	// Assume absolute (equated) number
 
 	if (w1 & TEXT)
 		st_shndx = elfHdrNum[ES_TEXT];
@@ -240,8 +240,13 @@ uint8_t * AddELFSymEntry(uint8_t * buf, SYM * sym, int globflag)
 		st_shndx = elfHdrNum[ES_DATA];
 	else if (w1 & BSS)
 		st_shndx = elfHdrNum[ES_BSS];
-	else if (globflag)
-		st_shndx = 0;		// Global, not absolute
+	else if (globflag && !(w1 & DEFINED) && (w1 & REFERENCED))
+	{
+		st_shndx = SHN_UNDEF;
+	}		                       // If the symbol is global then probably we
+                                    // don't need to do anything (probably)
+                                    // since we set STB_GLOBAL in st_info above.
+                                    // Unless we need to set it to SHN_COMMON?
 
 	D_word(st_shndx);
 
