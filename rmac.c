@@ -50,7 +50,8 @@ int endian;						// Host processor endianess (0 = LE, 1 = BE)
 char * objfname;				// Object filename pointer
 char * firstfname;				// First source filename
 char * cmdlnexec;				// Executable name, pointer to ARGV[0]
-char searchpath[512] = { 0 };	// Search path for include files
+char searchpatha[512] = { 0 };	// Buffer to hold searchpath when specified
+char * searchpath = NULL;		// Search path for include files
 char defname[] = "noname.o";	// Default output filename
 int optim_flags[OPT_COUNT];		// Specific optimisations on/off matrix
 int activecpu = CPU_68000;		// Active 68k CPU (68000 by default)
@@ -410,8 +411,9 @@ int Process(int argc, char ** argv)
 			case 'i':				// Set directory search path
 			case 'I':
 			{
-				strcat(searchpath, argv[argno] + 2);
-                strcat(searchpath, ";");
+				strcat(searchpatha, argv[argno] + 2);
+				strcat(searchpatha, ";");
+				searchpath = searchpatha;
 
 				// Check to see if include paths actually exist
 				char current_path[256];
