@@ -673,7 +673,6 @@ overflow:
 char * GetNextMacroLine(void)
 {
 	IMACRO * imacro = cur_inobj->inobj.imacro;
-//	LONG * strp = imacro->im_nextln;
 	LLIST * strp = imacro->im_nextln;
 
 	if (strp == NULL)						// End-of-macro

@@ -406,41 +406,75 @@ int InvokeMacro(SYM * mac, WORD siz)
 		// Parse out the arguments and set them up correctly
 		TOKEN * p = imacro->argument[nargs].token;
 		int stringNum = 0;
+		int numTokens = 0;
 
 		while (*tok != EOL)
 		{
 			if (*tok == ACONST)
 			{
+				// Sanity checking (it's numTokens + 1 because we need an EOL
+				// if we successfully parse this argument)
+				if ((numTokens + 3) >= TS_MAXTOKENS)
+					return error("Too many tokens in argument #%d in MACRO invocation", nargs + 1);
+
 				for(int i=0; i<3; i++)
 					*p++ = *tok++;
+
+				numTokens += 3;
 			}
 			else if (*tok == CONST)		// Constants are 64-bits
 			{
+				// Sanity checking (it's numTokens + 1 because we need an EOL
+				// if we successfully parse this argument)
+				if ((numTokens + 3) >= TS_MAXTOKENS)
+					return error("Too many tokens in argument #%d in MACRO invocation", nargs + 1);
+
 				*p++ = *tok++;			// Token
 				uint64_t *p64 = (uint64_t *)p;
 				uint64_t *tok64 = (uint64_t *)tok;
 				*p64++ = *tok64++;
 				tok = (TOKEN *)tok64;
 				p = (uint32_t *)p64;
+				numTokens += 3;
 			}
 			else if ((*tok == STRING) || (*tok == SYMBOL))
 			{
+				// Sanity checking (it's numTokens + 1 because we need an EOL
+				// if we successfully parse this argument)
+				if (stringNum >= TS_MAXSTRINGS)
+					return error("Too many strings in argument #%d in MACRO invocation", nargs + 1);
+
+				if ((numTokens + 2) >= TS_MAXTOKENS)
+					return error("Too many tokens in argument #%d in MACRO invocation", nargs + 1);
+
 				*p++ = *tok++;
 				imacro->argument[nargs].string[stringNum] = strdup(string[*tok++]);
 				*p++ = stringNum++;
+				numTokens += 2;
 			}
 			else if (*tok == ',')
 			{
+				// Sanity checking
+				if ((nargs + 1) >= TS_MAXARGS)
+					return error("Too many arguments in MACRO invocation");
+
 				// Comma delimiter was found, so set up for next argument
 				*p++ = EOL;
 				tok++;
 				stringNum = 0;
+				numTokens = 0;
 				nargs++;
 				p = imacro->argument[nargs].token;
 			}
 			else
 			{
+				// Sanity checking (it's numTokens + 1 because we need an EOL
+				// if we successfully parse this argument)
+				if ((numTokens + 1) >= TS_MAXTOKENS)
+					return error("Too many tokens in argument #%d in MACRO invocation", nargs + 1);
+
 				*p++ = *tok++;
+				numTokens++;
 			}
 		}
 

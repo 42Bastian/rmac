@@ -89,6 +89,7 @@ static inline uint64_t CheckFlags(char * s)
 		return 0x04;
 	else if (strcmp(scratchbuf, "RELEASE") == 0)
 		return 0x08;
+
 	return 0;
 }
 

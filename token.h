@@ -17,12 +17,13 @@
 #define SRC_IREPT       2			// Input source is IREPT
 
 // Macros
-#define INOBJ           struct _inobj
-#define IUNION          union _iunion
-#define IFILE           struct _incldfile
-#define IMACRO          struct _imacro
-#define IREPT           struct _irept
-#define IFENT           struct _ifent
+#define INOBJ		struct _inobj
+#define IUNION		union  _iunion
+#define IFILE		struct _incldfile
+#define TOKENSTREAM	struct _tokenstream
+#define IMACRO		struct _imacro
+#define IREPT		struct _irept
+#define IFENT		struct _ifent
 
 // Tunable definitions
 #define LNSIZ           1024		// Maximum size of a line of text
@@ -126,10 +127,14 @@ IFILE {
 	char ifbuf[LNBUFSIZ];	// Line buffer
 };
 
-#define TOKENSTREAM struct _tokenstream
+// Consts for maximums in TOKENSTREAM
+#define TS_MAXTOKENS	64	// 32 ought to be enough for anybody (including XiA!)
+#define TS_MAXSTRINGS	32	// same for attached strings
+#define TS_MAXARGS		20	// Assume no more than 20 arguments in an invocation
+
 TOKENSTREAM {
-	TOKEN token[32];		// 32 ought to be enough for anybody (including XiA!)
-	char * string[32];		// same for attached strings
+	TOKEN token[TS_MAXTOKENS];
+	char * string[TS_MAXSTRINGS];
 };
 
 // Information about a macro invocation
@@ -141,7 +146,7 @@ IMACRO {
 	LONG im_olduniq;		// Old value of 'macuniq'
 	SYM * im_macro;			// Pointer to macro we're in
 	char im_lnbuf[LNSIZ];	// Line buffer
-	TOKENSTREAM argument[20];	// Assume no more than 20 arguments in an invocation
+	TOKENSTREAM argument[TS_MAXARGS];
 };
 
 // Information about a .rept invocation
