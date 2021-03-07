@@ -1,14 +1,14 @@
 //
-// RMAC - Reboot's Macro Assembler for all Atari computers
+// RMAC - Renamed Macro Assembler for all Atari computers
 // LISTING.C - Listing Output
-// Copyright (C) 199x Landon Dyer, 2011-2020 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2021 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
 // --------------------------------------------------------------------------
 // 0    0    1    1    2    2    3    3    4    4    5    5    6    6    7    7
 // 012345678901234567890123456789012345678901234567890123456789012345678901234567
-// filename....                         Reboot's Macro Assembler N.N.NN (Unknown)
+// filename....                         Renamed Macro Assembler N.N.NN (Unknown)
 // nnnnn  aaaaaaaa  dddddddddddddddddddd T source code
 // nnnnn  aaaaaaaa  dddddddddddddddd
 // nnnnn           =vvvvvvvv

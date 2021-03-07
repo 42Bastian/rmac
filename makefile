@@ -1,6 +1,6 @@
 #
-# RMAC - Reboot's Macro Assembler for all Atari computers
-# Copyright (C) 199x Landon Dyer, 2011-2019 Reboot & Friends
+# RMAC - Renamed Macro Assembler for all Atari computers
+# Copyright (C) 199x Landon Dyer, 2011-2021 Reboot & Friends
 # MAKEFILE for *nix
 #
 

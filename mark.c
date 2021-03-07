@@ -1,7 +1,7 @@
 //
-// RMAC - Reboot's Macro Assembler for all Atari computers
+// RMAC - Renamed Macro Assembler for all Atari computers
 // MARK.C - A record of things that are defined relative to any of the sections
-// Copyright (C) 199x Landon Dyer, 2011-2020 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2021 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -624,7 +624,7 @@ uint32_t MarkABSImage(uint8_t * mp, uint32_t siz, uint32_t tsize, int reqseg)
 
 				if (rflag & 0x01)
 					diff = WORDSWAP32(diff);
-                
+
 				// Make sure to deposit the correct size payload
 				// Check comments in MarkBSDImage for more candid moments
 				if (rflag & 0x02)		// WORD relocation
