@@ -827,7 +827,7 @@ for(int j=0; j<i; j++)
 	}
 	else if (obj_format == RAW)
 	{
-		if (!org68k_active)
+		if (!org68k_active && !orgactive)
 		{
 			return error("cannot output absolute binary without a starting address (.org or command line)");
 		}
