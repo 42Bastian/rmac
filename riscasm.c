@@ -25,6 +25,22 @@
 
 #define MAXINTERNCC 26		// Maximum internal condition codes
 
+// Useful macros
+#define EVAL_REG_RETURN_IF_ERROR(x, y) \
+x = EvaluateRegisterFromTokenStream(y); \
+\
+if (x == ERROR) \
+	return ERROR;
+
+#define EVAL_REG_RETURN_IF_ERROR_OR_NO_EOL(x, y) \
+x = EvaluateRegisterFromTokenStream(y); \
+\
+if ((x == ERROR) || (ErrorIfNotAtEOL() == ERROR)) \
+	return ERROR;
+
+#define CHECK_EOL \
+if (ErrorIfNotAtEOL() == ERROR) \
+	return ERROR;
 
 unsigned altbankok = 0;		// Ok to use alternate register bank
 unsigned orgactive = 0;		// RISC/6502 org directive active
@@ -134,7 +150,6 @@ static const char * malformErr[] = {
 	malform1, malform2, malform3, malform4
 };
 
-
 //
 // Function to return "malformed expression" error
 // This is done mainly to remove a bunch of GOTO statements in the parser
@@ -143,7 +158,6 @@ static inline int MalformedOpcode(int signal)
 {
 	return error("Malformed opcode, %s", malformErr[signal]);
 }
-
 
 //
 // Function to return "Illegal Indexed Register" error
@@ -154,7 +168,6 @@ static inline int IllegalIndexedRegister(int reg)
 	return error("Attempted index reference with non-indexable register (r%d)", reg - KW_R0);
 }
 
-
 //
 // Function to return "Illegal Indexed Register" error for EQUR scenarios
 // Trying to use register value within EQUR that isn't 14 or 15
@@ -163,7 +176,6 @@ static inline int IllegalIndexedRegisterEqur(SYM * sy)
 {
 	return error("Attempted index reference with non-indexable register within EQUR (%s = r%d)", sy->sname, sy->svalue);
 }
-
 
 //
 // Build up & deposit RISC instruction word
@@ -181,25 +193,40 @@ static void DepositRISCInstructionWord(uint16_t opcode, int reg1, int reg2)
 	D_word(value);
 }
 
-
 //
 // Evaluate the RISC register from the token stream. Passed in value is the
 // FIXUP attribute to use if the expression comes back as undefined.
 //
-static int EvaluateRegisterFromTokenStream(uint32_t attr)
+static int EvaluateRegisterFromTokenStream(uint32_t fixup)
 {
+	// Firstly, check to see if it's a register token and return that.  No
+	// need to invoke expr() for easy cases like this.
+	if (*tok >= KW_R0 && *tok <= KW_R31)
+	{
+		int reg = *tok - KW_R0;
+		tok++;
+		return reg;
+	}
+
+	if (*tok != SYMBOL)
+	{
+		// If at this point we don't have a symbol then it's garbage.  Punt.
+		return error("Expected register number or EQUREG");
+	}
+
 	uint64_t eval;				// Expression value
 	WORD eattr;					// Expression attributes
 	SYM * esym;					// External symbol involved in expr.
 	TOKEN r_expr[EXPRSIZE];		// Expression token list
 
 	// Evaluate what's in the global "tok" buffer
+	// N.B.: We should either get a fixup or a register name from EQUR
 	if (expr(r_expr, &eval, &eattr, &esym) != OK)
 		return ERROR;
 
 	if (!(eattr & DEFINED))
 	{
-		AddFixup(FU_WORD | attr, sloc, r_expr);
+		AddFixup(FU_WORD | fixup, sloc, r_expr);
 		return 0;
 	}
 
@@ -210,7 +237,6 @@ static int EvaluateRegisterFromTokenStream(uint32_t attr)
 	// Otherwise, it's out of range & we flag an error
 	return error(reg_err);
 }
-
 
 //
 // Do RISC code generation
@@ -257,8 +283,7 @@ int GenerateRISCCode(int state)
 	// ABS, MIRROR, NEG, NOT, PACK, RESMAC, SAT8, SAT16, SAT16S, SAT24, SAT32S,
 	// UNPACK
 	case RI_ONE:
-		reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
-		ErrorIfNotAtEOL();
+		EVAL_REG_RETURN_IF_ERROR_OR_NO_EOL(reg2, FU_REGTWO);
 		DepositRISCInstructionWord(parm, parm >> 6, reg2);
 		break;
 
@@ -269,14 +294,13 @@ int GenerateRISCCode(int state)
 		if (parm == 37)
 			altbankok = 1;                      // MOVEFA
 
-		reg1 = EvaluateRegisterFromTokenStream(FU_REGONE);
+		EVAL_REG_RETURN_IF_ERROR(reg1, FU_REGONE);
 		CHECK_COMMA;
 
 		if (parm == 36)
 			altbankok = 1;                      // MOVETA
 
-		reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
-		ErrorIfNotAtEOL();
+		EVAL_REG_RETURN_IF_ERROR_OR_NO_EOL(reg2, FU_REGTWO);
 		DepositRISCInstructionWord(parm, reg1, reg2);
 		break;
 
@@ -343,8 +367,7 @@ int GenerateRISCCode(int state)
 		}
 
 		CHECK_COMMA;
-		reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
-		ErrorIfNotAtEOL();
+		EVAL_REG_RETURN_IF_ERROR_OR_NO_EOL(reg2, FU_REGTWO);
 		DepositRISCInstructionWord(parm, reg1, reg2);
 		break;
 
@@ -392,8 +415,7 @@ int GenerateRISCCode(int state)
 		}
 
 		CHECK_COMMA;
-		reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
-		ErrorIfNotAtEOL();
+		EVAL_REG_RETURN_IF_ERROR_OR_NO_EOL(reg2, FU_REGTWO);
 
 		DepositRISCInstructionWord(parm, 0, reg2);
 		val = WORDSWAP32(eval);
@@ -411,12 +433,11 @@ int GenerateRISCCode(int state)
 		else
 		{
 			parm = 34;
-			reg1 = EvaluateRegisterFromTokenStream(FU_REGONE);
+			EVAL_REG_RETURN_IF_ERROR(reg1, FU_REGONE);
 		}
 
 		CHECK_COMMA;
-		reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
-		ErrorIfNotAtEOL();
+		EVAL_REG_RETURN_IF_ERROR_OR_NO_EOL(reg2, FU_REGTWO);
 		DepositRISCInstructionWord(parm, reg1, reg2);
 		break;
 
@@ -465,7 +486,7 @@ int GenerateRISCCode(int state)
 
 		if (!indexed)
 		{
-			reg1 = EvaluateRegisterFromTokenStream(FU_REGONE);
+			EVAL_REG_RETURN_IF_ERROR(reg1, FU_REGONE);
 		}
 		else
 		{
@@ -497,7 +518,7 @@ int GenerateRISCCode(int state)
 
 				if (indexed)
 				{
-					reg1 = EvaluateRegisterFromTokenStream(FU_REGONE);
+					EVAL_REG_RETURN_IF_ERROR(reg1, FU_REGONE);
 				}
 				else
 				{
@@ -529,7 +550,7 @@ int GenerateRISCCode(int state)
 			}
 			else
 			{
-				reg1 = EvaluateRegisterFromTokenStream(FU_REGONE);
+				EVAL_REG_RETURN_IF_ERROR(reg1, FU_REGONE);
 			}
 		}
 
@@ -538,15 +559,14 @@ int GenerateRISCCode(int state)
 
 		tok++;
 		CHECK_COMMA;
-		reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
-		ErrorIfNotAtEOL();
+		EVAL_REG_RETURN_IF_ERROR_OR_NO_EOL(reg2, FU_REGTWO);
 		DepositRISCInstructionWord(parm, reg1, reg2);
 		break;
 
 	// Rn,(Rn) = 47 / Rn,(R14/R15+n) = 49/50 / Rn,(R14/R15+Rn) = 60/61
 	case RI_STORE:
 		parm = 47;
-		reg1 = EvaluateRegisterFromTokenStream(FU_REGONE);
+		EVAL_REG_RETURN_IF_ERROR(reg1, FU_REGONE);
 		CHECK_COMMA;
 
 		if (*tok != '(')
@@ -581,7 +601,7 @@ int GenerateRISCCode(int state)
 
 		if (!indexed)
 		{
-			reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
+			EVAL_REG_RETURN_IF_ERROR(reg2, FU_REGTWO);
 		}
 		else
 		{
@@ -613,7 +633,7 @@ int GenerateRISCCode(int state)
 
 				if (indexed)
 				{
-					reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
+					EVAL_REG_RETURN_IF_ERROR(reg2, FU_REGTWO);
 				}
 				else
 				{
@@ -650,7 +670,7 @@ int GenerateRISCCode(int state)
 			}
 			else
 			{
-				reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
+				EVAL_REG_RETURN_IF_ERROR(reg2, FU_REGTWO);
 			}
 		}
 
@@ -658,7 +678,7 @@ int GenerateRISCCode(int state)
 			return MalformedOpcode(MALF_RPAREN);
 
 		tok++;
-		ErrorIfNotAtEOL();
+		CHECK_EOL;
 		DepositRISCInstructionWord(parm, reg2, reg1);
 		break;
 
@@ -668,34 +688,33 @@ int GenerateRISCCode(int state)
 			return MalformedOpcode(MALF_LPAREN);
 
 		tok++;
-		reg1 = EvaluateRegisterFromTokenStream(FU_REGONE);
+		EVAL_REG_RETURN_IF_ERROR(reg1, FU_REGONE);
 
 		if (*tok != ')')
 			return MalformedOpcode(MALF_RPAREN);
 
 		tok++;
 		CHECK_COMMA;
-		reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
-		ErrorIfNotAtEOL();
+		EVAL_REG_RETURN_IF_ERROR_OR_NO_EOL(reg2, FU_REGTWO);
 		DepositRISCInstructionWord(parm, reg1, reg2);
 		break;
 
 	// STOREB/STOREP/STOREW Rn,(Rn)
 	case RI_STOREN:
-		reg1 = EvaluateRegisterFromTokenStream(FU_REGONE);
+		EVAL_REG_RETURN_IF_ERROR(reg1, FU_REGONE);
 		CHECK_COMMA;
 
 		if (*tok != '(')
 			return MalformedOpcode(MALF_LPAREN);
 
 		tok++;
-		reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
+		EVAL_REG_RETURN_IF_ERROR(reg2, FU_REGTWO);
 
 		if (*tok != ')')
 			return MalformedOpcode(MALF_RPAREN);
 
 		tok++;
-		ErrorIfNotAtEOL();
+		CHECK_EOL;
 		DepositRISCInstructionWord(parm, reg2, reg1);
 		break;
 
@@ -802,13 +821,13 @@ int GenerateRISCCode(int state)
 				return MalformedOpcode(MALF_LPAREN);
 
 			tok++;
-			reg2 = EvaluateRegisterFromTokenStream(FU_REGTWO);
+			EVAL_REG_RETURN_IF_ERROR(reg2, FU_REGTWO);
 
 			if (*tok != ')')
 				return MalformedOpcode(MALF_RPAREN);
 
 			tok++;
-			ErrorIfNotAtEOL();
+			CHECK_EOL;
 		}
 
 		DepositRISCInstructionWord(parm, reg2, reg1);
@@ -822,4 +841,3 @@ int GenerateRISCCode(int state)
 	lastOpcode = type;
 	return 0;
 }
-

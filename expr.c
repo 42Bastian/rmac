@@ -381,49 +381,20 @@ int expr(TOKEN * otk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 	PTR ptk;
 
 	evalTokenBuffer.u32 = otk;	// Set token pointer to 'exprbuf' (direct.c)
-							// Also set in various other places too (riscasm.c,
-							// e.g.)
+								// Also set in various other places too (riscasm.c,
+								// e.g.)
 
-//printf("expr(): tokens 0-2: %i %i %i (%c %c %c); tc[2] = %i\n", tok[0], tok[1], tok[2], tok[0], tok[1], tok[2], tokenClass[tok[2]]);
 	// Optimize for single constant or single symbol.
-	// Shamus: Subtle bug here. EOL token is 101; if you have a constant token
-	//         followed by the value 101, it will trigger a bad evaluation here.
-	//         This is probably a really bad assumption to be making here...!
-	//         (assuming tok[1] == EOL is a single token that is)
-	//         Seems that even other tokens (SUNARY type) can fuck this up too.
-#if 0
-//	if ((tok[1] == EOL)
-	if ((tok[1] == EOL && ((tok[0] != CONST || tok[0] != FCONST) && tokenClass[tok[0]] != SUNARY))
-//		|| (((*tok == CONST || *tok == FCONST || *tok == SYMBOL) || (*tok >= KW_R0 && *tok <= KW_R31))
-//		&& (tokenClass[tok[2]] < UNARY)))
-		|| (((tok[0] == SYMBOL) || (tok[0] >= KW_R0 && tok[0] <= KW_R31))
-			&& (tokenClass[tok[2]] < UNARY))
-		|| ((tok[0] == CONST || tok[0] == FCONST) && (tokenClass[tok[3]] < UNARY))
-		)
-#else
 // Shamus: Seems to me that this could be greatly simplified by 1st checking if the first token is a multibyte token, *then* checking if there's an EOL after it depending on the actual length of the token (multiple vs. single). Otherwise, we have the horror show that is the following:
 	if ((tok[1] == EOL
 			&& (tok[0] != CONST && tokenClass[tok[0]] != SUNARY))
-		|| (((tok[0] == SYMBOL)
-				|| (tok[0] >= KW_R0 && tok[0] <= KW_R31))
+		|| ((tok[0] == SYMBOL)
 			&& (tokenClass[tok[2]] < UNARY))
 		|| ((tok[0] == CONST) && (tokenClass[tok[3]] < UNARY))
 		)
-// Shamus: Yes, you can parse that out and make some kind of sense of it, but damn, it takes a while to get it and understand the subtle bugs that result from not being careful about what you're checking; especially vis-a-vis niavely checking tok[1] for an EOL. O_o
-#endif
+// Shamus: Yes, you can parse that out and make some kind of sense of it, but damn, it takes a while to get it and understand the subtle bugs that result from not being careful about what you're checking; especially vis-a-vis naively checking tok[1] for an EOL. O_o
 	{
-		if (*tok >= KW_R0 && *tok <= KW_R31)
-		{
-			*evalTokenBuffer.u32++ = CONST;
-			*evalTokenBuffer.u64++ = *a_value = (*tok - KW_R0);
-			*a_attr = ABS | DEFINED | RISCREG;
-
-			if (a_esym != NULL)
-				*a_esym = NULL;
-
-			tok++;
-		}
-		else if (*tok == CONST)
+		if (*tok == CONST)
 		{
 			ptk.u32 = tok;
 			*evalTokenBuffer.u32++ = *ptk.u32++;
