@@ -294,7 +294,7 @@ int AddFixup(uint32_t attr, uint32_t loc, TOKEN * fexpr)
 	}
 
 	// Allocate space for the fixup + any expression
-	FIXUP * fixup = malloc(sizeof(FIXUP) + (sizeof(TOKEN) * exprlen));
+	FIXUP * fixup = malloc(sizeof(FIXUP) + (sizeof(TOKEN) * exprlen)*2);
 
 	// Store the relevant fixup information in the FIXUP
 	fixup->next = NULL;
@@ -309,8 +309,53 @@ int AddFixup(uint32_t attr, uint32_t loc, TOKEN * fexpr)
 	// Copy the passed in expression to the FIXUP, if any
 	if (exprlen > 0)
 	{
+		// Here we used to to a plain memcpy and punt on trying to evaluate the expression by then.
+		// As discussed in bug #176, this can lead to robustness issues because some symbols might
+		// have changed by the time we perform the relocations (think of a symbol that's SET multiple
+		// times). So instead we perform a symbol-by-symbol copy and check to see if there are any
+		// resolved symbols that can be evaluated immediately. Those, we replace with constants.
+		// Also of note: because "fixup" can be larger than what ExpressionLength() returns
+		// (due to constants taking up more space than symbols), we allocate twice as RAM as we should
+		// without expansions just to be on the safe side. The "correct" thing to do would be to
+		// modify ExpressionLength() to cater for defined symbols and return the exact amount of items.
+
 		fixup->expr = (TOKEN *)((uint8_t *)fixup + sizeof(FIXUP));
-		memcpy(fixup->expr, fexpr, sizeof(TOKEN) * exprlen);
+		int i;
+		PTR dstexpr;
+		dstexpr.u32 = fixup->expr;
+		SYM *sy;
+		for (i = 0; i < exprlen; i++)
+		{
+			if (*fexpr == SYMBOL)
+			{
+				sy = symbolPtr[fexpr[1]];
+				if (sy->sattr & DEFINED && !(sy->sattr & (TDB| M56KPXYL|M6502)))
+				{
+					// Only convert symbols that are defined and are absolute
+					*dstexpr.u32++ = CONST;
+					*dstexpr.u64++ = sy->svalue;
+					fexpr += 2;
+					i++;
+				}
+				else
+				{
+					// Just copy the symbol
+					*dstexpr.u32++ = *fexpr++;
+					*dstexpr.u32++ = *fexpr++;
+					i++;
+				}
+			}
+			else if (*fexpr == CONST || *fexpr == FCONST)
+			{
+				// Copy constants
+				*dstexpr.u32++ = *fexpr++;
+				*dstexpr.u32++ = *fexpr++;
+				*dstexpr.u32++ = *fexpr++;
+				i += 2;
+			}
+			else
+				*dstexpr.u32++ = *fexpr++;
+		}
 	}
 
 	// Finally, put the FIXUP in the current section's linked list
@@ -416,9 +461,9 @@ int ResolveFixups(int sno)
 			if (evexpr(fup->expr, &eval, &eattr, &esym) != OK)
 				continue;
 
-			if ((CHECK_OPTS(OPT_PC_RELATIVE)) && (eattr & REFERENCED) && (eattr & DEFINED) && (!(eattr & EQUATED)))
+			if ((CHECK_OPTS(OPT_PC_RELATIVE)) && (eattr & (DEFINED | REFERENCED | EQUATED)) == (DEFINED | REFERENCED))
 			{
-				error("relocation not allowed");
+				error("relocation not allowed when o30 is enabled");
 				continue;
 			}
 		}
@@ -428,9 +473,9 @@ int ResolveFixups(int sno)
 			SYM * sy = fup->symbol;
 			eattr = sy->sattr;
 
-			if ((CHECK_OPTS(OPT_PC_RELATIVE)) && (eattr & REFERENCED) && (eattr & DEFINED) && (!(eattr & EQUATED)))
+			if ((CHECK_OPTS(OPT_PC_RELATIVE)) && (eattr & (DEFINED | REFERENCED | EQUATED)) == (DEFINED | REFERENCED))
 			{
-				error("relocation not allowed");
+				error("relocation not allowed when o30 is enabled");
 				continue;
 			}
 
@@ -544,7 +589,7 @@ int ResolveFixups(int sno)
 					*locp = 0x71;
 
 					if (optim_warn_flag)
-						warn("bra.s with zero offset converted to NOP");
+						warn("o6: bra.s with zero offset converted to NOP");
 
 					continue;
 				}

@@ -27,6 +27,7 @@
 	#define _OPEN_FLAGS     _O_TRUNC|_O_CREAT|_O_BINARY|_O_RDWR
 	#define _OPEN_INC       _O_RDONLY|_O_BINARY
 	#define _PERM_MODE      _S_IREAD|_S_IWRITE
+    #define PATH_SEPS       ";"
 
 	#ifdef _MSC_VER
 		#if _MSC_VER > 1000
@@ -64,6 +65,7 @@
 	#define _OPEN_FLAGS     O_TRUNC|O_CREAT|O_RDWR
 	#define _OPEN_INC       O_RDONLY
 	#define _PERM_MODE      S_IRUSR|S_IWUSR
+    #define PATH_SEPS       ";:"
 
 	#ifdef __MINGW32__
 	#define off64_t long
@@ -86,6 +88,7 @@
 	#define _OPEN_FLAGS     O_TRUNC|O_CREAT|O_RDWR
 	#define _OPEN_INC       O_RDONLY
 	#define _PERM_MODE      S_IREAD|S_IWRITE
+    #define PATH_SEPS       ":;"
 	// Defined here, even though the platform may not support it...
 	#define DO_PRAGMA(x) _Pragma (#x)
 	#define WARNING(desc) DO_PRAGMA(message (#desc))
@@ -281,6 +284,7 @@ PTR
 // Optimisation defines
 enum
 {
+    // These will be set to on/off when .opt "+Oall"/"~Oall" is called
 	OPT_ABS_SHORT     = 0,
 	OPT_MOVEL_MOVEQ   = 1,
 	OPT_BSR_BCC_S     = 2,
@@ -291,8 +295,12 @@ enum
 	OPT_CLR_DX        = 7,
 	OPT_ADDA_ADDQ     = 8,
 	OPT_ADDA_LEA      = 9,
-	OPT_PC_RELATIVE   = 10,		// Enforce PC relative
-	OPT_COUNT   // Dummy, used to count number of optimisation switches
+	OPT_56K_SHORT	  = 10,
+	OPT_56K_AUTO_LONG = 11,
+	OPT_COUNT,                  // Dummy, used to count number of optimisation switches
+    // These will be unaffected by "Oall"
+	OPT_PC_RELATIVE   = 30,		// Enforce PC relative
+    OPT_COUNT_ALL               // Dummy, used to count all switches
 };
 
 // Exported variables
@@ -307,7 +315,6 @@ extern int regbank;
 extern char * firstfname;
 extern int list_fd;
 extern int list_pag;
-extern int as68_flag;
 extern int m6502;
 extern int list_flag;
 extern int glob_flag;
@@ -317,7 +324,7 @@ extern int obj_format;
 extern int legacy_flag;
 extern int prg_flag;	// 1 = write ".PRG" relocatable executable
 extern LONG PRGFLAGS;
-extern int optim_flags[OPT_COUNT];
+extern int optim_flags[OPT_COUNT_ALL];
 extern int activecpu;
 extern int activefpu;
 extern uint32_t org68k_address;

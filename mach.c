@@ -356,7 +356,7 @@ int m_lea(WORD inst, WORD siz)
 		D_word(inst);
 
 		if (optim_warn_flag)
-			warn("lea size(An),An converted to addq #size,An");
+			warn("o4: lea size(An),An converted to addq #size,An");
 
 		return OK;
 	}
@@ -471,7 +471,7 @@ int m_adda(WORD inst, WORD siz)
 				return m_addq(B16(01010000, 00000000), siz);
 
 				if (optim_warn_flag)
-					warn("adda/suba size(An),An converted to addq/subq #size,An");
+					warn("o8: adda/suba size(An),An converted to addq/subq #size,An");
 			}
 		}
 
@@ -496,6 +496,8 @@ int m_adda(WORD inst, WORD siz)
 				optim_flags[OPT_LEA_ADDQ] = 1;				// Temporarily save switch state
 				return_value = m_lea(B16(01000001, 11011000), SIZW);
 				optim_flags[OPT_LEA_ADDQ] = temp_flag;		// Restore switch state
+				if (optim_warn_flag)
+					warn("o9: adda.w/l #x,Ay converted to lea x(Dy),Ay");
 				return return_value;
 			}
 		}
@@ -755,7 +757,7 @@ int m_move(WORD inst, WORD size)
 		m_moveq((WORD)0x7000, (WORD)0);
 
 		if (optim_warn_flag)
-			warn("move.l #size,dx converted to moveq");
+			warn("o1: move.l #size,dx converted to moveq");
 	}
 	else
 	{
@@ -917,7 +919,7 @@ int m_br(WORD inst, WORD siz)
 				D_word(inst);
 
 				if (optim_warn_flag)
-					warn("Bcc.w/BSR.w converted to .s");
+					warn("o2: Bcc.w/BSR.w converted to .s");
 
 				return OK;
 			}
@@ -1161,7 +1163,11 @@ int m_clrd(WORD inst, WORD siz)
 	if (!CHECK_OPTS(OPT_CLR_DX))
 		inst |= a0reg;
 	else
+	{
 		inst = (a0reg << 9) | B16(01110000, 00000000);
+		if (optim_warn_flag)
+			warn("o7: clr.l Dx converted to moveq #0,Dx");
+	}
 
 	D_word(inst);
 

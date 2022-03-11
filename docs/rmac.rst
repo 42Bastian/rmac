@@ -158,11 +158,11 @@ Switch               Description
 ~o\ *0-9*            Disable specific optimisation
 
                       `0: Absolute long adddresses to word (on by default)`
-                      
+
                       `1: move.l #x,Dn/An to moveq (on by default)`
 
                       `2: Word branches to short (on by default)`
-                      
+
                       `3: Outer displacement 0(An) to (An)`
 
                       `4: lea to addq`
@@ -185,15 +185,15 @@ Switch               Description
 -r *size*            automatically pad the size of each
                      segment in the output file until the size is an integral multiple of the
                      specified boundary. Size is a letter that specifies the desired boundary.
-                     
+
                       `-rw Word (2 bytes, default alignment)`
 
                       `-rl Long (4 bytes)`
 
                       `-rp Phrase (8 bytes)`
-                      
+
                       `-rd Double Phrase (16 bytes)`
-                      
+
                       `-rq Quad Phrase (32 bytes)`
 -s                   Warn about unoptimized long branches and applied optimisations.
 -u                   Force referenced and undefined symbols global.
@@ -432,7 +432,7 @@ necessary to make other assemblers' source code assemble.
     label2: rs.w 10
     label3: rs.l 5
     label4: rs.b 2
-   
+
     size_so_far equ rscount
 
   can be converted to:
@@ -444,7 +444,7 @@ necessary to make other assemblers' source code assemble.
     label2: ds.w 10
     label3: ds.l 5
     label4: ds.b 2
-   
+
     size_so_far equ ^^abscount
 * A rare case: if your macro contains something like:
 
@@ -508,7 +508,7 @@ As an addition, the exclamation mark character (**!**) can be placed at the very
 character of a line to disbale all optimisations for that specific line, i.e.
 
   ::
-      
+
       !label: operator operand(s)  ; comment
 
 `Equates`_
@@ -636,7 +636,7 @@ and may not be used as symbols (e.g. labels, equates, or the names of macros):
       n0 n1 n2 n3 n4 n5 n6 n7
       m0 m1 m2 m3 m4 m5 m6 m7
       r0 r1 r2 r3 r4 r5 r6 r7
-      
+
 
 `Constants`_
 ''''''''''''
@@ -836,6 +836,7 @@ Operator     Description
 
  * All binary operators have the same precedence:
    expressions are evaluated strictly left to right.
+   Use option `-4` to apply C operator precedence.
 
  * Division or modulo by zero yields an assembly error.
 
@@ -1019,7 +1020,7 @@ described in the chapter on `6502 Support`_.
 **.opt** *"~On"*
 **.opt** *"+Oall"*
 **.opt** *"~Oall"*
-   
+
    These directives control the optimisations that rmac applies to the source
    automatically. Each directive is applied immediately from the line encountered
    onwards. So it is possible to turn specific optimisations on and off globally
@@ -1097,15 +1098,15 @@ described in the chapter on `6502 Support`_.
            spf_emx_colouropt:  ds.l    1
            spf_emx_psmask:     ds.l    16
            spf_emx_psmaskopt:  ds.l    16
-           
+
            .68000
            ;*-------------------------------------------------------*
-           
+
                move #spf_em_colour,d0
                move #spf_emx_colour,d0
 
    In this example, *spf_em_colour* and *spf_emx_colour* will have the same value.
-           
+
 **.comm** *symbol*, *expression*
 
    Specifies a label and the size of a common region. The label is made global,
@@ -1119,7 +1120,7 @@ described in the chapter on `6502 Support`_.
    and JR instructions for GPU and DSP code. For example:
 
     ::
-   
+
      Always .ccdef 0
      . . .
           jump Always,(r3) ; 'Always' is actually 0
@@ -1128,7 +1129,7 @@ described in the chapter on `6502 Support`_.
 
    Undefines a register name (regname) previously assigned using the
    .CCDEF directive. This is only implemented in GPU and DSP code
-   sections.     
+   sections.
 
 **.dc.i** *expression*
 
@@ -1304,12 +1305,12 @@ described in the chapter on `6502 Support`_.
 **.incbin** "*file*" [, [*size*], [*offset*]]
 
    Include a file as a binary. This can be thought of a series of **dc.b** statements
-   that match the binary bytes of the included file, inserted at the location of the 
+   that match the binary bytes of the included file, inserted at the location of the
    directive. The directive is not allowed in a BSS section. Optional parameters
    control the amount of bytes to be included and offset from the start of the file.
    All the following lines are valid:
 
-              ::   
+              ::
                 .incbin "test.bin"          ; Include the whole file
                 .incbin "test.bin",,$30     ; Skip the first 48 bytes
                 .incbin "test.bin",$70,$30  ; Include $70 bytes starting at offset $30
@@ -1382,11 +1383,11 @@ described in the chapter on `6502 Support`_.
 ============ ======  =======
 Definition   Bit(s)  Meaning
 ============ ======  =======
-PF_FASTLOAD  0       If set, clear only the BSS area on program load, otherwise clear the entire heap. 
-PF_TTRAMLOAD 1       If set, the program may be loaded into alternative RAM, otherwise it must be loaded into standard RAM. 
-PF_TTRAMMEM  2       If set, the program's Malloc() requests may be satisfied from alternative RAM, otherwise they must be satisfied from standard RAM. 
+PF_FASTLOAD  0       If set, clear only the BSS area on program load, otherwise clear the entire heap.
+PF_TTRAMLOAD 1       If set, the program may be loaded into alternative RAM, otherwise it must be loaded into standard RAM.
+PF_TTRAMMEM  2       If set, the program's Malloc() requests may be satisfied from alternative RAM, otherwise they must be satisfied from standard RAM.
 --           3       Currently unused.
-See left.    4 & 5   If these bits are set to 0 (PF_PRIVATE), the processes' entire memory space will be considered private (when memory protection is enabled).If these bits are set to 1 (PF_GLOBAL), the processes' entire memory space will be readable and writable by any process (i.e. global).If these bits are set to 2 (PF_SUPERVISOR), the processes' entire memory space will only be readable and writable by itself and any other process in supervisor mode.If these bits are set to 3 (PF_READABLE), the processes' entire memory space will be readable by any application but only writable by itself. 
+See left.    4 & 5   If these bits are set to 0 (PF_PRIVATE), the processes' entire memory space will be considered private (when memory protection is enabled).If these bits are set to 1 (PF_GLOBAL), the processes' entire memory space will be readable and writable by any process (i.e. global).If these bits are set to 2 (PF_SUPERVISOR), the processes' entire memory space will only be readable and writable by itself and any other process in supervisor mode.If these bits are set to 3 (PF_READABLE), the processes' entire memory space will be readable by any application but only writable by itself.
 --           6-15    Currently unused.
 ============ ======  =======
 
@@ -1526,7 +1527,7 @@ The assembler provides "creature comforts" when it processes 68000 mnemonics:
    their quick forms; **ADDQ** and **SUBQ** must be explicit.
 
  * All optimisations are controllable using the **.opt** directive. Refer to its
-   description in section `Directives`_. 
+   description in section `Directives`_.
 
  * All optimisations are turned off for any source line that has an exclamation mark
    (*!*) on their first column.
@@ -1792,7 +1793,7 @@ modes.
 `Condition Codes`_
 ''''''''''''''''''
 The following condition codes for the GPU/DSP JUMP and JR instructions are built-in:
- 
+
   ::
 
    CC (Carry Clear) = %00100
@@ -1966,7 +1967,7 @@ Atari Falcon XBIOS) and *.p56* (binary equivalent of *.lod*)
   distinguish between the two. rmac needs the user to be explicit and will
   generate an error if the programmer tries to use syntax from one instruction
   to the other.
-- Similarly Motorola's assembler can alias **move** with **movec**, **movep** 
+- Similarly Motorola's assembler can alias **move** with **movec**, **movep**
   and **movem**. rmac also not accept such aliasing and generate an error.
 - Motorola's assembler uses the underscore character (*_*) to define local
   labels. In order for rmac to maintain a uniform syntax across all platforms,

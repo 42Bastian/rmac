@@ -103,6 +103,9 @@ SYM * NewSymbol(uint8_t * name, int type, int envno)
 	symbol->sorder = NULL;
 	symbol->uid    = currentUID++;
 
+	// Record filename the symbol is defined (for now only used by macro error reporting)
+	symbol->cfileno = cfileno;
+
 	// Install symbol in the symbol table
 	int hash = HashSymbol(name, envno);
 	symbol->snext = symbolTable[hash];
@@ -254,8 +257,7 @@ uint32_t sy_assign(uint8_t * buf, uint8_t *(* construct)())
 		// Export vanilla labels (but don't make them global). An exception is
 		// made for equates, which are not exported unless they are referenced.
 		else if (sy->stype == LABEL && lsym_flag
-			&& (sy->sattr & (DEFINED | REFERENCED)) != 0
-			&& (!as68_flag || *sy->sname != 'L'))
+			&& (sy->sattr & (DEFINED | REFERENCED)) != 0)
 		{
 			sy->senv = scount++;
 
@@ -280,14 +282,10 @@ uint32_t sy_assign_ELF(uint8_t * buf, uint8_t *(* construct)())
 {
 	uint16_t scount = 0;
 
-//	if (construct == (uint8_t *(*)())constr_elfsymtab)
-//	if (buf == NULL)
-	{
-		// Append all symbols not appearing on the .sdecl list to the end of
-		// the .sdecl list
-		for(SYM * sy=sorder; sy!=NULL; sy=sy->sorder)
-			AddToSymbolDeclarationList(sy);
-	}
+	// Append all symbols not appearing on the .sdecl list to the end of
+	// the .sdecl list
+	for(SYM * sy=sorder; sy!=NULL; sy=sy->sorder)
+		AddToSymbolDeclarationList(sy);
 
 	// Run through all symbols (now on the .sdecl list) and assign numbers to
 	// them. We also pick which symbols should be global or not here.
@@ -298,7 +296,8 @@ uint32_t sy_assign_ELF(uint8_t * buf, uint8_t *(* construct)())
 		if (sy->stype == LABEL && lsym_flag
 			&& (sy->sattr & (DEFINED | REFERENCED)) != 0
 			&& (*sy->sname != '.')
-			&& (sy->sattr & GLOBAL) == 0)
+			&& (sy->sattr & GLOBAL) == 0
+			&& (sy->sattre & (EQUATEDREG | UNDEF_EQUR | EQUATEDCC | UNDEF_CC)) == 0)
 		{
 			sy->senv = scount++;
 
@@ -316,6 +315,7 @@ uint32_t sy_assign_ELF(uint8_t * buf, uint8_t *(* construct)())
 	for(SYM * sy=sdecl; sy!=NULL; sy=sy->sdecl)
 	{
 		if ((sy->stype == LABEL)
+			&& (sy->sattre & (EQUATEDREG | UNDEF_EQUR | EQUATEDCC | UNDEF_CC)) == 0
 			&& ((sy->sattr & (GLOBAL | DEFINED)) == (GLOBAL | DEFINED)
 			|| (sy->sattr & (GLOBAL | REFERENCED)) == (GLOBAL | REFERENCED))
 			|| (sy->sattr & COMMON))
@@ -325,7 +325,7 @@ uint32_t sy_assign_ELF(uint8_t * buf, uint8_t *(* construct)())
 			if (buf != NULL)
 				buf = construct(buf, sy, 1);
 		}
-		else if ((sy->sattr == (GLOBAL | REFERENCED)) &&  (buf != NULL))
+		else if ((sy->sattr == (GLOBAL | REFERENCED)) &&  (buf != NULL) && (sy->sattre & (EQUATEDREG | UNDEF_EQUR | EQUATEDCC | UNDEF_CC)) == 0)
 		{
 			buf = construct(buf, sy, 0);
 			scount++;

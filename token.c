@@ -40,13 +40,6 @@ TOKEN tokeol[1] = {EOL};	// Bailout end-of-line token
 char * string[TOKBUFSIZE*2];// Token buffer string pointer storage
 int optimizeOff;			// Optimization override flag
 
-// File record, used to maintain a list of every include file ever visited
-#define FILEREC struct _filerec
-FILEREC
-{
-   FILEREC * frec_next;
-   char * frec_name;
-};
 
 FILEREC * filerec;
 FILEREC * last_fr;
@@ -706,7 +699,7 @@ char * GetNextRepeatLine(void)
 			DEBUG { printf("end-repeat-block\n"); }
 			return NULL;
 		}
-
+		reptuniq++;
 //		strp = irept->ir_nextln;
 	}
 	// Mark the current macro line in the irept object
@@ -715,8 +708,33 @@ char * GetNextRepeatLine(void)
 	// error reporting anyway)
 	irept->lineno = irept->ir_nextln->lineno;
 
-//	strcpy(irbuf, (char *)(irept->ir_nextln + 1));
-	strcpy(irbuf, irept->ir_nextln->line);
+	// Copy the rept lines verbatim, unless we're in nest level 0.
+	// Then, expand any \~ labels to unique numbers (Rn)
+	if (rptlevel)
+	{
+		strcpy(irbuf, irept->ir_nextln->line);
+	}
+	else
+	{
+		uint32_t linelen = strlen(irept->ir_nextln->line);
+		uint8_t *p_line = irept->ir_nextln->line;
+		char *irbufwrite = irbuf;
+		for (int i = 0; i <= linelen; i++)
+		{
+			uint8_t c;
+			c = *p_line++;
+			if (c == '\\' && *p_line == '~')
+			{
+				p_line++;
+				irbufwrite += sprintf(irbufwrite, "R%u", reptuniq);
+			}
+			else
+			{
+				*irbufwrite++ = c;
+			}
+		}
+	}
+
 	DEBUG { printf("repeat line='%s'\n", irbuf); }
 //	irept->ir_nextln = (LONG *)*strp;
 	irept->ir_nextln = irept->ir_nextln->next;
@@ -986,26 +1004,6 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 
 		curlineno++;			// Bump line number
 		lntag = SPACE;
-
-		if (as68_flag)
-		{
-			// AS68 compatibility, throw away all lines starting with
-			// back-quotes, tildes, or '*'
-			// On other lines, turn the first '*' into a semi-colon.
-			if (*ln == '`' || *ln == '~' || *ln == '*')
-				*ln = ';';
-			else
-			{
-				for(p=ln; *p!=EOS; p++)
-				{
-					if (*p == '*')
-					{
-						*p = ';';
-						break;
-					}
-				}
-			}
-		}
 
 		break;
 
@@ -1662,7 +1660,7 @@ int d_goto(WORD unused)
 		{
 			// Compare names (sleazo string compare)
 			char * s1 = sym;
-			char * s2 = defln->line;
+			char * s2 = defln->line + 1;
 
 			// Either we will match the strings to EOS on both, or we will
 			// match EOS on string 1 to whitespace on string 2. Otherwise, we

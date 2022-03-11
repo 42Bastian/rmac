@@ -65,7 +65,7 @@ int eaNgen(WORD siz)
 				}
 
 				if (optim_warn_flag)
-					warn("0(An) converted to (An)");
+					warn("o3: 0(An) converted to (An)");
 
 				return OK;
 			}
@@ -329,7 +329,7 @@ int eaNgen(WORD siz)
 			if (CHECK_OPTS(OPT_PC_RELATIVE))
 			{
 				if ((aNexattr & (DEFINED | REFERENCED | EQUATED)) == (DEFINED | REFERENCED))
-					return error("relocation not allowed");
+					return error("relocation not allowed when o10 is enabled");
 			}
 
 			if (tdb)

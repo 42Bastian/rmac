@@ -222,23 +222,9 @@ loop1:										// Internal line processing loop
 	// Skip past label (but record it)
 	if (j == ':' || j == DCOLON)
 	{
-as68label:
 		label = string[tok[1]];				// Get label name
 		labtyp = tok[2];					// Get label type
 		tok += 3;							// Go to next line token
-
-		// AS68 MODE:
-		// Looks like another label follows the previous one, so handle
-		// the previous one until there aren't any more
-		if (as68_flag && (*tok == SYMBOL && tok[2] == ':'))
-		{
-			if (HandleLabel(label, labtyp) != 0)
-				goto loop;
-
-			label_defined = label;
-
-			goto as68label;
-		}
 	}
 
 	// EOL is legal here...

@@ -8,8 +8,19 @@
 
 #include "error.h"
 #include <stdarg.h>
+#include <token.h>
 #include "listing.h"
-#include "token.h"
+char * interror_msg[] = {
+	"Unknown internal error",	// Error not referenced, should not be displayed
+	"Unknown internal error",	// Error not referenced, should not be displayed
+	"Bad MULTX entry in chrtab",				// Error #2
+	"Unknown internal error",	// Error not referenced, should not be displayed
+	"Bad fixup type",							// Error #4
+	"Bad operator in expression stream",		// Error #5
+	"Can't find generated code in section",		// Error #6
+	"Fixup (loc) out of range"					// Error #7
+	"Absolute top filename found"				// Error #8
+};
 
 // Exported variables
 int errcnt;						// Error count
@@ -17,7 +28,6 @@ char * err_fname;				// Name of error message file
 
 // Internal variables
 static long unused;				// For supressing 'write' warnings
-
 
 //
 // Report error if not at EOL
@@ -39,7 +49,6 @@ int ErrorIfNotAtEOL(void)
 	return 0;
 }
 
-
 //
 // Cannot create a file
 //
@@ -48,7 +57,6 @@ void CantCreateFile(const char * fn)
 	printf("Cannot create file: '%s'\n", fn);
 	exit(1);
 }
-
 
 //
 // Setup for error message
@@ -74,7 +82,6 @@ void err_setup(void)
 		err_flag = 1;
 	}
 }
-
 
 //
 // Display error message (uses printf() style variable arguments)
@@ -102,7 +109,37 @@ int error(const char * text, ...)
 			sprintf(buf1, "%s %d: Error: %s\n", curfname, curlineno, buf);
 			break;
 		case SRC_IMACRO:
-			sprintf(buf1, "%s %d: Error: %s\n", curfname, cur_inobj->inobj.imacro->im_macro->lineList->lineno, buf);
+		{
+			// This is basically SetFilenameForErrorReporting() but we don't
+			// call it here as it will clobber curfname. That function is used
+			// during fixups only so it really doesn't matter at that point...
+			char * filename;
+			FILEREC * fr;
+			uint16_t fnum = cur_inobj->inobj.imacro->im_macro->cfileno;
+
+			// Check for absolute top filename (this should never happen)
+			if (fnum == -1)
+				interror(8);
+			else
+			{
+				fr = filerec;
+
+				// Advance to the correct record...
+				while (fr != NULL && fnum != 0)
+				{
+					fr = fr->frec_next;
+					fnum--;
+				}
+			}
+			// Check for file # record not found (this should never happen either)
+			if (fr == NULL)
+				interror(8);
+
+			filename = fr->frec_name;
+
+			sprintf(buf1, "%s %d: Error: %s\nCalled from: %s %d\n", filename, cur_inobj->inobj.imacro->im_macro->lineList->lineno, buf,
+			curfname, curlineno);
+		}
 			break;
 		case SRC_IREPT:
 			sprintf(buf1, "%s %d: Error: %s\n", curfname, cur_inobj->inobj.irept->lineno, buf);
@@ -123,7 +160,6 @@ int error(const char * text, ...)
 
 	return ERROR;
 }
-
 
 //
 // Display warning message (uses printf() style variable arguments)
@@ -154,7 +190,6 @@ int warn(const char * text, ...)
 	return OK;
 }
 
-
 int fatal(const char * s)
 {
 	char buf[EBUFSIZ];
@@ -174,13 +209,12 @@ int fatal(const char * s)
 	exit(1);
 }
 
-
 int interror(int n)
 {
 	char buf[EBUFSIZ];
 
 	err_setup();
-	sprintf(buf, "%s %d: Internal error #%d\n", curfname, curlineno, n);
+	sprintf(buf, "%s %d: Internal error #%d: %s\n", curfname, curlineno, n, interror_msg[n]);
 
 	if (listing > 0)
 		ship_ln(buf);
@@ -192,4 +226,3 @@ int interror(int n)
 
 	exit(1);
 }
-

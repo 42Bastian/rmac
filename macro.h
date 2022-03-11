@@ -14,6 +14,8 @@
 // Exported variables
 extern LONG curuniq;
 extern TOKEN * argPtrs[];
+extern LONG reptuniq;
+extern int rptlevel;
 
 // Exported functions
 void InitMacro(void);

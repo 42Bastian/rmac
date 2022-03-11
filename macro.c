@@ -22,11 +22,12 @@ int macnum;					// Unique number for macro definition
 
 static LONG macuniq;		// Unique-per-macro number
 static SYM * curmac;		// Macro currently being defined
-static uint32_t argno;			// Formal argument count
+static uint32_t argno;		// Formal argument count
+LONG reptuniq;				// Unique-per-rept number
 
 static LLIST * firstrpt;	// First .rept line
 static LLIST * nextrpt;		// Last .rept line
-static int rptlevel;		// .rept nesting level
+int rptlevel;				// .rept nesting level
 
 // Function prototypes
 static int KWMatch(char *, char *);
@@ -40,6 +41,7 @@ void InitMacro(void)
 {
 	macuniq = 0;
 	macnum = 1;
+	reptuniq = 0;
 }
 
 

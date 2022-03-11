@@ -157,6 +157,14 @@ IREPT {
 	uint32_t lineno;		// Repeat line number (Convert this to global instead of putting it here?)
 };
 
+// File record, used to maintain a list of every include file ever visited
+#define FILEREC struct _filerec
+FILEREC
+{
+   FILEREC * frec_next;
+   char * frec_name;
+};
+
 // Exported variables
 extern int lnsave;
 extern uint32_t curlineno;
@@ -170,6 +178,7 @@ extern INOBJ * cur_inobj;
 extern int mjump_align;
 extern char * string[];
 extern int optimizeOff;
+extern FILEREC * filerec;
 
 // Exported functions
 int include(int, char *);

@@ -161,6 +161,24 @@ uint8_t * AddSymEntry(register uint8_t * buf, SYM * sym, int globflag)
 //
 // Add an entry to the BSD symbol table
 //
+// From stab.def (https://sites.uclouvain.be/SystInfo/usr/include/bits/stab.def.html):
+/*
+_________________________________________________
+| 00 - 1F are not dbx stab symbols              |
+| In most cases, the low bit is the EXTernal bit|
+
+| 00 UNDEF  | 02 ABS    | 04 TEXT   | 06 DATA   |
+| 01  |EXT  | 03  |EXT  | 05  |EXT  | 07  |EXT  |
+
+| 08 BSS    | 0A INDR   | 0C FN_SEQ | 0E WEAKA  |
+| 09  |EXT  | 0B        | 0D WEAKU  | 0F WEAKT  |
+
+| 10 WEAKD  | 12 COMM   | 14 SETA   | 16 SETT   |
+| 11 WEAKB  | 13        | 15        | 17        |
+
+| 18 SETD   | 1A SETB   | 1C SETV   | 1E WARNING|
+| 19        | 1B        | 1D        | 1F FN     |
+*/
 uint8_t * AddBSDSymEntry(uint8_t * buf, SYM * sym, int globflag)
 {
 	chptr = buf;						// Point to buffer for depositing longs
@@ -827,7 +845,7 @@ for(int j=0; j<i; j++)
 	}
 	else if (obj_format == RAW)
 	{
-		if (!org68k_active && !orgactive)
+		if (!org68k_active)
 		{
 			return error("cannot output absolute binary without a starting address (.org or command line)");
 		}

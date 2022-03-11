@@ -354,7 +354,7 @@ AMn_IXN:                 // Handle any indexed (tok -> a comma)
 							AnEXTEN |= EXT_BDSIZEW;
 
 							if (optim_warn_flag)
-								warn("absolute value in base displacement ranging $FFFF8000..$00007FFF optimised to absolute short");
+								warn("o5: absolute value in base displacement ranging $FFFF8000..$00007FFF optimised to absolute short");
 						}
 						else
 						{
@@ -651,7 +651,7 @@ CHECKODn:
 						AMn = MEMPOST + ea_PC;
 
 						if (optim_warn_flag)
-							warn("absolute value in outer displacement ranging $FFFF8000..$00007FFF optimised to absolute short");
+							warn("o5: absolute value in outer displacement ranging $FFFF8000..$00007FFF optimised to absolute short");
 					}
 					AnEXTEN |= od_ea;
 				}
@@ -723,7 +723,7 @@ IS_SUPPRESSEDn:
 					{
 						//AnEXTEN|=EXT_IISNOIW; // Word outer displacement with IS suppressed
 						if (optim_warn_flag)
-							warn("outer displacement absolute value from $FFFF8000..$00007FFF optimised to absolute short");
+							warn("o5: outer displacement absolute value from $FFFF8000..$00007FFF optimised to absolute short");
 					}
 				}
 
@@ -888,7 +888,7 @@ IS_SUPPRESSEDn:
 							expr_size = EXT_IISPREW;
 
 							if (optim_warn_flag)
-								warn("outer displacement absolute value from $FFFF8000..$00007FFF optimised to absolute short");
+								warn("o5: outer displacement absolute value from $FFFF8000..$00007FFF optimised to absolute short");
 						}
 					}
 
@@ -1162,16 +1162,15 @@ CHK_FOR_DISPn:
 			// expr[.L]
 			AMn = ABSL;
 
-			// When PC relative is enforced, check for any symbols that aren't
-			// EQU'd, in this case it's an illegal mode
-			if ((CHECK_OPTS(OPT_PC_RELATIVE)) && (AnEXATTR & REFERENCED) && (AnEXATTR & DEFINED) && (!(AnEXATTR & EQUATED)))
-				return error("relocation not allowed");
-
 			// .L is forced here
 			if (*tok == DOTL)
 			{
+				// When PC relative is enforced, check for any symbols that aren't
+				// EQU'd, in this case it's an illegal mode
+				if ((CHECK_OPTS(OPT_PC_RELATIVE)) && (AnEXATTR & (DEFINED | REFERENCED | EQUATED) == (DEFINED | REFERENCED)))
+					return error("relocation not allowed when o30 is enabled");
+
 				tok++;
-				AMn = ABSL;
 			}
 			else
 			{
@@ -1184,7 +1183,7 @@ CHK_FOR_DISPn:
 					AMn = ABSW;
 
 					if (optim_warn_flag)
-						warn("absolute value from $FFFF8000..$00007FFF optimised to absolute short");
+						warn("o0: absolute value from $FFFF8000..$00007FFF optimised to absolute short");
 				}
 			}
 

@@ -622,6 +622,10 @@ allright:
 					close(fd);
 					return ERROR;
 				}
+				if ((int64_t)size <= 0)
+				{
+					return error("invalid incbin size requested");
+				}
 			}
 			else
 				size = lseek(fd, 0L, SEEK_END);
@@ -641,7 +645,10 @@ allright:
 					}
 
 					lseek(fd, pos, SEEK_SET);
-					size -= pos;
+					if ((int64_t)(size - pos) < 0)
+					{
+						return error("requested incbin size out of range");
+					}
 				}
 				else
 				{

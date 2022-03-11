@@ -35,6 +35,7 @@ SYM
 	uint8_t * sname;		// * -> Symbol's print-name
 	LLIST * lineList;		// * -> Macro's linked list of lines
 	LLIST * last;			// * -> end of macro linked list
+	uint16_t cfileno;		// File the macro is defined in
 	uint32_t uid;			// Symbol's unique ID
 };
 

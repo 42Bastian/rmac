@@ -438,13 +438,20 @@ static inline int dsp_parmode(int *am, int *areg, TOKEN * AnEXPR, uint64_t * AnE
 			{
 				if (*AnEXVAL > 0x3F)
 				{
-					if (optim_warn_flag)
-						warn("short addressing mode forced but address is bigger than $3F - switching to long");
+					if (CHECK_OPTS(OPT_56K_AUTO_LONG))
+					{
+						if (optim_warn_flag)
+							warn("o11: short addressing mode forced but address is bigger than $3F - switching to long");
 
-					*am = M_DSPEA;
-					*memspace = 1 << 6;     // Mark we're on Y memory space
-					*areg = DSP_EA_ABS;
-					return OK;
+						*am = M_DSPEA;
+						*memspace = 1 << 6;     // Mark we're on Y memory space
+						*areg = DSP_EA_ABS;
+						return OK;
+					}
+					else
+					{
+						return error("short addressing mode forced but address is bigger than $3F - turn opt switch o11 on to bypass");
+					}
 				}
 			}
 			else
@@ -1611,12 +1618,19 @@ x_gotea1:
 		{
 			if (dspImmedEXVAL > 0x3F)
 			{
-				if (optim_warn_flag)
-					warn("short addressing mode forced but address is bigger than $3F - switching to long");
+				if (CHECK_OPTS(OPT_56K_AUTO_LONG))
+				{
+					if (optim_warn_flag)
+						warn("o11: short addressing mode forced but address is bigger than $3F - switching to long");
 
-				force_imm = NUM_FORCE_LONG;
-				deposit_extra_ea = DEPOSIT_EXTRA_WORD;
-				ea1 = DSP_EA_ABS;
+					force_imm = NUM_FORCE_LONG;
+					deposit_extra_ea = DEPOSIT_EXTRA_WORD;
+					ea1 = DSP_EA_ABS;
+				}
+				else
+				{
+					return error("short addressing mode forced but address is bigger than $3F - turn opt switch o11 on to bypass");
+				}
 			}
 		}
 		else
@@ -1896,17 +1910,24 @@ static inline LONG parse_y(LONG inst, LONG S1, LONG D1, LONG S2)
 		{
 			// We're in 'S1,D1 Y:ea,D2' or 'S1,D1 S1,Y:ea'
 			// there's no Y:aa mode here, so we'll force long
-			if (optim_warn_flag)
-				warn("forced short addressing in R:Y mode is not allowed - switching to long");
+			if (CHECK_OPTS(OPT_56K_AUTO_LONG))
+			{
+				if (optim_warn_flag)
+					warn("forced short addressing in R:Y mode is not allowed - switching to long");
 
-			if (expr(dspImmedEXPR, &dspImmedEXVAL, &dspImmedEXATTR, &dspImmedESYM) != OK)
-				return ERROR;
+				if (expr(dspImmedEXPR, &dspImmedEXVAL, &dspImmedEXATTR, &dspImmedESYM) != OK)
+					return ERROR;
 
-			ea1 = DSP_EA_ABS;
+				ea1 = DSP_EA_ABS;
 
-			force_imm = NUM_FORCE_LONG;
-			deposit_extra_ea = DEPOSIT_EXTRA_WORD;
-			goto y_check_immed;
+				force_imm = NUM_FORCE_LONG;
+				deposit_extra_ea = DEPOSIT_EXTRA_WORD;
+				goto y_check_immed;
+			}
+			else
+			{
+				return error("forced short addressing in R:Y mode is not allowed - turn opt switch o11 on to bypass");
+			}
 		}
 		else
 		{
@@ -1922,12 +1943,19 @@ static inline LONG parse_y(LONG inst, LONG S1, LONG D1, LONG S2)
 			{
 				if (dspImmedEXVAL > 0xFFF)
 				{
-					if (optim_warn_flag)
-						warn("short addressing mode forced but address is bigger than $FFF - switching to long");
+					if (CHECK_OPTS(OPT_56K_AUTO_LONG))
+					{
+						if (optim_warn_flag)
+							warn("short addressing mode forced but address is bigger than $FFF - switching to long");
 
-					ea1 = DSP_EA_ABS;
-					force_imm = NUM_FORCE_LONG;
-					deposit_extra_ea = DEPOSIT_EXTRA_WORD;
+						ea1 = DSP_EA_ABS;
+						force_imm = NUM_FORCE_LONG;
+						deposit_extra_ea = DEPOSIT_EXTRA_WORD;
+					}
+					else
+					{
+						return error("short addressing mode forced but address is bigger than $FFF - turn opt switch o11 on to bypass");
+					}
 				}
 			}
 			else
@@ -2549,9 +2577,16 @@ LONG parmoves(WORD dest)
 						}
 						else
 						{
-							if (optim_warn_flag)
-								warn("forced short immediate value doesn't fit in 8 bits - switching to long");
-							force_imm = NUM_FORCE_LONG;
+							if (CHECK_OPTS(OPT_56K_AUTO_LONG))
+							{
+								if (optim_warn_flag)
+									warn("forced short immediate value doesn't fit in 8 bits - switching to long");
+								force_imm = NUM_FORCE_LONG;
+							}
+							else
+							{
+								return error("forced short immediate value doesn't fit in 8 bits - turn opt switch o11 on to bypass");
+							}
 						}
 					}
 
@@ -2610,7 +2645,7 @@ deposit_immediate_short_with_register:
 				{
 					double f = *(double *)&dspImmedEXVAL;
 					// Check direct.c for ossom comments regarding conversion!
-//N.B.: This is bogus, we need to fix this so it does this the right way... !!! FIX !!!
+					//N.B.: This is bogus, we need to fix this so it does this the right way... !!! FIX !!!
 					dspImmedEXVAL = ((uint32_t)(int32_t)round(f * (1 << 23))) & 0xFFFFFF;
 					double g;
 					g = f * (1 << 23);
@@ -2618,24 +2653,38 @@ deposit_immediate_short_with_register:
 
 					if ((dspImmedEXVAL & 0xFFFF) == 0)
 					{
-						// Value's 16 lower bits are not set so the value can
-						// fit in a single byte (check parallel I move quoted
-						// above)
-						if (optim_warn_flag)
-							warn("Immediate value fits inside 8 bits, so using instruction short format");
+						if (CHECK_OPTS(OPT_56K_AUTO_LONG))
+						{
+							// Value's 16 lower bits are not set so the value can
+							// fit in a single byte (check parallel I move quoted
+							// above)
+							if (optim_warn_flag)
+								warn("o10: Immediate value fits inside 8 bits, so using instruction short format");
 
-						dspImmedEXVAL >>= 16;
-						goto deposit_immediate_short_with_register;
+							dspImmedEXVAL >>= 16;
+							goto deposit_immediate_short_with_register;
+						}
+						else
+						{
+							return error("Immediate value fits inside 8 bits, so using instruction short format - turn opt switch o11 on to bypass");
+						}
 					}
 
 					if (force_imm == NUM_FORCE_SHORT)
 					{
 						if ((dspImmedEXVAL & 0xFFFF) != 0)
 						{
-							if (optim_warn_flag)
-								warn("Immediate value short format forced but value does not fit inside 8 bits - switching to long format");
+							if (CHECK_OPTS(OPT_56K_AUTO_LONG))
+							{
+								if (optim_warn_flag)
+									warn("Immediate value short format forced but value does not fit inside 8 bits - switching to long format");
 
-							goto deposit_immediate_long_with_register;
+								goto deposit_immediate_long_with_register;
+							}
+							else
+							{
+								return error("Immediate value short format forced but value does not fit inside 8 bits - turn opt switch o11 on to bypass - turn opt switch o11 on to bypass");
+							}
 						}
 
 						return error("internal assembler error: we haven't implemented floating point constants in parallel mode parser yet!");

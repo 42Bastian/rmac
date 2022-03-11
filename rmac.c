@@ -29,7 +29,6 @@ int list_flag;					// "-l" listing flag on command line
 int list_pag = 1;				// Enable listing pagination by default
 int verb_flag;					// Be verbose about what's going on
 int m6502;						// 1, assembling 6502 code
-int as68_flag;					// as68 kludge mode
 int glob_flag;					// Assume undefined symbols are global
 int lsym_flag;					// Include local symbols in object file
 int optim_warn_flag;			// Warn about possible short branches
@@ -53,11 +52,12 @@ char * cmdlnexec;				// Executable name, pointer to ARGV[0]
 char searchpatha[512] = { 0 };	// Buffer to hold searchpath when specified
 char * searchpath = NULL;		// Search path for include files
 char defname[] = "noname.o";	// Default output filename
-int optim_flags[OPT_COUNT];		// Specific optimisations on/off matrix
+int optim_flags[OPT_COUNT_ALL] = { 0 };	// Specific optimisations on/off matrix
 int activecpu = CPU_68000;		// Active 68k CPU (68000 by default)
 int activefpu = FPU_NONE;		// Active FPU (none by default)
 int org68k_active = 0;			// .org switch for 68k (only with RAW output format)
 uint32_t org68k_address;		// .org for 68k
+int correctMathRules;
 
 //
 // Convert a string to uppercase
@@ -67,7 +67,6 @@ void strtoupper(char * s)
 	while (*s)
 		*s++ &= 0xDF;
 }
-
 
 //
 // Manipulate file extension.
@@ -101,6 +100,17 @@ char * fext(char * name, char * extension, int stripp)
 	return name;
 }
 
+static int is_sep(char c)
+{
+    const char *seps = PATH_SEPS;
+
+    for (seps = PATH_SEPS; *seps; seps++) {
+        if (*seps == c)
+            return 1;
+    }
+
+    return 0;
+}
 
 //
 // Return 'item'nth element of semicolon-seperated pathnames specified in the
@@ -120,20 +130,19 @@ int nthpath(char * env_var, int itemno, char * buf)
 		return 0;
 
 	while (itemno--)
-		while (*s != EOS && *s++ != ';')
+		while (*s != EOS && !is_sep(*s++))
 			;
 
 	if (*s == EOS)
 		return 0;
 
-	while (*s != EOS && *s != ';')
+	while (*s != EOS && !is_sep(*s))
 		*buf++ = *s++;
 
 	*buf++ = EOS;
 
 	return 1;
 }
-
 
 //
 // Display command line help
@@ -163,18 +172,20 @@ void DisplayHelp(void)
 		"  -n                Don't do things behind your back in RISC assembler\n"
 		"  -o file           Output file name\n"
 		"  +o[value]         Turn a specific optimisation on\n"
-		"                    Available optimisation values and default settings:\n"
-		"                    o0: Absolute long addresses to word               (on)\n"
-		"                    o1: move.l #x,dn/an to moveq                      (on)\n"
-		"                    o2: Word branches to short                        (on)\n"
-		"                    o3: Outer displacement 0(an) to (an)              (off)\n"
-		"                    o4: lea size(An),An to addq #size,An              (off)\n"
-		"                    o5: 68020+ Absolute long base/outer disp. to word (off)\n"
-		"                    o6: Null branches to NOP                          (off)\n"
-		"                    o7: clr.l Dx to moveq #0,Dx                       (off)\n"
-		"                    o8: adda.w/l #x,Dy to addq.w/l #x,Dy              (off)\n"
-		"                    o9: adda.w/l #x,Dy to lea x(Dy),Dy                (off)\n"
-		"                    op: Enforce PC relative                           (off)\n"
+		"                    Available optimisation switches:\n"
+		"                    o0: Absolute long addresses to word\n"
+		"                    o1: move.l #x,dn/an to moveq\n"
+		"                    o2: Word branches to short\n"
+		"                    o3: Outer displacement 0(an) to (an)\n"
+		"                    o4: lea size(An),An to addq #size,An\n"
+		"                    o5: 68020+ Absolute long base/outer disp. to word\n"
+		"                    o6: Null branches to NOP\n"
+		"                    o7: clr.l Dx to moveq #0,Dx\n"
+		"                    o8: adda.w/l #x,Dy to addq.w/l #x,Dy\n"
+		"                    o9: adda.w/l #x,Ay to lea x(Dy),Ay\n"
+		"                    o10: 56001 Use short format for immediate values if possible\n"
+		"                    o11: 56001 Auto convert short addressing mode to long (default: on)\n"
+		"                    o30: Enforce PC relative (alternative name: op)\n"
 		"  ~o[value]         Turn a specific optimisation off\n"
 		"  +oall             Turn all optimisations on\n"
 		"  ~oall             Turn all optimisations off\n"
@@ -193,6 +204,7 @@ void DisplayHelp(void)
 		"  -v                Set verbose mode\n"
 		"  -x                Turn on debugging mode\n"
 		"  -y[pagelen]       Set page line length (default: 61)\n"
+		"  -4                C style operator precdence\n"
 		"\n", cmdlnexec);
 }
 
@@ -209,9 +221,9 @@ void DisplayVersion(void)
 		"|_|  |_| |_| |_|\\__,_|\\___|\n"
 		"\nRenamed Macro Assembler\n"
 		"Copyright (C) 199x Landon Dyer, 2011-2021 Reboot and Friends\n"
+		"Operator precedence fix (c) 2018 42Bastian\n"
 		"V%01i.%01i.%01i %s (%s)\n\n", MAJOR, MINOR, PATCH, __DATE__, PLATFORM);
 }
-
 
 //
 // Parse optimisation options
@@ -226,6 +238,9 @@ int ParseOptimization(char * optstring)
 			onoff = 1;
 		else if (*optstring != '~')
 			return ERROR;
+
+        if (optstring[2] == 0)
+            return error(".opt called with zero arguments");
 
 		if ((optstring[2] == 'a' || optstring[2] == 'A')
 			&& (optstring[3] == 'l' || optstring[3] == 'L')
@@ -273,7 +288,6 @@ int ParseOptimization(char * optstring)
 	return OK;
 }
 
-
 //
 // Process command line arguments and do an assembly
 //
@@ -291,7 +305,6 @@ int Process(int argc, char ** argv)
 	listing = 0;					// Initialize listing level
 	list_flag = 0;					// Initialize listing flag
 	verb_flag = perm_verb_flag;		// Initialize verbose flag
-	as68_flag = 0;					// Initialize as68 kludge mode
 	glob_flag = 0;					// Initialize .globl flag
 	optim_warn_flag = 0;			// Initialize short branch flag
 	debug = 0;						// Initialize debug flag
@@ -313,6 +326,8 @@ int Process(int argc, char ** argv)
     dsp_orgmap[0].start = 0;		// Initialize 56001 org initial address
     dsp_orgmap[0].memtype = ORG_P;	// Initialize 56001 org start segment
 	m6502 = 0;						// 6502 mode off by default
+        correctMathRules = 0;                           // respect operator precedence
+
 
 	// Initialize modules
 	InitSymbolTable();				// Symbol table
@@ -332,6 +347,9 @@ int Process(int argc, char ** argv)
 		{
 			switch (argv[argno][1])
 			{
+                        case '4':
+                          correctMathRules = 1;
+                          break;
 			case 'd':				// Define symbol
 			case 'D':
 				for(s=argv[argno]+2; *s!=EOS;)
@@ -745,7 +763,6 @@ int Process(int argc, char ** argv)
 	return errcnt;
 }
 
-
 //
 // Determine processor endianess
 //
@@ -760,7 +777,6 @@ int GetEndianess(void)
 	return 1;
 }
 
-
 //
 // Application entry point
 //
@@ -768,12 +784,6 @@ int main(int argc, char ** argv)
 {
 	perm_verb_flag = 0;				// Clobber "permanent" verbose flag
 	legacy_flag = 1;				// Default is legacy mode on (:-P)
-
-	// Set legacy optimisation flags to on and everything else to off
-	memset(optim_flags, 0, OPT_COUNT * sizeof(int));
-	optim_flags[OPT_ABS_SHORT] =
-		optim_flags[OPT_MOVEL_MOVEQ] =
-		optim_flags[OPT_BSR_BCC_S] = 1;
 
 	cmdlnexec = argv[0];			// Obtain executable name
 	endian = GetEndianess();		// Get processor endianess
@@ -787,4 +797,3 @@ int main(int argc, char ** argv)
 
 	return 0;
 }
-
