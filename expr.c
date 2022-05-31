@@ -235,7 +235,7 @@ int sum(void)
     *evalTokenBuffer.u32++ = t;
   }
 
-  return OK;
+	return OK;
 }
 
 int product(void)
@@ -434,16 +434,6 @@ int expr2(void)
 		if (sy == NULL)
 			sy = NewSymbol(p, LABEL, j);
 
-		// Check register bank usage
-		if (sy->sattre & EQUATEDREG)
-		{
-			if ((regbank == BANK_0) && (sy->sattre & BANK_1) && !altbankok)
-				warn("equated symbol \'%s\' cannot be used in register bank 0", sy->sname);
-
-			if ((regbank == BANK_1) && (sy->sattre & BANK_0) && !altbankok)
-				warn("equated symbol \'%s\' cannot be used in register bank 1", sy->sname);
-		}
-
 		*evalTokenBuffer.u32++ = SYMBOL;
 		*evalTokenBuffer.u32++ = symbolNum;
 		symbolPtr[symbolNum] = sy;
@@ -607,18 +597,6 @@ int expr(TOKEN * otk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)
 			if ((symbol->sattre & UNDEF_EQUR) && !riscImmTokenSeen)
 			{
 				error("undefined register equate '%s'", symbol->sname);
-//if we return right away, it returns some spurious errors...
-//				return ERROR;
-			}
-
-			// Check register bank usage
-			if (symbol->sattre & EQUATEDREG)
-			{
-				if ((regbank == BANK_0) && (symbol->sattre & BANK_1) && !altbankok)
-					warn("equated symbol '%s' cannot be used in register bank 0", symbol->sname);
-
-				if ((regbank == BANK_1) && (symbol->sattre & BANK_0) && !altbankok)
-					warn("equated symbol '%s' cannot be used in register bank 1", symbol->sname);
 			}
 
 			*evalTokenBuffer.u32++ = SYMBOL;
@@ -638,13 +616,8 @@ be converted from a linked list into an array).
 			*a_value = (symbol->sattr & DEFINED ? symbol->svalue : 0);
 			*a_attr = (WORD)(symbol->sattr & ~GLOBAL);
 
-/*
-All that extra crap that was put into the svalue when doing the equr stuff is
-thrown away right here. What the hell is it for?
-*/
 			if (symbol->sattre & EQUATEDREG)
 			{
-				*a_value &= 0x1F;
 				*a_attr |= RISCREG; // Mark it as a register, 'cause it is
 				*a_esym = symbol;
 			}

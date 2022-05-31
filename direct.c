@@ -25,7 +25,15 @@
 
 #define DEF_KW
 #include "kwtab.h"
-
+#define DEF_REG56
+#define DECL_REG56
+#include "56kregs.h"
+#define DEF_REG68
+#define DECL_REG68
+#include "68kregs.h"
+#define DEF_REGRISC
+#define DECL_REGRISC
+#include "riscregs.h"
 
 TOKEN exprbuf[128];			// Expression buffer
 SYM * symbolPtr[1000000];	// Symbol pointers table
@@ -281,22 +289,22 @@ int d_org(void)
 
 		switch (tok[0])
 		{
-		case KW_X:
+		case REG56_X:
 			dsp_currentorg->memtype = ORG_X;
 			sectionToSwitch = M56001X;
 			break;
 
-		case KW_Y:
+		case REG56_Y:
 			dsp_currentorg->memtype = ORG_Y;
 			sectionToSwitch = M56001Y;
 			break;
 
-		case KW_P:
+		case REG56_P:
 			dsp_currentorg->memtype = ORG_P;
 			sectionToSwitch = M56001P;
 			break;
 
-		case KW_L:
+		case REG56_L:
 			dsp_currentorg->memtype = ORG_L;
 			sectionToSwitch = M56001L;
 			break;
@@ -396,15 +404,16 @@ int d_print(void)
 			formatting = 1;
 
 			// "X" & "L" get tokenized now... :-/ Probably should look into preventing this kind of thing from happening (was added with DSP56K code)
-			if ((tok[1] != SYMBOL) && (tok[1] != KW_L) && (tok[1] != KW_X))
+			// Note (ggn): This is now much less severe as it's localised for 56k only
+			if ((tok[1] != SYMBOL) && (tok[1] != REG56_L) && (tok[1] != REG56_X))
 				goto token_err;
 
-			if (tok[1] == KW_L)
+			if (tok[1] == REG56_L)
 			{
 				wordlong = 1;
 				tok += 2;
 			}
-			else if (tok[1] == KW_X)
+			else if (tok[1] == REG56_X)
 			{
 				outtype = 0;
 				tok += 2;
@@ -536,7 +545,7 @@ int d_equrundef(void)
 		{
 			// Reset the attributes of this symbol...
 			regname->sattr = 0;
-			regname->sattre &= ~(EQUATEDREG | BANK_0 | BANK_1);
+			regname->sattre &= ~EQUATEDREG;
 			regname->sattre |= UNDEF_EQUR;
 		}
 
@@ -701,16 +710,16 @@ allright:
 //
 int d_regbank0(void)
 {
-	// Set active register bank zero
-	regbank = BANK_0;
+	// Deprecated, it's not as if this did anything useful, ever
+	warn("regbank0 ignored");
 	return 0;
 }
 
 
 int d_regbank1(void)
 {
-	// Set active register bank one
-	regbank = BANK_1;
+	// Deprecated, it's not as if this did anything useful, ever
+	warn("regbank1 ignored");
 	return 0;
 }
 
@@ -1137,6 +1146,7 @@ int d_ds(WORD siz)
 	DEBUG { printf("Directive: .ds.[size] = %u, sloc = $%X\n", siz, sloc); }
 
 	uint64_t eval;
+    WORD eattr;
 
 	if ((cursect & (M6502 | M56KPXYL)) == 0)
 	{
@@ -1144,9 +1154,9 @@ int d_ds(WORD siz)
 			auto_even();
 	}
 
-	if (abs_expr(&eval) != OK)
-		return 0;
-
+	if (expr(exprbuf, &eval, &eattr, NULL) < 0)
+		return ERROR;
+	
 	// Check to see if the value being passed in is negative (who the hell does
 	// that?--nobody does; it's the code gremlins, or rum, what does it)
 	// N.B.: Since 'eval' is of type uint64_t, if it goes negative, it will
@@ -1844,6 +1854,10 @@ int d_68000(void)
 	SaveSection();
 	SwitchSection(TEXT);
 	activecpu = CPU_68000;
+	regbase = reg68base;	// Update register DFA tables
+	regtab = reg68tab;
+	regcheck = reg68check;
+	regaccept = reg68accept;
 	return 0;
 }
 
@@ -1899,8 +1913,11 @@ int d_68060(void)
 //
 int d_68881(void)
 {
-	//d_68000();
 	activefpu = FPU_68881;
+	regbase = reg68base;	// Update register DFA tables
+	regtab = reg68tab;
+	regcheck = reg68check;
+	regaccept = reg68accept;
 	return 0;
 }
 
@@ -1910,8 +1927,11 @@ int d_68881(void)
 //
 int d_68882(void)
 {
-	//d_68000();
 	activefpu = FPU_68882;
+	regbase = reg68base;	// Update register DFA tables
+	regtab = reg68tab;
+	regcheck = reg68check;
+	regaccept = reg68accept;
 	return 0;
 }
 
@@ -1938,6 +1958,10 @@ int d_56001(void)
 	if ((obj_format == LOD) || (obj_format == P56))
 		SwitchSection(M56001P);
 
+	regbase = reg56base;	// Update register DFA tables
+	regtab = reg56tab;
+	regcheck = reg56check;
+	regaccept = reg56accept;
 	return 0;
 }
 
@@ -1964,7 +1988,11 @@ int d_gpu(void)
 	rdsp = 0;			// Unset DSP assembly
 	robjproc = 0;		// Unset OP assembly
 	dsp56001 = 0;		// Unset 56001 assembly
-	regbank = BANK_N;	// Set no default register bank
+
+	regbase = regriscbase;	// Update register DFA tables
+	regtab = regrisctab;
+	regcheck = regrisccheck;
+	regaccept = regriscaccept;
 	return 0;
 }
 
@@ -1991,7 +2019,11 @@ int d_dsp(void)
 	rgpu = 0;			// Unset GPU assembly
 	robjproc = 0;		// Unset OP assembly
 	dsp56001 = 0;		// Unset 56001 assembly
-	regbank = BANK_N;	// Set no default register bank
+
+	regbase = regriscbase;	// Update register DFA tables
+	regtab = regrisctab;
+	regcheck = regrisccheck;
+	regaccept = regriscaccept;
 	return 0;
 }
 
@@ -2070,7 +2102,7 @@ int d_cargs(void)
 
 			eval += 2;
 		}
-		else if (*tok >= KW_D0 && *tok <= KW_A7)
+		else if (*tok >= REG68_D0 && *tok <= REG68_A7)
 		{
 			if (reglist(&rlist) < 0)
 				return 0;
@@ -2085,13 +2117,13 @@ int d_cargs(void)
 		{
 			switch ((int)*tok)
 			{
-			case KW_USP:
-			case KW_SSP:
-			case KW_PC:
+			case REG68_USP:
+			case REG68_SSP:
+			case REG68_PC:
 				eval += 2;
 				// FALLTHROUGH
-			case KW_SR:
-			case KW_CCR:
+			case REG68_SR:
+			case REG68_CCR:
 				eval += 2;
 				tok++;
 				break;
@@ -2202,7 +2234,7 @@ int d_cstruct(void)
 
 			tok++;
 		}
-		else if (*tok >= KW_D0 && *tok <= KW_A7)
+		else if (*tok >= REG68_D0 && *tok <= REG68_A7)
 		{
 			if (reglist(&rlist) < 0)
 				return 0;
@@ -2217,13 +2249,13 @@ int d_cstruct(void)
 		{
 			switch ((int)*tok)
 			{
-			case KW_USP:
-			case KW_SSP:
-			case KW_PC:
+			case REG68_USP:
+			case REG68_SSP:
+			case REG68_PC:
 				eval += 2;
 				// FALLTHROUGH
-			case KW_SR:
-			case KW_CCR:
+			case REG68_SR:
+			case REG68_CCR:
 				eval += 2;
 				tok++;
 				break;

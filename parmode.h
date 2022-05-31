@@ -17,12 +17,12 @@
 	// Dn
 	// An
 	// # expression
-	if ((*tok >= KW_D0) && (*tok <= KW_D7))
+	if ((*tok >= REG68_D0) && (*tok <= REG68_D7))
 	{
 		AMn = DREG;
 		AnREG = *tok++ & 7;
 	}
-	else if ((*tok >= KW_A0) && (*tok <= KW_A7))
+	else if ((*tok >= REG68_A0) && (*tok <= REG68_A7))
 	{
 		AMn = AREG;
 		AnREG = *tok++ & 7;
@@ -58,7 +58,7 @@
 		int ea_PC = 0;				// Flag that let us know if we have PC or An relative ea
 		tok++;
 
-		if ((*tok >= KW_A0) && (*tok <= KW_A7))
+		if ((*tok >= REG68_A0) && (*tok <= REG68_A7))
 		{
 			AnREG = *tok++ & 7;
 
@@ -80,7 +80,7 @@
 			AMn = AINDEXED;
 			goto AMn_IX0;            // Handle ",Xn[.siz][*scale])"
 		}
-		else if ((*tok >= KW_D0) && (*tok <= KW_D7))
+		else if ((*tok >= REG68_D0) && (*tok <= REG68_D7))
 		{
 			// Since index register isn't used here, store register number in this field
 			AnIXREG = *tok++ & 7;                                // (Dn)
@@ -206,7 +206,7 @@
 			else
 				return error("unhandled so far");
 		}
-		else if (*tok == KW_PC)
+		else if (*tok == REG68_PC)
 		{                            // (PC,Xn[.siz][*scale])
 			tok++;
 			AMn = PCINDEXED;
@@ -224,7 +224,7 @@ AMn_IXN:                 // Handle any indexed (tok -> a comma)
 			if (*tok++ != ',')
 				goto badmode;
 
-			if (*tok < KW_D0 || *tok > KW_A7)
+			if (*tok < REG68_D0 || *tok > REG68_A7)
 				goto badmode;
 
 			AnIXREG = *tok++ & 15;
@@ -370,19 +370,19 @@ AMn_IXN:                 // Handle any indexed (tok -> a comma)
 			// Check for address register or PC, suppress base register
 			// otherwise
 
-			if (*tok == KW_PC)
+			if (*tok == REG68_PC)
 			{					// ([bd,PC,...
 				ea_PC = 3;				// Set flag in order to set proper value to AMn below when we can make a decision on ea
 										// (why "3"? Well, MEMPOST is 3 away from PCMPOST, etc. Have a look at amode.h)
 				AnREG = (7 << 3) | 3;	// PC is special case - stuff 011 to register field and 111 to the mode field
 				tok++;
 			}
-			else if ((*tok >= KW_A0) && (*tok <= KW_A7))
+			else if ((*tok >= REG68_A0) && (*tok <= REG68_A7))
 			{					// ([bd,An,...
 				AnREG = (6 << 3) | (*tok & 7);
 				tok++;
 			}
-			else if ((*tok >= KW_D0) && (*tok <= KW_D7))
+			else if ((*tok >= REG68_D0) && (*tok <= REG68_D7))
 			{
 				// ([bd,Dn,...
 				AnREG = (6 << 3);
@@ -498,13 +498,13 @@ AMn_IXN:                 // Handle any indexed (tok -> a comma)
 				else
 					tok++;				// eat the comma
 
-				if ((*tok >= KW_A0) && (*tok <= KW_A7))
+				if ((*tok >= REG68_A0) && (*tok <= REG68_A7))
 				{
 					AnIXREG = ((*tok & 7) << 12);
 					AnEXTEN |= EXT_A;
 					tok++;
 				}
-				else if ((*tok >= KW_D0) && (*tok <= KW_D7))
+				else if ((*tok >= REG68_D0) && (*tok <= REG68_D7))
 				{
 					AnEXTEN |= ((*tok & 7) << 12);
 					AnEXTEN |= EXT_D;
@@ -741,13 +741,13 @@ IS_SUPPRESSEDn:
 				tok++;			// ([bd,An,Xn.size*scale],od)
 
 				// Check for Xn
-				if ((*tok >= KW_A0) && (*tok <= KW_A7))
+				if ((*tok >= REG68_A0) && (*tok <= REG68_A7))
 				{
 					AnEXTEN |= ((*tok & 7) << 12);
 					AnEXTEN |= EXT_A;
 					tok++;
 				}
-				else if ((*tok >= KW_D0) && (*tok <= KW_D7))
+				else if ((*tok >= REG68_D0) && (*tok <= REG68_D7))
 				{
 					AnEXTEN |= ((*tok & 7) << 12);
 					AnEXTEN |= EXT_D;
@@ -934,7 +934,7 @@ IS_SUPPRESSEDn:
 			if (*tok++ != ',')
 				goto badmode;
 
-			if ((*tok >= KW_A0) && (*tok <= KW_A7))
+			if ((*tok >= REG68_A0) && (*tok <= REG68_A7))
 			{
 				AnREG = *tok & 7;
 				tok++;
@@ -965,7 +965,7 @@ IS_SUPPRESSEDn:
 						AnBEXVAL = AnEXVAL;
 						AnBEXATTR = AnEXATTR;
 
-						if ((*tok >= KW_D0) && (*tok <= KW_D7))
+						if ((*tok >= REG68_D0) && (*tok <= REG68_D7))
 						{
 							AnEXTEN |= ((*tok++) & 7) << 12;
 							// Check for size
@@ -1062,7 +1062,7 @@ IS_SUPPRESSEDn:
 				else
 					goto badmode;
 			}
-			else if (*tok == KW_PC)
+			else if (*tok == REG68_PC)
 			{
 				if (*++tok == ',')
 				{                             // expr(PC,Xn...)
@@ -1082,56 +1082,56 @@ IS_SUPPRESSEDn:
 				goto badmode;
 		}
 	}
-	else if (*tok == '-' && tok[1] == '(' && ((tok[2] >= KW_A0) && (tok[2] <= KW_A7)) && tok[3] == ')')
+	else if (*tok == '-' && tok[1] == '(' && ((tok[2] >= REG68_A0) && (tok[2] <= REG68_A7)) && tok[3] == ')')
 	{
 		AMn = APREDEC;
 		AnREG = tok[2] & 7;
 		tok += 4;
 	}
-	else if (*tok == KW_CCR)
+	else if (*tok == REG68_CCR)
 	{
 		AMn = AM_CCR;
 		tok++;
 		goto AnOK;
 	}
-	else if (*tok == KW_SR)
+	else if (*tok == REG68_SR)
 	{
 		AMn = AM_SR;
 		tok++;
 		goto AnOK;
 	}
-	else if (*tok == KW_USP)
+	else if (*tok == REG68_USP)
 	{
 		AMn = AM_USP;
 		tok++;
 		AnREG = 2;	// Added this for the case of USP used in movec (see CREGlut in mach.c). Hopefully nothing gets broken!
 		goto AnOK;
 	}
-	else if ((*tok >= KW_IC40) && (*tok <= KW_BC40))
+	else if ((*tok >= REG68_IC40) && (*tok <= REG68_BC40))
 	{
 		AMn = CACHES;
-		AnREG = *tok++ - KW_IC40;
+		AnREG = *tok++ - REG68_IC40;
 
 		// After a cache keyword only a comma or EOL is allowed
 		if ((*tok != ',') && (*tok != EOL))
 			return ERROR;
 		goto AnOK;
 	}
-	else if ((*tok >= KW_SFC) && (*tok <= KW_CRP))
+	else if ((*tok >= REG68_SFC) && (*tok <= REG68_CRP))
 	{
 		AMn = CREG;
-		AnREG = (*tok++) - KW_SFC;
+		AnREG = (*tok++) - REG68_SFC;
 		goto AnOK;
 	}
-	else if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
+	else if ((*tok >= REG68_FP0) && (*tok <= REG68_FP7))
 	{
 		AMn = FREG;
 		AnREG = (*tok++ & 7);
 	}
-	else if ((*tok >= KW_FPIAR) && (*tok <= KW_FPCR))
+	else if ((*tok >= REG68_FPIAR) && (*tok <= REG68_FPCR))
 	{
 		AMn = FPSCR;
-		AnREG = (1 << ((*tok++) - KW_FPIAR + 10));
+		AnREG = (1 << ((*tok++) - REG68_FPIAR + 10));
 	}
 	// expr
 	// expr.w
@@ -1192,7 +1192,7 @@ CHK_FOR_DISPn:
 
 		tok++;
 
-		if ((*tok >= KW_A0) && (*tok <= KW_A7))
+		if ((*tok >= REG68_A0) && (*tok <= REG68_A7))
 		{
 			AnREG = *tok++ & 7;
 
@@ -1206,7 +1206,7 @@ CHK_FOR_DISPn:
 			AMn = AINDEXED;
 			goto AMn_IXN;
 		}
-		else if (*tok == KW_PC)
+		else if (*tok == REG68_PC)
 		{
 			if (*++tok == ')')
 			{

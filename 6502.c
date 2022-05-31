@@ -21,8 +21,9 @@
 #include "sect.h"
 #include "token.h"
 
-#define DEF_KW
-#include "kwtab.h"
+#define DEF_REG65
+#define DECL_REG65
+#include "6502regs.h"
 
 #define	UPSEG_SIZE	0x10010L // size of 6502 code buffer, 64K+16bytes
 
@@ -238,6 +239,10 @@ int d_6502()
 {
 	SaveSection();			// Save curent section
 	SwitchSection(M6502);	// Switch to 6502 section
+	regbase = reg65base;	// Update register DFA tables
+	regtab = reg65tab;
+	regcheck = reg65check;
+	regaccept = reg65accept;
 
 	return 0;
 }
@@ -263,7 +268,7 @@ void m6502cg(int op)
 		amode = A65_IMPL;
 		break;
 
-	case KW_A:
+	case REG65_A:
 		if (tok[1] != EOL)
 			goto badmode;
 
@@ -307,7 +312,7 @@ void m6502cg(int op)
 				tok++;
 				amode = A65_INDY;
 
-				if (tok[0] != KW_Y)
+				if (tok[0] != REG65_Y)
 					goto badmode;
 
 				tok++;
@@ -315,7 +320,7 @@ void m6502cg(int op)
 			else
 				amode = A65_IND;
 		}
-		else if ((tok[0] == ',') && (tok[1] == KW_X) && (tok[2] == ')'))
+		else if ((tok[0] == ',') && (tok[1] == REG65_X) && (tok[2] == ')'))
 		{
 			// (foo,x)
 			tok += 3;
@@ -341,9 +346,9 @@ void m6502cg(int op)
 			if ((tok[1] != ')') || (tok[2] != EOL))
 				goto badmode;
 
-			if (tok[0] == KW_X)
+			if (tok[0] == REG65_X)
 				amode = A65_INDX;
-			else if (tok[0] == KW_Y)
+			else if (tok[0] == REG65_Y)
 				amode = A65_INDY;
 			else
 				goto badmode;
@@ -373,12 +378,12 @@ void m6502cg(int op)
 		{
 			tok++;
 
-			if (tok[0] == KW_X)
+			if (tok[0] == REG65_X)
 			{
 				tok++;
 				amode = A65_ABSX;
 			}
-			else if (tok[0] == KW_Y)
+			else if (tok[0] == REG65_Y)
 			{
 				tok++;
 				amode = A65_ABSY;

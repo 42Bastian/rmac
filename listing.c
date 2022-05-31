@@ -53,7 +53,7 @@ static char * month[16] = {
 //
 int eject(void)
 {
-	if (listing > 0)
+	if (listing > 0 && list_pag)
 	{
 		println("\f");
 		nlines = 0;

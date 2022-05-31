@@ -1,7 +1,7 @@
 //
 // RMAC - Renamed Macro Assembler for all Atari computers
 // OBJECT.C - Writing Object Files
-// Copyright (C) 199x Landon Dyer, 2011-2021 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2022 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -61,7 +61,6 @@ See left.		4 & 5	If these bits are set to 0 (PF_PRIVATE), the processes'
 // Internal function prototypes
 static void WriteLOD(void);
 static void WriteP56(void);
-
 
 //
 // Add entry to symbol table (in ALCYON mode)
@@ -157,7 +156,6 @@ uint8_t * AddSymEntry(register uint8_t * buf, SYM * sym, int globflag)
 	return buf;
 }
 
-
 //
 // Add an entry to the BSD symbol table
 //
@@ -192,9 +190,9 @@ uint8_t * AddBSDSymEntry(uint8_t * buf, SYM * sym, int globflag)
 		z = 0x02000000;					// Set equated flag
 	}
 
-	// If a symbol is both EQUd and flagged as TBD then we let
-	// the later take precedence. Otherwise the linker will not even
-	// bother trying to relocate the address during link time
+	// If a symbol is both EQUd and flagged as TBD then we let the latter take
+	// precedence. Otherwise the linker will not even bother trying to relocate
+	// the address during link time.
 
 	switch (w1 & TDB)
 	{
@@ -223,7 +221,6 @@ uint8_t * AddBSDSymEntry(uint8_t * buf, SYM * sym, int globflag)
 
 	return buf;
 }
-
 
 //
 // Add entry to ELF symbol table; if `globflag' is 1, make the symbol global
@@ -275,7 +272,6 @@ uint8_t * AddELFSymEntry(uint8_t * buf, SYM * sym, int globflag)
 	return buf + 0x10;
 }
 
-
 //
 // Helper function for ELF output
 //
@@ -296,7 +292,6 @@ int DepositELFSectionHeader(uint8_t * ptr, uint32_t name, uint32_t type, uint32_
 	return 40;
 }
 
-
 //
 // Deposit an entry in the Section Header string table
 //
@@ -310,7 +305,6 @@ printf("DepositELFSHSTEntry: s = \"%s\"\n", s);
 	*pTable += strSize + 1;
 	return strSize + 1;
 }
-
 
 //
 // Deposit a symbol table entry in the ELF Symbol Table
@@ -327,7 +321,6 @@ uint32_t DepositELFSymbol(uint8_t * ptr, uint32_t name, uint32_t addr, uint32_t 
 	D_word(shndx);
 	return 16;
 }
-
 
 //
 // Write an object file to the passed in file descriptor
@@ -363,9 +356,9 @@ int WriteObject(int fd)
 			printf("Total       : %d bytes\n", sect[TEXT].sloc + sect[DATA].sloc + sect[BSS].sloc);
 		}
 
-		sy_assign(NULL, NULL);						// Assign index numbers to the symbols
+		AssignSymbolNos(NULL, NULL);	// Assign index numbers to the symbols
 		tds = sect[TEXT].sloc + sect[DATA].sloc;	// Get size of TEXT and DATA segment
-		buf = malloc(0x800000);						// Allocate 8MB object file image memory
+		buf = malloc(0x800000);			// Allocate 8MB object file image memory
 
 		if (buf == NULL)
 		{
@@ -425,7 +418,7 @@ int WriteObject(int fd)
 
 		// Point to start of symbol table
 		p = buf + BSDHDRSIZE + tds + trsize + drsize;
-		sy_assign(p, AddBSDSymEntry);	// Build symbol and string tables
+		AssignSymbolNos(p, AddBSDSymEntry);	// Build symbol and string tables
 		chptr = buf + 0x10;				// Point to sym table size hdr entry
 		D_long(symsize);				// Write the symbol table size
 
@@ -465,7 +458,7 @@ int WriteObject(int fd)
 		// Assign index numbers to the symbols, get # of symbols (we assume
 		// that all symbols can potentially be extended, hence the x28)
 		// (To clarify: 28 bytes is the size of an extended symbol)
-		uint32_t symbolMaxSize = sy_assign(NULL, NULL) * 28;
+		uint32_t symbolMaxSize = AssignSymbolNos(NULL, NULL) * 28;
 
 		// Alloc memory for header + text + data, symbol and relocation
 		// information construction.
@@ -505,8 +498,8 @@ int WriteObject(int fd)
 		// Construct symbol table and update the header entry, if necessary
 		if (prg_flag > 1)
 		{
-			// sy_assign with AddSymEntry updates symsize (stays 0 otherwise)
-			sy_assign(buf + HDRSIZE + tds, AddSymEntry);
+			// AssignSymbolNos with AddSymEntry updates symsize (stays 0 otherwise)
+			AssignSymbolNos(buf + HDRSIZE + tds, AddSymEntry);
 			chptr = buf + 0x0E;			// Point to symbol table size entry
 			D_long(symsize);
 
@@ -762,7 +755,7 @@ for(int j=0; j<i; j++)
 			extraSyms++;
 		}
 
-		int numSymbols = sy_assign_ELF(buf + elfSize, AddELFSymEntry);
+		int numSymbols = AssignSymbolNosELF(buf + elfSize, AddELFSymEntry);
 		elfSize += numSymbols * 0x10;
 
 		// String table
@@ -823,8 +816,6 @@ for(int j=0; j<i; j++)
 		if (buf == NULL)
 			return error("cannot allocate object file memory (in P56/LOD mode)");
 
-//		objImage = buf;					// Set global object image pointer
-
 		memset(buf, 0, 0x600000);		// Clear allocated memory
 
 		// Iterate through DSP ram buffers
@@ -846,9 +837,7 @@ for(int j=0; j<i; j++)
 	else if (obj_format == RAW)
 	{
 		if (!org68k_active)
-		{
 			return error("cannot output absolute binary without a starting address (.org or command line)");
-		}
 
 		// Alloc memory for text + data construction.
 		tds = sect[TEXT].sloc + sect[DATA].sloc;
@@ -861,9 +850,9 @@ for(int j=0; j<i; j++)
 		p = buf;
 		objImage = buf;					// Set global object image pointer
 
-		for (i = TEXT; i <= DATA; i++)
+		for(i=TEXT; i<=DATA; i++)
 		{
-			for (cp = sect[i].sfcode; cp != NULL; cp = cp->chnext)
+			for(cp=sect[i].sfcode; cp!=NULL; cp=cp->chnext)
 			{
 				memcpy(p, cp->chptr, cp->ch_size);
 				p += cp->ch_size;
@@ -885,7 +874,6 @@ for(int j=0; j<i; j++)
 	}
 	return 0;
 }
-
 
 static void WriteLOD(void)
 {
@@ -958,7 +946,6 @@ static void WriteLOD(void)
 	D_printf("\n_END %.4X\n", dsp_orgmap[0].orgadr);
 }
 
-
 static void WriteP56(void)
 {
 	for(DSP_ORG * l=&dsp_orgmap[0]; l<dsp_currentorg; l++)
@@ -1024,4 +1011,3 @@ static void WriteP56(void)
 		SETBE24(p_buf_len, chunk_size / 3);
 	}
 }
-

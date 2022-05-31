@@ -19,6 +19,13 @@
 #define DECL_KW				// Declare keyword arrays
 #define DEF_KW				// Declare keyword values
 #include "kwtab.h"			// Incl generated keyword tables & defs
+#define DEF_REG68			// Incl 68k register definitions
+#include "68kregs.h"
+#define DEF_REGRISC			// Include GPU/DSP register definitions
+#include "riscregs.h"
+#define DEF_UNARY			// Declare unary values
+#define DECL_UNARY			// Incl uanry keyword state machine tables
+#include "unarytab.h"		// Incl generated unary tables & defs
 
 
 int lnsave;					// 1; strcpy() text of current line
@@ -145,13 +152,6 @@ static char * regname[] = {
 	"","","","","","","l","p", // 296,303
 	"mr","omr","la","lc","ssh","ssl","ss","", // 304,311
 	"a10","b10","x","y","","","ab","ba"  // 312,319
-};
-
-static char * riscregname[] = {
-	 "r0",  "r1",  "r2",  "r3",  "r4", "r5",   "r6",  "r7",
-	 "r8",  "r9", "r10", "r11", "r12", "r13", "r14", "r15",
-	"r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",
-	"r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31"
 };
 
 
@@ -509,14 +509,9 @@ arg_num:
 						// This is a hack. It might be better table-driven.
 						d = NULL;
 
-						if ((*tk >= KW_D0) && !rdsp && !rgpu)
+						if (*tk >= REG68_D0)
 						{
-							d = regname[(int)*tk++ - KW_D0];
-							goto strcopy;
-						}
-						else if ((*tk >= KW_R0) && (*tk <= KW_R31))
-						{
-							d = riscregname[(int)*tk++ - KW_R0];
+							d = regname[(int)*tk++ - REG68_D0];
 							goto strcopy;
 						}
 						else
@@ -974,6 +969,8 @@ int TokenizeLine(void)
 	int stuffnull;				// 1:terminate SYMBOL '\0' at *nullspot
 	uint8_t c1;
 	int stringNum = 0;			// Pointer to string locations in tokenized line
+	SYM* sy;					// For looking up symbols (.equr)
+	int equrundef = 0;			// Flag for equrundef scanning
 
 retry:
 
@@ -1154,14 +1151,15 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 
 			// If the symbol is small, check to see if it's really the name of
 			// a register.
-			if (j <= KWSIZE)
+			uint8_t *p2 = p;
+			if (j <= 5)
 			{
-				for(state=0; state>=0;)
+				for (state = 0; state >= 0;)
 				{
 					j = (int)tolowertab[*p++];
-					j += kwbase[state];
+					j += regbase[state];
 
-					if (kwcheck[j] != state)
+					if (regcheck[j] != state)
 					{
 						j = -1;
 						break;
@@ -1169,40 +1167,79 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 
 					if (*p == EOS || p == ln)
 					{
-						j = kwaccept[j];
+						j = regaccept[j];
+						goto skip_keyword;
 						break;
 					}
 
-					state = kwtab[j];
+					state = regtab[j];
 				}
 			}
-			else
+
+			// Scan for keywords
+			if ((j <= 0 || state <= 0) || p==p2)
 			{
-				j = -1;
+				if (j <= KWSIZE)
+				{
+					for (state = 0; state >= 0;)
+					{
+						j = (int)tolowertab[*p2++];
+						j += kwbase[state];
+			
+						if (kwcheck[j] != state)
+						{
+							j = -1;
+							break;
+						}
+			
+						if (*p == EOS || p2 == ln)
+						{
+							j = kwaccept[j];
+							break;
+						}
+			
+						state = kwtab[j];
+					}
+				}
+				else
+				{
+					j = -1;
+				}
 			}
 
-			// Make j = -1 if user tries to use a RISC register while in 68K mode
-			if (!(rgpu || rdsp || dsp56001) && ((TOKEN)j >= KW_R0 && (TOKEN)j <= KW_R31))
-			{
-				j = -1;
-			}
+			skip_keyword:
 
-			// Make j = -1 if time, date etc with no preceeding ^^
-			// defined, referenced, streq, macdef, date and time
-			switch ((TOKEN)j)
+			// If we detected equrundef/regundef set relevant flag
+			if (j == KW_EQURUNDEF)
 			{
-			case 112:   // defined
-			case 113:   // referenced
-			case 118:   // streq
-			case 119:   // macdef
-			case 120:   // time
-			case 121:   // date
+				equrundef = 1;
 				j = -1;
 			}
 
 			// If not tokenized keyword OR token was not found
 			if ((j < 0) || (state < 0))
 			{
+				// Only proceed if no equrundef has been detected. In that case we need to store the symbol
+				// because the directive handler (d_equrundef) will run outside this loop, further into procln.c
+				if (!equrundef && !disabled)
+				{
+					// Last attempt: let's see if this is an equated register.
+					// If yes, then just store the register's keyword value instead of the symbol
+					char temp = *ln;
+					*ln = 0;
+					sy = lookup(nullspot, LABEL, 0);
+					*ln = temp;
+					if (sy)
+					{
+						if (sy->sattre & EQUATEDREG)
+						{
+							*tk.u32++ = sy->svalue;
+							stuffnull = 0;
+							continue;
+						}
+					}
+				}
+				// Ok, that failed, let's store the symbol instead
 				*tk.u32++ = SYMBOL;
 				string[stringNum] = nullspot;
 				*tk.u32++ = stringNum;
@@ -1499,14 +1536,14 @@ dostring:
 				for(state=0; state>=0;)
 				{
 					// Get char, convert to lowercase
-					j = *p++;
+					j = (int)tolowertab[*p++];
 
-					if (j >= 'A' && j <= 'Z')
-						j += 0x20;
+					//if (j >= 'A' && j <= 'Z')
+					//	j += 0x20;
 
-					j += kwbase[state];
+					j += unarybase[state];
 
-					if (kwcheck[j] != state)
+					if (unarycheck[j] != state)
 					{
 						j = -1;
 						break;
@@ -1514,11 +1551,11 @@ dostring:
 
 					if (*p == EOS || p == ln)
 					{
-						j = kwaccept[j];
+						j = unaryaccept[j];
 						break;
 					}
 
-					state = kwtab[j];
+					state = unarytab[j];
 				}
 
 				if (j < 0 || state < 0)

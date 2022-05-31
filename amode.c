@@ -15,8 +15,8 @@
 #include "sect.h"
 #include "token.h"
 
-#define DEF_KW
-#include "kwtab.h"
+#define DEF_REG68
+#include "68kregs.h"
 #define DEF_MN
 #include "mntab.h"
 
@@ -171,9 +171,9 @@ int amode(int acount)
 		// TODO: protect this from combinations like Dx:FPx etc :)
 		tok++;  //eat the colon
 
-		if ((*tok >= KW_D0) && (*tok <= KW_D7))
+		if ((*tok >= REG68_D0) && (*tok <= REG68_D7))
 			a2reg = (*tok++) & 7;
-		else if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
+		else if ((*tok >= REG68_FP0) && (*tok <= REG68_FP7))
 			a2reg = (*tok++) & 7;
 		else
 			return error("a data or FPU register must follow a :");
@@ -211,7 +211,7 @@ int reglist(WORD * a_rmask)
 
 	for(;;)
 	{
-		if ((*tok >= KW_D0) && (*tok <= KW_A7))
+		if ((*tok >= REG68_D0) && (*tok <= REG68_A7))
 			r = *tok++ & 0x0F;
 		else
 			break;
@@ -220,7 +220,7 @@ int reglist(WORD * a_rmask)
 		{
 			tok++;
 
-			if ((*tok >= KW_D0) && (*tok <= KW_A7))
+			if ((*tok >= REG68_D0) && (*tok <= REG68_A7))
 				cnt = *tok++ & 0x0F;
 			else
 				return error("register list syntax");
@@ -263,7 +263,7 @@ int fpu_reglist_left(WORD * a_rmask)
 
 	for(;;)
 	{
-		if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
+		if ((*tok >= REG68_FP0) && (*tok <= REG68_FP7))
 			r = *tok++ & 0x07;
 		else
 			break;
@@ -272,7 +272,7 @@ int fpu_reglist_left(WORD * a_rmask)
 		{
 			tok++;
 
-			if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
+			if ((*tok >= REG68_FP0) && (*tok <= REG68_FP7))
 				cnt = *tok++ & 0x07;
 			else
 				return error("register list syntax");
@@ -314,7 +314,7 @@ int fpu_reglist_right(WORD * a_rmask)
 
 	for(;;)
 	{
-		if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
+		if ((*tok >= REG68_FP0) && (*tok <= REG68_FP7))
 			r = *tok++ & 0x07;
 		else
 			break;
@@ -323,7 +323,7 @@ int fpu_reglist_right(WORD * a_rmask)
 		{
 			tok++;
 
-			if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
+			if ((*tok >= REG68_FP0) && (*tok <= REG68_FP7))
 				cnt = *tok++ & 0x07;
 			else
 				return error("register list syntax");
@@ -385,7 +385,7 @@ int Check030Bitfield(void)
 		// Do=0, offset=immediate - shift it to place
 		bfparam1 = (0 << 11);
 	}
-	else if ((*tok >= KW_D0) && (*tok <= KW_D7))
+	else if ((*tok >= REG68_D0) && (*tok <= REG68_D7))
 	{
 		// Do=1, offset=data register - shift it to place
 		bfparam1 = (1 << 11);
@@ -428,7 +428,7 @@ int Check030Bitfield(void)
 		// Do=0, offset=immediate - shift it to place
 		bfparam2 = (0 << 5);
 	}
-	else if ((*tok >= KW_D0) && (*tok <= KW_D7))
+	else if ((*tok >= REG68_D0) && (*tok <= REG68_D7))
 	{
 		// Do=1, offset=data register - shift it to place
 		bfval2 = (*(int *)tok - 128);

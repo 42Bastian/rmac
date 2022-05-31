@@ -1,7 +1,7 @@
 //
 // RMAC - Renamed Macro Assembler for all Atari computers
 // RMAC.C - Main Application Code
-// Copyright (C) 199x Landon Dyer, 2011-2021 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2022 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -30,7 +30,7 @@ int list_pag = 1;				// Enable listing pagination by default
 int verb_flag;					// Be verbose about what's going on
 int m6502;						// 1, assembling 6502 code
 int glob_flag;					// Assume undefined symbols are global
-int lsym_flag;					// Include local symbols in object file
+int lsym_flag;					// Include local symbols in object file (ALWAYS true)
 int optim_warn_flag;			// Warn about possible short branches
 int prg_flag;					// !=0, produce .PRG executable (2=symbols)
 int prg_extend;					// !=0, output extended .PRG symbols
@@ -43,9 +43,12 @@ int rgpu, rdsp;					// Assembling Jaguar GPU or DSP code
 int robjproc;					// Assembling Jaguar Object Processor code
 int dsp56001;					// Assembling DSP 56001 code
 int list_fd;					// File to write listing to
-int regbank;					// RISC register bank
 int segpadsize;					// Segment padding size
 int endian;						// Host processor endianess (0 = LE, 1 = BE)
+int *regbase;					// Points to current DFA register table (base)
+int *regtab;					// Points to current DFA register table (tab)
+int *regcheck;					// Points to current DFA register table (check)
+int *regaccept;					// Points to current DFA register table (accept)
 char * objfname;				// Object filename pointer
 char * firstfname;				// First source filename
 char * cmdlnexec;				// Executable name, pointer to ARGV[0]
@@ -204,7 +207,7 @@ void DisplayHelp(void)
 		"  -v                Set verbose mode\n"
 		"  -x                Turn on debugging mode\n"
 		"  -y[pagelen]       Set page line length (default: 61)\n"
-		"  -4                C style operator precdence\n"
+		"  -4                Use C style operator precedence\n"
 		"\n", cmdlnexec);
 }
 
@@ -220,9 +223,9 @@ void DisplayVersion(void)
 		"| |  | | | | | | (_| | (__ \n"
 		"|_|  |_| |_| |_|\\__,_|\\___|\n"
 		"\nRenamed Macro Assembler\n"
-		"Copyright (C) 199x Landon Dyer, 2011-2021 Reboot and Friends\n"
-		"Operator precedence fix (c) 2018 42Bastian\n"
-		"V%01i.%01i.%01i %s (%s)\n\n", MAJOR, MINOR, PATCH, __DATE__, PLATFORM);
+		"Copyright (C) 199x Landon Dyer, 2011-2022 Reboot and Friends\n"
+    "Operator precedence fix (c) 2018 42Bastian\n"
+		"V%01i.%01i.%01i.42 %s (%s)\n\n", MAJOR, MINOR, PATCH, __DATE__, PLATFORM);
 }
 
 //
@@ -288,6 +291,11 @@ int ParseOptimization(char * optstring)
 	return OK;
 }
 
+extern int reg68base[53];
+extern int reg68tab[222];
+extern int reg68check[222];
+extern int reg68accept[222];
+
 //
 // Process command line arguments and do an assembly
 //
@@ -319,16 +327,17 @@ int Process(int argc, char ** argv)
 	rdsp = 0;						// Initialize DSP assembly flag
 	robjproc = 0;					// Initialize OP assembly flag
 	lsym_flag = 1;					// Include local symbols in object file
-	regbank = BANK_N;				// No RISC register bank specified
 	orgactive = 0;					// Not in RISC org section
 	orgwarning = 0;					// No ORG warning issued
 	segpadsize = 2;					// Initialize segment padding size
     dsp_orgmap[0].start = 0;		// Initialize 56001 org initial address
     dsp_orgmap[0].memtype = ORG_P;	// Initialize 56001 org start segment
 	m6502 = 0;						// 6502 mode off by default
-        correctMathRules = 0;                           // respect operator precedence
-
-
+	regbase = reg68base;			// Initialise DFA register tables
+	regtab = reg68tab;				// Idem
+	regcheck = reg68check;			// Idem
+	regaccept = reg68accept;		// Idem
+correctMathRules = 0;                           // respect operator precedence
 	// Initialize modules
 	InitSymbolTable();				// Symbol table
 	InitTokenizer();				// Tokenizer
@@ -784,6 +793,7 @@ int main(int argc, char ** argv)
 {
 	perm_verb_flag = 0;				// Clobber "permanent" verbose flag
 	legacy_flag = 1;				// Default is legacy mode on (:-P)
+	optim_flags[OPT_56K_SHORT] = 1; // This ensures compatibilty with Motorola's 56k assembler
 
 	cmdlnexec = argv[0];			// Obtain executable name
 	endian = GetEndianess();		// Get processor endianess

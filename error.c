@@ -18,8 +18,9 @@ char * interror_msg[] = {
 	"Bad fixup type",							// Error #4
 	"Bad operator in expression stream",		// Error #5
 	"Can't find generated code in section",		// Error #6
-	"Fixup (loc) out of range"					// Error #7
-	"Absolute top filename found"				// Error #8
+	"Fixup (loc) out of range",					// Error #7
+	"Absolute top filename found",				// Error #8
+	"The RISC expression evaluator blew up, sorry" // Error #9
 };
 
 // Exported variables

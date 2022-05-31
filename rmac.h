@@ -1,7 +1,7 @@
 //
 // RMAC - Renamed Macro Assembler for all Atari computers
 // RMAC.H - Main Application Code
-// Copyright (C) 199x Landon Dyer, 2011-2021 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2022 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -39,7 +39,6 @@
 	#define STRINGIZE(x) STRINGIZE_HELPER(x)
 	#define WARNING(desc) __pragma(message(__FILE__ "(" STRINGIZE(__LINE__) ") : Warning: " #desc))
 	#define inline __inline
-
 	// usage:
 	// WARNING(FIXME: Code removed because...)
 
@@ -159,6 +158,17 @@
 #include <dirent.h>
 #include "symbol.h"
 
+#if defined(WIN32) || defined(WIN64)
+// Ever since Visual Studio... 2017? 2019? the following constants come defined in the
+// platform SDK, which leads to endless warnings from the compiler. So let's just
+// put the pacifier on and undef them, sheesh! (No, we won't rename the defines,
+// we've been here since 1986, Visual Studio wasn't even a glimpse in the milkman's eyes,
+// if you catch my drift)
+#undef CONST
+#undef ERROR
+#undef TEXT
+#endif
+
 #define BYTE         uint8_t
 #define WORD         uint16_t
 #define LONG         uint32_t
@@ -249,37 +259,10 @@ PTR
 #define SIZP         0x0080		// .p (FPU pakced decimal real)
 #define SIZQ         0x0100		// .q (quad word)
 
-// RISC register bank definitions (used in extended symbol attributes also)
-#define BANK_N       0x0000		// No register bank specified
-#define BANK_0       0x0001		// Register bank zero specified
-#define BANK_1       0x0002		// Register bank one specified
 #define EQUATEDREG   0x0008		// Equated register symbol
 #define UNDEF_EQUR   0x0010
 #define EQUATEDCC    0x0020
 #define UNDEF_CC     0x0040
-
-// Construct binary constants at compile time
-// Code by Tom Torfs
-
-// Helper macros
-#define HEX__(n) 0x##n##LU
-#define B8__(x) \
- ((x&0x0000000FLU)?1:0) \
-+((x&0x000000F0LU)?2:0) \
-+((x&0x00000F00LU)?4:0) \
-+((x&0x0000F000LU)?8:0) \
-+((x&0x000F0000LU)?16:0) \
-+((x&0x00F00000LU)?32:0) \
-+((x&0x0F000000LU)?64:0) \
-+((x&0xF0000000LU)?128:0)
-
-// User macros
-#define B8(d) ((uint8_t)B8__(HEX__(d)))
-#define B16(dmsb,dlsb) (((uint16_t)B8(dmsb)<<8) + B8(dlsb))
-#define B32(dmsb,db2,db3,dlsb) (((uint32_t)B8(dmsb)<<24) \
-+ ((uint32_t)B8(db2)<<16) \
-+ ((uint32_t)B8(db3)<<8) \
-+ B8(dlsb))
 
 // Optimisation defines
 enum
@@ -311,7 +294,6 @@ extern int robjproc;
 extern int dsp56001;
 extern int err_flag;
 extern int err_fd;
-extern int regbank;
 extern char * firstfname;
 extern int list_fd;
 extern int list_pag;
@@ -329,6 +311,10 @@ extern int activecpu;
 extern int activefpu;
 extern uint32_t org68k_address;
 extern int org68k_active;
+extern int *regbase;
+extern int *regtab;
+extern int *regcheck;
+extern int *regaccept;
 
 // Exported functions
 void strtoupper(char * s);

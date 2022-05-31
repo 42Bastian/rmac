@@ -43,6 +43,36 @@ if not exist %FILE2% GOTO BUILD
 for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
 if %NEWEST%==%FILE1% GOTO BUILD
 
+SET FILE1=68kregs.tab
+SET FILE2=68kregs.h
+if not exist %FILE2% GOTO BUILD
+for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
+if %NEWEST%==%FILE1% GOTO BUILD
+
+SET FILE1=56kregs.tab
+SET FILE2=56kregs.h
+if not exist %FILE2% GOTO BUILD
+for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
+if %NEWEST%==%FILE1% GOTO BUILD
+
+SET FILE1=6502regs.tab
+SET FILE2=6502regs.h
+if not exist %FILE2% GOTO BUILD
+for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
+if %NEWEST%==%FILE1% GOTO BUILD
+
+SET FILE1=riscregs.tab
+SET FILE2=riscregs.h
+if not exist %FILE2% GOTO BUILD
+for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
+if %NEWEST%==%FILE1% GOTO BUILD
+
+SET FILE1=unary.tab
+SET FILE2=unarytab.h
+if not exist %FILE2% GOTO BUILD
+for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
+if %NEWEST%==%FILE1% GOTO BUILD
+
 GOTO END
 
 :BUILD
@@ -58,7 +88,11 @@ kwgen dsp <dsp56k.tab >dsp56kkw.h
 kwgen mp <6502.tab >6502kw.h
 kwgen mp <6502.tab >6502kw.h
 kwgen mo <op.tab >opkw.h
-
+kwgen reg68 <68kregs.tab >68kregs.h
+kwgen reg56 <56kregs.tab >56kregs.h
+kwgen reg65 <6502regs.tab >6502regs.h
+kwgen regrisc <riscregs.tab >riscregs.h
+kwgen unary <unary.tab >unarytab.h
 
 rem touch files that include these header files so they'll recompile
 echo Generating tables...

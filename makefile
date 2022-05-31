@@ -66,6 +66,21 @@ risckw.h: risc.tab kwgen
 opkw.h: op.tab kwgen
 	./kwgen mo <op.tab >opkw.h
 
+68kregs.h: 68kregs.tab kwgen
+	./kwgen reg68 <68kregs.tab >68kregs.h
+
+56kregs.h: 56kregs.tab kwgen
+	./kwgen reg56 <56kregs.tab >56kregs.h
+
+6502regs.h: 6502regs.tab kwgen
+	./kwgen reg65 <6502regs.tab >6502regs.h
+
+riscregs.h: riscregs.tab kwgen
+	./kwgen regrisc <riscregs.tab >riscregs.h
+
+unarytab.h: unary.tab kwgen
+	./kwgen unary <unary.tab >unarytab.h
+
 # Looks like this is not needed...
 dsp56kkw.h: dsp56k.tab kwgen
 	./kwgen dsp <dsp56k.tab >dsp56kkw.h
@@ -93,21 +108,21 @@ rmac: $(OBJS)
 #
 
 clean:
-	$(RM) $(OBJS) kwgen.o 68kgen.o rmac kwgen 68kgen 68k.tab kwtab.h 68ktab.h mntab.h risckw.h 6502kw.h opkw.h dsp56kgen dsp56kgen.o dsp56k.tab dsp56kkw.h dsp56ktab.h
+	$(RM) $(OBJS) kwgen.o 68kgen.o rmac kwgen 68kgen 68k.tab kwtab.h 68ktab.h mntab.h risckw.h 6502kw.h opkw.h dsp56kgen dsp56kgen.o dsp56k.tab dsp56kkw.h dsp56ktab.h 68kregs.h 56kregs.h 6502regs.h riscregs.h unarytab.h
 
 #
 # Dependencies
 #
 6502.o: 6502.c direct.h rmac.h symbol.h token.h expr.h error.h mach.h \
- procln.h riscasm.h sect.h kwtab.h
+ procln.h riscasm.h sect.h kwtab.h 6502regs.h
 68kgen: 68kgen.c
 amode.o: amode.c amode.h rmac.h symbol.h error.h expr.h mach.h procln.h \
- token.h sect.h riscasm.h kwtab.h mntab.h parmode.h
+ token.h sect.h riscasm.h kwtab.h mntab.h parmode.h 68kregs.h
 debug.o: debug.c debug.h rmac.h symbol.h amode.h direct.h token.h expr.h \
  mark.h sect.h riscasm.h
 direct.o: direct.c direct.h rmac.h symbol.h token.h 6502.h amode.h \
  error.h expr.h fltpoint.h listing.h mach.h macro.h mark.h procln.h \
- riscasm.h sect.h kwtab.h
+ riscasm.h sect.h kwtab.h 56kregs.h riscregs.h
 dsp56k.o: dsp56k.c rmac.h symbol.h dsp56k.h sect.h riscasm.h
 dsp56k_amode.o: dsp56k_amode.c dsp56k_amode.h rmac.h symbol.h amode.h \
  error.h token.h expr.h procln.h sect.h riscasm.h kwtab.h mntab.h
@@ -142,9 +157,8 @@ rmac.o: rmac.c rmac.h symbol.h 6502.h debug.h direct.h token.h error.h \
  expr.h listing.h mark.h macro.h object.h procln.h riscasm.h sect.h \
  version.h
 sect.o: sect.c sect.h rmac.h symbol.h riscasm.h 6502.h direct.h token.h \
- error.h expr.h listing.h mach.h mark.h
+ error.h expr.h listing.h mach.h mark.h riscregs.h
 symbol.o: symbol.c symbol.h error.h rmac.h listing.h object.h procln.h \
  token.h
 token.o: token.c token.h rmac.h symbol.h direct.h error.h macro.h \
- procln.h sect.h riscasm.h kwtab.h
-
+ procln.h sect.h riscasm.h kwtab.h unarytab.h

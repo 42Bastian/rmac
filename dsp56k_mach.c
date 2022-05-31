@@ -14,8 +14,8 @@
 #include "sect.h"
 #include "token.h"
 
-#define DEF_KW
-#include "kwtab.h"
+#define DEF_REG56
+#include "56kregs.h"
 
 
 // Globals
@@ -151,12 +151,12 @@ int dsp_acc48(LONG inst)
 
 	switch (dsp_a0reg)
 	{
-	case KW_X:  inst |= 2 << 4; break;
-	case KW_Y:  inst |= 3 << 4; break;
-	case KW_X0: inst |= 4 << 4;break;
-	case KW_Y0: inst |= 5 << 4;break;
-	case KW_X1: inst |= 6 << 4;break;
-	case KW_Y1: inst |= 7 << 4;break;
+	case REG56_X:  inst |= 2 << 4; break;
+	case REG56_Y:  inst |= 3 << 4; break;
+	case REG56_X0: inst |= 4 << 4;break;
+	case REG56_Y0: inst |= 5 << 4;break;
+	case REG56_X1: inst |= 6 << 4;break;
+	case REG56_Y1: inst |= 7 << 4;break;
 	default: return error("dsp_acc48: shouldn't reach here!");
 	}
 
@@ -210,9 +210,9 @@ int dsp_immcr(LONG inst)
 {
 	switch (dsp_a1reg)
 	{
-	case KW_CCR: inst |= 1; break;
-	case KW_MR:inst |= 0; break;
-	case KW_OMR:inst |= 2; break;
+	case REG56_CCR: inst |= 1; break;
+	case REG56_MR:inst |= 0; break;
+	case REG56_OMR:inst |= 2; break;
 	default: return error("invalid destination register (only ccr, mr, omr allowed");
 	}
 
@@ -243,13 +243,13 @@ int dsp_immmovec(LONG inst)
 	case 5:
 	case 6:
 	case 7:      inst |= dsp_a1reg; break; // M0-M7
-	case KW_SR:  inst |= 25; break;
-	case KW_OMR: inst |= 26; break;
-	case KW_SP:  inst |= 27; break;
-	case KW_SSH: inst |= 28; break;
-	case KW_SSL: inst |= 29; break;
-	case KW_LA:  inst |= 30; break;
-	case KW_LC:  inst |= 31; break;
+	case REG56_SR:  inst |= 25; break;
+	case REG56_OMR: inst |= 26; break;
+	case REG56_SP:  inst |= 27; break;
+	case REG56_SSH: inst |= 28; break;
+	case REG56_SSL: inst |= 29; break;
+	case REG56_LA:  inst |= 30; break;
+	case REG56_LC:  inst |= 31; break;
 	default: return error("invalid destination register (only m0-m7, SR, OMR, SP, SSH, SSL, LA, LC allowed");
 	}
 
@@ -451,7 +451,7 @@ static inline LONG tab_A18(int *am, int *reg)
 	case M_ACC56:
 	case M_ACC24:
 	case M_ACC8:
-		if (*reg == KW_A1)
+		if (*reg == REG56_A1)
 			return 4;
 		else
 			return (*reg & 7);
@@ -460,13 +460,13 @@ static inline LONG tab_A18(int *am, int *reg)
 	case M_DSPPCU:
 		switch (*reg)
 		{
-		case KW_SR:  return 1; break;
-		case KW_OMR: return 2; break;
-		case KW_SP:  return 3; break;
-		case KW_SSH: return 4; break;
-		case KW_SSL: return 5; break;
-		case KW_LA:  return 6; break;
-		case KW_LC:  return 7; break;
+		case REG56_SR:  return 1; break;
+		case REG56_OMR: return 2; break;
+		case REG56_SP:  return 3; break;
+		case REG56_SSH: return 4; break;
+		case REG56_SSL: return 5; break;
+		case REG56_LA:  return 6; break;
+		case REG56_LC:  return 7; break;
 		default:
 			return error("specified control register not allowed as destination");
 			break;
@@ -926,7 +926,7 @@ int dsp_movec_ea(LONG inst)
 	}
 
 	// Abort if unsupported registers are requested
-	if (reg == KW_PC || reg == KW_MR || reg == KW_CCR)
+	if (reg == REG56_PC || reg == REG56_MR || reg == REG56_CCR)
 		return error("illegal registers for instruction.");
 
 	if (dsp_am0 & C_DSPIM)
@@ -997,7 +997,7 @@ int dsp_movec_aa(LONG inst)
 	}
 
 	// Abort if unsupported registers are requested
-	if (reg == KW_PC || reg == KW_MR || reg == KW_CCR)
+	if (reg == REG56_PC || reg == REG56_MR || reg == REG56_CCR)
 		return error("PC, MR, CCR are illegal registers for this instruction.");
 
 	if (memspace == -1)
@@ -1030,8 +1030,8 @@ int dsp_movec_reg(LONG inst)
 	int am1 = dsp_am1;
 
 	// Abort if unsupported registers are requested
-	if (dsp_a0reg == KW_PC || dsp_a0reg == KW_MR || dsp_a0reg == KW_CCR ||
-		dsp_a1reg == KW_PC || dsp_a1reg == KW_MR || dsp_a1reg == KW_CCR)
+	if (dsp_a0reg == REG56_PC || dsp_a0reg == REG56_MR || dsp_a0reg == REG56_CCR ||
+		dsp_a1reg == REG56_PC || dsp_a1reg == REG56_MR || dsp_a1reg == REG56_CCR)
 		return error("PC, MR, CCR are illegal registers for this instruction.");
 
 	int reg1 = tab_A18(&dsp_am0, &dsp_a0reg);
@@ -1106,7 +1106,7 @@ int dsp_mult(LONG inst)
 		return error("x0/y0/x1/y1 combination not allowed for multiplication.");
 	}
 
-	if (dsp_a2reg == KW_B)
+	if (dsp_a2reg == REG56_B)
 		inst |= 1 << 3;
 
 	inst |= dsp_k;
@@ -1142,7 +1142,7 @@ int dsp_movem_ea(LONG inst)
 	}
 
 	// Abort if unsupported registers are requested
-	if (reg == KW_PC || reg == KW_MR || reg == KW_CCR)
+	if (reg == REG56_PC || reg == REG56_MR || reg == REG56_CCR)
 		return error("illegal registers for instruction.");
 
 	if (memspace != -1)
@@ -1206,7 +1206,7 @@ int dsp_movem_aa(LONG inst)
 	}
 
 	// Abort if unsupported registers are requested
-	if (reg == KW_PC || reg == KW_MR || reg == KW_CCR)
+	if (reg == REG56_PC || reg == REG56_MR || reg == REG56_CCR)
 		return error("PC, MR, CCR are illegal registers for this instruction.");
 
 	if (memspace != -1)
@@ -1428,7 +1428,7 @@ int dsp_movep_reg(LONG inst)
 	}
 
 	// Abort if unsupported registers are requested
-	if (reg == KW_PC || reg == KW_MR || reg == KW_CCR)
+	if (reg == REG56_PC || reg == REG56_MR || reg == REG56_CCR)
 		return error("illegal registers for instruction.");
 
 	reg2 = tab_A18(&am, &reg2);

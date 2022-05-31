@@ -17,8 +17,8 @@
 #include "sect.h"
 #include "token.h"
 
-#define DEF_KW
-#include "kwtab.h"
+#define DEF_REG68
+#include "68kregs.h"
 
 // Exported variables
 int movep = 0; // Global flag to indicate we're generating a movep instruction
@@ -352,7 +352,7 @@ int m_lea(WORD inst, WORD siz)
 		&& ((am0 == ADISP) && (a0reg == a1reg) && (a0exattr & DEFINED))
 		&& ((a0exval > 0) && (a0exval <= 8)))
 	{
-		inst = B16(01010000, 01001000) | (((uint16_t)a0exval & 7) << 9) | (a0reg);
+		inst = 0b0101000001001000 | (((uint16_t)a0exval & 7) << 9) | (a0reg);
 		D_word(inst);
 
 		if (optim_warn_flag)
@@ -468,7 +468,7 @@ int m_adda(WORD inst, WORD siz)
 			if ((a0exval > 1) && (a0exval <= 8))
 			{
 				// Immediate is between 1 and 8 so let's convert to addq
-				return m_addq(B16(01010000, 00000000), siz);
+				return m_addq(0b0101000000000000, siz);
 
 				if (optim_warn_flag)
 					warn("o8: adda/suba size(An),An converted to addq/subq #size,An");
@@ -494,7 +494,7 @@ int m_adda(WORD inst, WORD siz)
 				int return_value;
 				int temp_flag = optim_flags[OPT_LEA_ADDQ];
 				optim_flags[OPT_LEA_ADDQ] = 1;				// Temporarily save switch state
-				return_value = m_lea(B16(01000001, 11011000), SIZW);
+				return_value = m_lea(0b0100000111011000, SIZW);
 				optim_flags[OPT_LEA_ADDQ] = temp_flag;		// Restore switch state
 				if (optim_warn_flag)
 					warn("o9: adda.w/l #x,Ay converted to lea x(Dy),Ay");
@@ -1073,7 +1073,7 @@ int m_movem(WORD inst, WORD siz)
 		goto immed1;
 	}
 
-	if ((*tok >= KW_D0) && (*tok <= KW_A7))
+	if ((*tok >= REG68_D0) && (*tok <= REG68_A7))
 	{
 		// <rlist>, ea
 		if (reglist(&rmask) < 0)
@@ -1164,7 +1164,7 @@ int m_clrd(WORD inst, WORD siz)
 		inst |= a0reg;
 	else
 	{
-		inst = (a0reg << 9) | B16(01110000, 00000000);
+		inst = (a0reg << 9) | 0b0111000000000000;
 		if (optim_warn_flag)
 			warn("o7: clr.l Dx converted to moveq #0,Dx");
 	}
@@ -1239,7 +1239,7 @@ int m_bfop(WORD inst, WORD siz)
 		bfparam1 = bfval1 << 12;
 
 	//D_word((inst | am0 | a0reg | am1 | a1reg));
-	if (inst == B16(11101111, 11000000))
+	if (inst == 0b1110111111000000)
 	{
 		// bfins special case
 		D_word((inst | am1 | a1reg));
@@ -1252,7 +1252,7 @@ int m_bfop(WORD inst, WORD siz)
 	ea0gen(siz);	// Generate EA
 
 	// Second instruction word - Dest register (if exists), Do, Offset, Dw, Width
-	if (inst == B16(11101111, 11000000))
+	if (inst == 0b1110111111000000)
 	{
 		// bfins special case
 		inst = bfparam1 | bfparam2;
@@ -1365,7 +1365,7 @@ int m_cas(WORD inst, WORD siz)
 	}
 
 	// Dc
-	if ((*tok < KW_D0) && (*tok > KW_D7))
+	if ((*tok < REG68_D0) && (*tok > REG68_D7))
 		return error("CAS accepts only data registers");
 
 	inst2 = (*tok++) & 7;
@@ -1374,7 +1374,7 @@ int m_cas(WORD inst, WORD siz)
 		return error("missing comma");
 
 	// Du
-	if ((*tok < KW_D0) && (*tok > KW_D7))
+	if ((*tok < REG68_D0) && (*tok > REG68_D7))
 		return error("CAS accepts only data registers");
 
 	inst2 |= ((*tok++) & 7) << 6;
@@ -1435,7 +1435,7 @@ int m_cas2(WORD inst, WORD siz)
 	}
 
 	// Dc1
-	if ((*tok < KW_D0) && (*tok > KW_D7))
+	if ((*tok < REG68_D0) && (*tok > REG68_D7))
 		return error("CAS2 accepts only data registers for Dx1:Dx2 pairs");
 
 	inst2 = (*tok++) & 7;
@@ -1444,7 +1444,7 @@ int m_cas2(WORD inst, WORD siz)
 		return error("missing colon");
 
 	// Dc2
-	if ((*tok < KW_D0) && (*tok > KW_D7))
+	if ((*tok < REG68_D0) && (*tok > REG68_D7))
 		return error("CAS2 accepts only data registers for Dx1:Dx2 pairs");
 
 	inst3 = (*tok++) & 7;
@@ -1453,7 +1453,7 @@ int m_cas2(WORD inst, WORD siz)
 		return error("missing comma");
 
 	// Du1
-	if ((*tok < KW_D0) && (*tok > KW_D7))
+	if ((*tok < REG68_D0) && (*tok > REG68_D7))
 		return error("CAS2 accepts only data registers for Dx1:Dx2 pairs");
 
 	inst2 |= ((*tok++) & 7) << 6;
@@ -1462,7 +1462,7 @@ int m_cas2(WORD inst, WORD siz)
 		return error("missing colon");
 
 	// Du2
-	if ((*tok < KW_D0) && (*tok > KW_D7))
+	if ((*tok < REG68_D0) && (*tok > REG68_D7))
 		return error("CAS2 accepts only data registers for Dx1:Dx2 pairs");
 
 	inst3 |= ((*tok++) & 7) << 6;
@@ -1473,9 +1473,9 @@ int m_cas2(WORD inst, WORD siz)
 	// Rn1
 	if (*tok++ != '(')
 		return error("missing (");
-	if ((*tok >= KW_D0) && (*tok <= KW_D7))
+	if ((*tok >= REG68_D0) && (*tok <= REG68_D7))
 		inst2 |= (((*tok++) & 7) << 12) | (0 << 15);
-	else if ((*tok >= KW_A0) && (*tok <= KW_A7))
+	else if ((*tok >= REG68_A0) && (*tok <= REG68_A7))
 		inst2 |= (((*tok++) & 7) << 12) | (1 << 15);
 	else
 		return error("CAS accepts either data or address registers for Rn1:Rn2 pair");
@@ -1489,9 +1489,9 @@ int m_cas2(WORD inst, WORD siz)
 	// Rn2
 	if (*tok++ != '(')
 		return error("missing (");
-	if ((*tok >= KW_D0) && (*tok <= KW_D7))
+	if ((*tok >= REG68_D0) && (*tok <= REG68_D7))
 		inst3 |= (((*tok++) & 7) << 12) | (0 << 15);
-	else if ((*tok >= KW_A0) && (*tok <= KW_A7))
+	else if ((*tok >= REG68_A0) && (*tok <= REG68_A7))
 		inst3 |= (((*tok++) & 7) << 12) | (1 << 15);
 	else
 		return error("CAS accepts either data or address registers for Rn1:Rn2 pair");
@@ -1884,7 +1884,7 @@ int m_pack(WORD inst, WORD siz)
 	if (siz != SIZN)
 		return error("bad size suffix");
 
-	if (*tok >= KW_D0 && *tok <= KW_D7)
+	if (*tok >= REG68_D0 && *tok <= REG68_D7)
 	{
 		// Dx,Dy,#<adjustment>
 		inst |= (0 << 3);   // R/M
@@ -1893,7 +1893,7 @@ int m_pack(WORD inst, WORD siz)
 		if (*tok != ',' && tok[2] != ',')
 			return error("missing comma");
 
-		if (tok[1] < KW_D0 && tok[1] > KW_D7)
+		if (tok[1] < REG68_D0 && tok[1] > REG68_D7)
 			return error(syntax_error);
 
 		inst |= ((tok[1] & 7)<<9);
@@ -1910,10 +1910,10 @@ int m_pack(WORD inst, WORD siz)
 		if ((*tok != '(') && (tok[2]!=')') && (tok[3]!=',') && (tok[4] != '-') && (tok[5] != '(') && (tok[7] != ')') && (tok[8] != ','))
 			return error(syntax_error);
 
-		if (tok[1] < KW_A0 && tok[1] > KW_A7)
+		if (tok[1] < REG68_A0 && tok[1] > REG68_A7)
 			return error(syntax_error);
 
-		if (tok[5] < KW_A0 && tok[6] > KW_A7)
+		if (tok[5] < REG68_A0 && tok[6] > REG68_A7)
 			return error(syntax_error);
 
 		inst |= ((tok[1] & 7) << 0);
@@ -2044,13 +2044,13 @@ int m_cinv(WORD inst, WORD siz)
 		inst |= (0 << 6) | (a1reg);
 	switch (a0reg)
 	{
-	case 0:     // KW_IC40
+	case 0:     // REG68_IC40
 		inst |= (2 << 6) | (a1reg);
 		break;
-	case 1:     // KW_DC40
+	case 1:     // REG68_DC40
 		inst |= (1 << 6) | (a1reg);
 		break;
-	case 2:     // KW_BC40
+	case 2:     // REG68_BC40
 		inst |= (3 << 6) | (a1reg);
 		break;
 	}
@@ -2206,7 +2206,7 @@ int m_pflusha(WORD inst, WORD siz)
 	}
 	else if (activecpu == CPU_68040)
 	{
-		inst = B16(11110101, 00011000);
+		inst = 0b1111010100011000;
 		D_word(inst);
 		return OK;
 	}
@@ -2247,21 +2247,21 @@ int m_pflush(WORD inst, WORD siz)
 
 			fc = (uint16_t)a0exval;
 			break;
-		case KW_D0:
-		case KW_D1:
-		case KW_D2:
-		case KW_D3:
-		case KW_D4:
-		case KW_D5:
-		case KW_D6:
-		case KW_D7:
+		case REG68_D0:
+		case REG68_D1:
+		case REG68_D2:
+		case REG68_D3:
+		case REG68_D4:
+		case REG68_D5:
+		case REG68_D6:
+		case REG68_D7:
 			fc = (1 << 4) | (*tok++ & 7);
 			break;
-		case KW_SFC:
+		case REG68_SFC:
 			fc = 0;
 			tok++;
 			break;
-		case KW_DFC:
+		case REG68_DFC:
 			fc = 1;
 			tok++;
 			break;
@@ -2333,7 +2333,7 @@ int m_pflush(WORD inst, WORD siz)
 		if (*tok != '(' && tok[2] != ')')
 			return error(syntax_error);
 
-		if (tok[1] < KW_A0 && tok[1] > KW_A7)
+		if (tok[1] < REG68_A0 && tok[1] > REG68_A7)
 			return error("expected (An)");
 
 		if ((inst & 7) == 7)
@@ -2417,7 +2417,7 @@ int m_pflushr(WORD inst, WORD siz)
 			ea1gen(siz);
 	}
 
-	D_word(B16(10100000, 00000000));
+	D_word(0b1010000000000000);
 	return OK;
 }
 
@@ -2438,9 +2438,9 @@ int m_pload(WORD inst, WORD siz, WORD extension)
 	switch (am0)
 	{
 	case CREG:
-		if (a0reg == KW_SFC - KW_SFC)
+		if (a0reg == REG68_SFC - REG68_SFC)
 			inst = 0;
-		else if (a0reg == KW_DFC - KW_SFC)
+		else if (a0reg == REG68_DFC - REG68_SFC)
 			inst = 1;
 		else
 			return error("illegal control register specified");
@@ -2514,15 +2514,15 @@ int m_pmove(WORD inst, WORD siz)
 	// and the transparent translation registers(TT0 and TT1).
 	// It is a word operation for the MMU status register.
 
-	if (((reg == (KW_URP - KW_SFC)) || (reg == (KW_SRP - KW_SFC)))
+	if (((reg == (REG68_URP - REG68_SFC)) || (reg == (REG68_SRP - REG68_SFC)))
 		&& ((siz != SIZD) && (siz != SIZN)))
 		return error(siz_error);
 
-	if (((reg == (KW_TC - KW_SFC)) || (reg == (KW_TT0 - KW_SFC)) || (reg == (KW_TT1 - KW_SFC)))
+	if (((reg == (REG68_TC - REG68_SFC)) || (reg == (REG68_TT0 - REG68_SFC)) || (reg == (REG68_TT1 - REG68_SFC)))
 		&& ((siz != SIZL) && (siz != SIZN)))
 		return error(siz_error);
 
-	if ((reg == (KW_MMUSR - KW_SFC)) && ((siz != SIZW) && (siz != SIZN)))
+	if ((reg == (REG68_MMUSR - REG68_SFC)) && ((siz != SIZW) && (siz != SIZN)))
 		return error(siz_error);
 
 	if (am0 == CREG)
@@ -2536,19 +2536,19 @@ int m_pmove(WORD inst, WORD siz)
 		D_word(inst);
 	}
 
-	switch (reg + KW_SFC)
+	switch (reg + REG68_SFC)
 	{
-	case KW_TC:
+	case REG68_TC:
 		inst2 |= (0 << 10) + (1 << 14); break;
-	case KW_SRP:
+	case REG68_SRP:
 		inst2 |= (2 << 10) + (1 << 14); break;
-	case KW_CRP:
+	case REG68_CRP:
 		inst2 |= (3 << 10) + (1 << 14); break;
-	case KW_TT0:
+	case REG68_TT0:
 		inst2 |= (2 << 10) + (0 << 13); break;
-	case KW_TT1:
+	case REG68_TT1:
 		inst2 |= (3 << 10) + (0 << 13); break;
-	case KW_MMUSR:
+	case REG68_MMUSR:
 		if (am0 == CREG)
 			inst2 |= (1 << 9) + (3 << 13);
 		else
@@ -2637,9 +2637,9 @@ int m_ptest(WORD inst, WORD siz, WORD extension)
 		switch (am0)
 		{
 		case CREG:
-			if (a0reg == KW_SFC - KW_SFC)
+			if (a0reg == REG68_SFC - REG68_SFC)
 				extension |= 0;
-			else if (a0reg == KW_DFC - KW_SFC)
+			else if (a0reg == REG68_DFC - REG68_SFC)
 				extension |= 1;
 			else
 				return error("illegal control register specified");
@@ -2684,7 +2684,7 @@ int m_ptest(WORD inst, WORD siz, WORD extension)
 		{
 			CHECK_COMMA
 
-			if ((*tok >= KW_A0) && (*tok <= KW_A7))
+			if ((*tok >= REG68_A0) && (*tok <= REG68_A7))
 			{
 				extension |= (1 << 8) | ((*tok++ & 7) << 4);
 			}
@@ -2795,7 +2795,7 @@ static inline int gen_fpu(WORD inst, WORD siz, WORD opmode, WORD emul)
 int m_fabs(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00011000), FPU_NOWARN);
+	return gen_fpu(inst, siz, 0b00011000, FPU_NOWARN);
 }
 
 
@@ -2806,7 +2806,7 @@ int m_fsabs(WORD inst, WORD siz)
 {
 	CHECKNO40;
 	if (activefpu == FPU_68040)
-		return gen_fpu(inst, siz, B8(01011000), FPU_NOWARN);
+		return gen_fpu(inst, siz, 0b01011000, FPU_NOWARN);
 
 	return error("Unsupported in current FPU");
 }
@@ -2818,7 +2818,7 @@ int m_fsabs(WORD inst, WORD siz)
 int m_fdabs(WORD inst, WORD siz)
 {
 	if (activefpu == FPU_68040)
-		return gen_fpu(inst, siz, B8(01011100), FPU_NOWARN);
+		return gen_fpu(inst, siz, 0b01011100, FPU_NOWARN);
 
 	return error("Unsupported in current FPU");
 }
@@ -2830,7 +2830,7 @@ int m_fdabs(WORD inst, WORD siz)
 int m_facos(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00011100), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00011100, FPU_FPSP);
 }
 
 
@@ -2840,7 +2840,7 @@ int m_facos(WORD inst, WORD siz)
 int m_fadd(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00100010), FPU_NOWARN);
+	return gen_fpu(inst, siz, 0b00100010, FPU_NOWARN);
 }
 
 
@@ -2850,7 +2850,7 @@ int m_fadd(WORD inst, WORD siz)
 int m_fsadd(WORD inst, WORD siz)
 {
 	if (activefpu & (FPU_68040 | FPU_68060))
-		return gen_fpu(inst, siz, B8(01100010), FPU_NOWARN);
+		return gen_fpu(inst, siz, 0b01100010, FPU_NOWARN);
 
 	return error("Unsupported in current FPU");
 }
@@ -2862,7 +2862,7 @@ int m_fsadd(WORD inst, WORD siz)
 int m_fdadd(WORD inst, WORD siz)
 {
 	if (activefpu & (FPU_68040 | FPU_68060))
-		return gen_fpu(inst, siz, B8(01100110), FPU_NOWARN);
+		return gen_fpu(inst, siz, 0b01100110, FPU_NOWARN);
 
 	return error("Unsupported in current FPU");
 }
@@ -2874,7 +2874,7 @@ int m_fdadd(WORD inst, WORD siz)
 int m_fasin(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00001100), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00001100, FPU_FPSP);
 }
 
 
@@ -2884,7 +2884,7 @@ int m_fasin(WORD inst, WORD siz)
 int m_fatan(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00001010), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00001010, FPU_FPSP);
 }
 
 
@@ -2894,7 +2894,7 @@ int m_fatan(WORD inst, WORD siz)
 int m_fatanh(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00001101), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00001101, FPU_FPSP);
 }
 
 
@@ -2904,7 +2904,7 @@ int m_fatanh(WORD inst, WORD siz)
 int m_fcmp(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00111000), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00111000, FPU_FPSP);
 }
 
 
@@ -2914,7 +2914,7 @@ int m_fcmp(WORD inst, WORD siz)
 int m_fcos(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00011101), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00011101, FPU_FPSP);
 }
 
 
@@ -2924,7 +2924,7 @@ int m_fcos(WORD inst, WORD siz)
 int m_fcosh(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00011001), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00011001, FPU_FPSP);
 }
 
 
@@ -2975,7 +2975,7 @@ int m_fdbcc(WORD inst, WORD siz)
 int m_fdiv(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00100000), FPU_NOWARN);
+	return gen_fpu(inst, siz, 0b00100000, FPU_NOWARN);
 }
 
 
@@ -2985,7 +2985,7 @@ int m_fdiv(WORD inst, WORD siz)
 int m_fsdiv(WORD inst, WORD siz)
 {
 	if (activefpu & (FPU_68040 | FPU_68060))
-		return gen_fpu(inst, siz, B8(01100000), FPU_NOWARN);
+		return gen_fpu(inst, siz, 0b01100000, FPU_NOWARN);
 
 	return error("Unsupported in current FPU");
 }
@@ -2997,7 +2997,7 @@ int m_fsdiv(WORD inst, WORD siz)
 int m_fddiv(WORD inst, WORD siz)
 {
 	if (activefpu & (FPU_68040 | FPU_68060))
-		return gen_fpu(inst, siz, B8(01100100), FPU_NOWARN);
+		return gen_fpu(inst, siz, 0b01100100, FPU_NOWARN);
 
 	return error("Unsupported in current FPU");
 }
@@ -3009,7 +3009,7 @@ int m_fddiv(WORD inst, WORD siz)
 int m_fetox(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00010000), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00010000, FPU_FPSP);
 }
 
 
@@ -3019,7 +3019,7 @@ int m_fetox(WORD inst, WORD siz)
 int m_fetoxm1(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00001000), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00001000, FPU_FPSP);
 }
 
 
@@ -3029,7 +3029,7 @@ int m_fetoxm1(WORD inst, WORD siz)
 int m_fgetexp(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00011110), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00011110, FPU_FPSP);
 }
 
 
@@ -3039,7 +3039,7 @@ int m_fgetexp(WORD inst, WORD siz)
 int m_fgetman(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00011111), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00011111, FPU_FPSP);
 }
 
 
@@ -3055,7 +3055,7 @@ int m_fint(WORD inst, WORD siz)
 	if (activefpu == FPU_68040)
 		warn("Instruction is emulated in 68040");
 
-	return gen_fpu(inst, siz, B8(00000001), FPU_NOWARN);
+	return gen_fpu(inst, siz, 0b00000001, FPU_NOWARN);
 }
 
 
@@ -3071,7 +3071,7 @@ int m_fintrz(WORD inst, WORD siz)
 	if (activefpu == FPU_68040)
 		warn("Instruction is emulated in 68040");
 
-	return gen_fpu(inst, siz, B8(00000011), FPU_NOWARN);
+	return gen_fpu(inst, siz, 0b00000011, FPU_NOWARN);
 }
 
 
@@ -3081,7 +3081,7 @@ int m_fintrz(WORD inst, WORD siz)
 int m_flog10(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00010101), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00010101, FPU_FPSP);
 }
 
 
@@ -3091,7 +3091,7 @@ int m_flog10(WORD inst, WORD siz)
 int m_flog2(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00010110), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00010110, FPU_FPSP);
 }
 
 
@@ -3101,7 +3101,7 @@ int m_flog2(WORD inst, WORD siz)
 int m_flogn(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00010100), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00010100, FPU_FPSP);
 }
 
 
@@ -3111,7 +3111,7 @@ int m_flogn(WORD inst, WORD siz)
 int m_flognp1(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00000110), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00000110, FPU_FPSP);
 }
 
 
@@ -3121,7 +3121,7 @@ int m_flognp1(WORD inst, WORD siz)
 int m_fmod(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00100001), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00100001, FPU_FPSP);
 }
 
 
@@ -3293,7 +3293,7 @@ int m_fsmove(WORD inst, WORD siz)
 	if (!(activefpu & (FPU_68040 | FPU_68060)))
 		return error("Unsupported in current FPU");
 
-	return gen_fpu(inst, siz, B8(01100100), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b01100100, FPU_FPSP);
 }
 
 
@@ -3302,7 +3302,7 @@ int m_fdmove(WORD inst, WORD siz)
 	if (!(activefpu & (FPU_68040 | FPU_68060)))
 		return error("Unsupported in current FPU");
 
-	return gen_fpu(inst, siz, B8(01100100), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b01100100, FPU_FPSP);
 }
 
 
@@ -3338,7 +3338,7 @@ int m_fmovem(WORD inst, WORD siz)
 
 	if (siz == SIZX || siz == SIZN)
 	{
-		if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
+		if ((*tok >= REG68_FP0) && (*tok <= REG68_FP7))
 		{
 			// fmovem.x <rlist>,ea
 			if (fpu_reglist_left(&regmask) < 0)
@@ -3361,7 +3361,7 @@ int m_fmovem(WORD inst, WORD siz)
 			ea0gen(siz);
 			return OK;
 		}
-		else if ((*tok >= KW_D0) && (*tok <= KW_D7))
+		else if ((*tok >= REG68_D0) && (*tok <= REG68_D7))
 		{
 			// fmovem.x Dn,ea
 			datareg = (*tok++ & 7) << 10;
@@ -3399,7 +3399,7 @@ int m_fmovem(WORD inst, WORD siz)
 			if (*tok++ != ',')
 				return error("missing comma");
 
-			if ((*tok >= KW_FP0) && (*tok <= KW_FP7))
+			if ((*tok >= REG68_FP0) && (*tok <= REG68_FP7))
 			{
 				// fmovem.x ea,<rlist>
 				if (fpu_reglist_right(&regmask) < 0)
@@ -3431,14 +3431,14 @@ int m_fmovem(WORD inst, WORD siz)
 	}
 	else if (siz == SIZL)
 	{
-		if ((*tok == KW_FPCR) || (*tok == KW_FPSR) || (*tok == KW_FPIAR))
+		if ((*tok == REG68_FPCR) || (*tok == REG68_FPSR) || (*tok == REG68_FPIAR))
 		{
 			// fmovem.l <rlist>,ea
 			regmask = (1 << 15) | (1 << 13);
 			int no_control_regs = 0;
 
 fmovem_loop_1:
-			if (*tok == KW_FPCR)
+			if (*tok == REG68_FPCR)
 			{
 				regmask |= (1 << 12);
 				tok++;
@@ -3446,7 +3446,7 @@ fmovem_loop_1:
 				goto fmovem_loop_1;
 			}
 
-			if (*tok == KW_FPSR)
+			if (*tok == REG68_FPSR)
 			{
 				regmask |= (1 << 11);
 				tok++;
@@ -3454,7 +3454,7 @@ fmovem_loop_1:
 				goto fmovem_loop_1;
 			}
 
-			if (*tok == KW_FPIAR)
+			if (*tok == REG68_FPIAR)
 			{
 				regmask |= (1 << 10);
 				tok++;
@@ -3501,21 +3501,21 @@ fmovem_loop_1:
 			regmask = (1 << 15) | (0 << 13);
 
 fmovem_loop_2:
-			if (*tok == KW_FPCR)
+			if (*tok == REG68_FPCR)
 			{
 				regmask |= (1 << 12);
 				tok++;
 				goto fmovem_loop_2;
 			}
 
-			if (*tok == KW_FPSR)
+			if (*tok == REG68_FPSR)
 			{
 				regmask |= (1 << 11);
 				tok++;
 				goto fmovem_loop_2;
 			}
 
-			if (*tok == KW_FPIAR)
+			if (*tok == REG68_FPIAR)
 			{
 				regmask |= (1 << 10);
 				tok++;
@@ -3550,7 +3550,7 @@ fmovem_loop_2:
 int m_fmul(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00100011), FPU_NOWARN);
+	return gen_fpu(inst, siz, 0b00100011, FPU_NOWARN);
 }
 
 
@@ -3560,7 +3560,7 @@ int m_fmul(WORD inst, WORD siz)
 int m_fsmul(WORD inst, WORD siz)
 {
 	if (activefpu & (FPU_68040 | FPU_68060))
-		return gen_fpu(inst, siz, B8(01100011), FPU_NOWARN);
+		return gen_fpu(inst, siz, 0b01100011, FPU_NOWARN);
 
 	return error("Unsupported in current FPU");
 }
@@ -3572,7 +3572,7 @@ int m_fsmul(WORD inst, WORD siz)
 int m_fdmul(WORD inst, WORD siz)
 {
 	if (activefpu & (FPU_68040 | FPU_68060))
-		return gen_fpu(inst, siz, B8(01100111), FPU_NOWARN);
+		return gen_fpu(inst, siz, 0b01100111, FPU_NOWARN);
 
 	return error("Unsupported in current FPU");
 }
@@ -3588,10 +3588,10 @@ int m_fneg(WORD inst, WORD siz)
 	if (am1 == AM_NONE)
 	{
 		a1reg = a0reg;
-		return gen_fpu(inst, siz, B8(00011010), FPU_NOWARN);
+		return gen_fpu(inst, siz, 0b00011010, FPU_NOWARN);
 	}
 
-	return gen_fpu(inst, siz, B8(00011010), FPU_NOWARN);
+	return gen_fpu(inst, siz, 0b00011010, FPU_NOWARN);
 }
 
 
@@ -3605,10 +3605,10 @@ int m_fsneg(WORD inst, WORD siz)
 		if (am1 == AM_NONE)
 		{
 			a1reg = a0reg;
-			return gen_fpu(inst, siz, B8(01011010), FPU_NOWARN);
+			return gen_fpu(inst, siz, 0b01011010, FPU_NOWARN);
 		}
 
-		return gen_fpu(inst, siz, B8(01011010), FPU_NOWARN);
+		return gen_fpu(inst, siz, 0b01011010, FPU_NOWARN);
 	}
 
 	return error("Unsupported in current FPU");
@@ -3625,10 +3625,10 @@ int m_fdneg(WORD inst, WORD siz)
 		if (am1 == AM_NONE)
 		{
 				a1reg = a0reg;
-				return gen_fpu(inst, siz, B8(01011110), FPU_NOWARN);
+				return gen_fpu(inst, siz, 0b01011110, FPU_NOWARN);
 		}
 
-		return gen_fpu(inst, siz, B8(01011110), FPU_NOWARN);
+		return gen_fpu(inst, siz, 0b01011110, FPU_NOWARN);
 	}
 
 	return error("Unsupported in current FPU");
@@ -3641,7 +3641,7 @@ int m_fdneg(WORD inst, WORD siz)
 int m_fnop(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00000000), FPU_NOWARN);
+	return gen_fpu(inst, siz, 0b00000000, FPU_NOWARN);
 }
 
 
@@ -3651,7 +3651,7 @@ int m_fnop(WORD inst, WORD siz)
 int m_frem(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00100101), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00100101, FPU_FPSP);
 }
 
 
@@ -3661,7 +3661,7 @@ int m_frem(WORD inst, WORD siz)
 int m_fscale(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00100110), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00100110, FPU_FPSP);
 }
 
 
@@ -3694,7 +3694,7 @@ int m_fscc(WORD inst, WORD siz)
 int m_fsgldiv(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00100100), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00100100, FPU_FPSP);
 }
 
 
@@ -3704,7 +3704,7 @@ int m_fsgldiv(WORD inst, WORD siz)
 int m_fsglmul(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00100111), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00100111, FPU_FPSP);
 }
 
 
@@ -3714,7 +3714,7 @@ int m_fsglmul(WORD inst, WORD siz)
 int m_fsin(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00001110), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00001110, FPU_FPSP);
 }
 
 
@@ -3732,7 +3732,7 @@ int m_fsincos(WORD inst, WORD siz)
 	a2reg = a1reg;
 	a1reg = temp;
 
-	if (gen_fpu(inst, siz, B8(00110000), FPU_FPSP) == OK)
+	if (gen_fpu(inst, siz, 0b00110000, FPU_FPSP) == OK)
 	{
 		chptr[-1] |= a2reg;
 		return OK;
@@ -3748,7 +3748,7 @@ int m_fsincos(WORD inst, WORD siz)
 int m_fsinh(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00000010), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00000010, FPU_FPSP);
 }
 
 
@@ -3758,7 +3758,7 @@ int m_fsinh(WORD inst, WORD siz)
 int m_fsqrt(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00000100), FPU_NOWARN);
+	return gen_fpu(inst, siz, 0b00000100, FPU_NOWARN);
 }
 
 
@@ -3768,7 +3768,7 @@ int m_fsqrt(WORD inst, WORD siz)
 int m_fsfsqrt(WORD inst, WORD siz)
 {
 	if (activefpu & (FPU_68040 | FPU_68060))
-		return gen_fpu(inst, siz, B8(01000001), FPU_NOWARN);
+		return gen_fpu(inst, siz, 0b01000001, FPU_NOWARN);
 
 	return error("Unsupported in current FPU");
 }
@@ -3780,7 +3780,7 @@ int m_fsfsqrt(WORD inst, WORD siz)
 int m_fdfsqrt(WORD inst, WORD siz)
 {
 	if (activefpu & (FPU_68040 | FPU_68060))
-		return gen_fpu(inst, siz, B8(01000101), FPU_NOWARN);
+		return gen_fpu(inst, siz, 0b01000101, FPU_NOWARN);
 
 	return error("Unsupported in current FPU");
 }
@@ -3792,7 +3792,7 @@ int m_fdfsqrt(WORD inst, WORD siz)
 int m_fsub(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00101000), FPU_NOWARN);
+	return gen_fpu(inst, siz, 0b00101000, FPU_NOWARN);
 }
 
 
@@ -3802,7 +3802,7 @@ int m_fsub(WORD inst, WORD siz)
 int m_fsfsub(WORD inst, WORD siz)
 {
 	if (activefpu & (FPU_68040 | FPU_68060))
-		return gen_fpu(inst, siz, B8(01101000), FPU_NOWARN);
+		return gen_fpu(inst, siz, 0b01101000, FPU_NOWARN);
 
 	return error("Unsupported in current FPU");
 }
@@ -3814,7 +3814,7 @@ int m_fsfsub(WORD inst, WORD siz)
 int m_fdsub(WORD inst, WORD siz)
 {
 	if (activefpu & (FPU_68040 | FPU_68060))
-		return gen_fpu(inst, siz, B8(01101100), FPU_NOWARN);
+		return gen_fpu(inst, siz, 0b01101100, FPU_NOWARN);
 
 	return error("Unsupported in current FPU");
 }
@@ -3826,7 +3826,7 @@ int m_fdsub(WORD inst, WORD siz)
 int m_ftan(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00001111), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00001111, FPU_FPSP);
 }
 
 
@@ -3836,7 +3836,7 @@ int m_ftan(WORD inst, WORD siz)
 int m_ftanh(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00001001), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00001001, FPU_FPSP);
 }
 
 
@@ -3846,7 +3846,7 @@ int m_ftanh(WORD inst, WORD siz)
 int m_ftentox(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00010010), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00010010, FPU_FPSP);
 }
 
 
@@ -3897,7 +3897,7 @@ int m_ftrapcc(WORD inst, WORD siz)
 int m_ftst(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00111010), FPU_NOWARN);
+	return gen_fpu(inst, siz, 0b00111010, FPU_NOWARN);
 }
 
 
@@ -3907,7 +3907,7 @@ int m_ftst(WORD inst, WORD siz)
 int m_ftwotox(WORD inst, WORD siz)
 {
 	CHECKNOFPU;
-	return gen_fpu(inst, siz, B8(00010001), FPU_FPSP);
+	return gen_fpu(inst, siz, 0b00010001, FPU_FPSP);
 }
 
 
@@ -3924,7 +3924,7 @@ int m_ftwotox(WORD inst, WORD siz)
 int m_lpstop(WORD inst, WORD siz)
 {
 	CHECKNO60;
-	D_word(B16(00000001, 11000000));
+	D_word(0b0000000111000000);
 
 	if (a0exattr & DEFINED)
 	{

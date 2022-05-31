@@ -18,7 +18,8 @@
 #include "riscasm.h"
 #include "symbol.h"
 #include "token.h"
-
+#define DEF_REGRISC
+#include "riscregs.h"
 
 // Function prototypes
 void MakeSection(int, uint16_t);
@@ -720,6 +721,7 @@ int ResolveFixups(int sno)
 			}
 			else if ((dw & FUMASKRISC) == FU_REGONE)
 			{
+				eval -= REGRISC_R0;
 				if (eval > 31)
 				{
 					error("register one value out of range");
@@ -733,6 +735,7 @@ int ResolveFixups(int sno)
 			}
 			else if ((dw & FUMASKRISC) == FU_REGTWO)
 			{
+				eval -= REGRISC_R0;
 				if (eval > 31)
 				{
 					error("register two value out of range");

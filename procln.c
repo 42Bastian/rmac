@@ -1,7 +1,7 @@
 //
 // RMAC - Renamed Macro Assembler for all Atari computers
 // PROCLN.C - Line Processing
-// Copyright (C) 199x Landon Dyer, 2011-2021 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2022 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -28,6 +28,8 @@
 #define DEF_MN					// Incl 68k keyword definitions
 #define DECL_MN					// Incl 68k keyword state machine tables
 #include "mntab.h"
+#define DEF_REG68				// Incl 68k register definitions
+#include "68kregs.h"
 
 #define DEF_MR
 #define DECL_MR
@@ -44,7 +46,8 @@
 #define DEF_DSP					// Include DSP56K keywords definitions
 #define DECL_DSP				// Include DSP56K keyword state machine tables
 #include "dsp56kkw.h"
-
+#define DEF_REG56				// Include DSP56K register definitions
+#include "56kregs.h"
 
 IFENT * ifent;					// Current ifent
 static IFENT ifent0;			// Root ifent
@@ -114,10 +117,8 @@ LONG amsktab[0124] = {
 	M_FPSCR			// 0123
 };					// 0123 length
 
-
 // Function prototypes
 int HandleLabel(char *, int);
-
 
 //
 // Initialize line processor
@@ -129,7 +130,6 @@ void InitLineProcessor(void)
 	f_ifent = ifent0.if_prev = NULL;
 	ifent0.if_state = 0;
 }
-
 
 //
 // Line processor
@@ -154,8 +154,7 @@ void Assemble(void)
 	char * opname = NULL;		// Name of dirctve/mnemonic/macro
 	int listflag;				// 0: Don't call listeol()
 	WORD rmask;					// Register list, for REG
-	int registerbank;			// RISC register bank
-	int riscreg;				// RISC register
+	int equreg;				// RISC register
 	listflag = 0;				// Initialise listing flag
 
 loop:							// Line processing loop label
@@ -201,10 +200,7 @@ loop1:										// Internal line processing loop
 	// First token MUST be a symbol (Shamus: not sure why :-/)
 	if (*tok != SYMBOL)
 	{
-		if ((*tok >= KW_D0) && (*tok <= KW_R31))
-			error("cannot use reserved keyword as label name or .equ");
-		else
-			error("syntax error; expected symbol");
+		error("syntax error; expected symbol");
 
 		goto loop;
 	}
@@ -434,65 +430,24 @@ have an array of bools with 64 entries. Whenever a register is equated, set the
 corresponding register bool to true. Whenever it's undef'ed, set it to false.
 When checking to see if it's already been equated, issue a warning.
 */
-			// Check that we are in a RISC section
-			if (!rgpu && !rdsp)
-			{
-				error(".equr/.regequ must be defined in .gpu/.dsp section");
-				goto loop;
-			}
 
 			// Check for register to equate to
-			if ((*tok >= KW_R0) && (*tok <= KW_R31))
+			// This check will change once we split the registers per architecture into their own tables
+			// and out of kw.tab. But for now it'll do...
+			if ((*tok >= REG68_D0) && (*tok <= REG56_BA))
 			{
-//				sy->sattre  = EQUATEDREG | RISCSYM;	// Mark as equated register
-				sy->sattre  = EQUATEDREG;	// Mark as equated register
-				riscreg = (*tok - KW_R0);
-//is there any reason to do this, since we're putting this in svalue?
-//i'm thinking, no. Let's test that out! :-D
-//				sy->sattre |= (riscreg << 8);		// Store register number
-//everything seems to build fine without it... We'll leave it here Just In Case(tm)
-
-#define DEBODGE_REGBANK
-#ifdef DEBODGE_REGBANK
-				// Default is current state of "regbank"
-				registerbank = regbank;
-#else
-				// Default is no register bank specified
-				registerbank = BANK_N;
-#endif
-
-				// Check for ",<bank #>" override notation
-				if ((tok[1] == ',') && (tok[2] == CONST))
+				sy->sattre = EQUATEDREG;	// Mark as equated register
+				equreg = *tok;
+				// Check for ",<bank #>" override notation and skip past it.
+				// It is ignored now. Was that ever useful anyway?
+				if ((rgpu ||rdsp) && (tok[1] == ',') && (tok[2] == CONST))
 				{
-					// Advance token pointer to the constant
-					tok += 3;
-
-					// Anything other than a 0 or a 1 will result in "No Bank"
-					if (*(uint64_t *)tok == 0)
-						registerbank = BANK_0;
-					else if (*(uint64_t *)tok == 1)
-						registerbank = BANK_1;
-
-					// Advance half-way through the 64-bit const.
-					// The code below, expecting a regular token,
-					// will advance past the second half.
-					tok++;
+					// Advance token pointer and skip everything
+					tok += 4;
 				}
 
-#ifdef DEBODGE_REGBANK
-				sy->sattre |= registerbank;	// Store register bank
-#else
-// What needs to happen here is to prime registerbank with regbank, then use
-// registerbank down below for the bank marking.
-#warning "!!! regbank <-> registerbank confusion here !!!"
-// The question here is why, if we're allowed to override the ".regbankN" rules
-// above, then why is it using the one set by the directive in the extended
-// attributes and not in what ends up in symbol->svalue?
-// ".regbankN" is not an original Madmac directive, so it's suspect
-				sy->sattre |= regbank;		// Store register bank
-#endif
 				eattr = ABS | DEFINED | GLOBAL;
-				eval = riscreg;
+				eval = equreg;
 				tok++;
 			}
 			// Checking for a register symbol
@@ -503,12 +458,12 @@ When checking to see if it's already been equated, issue a warning.
 				// Make sure symbol is a valid equreg
 				if (!sy2 || !(sy2->sattre & EQUATEDREG))
 				{
-					error("invalid GPU/DSP .equr/.regequ definition");
+					error("invalid .equr/.regequ definition");
 					goto loop;
 				}
 				else
 				{
-					eattr = ABS | DEFINED | GLOBAL;	// Copy symbols attributes
+					eattr = ABS | DEFINED | GLOBAL;	// Copy symbol's attributes
 					sy->sattre = sy2->sattre;
 					eval = (sy2->svalue & 0xFFFFF0FF);
 					tok += 2;
@@ -516,7 +471,7 @@ When checking to see if it's already been equated, issue a warning.
 			}
 			else
 			{
-				error("invalid GPU/DSP .equr/.regequ definition");
+				error("invalid .equr/.regequ definition");
 				goto loop;
 			}
 		}
@@ -867,7 +822,6 @@ When checking to see if it's already been equated, issue a warning.
 	goto loop;
 }
 
-
 //
 // Handle the creation of labels
 //
@@ -918,4 +872,3 @@ int HandleLabel(char * label, int labelType)
 
 	return 0;
 }
-

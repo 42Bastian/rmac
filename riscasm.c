@@ -20,8 +20,8 @@
 #define DEF_MR				// Declare keyword values
 #include "risckw.h"			// Incl. generated risc keywords
 
-#define DEF_KW				// Declare keyword values
-#include "kwtab.h"			// Incl. generated keyword tables & defs
+#define DEF_REGRISC
+#include "riscregs.h"		// Incl. generated keyword tables & defs
 
 #define MAXINTERNCC 26		// Maximum internal condition codes
 
@@ -165,7 +165,7 @@ static inline int MalformedOpcode(int signal)
 //
 static inline int IllegalIndexedRegister(int reg)
 {
-	return error("Attempted index reference with non-indexable register (r%d)", reg - KW_R0);
+	return error("Attempted index reference with non-indexable register (r%d)", reg - REGRISC_R0);
 }
 
 //
@@ -201,9 +201,10 @@ static int EvaluateRegisterFromTokenStream(uint32_t fixup)
 {
 	// Firstly, check to see if it's a register token and return that.  No
 	// need to invoke expr() for easy cases like this.
-	if (*tok >= KW_R0 && *tok <= KW_R31)
+	int reg = *tok & 255;
+	if (reg >= REGRISC_R0 && reg <= REGRISC_R31)
 	{
-		int reg = *tok - KW_R0;
+		reg -= REGRISC_R0;
 		tok++;
 		return reg;
 	}
@@ -230,12 +231,9 @@ static int EvaluateRegisterFromTokenStream(uint32_t fixup)
 		return 0;
 	}
 
-	// If we got a register in range (0-31), return it
-	if (eval <= 31)
-		return (int)eval;
-
-	// Otherwise, it's out of range & we flag an error
-	return error(reg_err);
+	// We shouldn't get here, that should not be legal
+	interror(9);
+	return 0; // Not that this will ever execute, but let's be nice and pacify gcc warnings
 }
 
 //
@@ -424,7 +422,7 @@ int GenerateRISCCode(int state)
 
 	// PC,Rd or Rs,Rd
 	case RI_MOVE:
-		if (*tok == KW_PC)
+		if (*tok == REGRISC_PC)
 		{
 			parm = 51;
 			reg1 = 0;
@@ -454,34 +452,10 @@ int GenerateRISCCode(int state)
         if ((tok[1] == '+') || (tok[1] == '-'))
 		{
 			// Trying to make indexed call
-			if ((*tok == KW_R14) || (*tok == KW_R15))
-				indexed = (*tok - KW_R0);
+			if ((*tok == REGRISC_R14) || (*tok == REGRISC_R15))
+				indexed = (*tok - REGRISC_R0);
 			else
 				return IllegalIndexedRegister(*tok);
-		}
-
-		if (*tok == SYMBOL)
-		{
-			sy = lookup(string[tok[1]], LABEL, 0);
-
-			if (!sy)
-			{
-				error(reg_err);
-				return ERROR;
-			}
-
-			if (sy->sattre & EQUATEDREG)
-			{
-				if ((tok[2] == '+') || (tok[2] == '-'))
-				{
-					if ((sy->svalue & 0x1F) == 14 || (sy->svalue & 0x1F) == 15) {
-						indexed = (sy->svalue & 0x1F);
-						tok++;
-					}
-					else
-						return IllegalIndexedRegisterEqur(sy);
-				}
-			}
 		}
 
 		if (!indexed)
@@ -499,7 +473,7 @@ int GenerateRISCCode(int state)
 				parm = (WORD)(reg1 - 14 + 58);
 				tok++;
 
-				if ((*tok >= KW_R0) && (*tok <= KW_R31))
+				if ((*tok >= REGRISC_R0) && (*tok <= REGRISC_R31))
 					indexed = 1;
 
 				if (*tok == SYMBOL)
@@ -575,29 +549,8 @@ int GenerateRISCCode(int state)
 		tok++;
 		indexed = 0;
 
-		if (((*tok == KW_R14) || (*tok == KW_R15)) && (tok[1] != ')'))
-			indexed = *tok - KW_R0;
-
-		if (*tok == SYMBOL)
-		{
-			sy = lookup(string[tok[1]], LABEL, 0);
-
-			if (!sy)
-			{
-				error(reg_err);
-				return ERROR;
-			}
-
-			if (sy->sattre & EQUATEDREG)
-			{
-				if (((sy->svalue & 0x1F) == 14 || (sy->svalue & 0x1F) == 15)
-					&& (tok[2] != ')'))
-				{
-					indexed = (sy->svalue & 0x1F);
-					tok++;
-				}
-			}
-		}
+		if (((*tok == REGRISC_R14) || (*tok == REGRISC_R15)) && (tok[1] != ')'))
+			indexed = *tok - REGRISC_R0;
 
 		if (!indexed)
 		{
@@ -614,7 +567,7 @@ int GenerateRISCCode(int state)
 				parm = (WORD)(reg2 - 14 + 60);
 				tok++;
 
-				if ((*tok >= KW_R0) && (*tok <= KW_R31))
+				if ((*tok >= REGRISC_R0) && (*tok <= REGRISC_R31))
 					indexed = 1;
 
 				if (*tok == SYMBOL)

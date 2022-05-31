@@ -4,7 +4,7 @@ RMAC
 =====================
 Reference Manual
 ================
-version 2.0.18
+version 2.0.23
 ==============
 
 © and notes
@@ -153,9 +153,9 @@ Switch               Description
                       `jerry - Jaguar DSP JRISC`
 
                       -o\ *file[.o]*       Direct object code output to the specified file.
-+/~oall              Turn all optimisations on/off
-+o\ *0-9*            Enable specific optimisation
-~o\ *0-9*            Disable specific optimisation
++/~oall               Turn all optimisations on/off
++o\ *0-30*/*p*        Enable specific optimisation
+~o\ *0-30*/*p*        Disable specific optimisation
 
                       `0: Absolute long adddresses to word (on by default)`
 
@@ -177,7 +177,12 @@ Switch               Description
 
                       `9: Convert adda.w/l #x,Dy to lea x(Dy),Dy`
 
-                      'p: Enforce PC relative'
+                      `10: 56001 Use short format for immediate values if possible`
+
+                      `11: 56001 Auto convert short addressing mode to long (default: on)`
+
+                      `o30: Enforce PC relative (alternative name: op)`
+
 -p                   Produce an executable (**.prg**) output file.
 -ps                  Produce an executable (**.prg**) output file with symbols.
 -px                  Produce an executable (**.prg**) output file with extended symbols.
@@ -404,7 +409,7 @@ necessary to make other assemblers' source code assemble.
   **ifne**, **ifeq** (etc.), and **endc**.
 * The tilde (~) character is an operator, and back-quote (`) is an illegal character.
   AS68 permitted the tilde and back-quote characters in symbols.
-* There are no equivalents to org or section directives.
+* There are no equivalents to org or section directives apart from .text, .data, .bss.
   The **.xdef** and **.xref** directives are not implemented,
   but **.globl** makes these unnecessary anyway.
 
@@ -414,6 +419,8 @@ necessary to make other assemblers' source code assemble.
 
                                 * = expression
 
+  Exceptions to this rule are when outputting a binary using the **-fr** switch,
+  6502 mode, and Jaguar GPU/DSP.
 * Back-slashes in strings are "electric" characters that are used to escape C-like
   character codes. Watch out for GEMDOS path names in ASCII constants -
   you will have to convert them to double-backslashes.
@@ -422,7 +429,7 @@ necessary to make other assemblers' source code assemble.
 * Mark your segments across files.
   Branching to a code segment that could be identified as BSS will cause a "Error: cannot initialize non-storage (BSS) section"
 * In 68020+ mode **Zan** and **Zri** (register suppression) is not supported.
-* rs.b/rs.w/rs.l/rscount/rsreset can be simulated in rmac using abs.
+* rs.b/rs.w/rs.l/rscount/rsreset can be simulated in rmac using **.abs**.
   For example the following source:
 
    ::
@@ -626,7 +633,7 @@ and may not be used as symbols (e.g. labels, equates, or the names of macros):
       a0 a1 a2 a3 a4 a5 a6 a7
       Tom/Jerry:
       r0 r1 r2 r3 r4 r5 r6 r7
-      r8 r9 r10 r11 r12 rl3 r14 ri5
+      r8 r9 r10 r11 r12 rl3 r14 r15
       6502:
       x y a
       DSP56001:
@@ -803,7 +810,7 @@ Operator                            Description
 **~**                               Tilde: bitwise not (l's complement).
 **^^defined** *symbol*              True if symbol has a value.
 **^^referenced** *symbol*           True if symbol has been referenced.
-**^^streq** *stringl*,*string2*     True if the strings are equal.
+**^^streq** *string1*, *string2*    True if the strings are equal.
 **^^macdef** *macroName*            True if the macro is defined.
 **^^abscount**                      Returns the size of current .abs section
 **^^filesize** *string_filename*    Returns the file size of supplied filename
@@ -836,7 +843,6 @@ Operator     Description
 
  * All binary operators have the same precedence:
    expressions are evaluated strictly left to right.
-   Use option `-4` to apply C operator precedence.
 
  * Division or modulo by zero yields an assembly error.
 
@@ -924,9 +930,11 @@ symbol **debug** external, instead of including another source file).
 Assembler directives may be any mix of upper- or lowercase. The leading periods
 are optional, though they are shown here and their use is encouraged. Directives
 may be preceeded by a label; the label is defined before the directive is executed.
-Some directives accept size suffixes (**.b**, **.s**, **.w** or **.1**); the default is word (**.w**) if no
-size is specified. The **.s** suffix is identical to **.b**. Directives relating to the 6502 are
-described in the chapter on `6502 Support`_.
+Some directives accept size suffixes (**.b**, **.s**, **.w**, **.1**, **.d**, **.x**, **.p**, or  **.q**);
+the default is word (**.w**) if no size is specified. The **.s** suffix is identical to **.b**,
+with the exception of being used in a **dc** statement. In that case the **.s**
+refers to single precision floating point numbers.
+Directives relating to the 6502 are described in the chapter on `6502 Support`_.
 
 
 
@@ -942,6 +950,29 @@ described in the chapter on `6502 Support`_.
    segments and are actually part of the TEXT or DATA segments.
    Therefore, to align GPU/DSP code, align the current section before and
    after the GPU/DSP code.
+
+**.print**
+   This directive is similar to the standard ‘C’ library printf() function
+   and is used to print user messages from the assembly process. You can
+   print any string or valid expression. Several format flags that can be used
+   to format your output are also supported.
+
+          ::
+
+           /x hexadecimal
+           /d signed decimal
+           /u unsigned decimal
+           /w word
+           /l long
+
+   For example:
+
+          ::
+
+           MASK .equ $FFF8
+           VALUE .equ -100000
+            .print “Mask: $”,/x/w MASK
+            .print “Value: “,/d/l VALUE
 
 **.phrase**
 
@@ -1027,7 +1058,10 @@ described in the chapter on `6502 Support`_.
    (when placed at the start of the first file) or locally (by turning desired
    optimisations on and off at certain parts of the source). For a list of the
    optimisations (*n*) available please consult the table in section `The Command Line`_.
-   **all**, as expected, turns all available optimisations on or off.
+
+   **all**, as expected, turns all available optimisations on or off. An exception to this
+   is *o10*/*op* as this is not an optimisation that should be turned on unless the user
+   absolutely needs it.
 
    Lastly, as a "creature comfort" feature, if the first column of any line is prefixed
    with an exclamation mark (*!*) then for that line all optimisations are turned off.
@@ -1037,7 +1071,6 @@ described in the chapter on `6502 Support`_.
    Start an absolute section, beginning with the specified location (or zero, if
    no location is specified). An absolute section is much like BSS, except that
    locations declared with .ds are based absolute. This directive is useful for
-
    declaring structures or hardware locations.
    For example, the following equates:
 
@@ -1208,6 +1241,17 @@ described in the chapter on `6502 Support`_.
                bne   .1               ; (no -- try again)
                rts                    ; return string length
 
+**.error** ["*string*"]
+
+  Aborts the build, optionally printing a user defined string. Can be useful
+  inside conditional assembly blocks in order to catch errors. For example:
+
+        ::
+
+         .if ^^defined JAGUAR
+           .error "TOS cannot be built on Jaguar, don't be silly"
+         .endif
+
 **.end**
 
    End the assembly. In an include file, end the include file and resume assembling
@@ -1217,11 +1261,11 @@ described in the chapter on `6502 Support`_.
 
 **.equr** *expression*
 
-   Allows you to name a register. This is only implemented for GPU/DSP
-   code sections. For example:
+   Allows you to name a register. For example:
 
     ::
 
+     .gpu
      Clipw .equr r19
      . . .
           add ClipW,r0 ; ClipW actually is r19
@@ -1532,15 +1576,13 @@ The assembler provides "creature comforts" when it processes 68000 mnemonics:
  * All optimisations are turned off for any source line that has an exclamation mark
    (*!*) on their first column.
 
- * Optimisation switches 0, 1 and 2 are turned on by default for legacy reasons.
+ * Optimisation switch 11 is turned on by default for compatibility with the
+   Motorola reference 56001 DSP assembler.
    All other levels are off by default. (refer to section `The Command Line`_
    for a description of all the switches).
 
  * Optimisation warnings are off by default. Invoke RMAC with the *-s* switch to
    turn on warnings in console and listing output.
-
- * In DSP56001 mode size optimisations are on by default. Currently there is no
-   way to disable this behaviour.
 
  * In GPU/DSP code sections, you can use JUMP (Rx) in place of JUMP T, (Rx) and JR
    (Rx) in place of JR T,(Rx).
@@ -1983,7 +2025,7 @@ Atari Falcon XBIOS) and *.p56* (binary equivalent of *.lod*)
 
 `6502 Support`_
 ===============
-RMAC will generate code for the Motorola 6502 microprocessor. This chapter
+RMAC will generate code for the MOS 6502 microprocessor. This chapter
 describes extra addressing modes and directives used to support the 6502.
 
 As the 6502 object code is not linkable (currently there is no linker) external
@@ -2089,7 +2131,7 @@ indicates that the assembler could not determine which file had the problem.
 The following sections list warnings, errors and fatal errors in alphabetical
 order, along with a short description of what may have caused the problem.
 
-.. [3] If you come across an internal error, we would appreciate it if you would contact Atari Technical Support and let us know about the problem.
+.. [3] If you come across an internal error, we would appreciate it if you would contact the rmac development team and let us know about the problem.
 
 `Warnings`_
 '''''''''''
@@ -2140,10 +2182,6 @@ order, along with a short description of what may have caused the problem.
 **.comm symbol already defined**
 
     You tried to ``.comm`` a symbol that was already defined.
-
-**.ds permitted only in BSS**
-
-    You tried to use ``.ds`` in the text or data section.
 
 **.init not permitted in BSS or ABS**
 
@@ -2391,11 +2429,6 @@ order, along with a short description of what may have caused the problem.
   The expression has an undefined value because of a forward reference, or an
   undefined or external symbol.
 
-**unimplemented addressing mode**
-
-  You tried to use 68020 "square-bracket" notation for a 68020 addressing mode.
-  RMAC does not support 68020 addressing modes.
-
 **unimplemented directive**
 
   You have found a directive that didn't appear in the documentation. It doesn't
@@ -2407,13 +2440,8 @@ order, along with a short description of what may have caused the problem.
 
 **unknown symbol following ^^**
 
-  You followed a ^^ with something other than one of the names defined, ref-
-  erenced or streq.
-
-**unsupported 68020 addressing mode**
-
-  The assembler saw a 68020-type addressing mode. RMAC does not assem-
-  ble code for the 68020 or 68010.
+  You followed a ^^ with something other than one of the names defined, referenced
+  or streq.
 
 **unterminated string**
 
