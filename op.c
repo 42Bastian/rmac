@@ -322,7 +322,7 @@ static int HandleScaledBitmap(void)
 
 //
 // Insert GPU object
-// Form: gpuobj <line #>, <userdata> (bits 14-63 of this object)
+// Form: gpuobj <userdata> (bits 3-63 of this object)
 //
 static int HandleGPUObject(void)
 {
@@ -334,21 +334,11 @@ static int HandleGPUObject(void)
 		return ERROR;
 
 	if (!(eattr & DEFINED))
-		return error("bad expression in y position");
-
-	uint64_t ypos = eval;
-
-	CHECK_COMMA;
-
-	if (expr(exprbuf, &eval, &eattr, &esym) != OK)
-		return ERROR;
-
-	if (!(eattr & DEFINED))
 		return error("bad expression in data");
 
 	ErrorIfNotAtEOL();
 
-	uint64_t p1 = 0x02 | ((ypos * 2) << 3) | (eval << 14);
+	uint64_t p1 = 0x02 | (eval << 3);
 
 	lastObjType = 2;
 	D_quad(p1);
@@ -479,4 +469,3 @@ static int HandleJump(void)
 
 	return OK;
 }
-
