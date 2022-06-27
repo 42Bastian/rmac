@@ -113,6 +113,8 @@ opt     66
 .objproc	67
 .dsm	68
 dsm	68
+.align 69
+align 69
 .if		500
 if		500
 .else	501
@@ -133,4 +135,3 @@ rept	506
 endr	507
 .exitm	510
 exitm	510
-

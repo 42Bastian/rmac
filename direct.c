@@ -90,6 +90,7 @@ int d_prgflags(void);
 int d_opt(void);
 int d_dsp(void);
 int d_objproc(void);
+int d_align(void);
 void SetLargestAlignment(int);
 
 // Directive handler table
@@ -163,6 +164,7 @@ int (*dirtab[])() = {
 	d_opt,				// 66 .opt
 	d_objproc,			// 67 .objproc
 	(void *)d_dsm,			// 68 .dsm
+	d_align				// 69 .align
 };
 
 
@@ -841,6 +843,35 @@ int d_qphrase(void)
 	return 0;
 }
 
+//
+// Adjust location to a <alignment> bytes
+//
+int d_align(void)
+{
+	unsigned bytesToSkip;
+	uint64_t eval;
+
+	if (abs_expr(&eval) != OK)
+		return 0;
+
+	bytesToSkip = eval - (rgpu || rdsp ? orgaddr : sloc) % eval;
+	if ( bytesToSkip != eval )
+	{
+		if ((scattr & SBSS) == 0)
+		{
+			D_ZEROFILL(bytesToSkip);
+		}
+		else
+		{
+			sloc += bytesToSkip;
+
+		if (orgactive)
+			orgaddr += bytesToSkip;
+		}
+	}
+	return 0;
+}
+
 
 //
 // Do auto-even.  This must be called ONLY if 'sloc' is odd.
@@ -1156,7 +1187,7 @@ int d_ds(WORD siz)
 
 	if (expr(exprbuf, &eval, &eattr, NULL) < 0)
 		return ERROR;
-	
+
 	// Check to see if the value being passed in is negative (who the hell does
 	// that?--nobody does; it's the code gremlins, or rum, what does it)
 	// N.B.: Since 'eval' is of type uint64_t, if it goes negative, it will
@@ -2438,4 +2469,3 @@ int d_endif(void)
 	f_ifent = rif;
 	return 0;
 }
-
