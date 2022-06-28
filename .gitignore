@@ -31,3 +31,8 @@ elf/
 tests/
 regression/
 versions/
+56kregs.h
+6502regs.h
+68kregs.h
+riscregs.h
+unarytab.h

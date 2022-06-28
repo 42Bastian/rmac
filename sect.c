@@ -548,6 +548,9 @@ int ResolveFixups(int sno)
 						// In this instruction the PC is located a DWORD away
 						if (dw & FU_PCRELX)
 							eval += 2;
+						
+						if ((int64_t)eval > 0x7fff || (int64_t)eval < -32768)
+							error(range_error);
 					}
 					else
 					{

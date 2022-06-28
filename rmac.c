@@ -60,7 +60,7 @@ int activecpu = CPU_68000;		// Active 68k CPU (68000 by default)
 int activefpu = FPU_NONE;		// Active FPU (none by default)
 int org68k_active = 0;			// .org switch for 68k (only with RAW output format)
 uint32_t org68k_address;		// .org for 68k
-int correctMathRules;
+int correctMathRules;			// 1, use C operator precedence in expressions
 
 //
 // Convert a string to uppercase
@@ -224,8 +224,7 @@ void DisplayVersion(void)
 		"|_|  |_| |_| |_|\\__,_|\\___|\n"
 		"\nRenamed Macro Assembler\n"
 		"Copyright (C) 199x Landon Dyer, 2011-2022 Reboot and Friends\n"
-    "Operator precedence fix (c) 2018 42Bastian\n"
-		"V%01i.%01i.%01i.42 %s (%s)\n\n", MAJOR, MINOR, PATCH, __DATE__, PLATFORM);
+		"V%01i.%01i.%01i.%01li %s (%s)\n\n", MAJOR, MINOR, PATCH, PATCHBS42, __DATE__, PLATFORM);
 }
 
 //
@@ -337,7 +336,7 @@ int Process(int argc, char ** argv)
 	regtab = reg68tab;				// Idem
 	regcheck = reg68check;			// Idem
 	regaccept = reg68accept;		// Idem
-correctMathRules = 0;                           // respect operator precedence
+    correctMathRules = 0;			// respect operator precedence
 	// Initialize modules
 	InitSymbolTable();				// Symbol table
 	InitTokenizer();				// Tokenizer

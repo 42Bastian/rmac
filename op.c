@@ -37,7 +37,6 @@ static TOKEN fixupExpr[4] = { CONST, 0, 0, ENDEXPR };
 //static PTR fixupPtr = { .tk = (fixupExpr + 1) };		// C99 \o/
 static PTR fixupPtr = { (uint8_t *)(fixupExpr + 1) };	// meh, it works
 
-
 //
 // The main Object Processor assembler. Basically just calls the sub functions
 // to generate the appropriate code.
@@ -68,14 +67,12 @@ int GenerateOPCode(int state)
 	return error("unknown OP opcode");
 }
 
-
 static inline void GetSymbolUCFromTokenStream(char * s)
 {
 	strcpy(s, string[tok[1]]);
 	strtoupper(s);
 	tok += 2;
 }
-
 
 static inline uint64_t CheckFlags(char * s)
 {
@@ -92,7 +89,6 @@ static inline uint64_t CheckFlags(char * s)
 
 	return 0;
 }
-
 
 //
 // Define a bitmap object
@@ -190,7 +186,6 @@ static int HandleBitmap(void)
 
 	return OK;
 }
-
 
 //
 // Define a scaled bitmap object
@@ -319,7 +314,6 @@ static int HandleScaledBitmap(void)
 	return OK;
 }
 
-
 //
 // Insert GPU object
 // Form: gpuobj <userdata> (bits 3-63 of this object)
@@ -345,7 +339,6 @@ static int HandleGPUObject(void)
 
 	return OK;
 }
-
 
 //
 // Insert a branch object
@@ -411,7 +404,6 @@ static int HandleBranch(void)
 	return OK;
 }
 
-
 //
 // Insert a stop object
 // Form: stop
@@ -423,7 +415,6 @@ static int HandleStop(void)
 
 	return OK;
 }
-
 
 //
 // Insert a phrase sized "NOP" in the object list (psuedo-op)
@@ -441,7 +432,6 @@ static int HandleNOP(void)
 
 	return OK;
 }
-
 
 //
 // Insert an unconditional jump in the object list (psuedo-op)

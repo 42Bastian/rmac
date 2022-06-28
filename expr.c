@@ -94,13 +94,35 @@ void InitExpression(void)
 }
 
 extern int correctMathRules;
-//
-// Binary operators (all the same precedence)
-//
 int xor(void);
+int and(void);
+int rel(void);
+int shift(void);
+int sum(void);
+int product(void);
+
+//
+// Binary operators (all the same precedence,
+// except if -4 is passed to the command line)
+//
+#define precedence(HIERARCHY_HIGHER, HIERARCHY_CURRENT) \
+do \
+{ \
+	if (HIERARCHY_HIGHER() != OK) \
+		return ERROR; \
+	while (tokenClass[*tok] == HIERARCHY_CURRENT) \
+	{ \
+		TOKEN t = *tok++; \
+		if (HIERARCHY_HIGHER() != OK) \
+			return ERROR; \
+		*evalTokenBuffer.u32++ = t; \
+	} \
+}while (0)
+
 int expr0(void)
 {
-  if ( correctMathRules == 0 ){
+	if ( correctMathRules == 0 )
+	{
 	if (expr1() != OK)
 		return ERROR;
 
@@ -113,150 +135,57 @@ int expr0(void)
 
 		*evalTokenBuffer.u32++ = t;
 	}
-  } else {
-//->    printf("or\n");
-    if (xor() != OK)
-      return ERROR;
-
-    while (tokenClass[*tok] == OR)
+	}
+	else
     {
-      TOKEN t = *tok++;
-
-//->      printf("or\n");
-      if (xor() != OK)
-        return ERROR;
-
-      *evalTokenBuffer.u32++ = t;
-    }
+		// The order of C precedence (lower to higher):
+		// bitwise XOR ^
+		// bitwise OR |
+		// bitwise AND &
+		// relational = < <= >= > !=
+		// shifts << >>
+		// sum + -
+		// product * /
+		precedence(xor, OR);
   }
-
   return OK;
 }
 
-int and(void);
 int xor(void)
 {
-//->  printf("xor\n");
-  if (and() != OK)
-    return ERROR;
-
-  while (tokenClass[*tok] == XOR)
-  {
-    TOKEN t = *tok++;
-
-//->    printf("xor\n");
-    if (and() != OK)
-      return ERROR;
-
-    *evalTokenBuffer.u32++ = t;
-  }
-
+	precedence(and, XOR);
   return OK;
 }
 
-int rel(void);
 int and(void)
 {
-//->  printf("and\n");
-  if (rel() != OK)
-    return ERROR;
-
-  while (tokenClass[*tok] == AND)
-  {
-    TOKEN t = *tok++;
-
-//->    printf("and\n");
-    if (rel() != OK)
-      return ERROR;
-
-    *evalTokenBuffer.u32++ = t;
-  }
-
+	precedence(rel, AND);
   return OK;
 }
 
-int shift(void);
 int rel(void)
 {
-//->  printf("rel\n");
-  if (shift() != OK)
-    return ERROR;
-
-  while (tokenClass[*tok] == REL)
-  {
-    TOKEN t = *tok++;
-
-//->    printf("rel\n");
-    if (shift() != OK)
-      return ERROR;
-
-    *evalTokenBuffer.u32++ = t;
-  }
-
+	precedence(shift, REL);
   return OK;
 }
 
-int sum(void);
 int shift(void)
 {
-//->  printf("shift\n");
-  if (sum() != OK)
-    return ERROR;
-
-  while (tokenClass[*tok] == SHIFT)
-  {
-    TOKEN t = *tok++;
-
-//->    printf("shift\n");
-    if (sum() != OK)
-      return ERROR;
-
-    *evalTokenBuffer.u32++ = t;
-  }
-
+	precedence(sum, SHIFT);
   return OK;
 }
 
-int product(void);
 int sum(void)
 {
-//->  printf("sum\n");
-  if (product() != OK)
-    return ERROR;
-
-  while (tokenClass[*tok] == ADD)
-  {
-    TOKEN t = *tok++;
-
-//->    printf("sum\n");
-    if (product() != OK)
-      return ERROR;
-
-    *evalTokenBuffer.u32++ = t;
-  }
-
+	precedence(product, ADD);
 	return OK;
 }
 
 int product(void)
 {
-//->  printf("product\n");
-  if (expr1() != OK)
-    return ERROR;
-
-  while (tokenClass[*tok] == MULT)
-  {
-    TOKEN t = *tok++;
-
-    if (expr1() != OK)
-      return ERROR;
-
-    *evalTokenBuffer.u32++ = t;
-  }
-
+	precedence(expr1, MULT);
 	return OK;
 }
-
 
 //
 // Unary operators (detect unary '-')

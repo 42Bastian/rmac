@@ -127,7 +127,7 @@ Switch               Description
 -fx                  Atari 800 com/exe/xex output object file format.
 -i\ *path*           Set include-file directory search path.
 -l\ *[file[prn]]*    Construct and direct assembly listing to the specified file.
--l\ *\*[filename]*   Create an output listing file without pagination
+-l\ *\*[filename]*   Create an output listing file without pagination.
 -m\ *cpu*            Switch CPU type
 
                       `68000 - MC68000`
@@ -203,8 +203,9 @@ Switch               Description
 -s                   Warn about unoptimized long branches and applied optimisations.
 -u                   Force referenced and undefined symbols global.
 -v                   Verbose mode (print running dialogue).
--x                   Turn on debugging mode
+-x                   Turn on debugging mode.
 -yn                  Set listing page size to n lines.
+-4                   Use C style operator precedence.
 file\ *[s]*          Assemble the specified file.
 ===================  ===========
 
@@ -296,6 +297,9 @@ the table.
   space), sets the number of lines in a page. RMAC will produce *N* lines
   before emitting a form-feed. If *N* is missing or less than 10 an error message is
   generated.
+**-4**
+  Use C style order of precedence in expressions. See `Order of Evaluation`_ for more
+  information.
 
 `Using RMAC`_
 ===============
@@ -425,7 +429,8 @@ necessary to make other assemblers' source code assemble.
   character codes. Watch out for GEMDOS path names in ASCII constants -
   you will have to convert them to double-backslashes.
 * Expression evaluation is done left-to-right without operator precedence. Use parentheses to
-  force the expression evaluation as you wish.
+  force the expression evaluation as you wish. Alternatively, use the **-4** switch to switch
+  to C style precedence. For more information refer to `Order of Evaluation`_.
 * Mark your segments across files.
   Branching to a code segment that could be identified as BSS will cause a "Error: cannot initialize non-storage (BSS) section"
 * In 68020+ mode **Zan** and **Zri** (register suppression) is not supported.
@@ -746,6 +751,24 @@ true.
 Thus the expression "1+2*3" evaluates to 9, not 7. However, precedence may be
 forced with parenthesis (**()**) or square-brackets (**[]**).
 
+All the above behavior is the default. However if the command line switch **-4**
+is used, then C style of operator precedence is enforced. The following list
+shows the order of precedence in this mode, from lowest to highest:
+
+ * bitwise XOR ^
+
+ * bitwise OR |
+
+ * bitwise AND &
+
+ * relational = < <= >= > !=
+
+ * shifts << >>
+
+ * sum + -
+
+ * product * /
+
 `Types`_
 '''''''''
 Expressions belong to one of three classes: undefined, absolute or relocatable. An
@@ -842,7 +865,9 @@ Operator     Description
 ===========  ==============================================
 
  * All binary operators have the same precedence:
-   expressions are evaluated strictly left to right.
+   expressions are evaluated strictly left to right,
+   with the exception of the **-4** switch. For more information
+   refer to `Order of Evaluation`_.
 
  * Division or modulo by zero yields an assembly error.
 
