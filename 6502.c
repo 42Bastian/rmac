@@ -423,6 +423,8 @@ badmode:
 	DEBUG printf("inf[op][amode]=%d\n", (int)inf[op][amode]);
 #endif
 
+	GENLINENOSYM();
+
 	switch (inf[op][amode])
 	{
 		case A65_IMPL:		// Just leave the instruction

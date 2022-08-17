@@ -37,6 +37,9 @@ SYM
 	LLIST * last;			// * -> end of macro linked list
 	uint16_t cfileno;		// File the macro is defined in
 	uint32_t uid;			// Symbol's unique ID
+	uint8_t st_type;		// stabs debug symbol's "type" field
+	uint8_t st_other;		// stabs debug symbol's "other" field
+	uint16_t st_desc;		// stabs debug symbol's "description" field
 };
 
 // Exported variables
@@ -46,7 +49,7 @@ extern uint32_t firstglobal;// Index of the fist global symbol in an ELF object.
 // Exported functions
 SYM * lookup(uint8_t *, int, int);
 void InitSymbolTable(void);
-SYM * NewSymbol(uint8_t *, int, int);
+SYM * NewSymbol(const uint8_t *, int, int);
 void AddToSymbolDeclarationList(SYM *);
 void ForceUndefinedSymbolsGlobal(void);
 int symtable(void);
@@ -54,6 +57,12 @@ uint32_t AssignSymbolNos(uint8_t *, uint8_t *(*)());
 uint32_t AssignSymbolNosELF(uint8_t *, uint8_t *(*)());
 void DumpLODSymbols(void);
 uint8_t * GetSymbolNameByUID(uint32_t);
+SYM * NewDebugSymbol(const uint8_t *, uint8_t, uint8_t, uint16_t);
+void GenMainFileSym(const char *);
+void GenLineNoSym(void);
+
+// Helper to avoid unnecessary branches:
+#define GENLINENOSYM() if (dsym_flag) GenLineNoSym()
 
 #endif // __SYMBOL_H__
 

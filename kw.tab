@@ -4,6 +4,8 @@ equ	61
 reg     82
 .equr  85
 equr   85
+.ccdef   183
+ccdef 183
 .regequ  85
 regequ   85
 .equrundef  50

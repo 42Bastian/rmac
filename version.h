@@ -15,6 +15,6 @@
 
 #define MAJOR   2		// Major version number
 #define MINOR   2		// Minor version number
-#define PATCH   4		// Patch release number
-#define PATCHBS42 1  //BS42 private patches
+#define PATCH   7		// Patch release number
+
 #endif // __VERSION_H__

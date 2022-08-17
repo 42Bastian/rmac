@@ -17,11 +17,9 @@ the accuracy of printed or duplicated material after the date of publication and
 disclaims liability for changes, errors or omissions.*
 
 
-*Copyright © 2011-2020, Reboot*
+*Copyright © 2011-2022, the rmac authors*
 
 *All rights reserved.*
-
-*Reboot Document number F00000K-001 Rev. A.*
 
 Contents
 ========
@@ -125,6 +123,7 @@ Switch               Description
 -fe                  ELF output object file format.
 -fr                  Absolute address. Source code is required to have one .org statement.
 -fx                  Atari 800 com/exe/xex output object file format.
+-g                   Generate source level debug info. Requires BSD COFF object file format.
 -i\ *path*           Set include-file directory search path.
 -l\ *[file[prn]]*    Construct and direct assembly listing to the specified file.
 -l\ *\*[filename]*   Create an output listing file without pagination.
@@ -157,11 +156,11 @@ Switch               Description
 +o\ *0-30*/*p*        Enable specific optimisation
 ~o\ *0-30*/*p*        Disable specific optimisation
 
-                      `0: Absolute long adddresses to word (on by default)`
+                      `0: Absolute long adddresses to word`
 
-                      `1: move.l #x,Dn/An to moveq (on by default)`
+                      `1: move.l #x,Dn/An to moveq`
 
-                      `2: Word branches to short (on by default)`
+                      `2: Word branches to short`
 
                       `3: Outer displacement 0(An) to (An)`
 
@@ -181,7 +180,7 @@ Switch               Description
 
                       `11: 56001 Auto convert short addressing mode to long (default: on)`
 
-                      `o30: Enforce PC relative (alternative name: op)`
+                      `30: Enforce PC relative (alternative name: op)`
 
 -p                   Produce an executable (**.prg**) output file.
 -ps                  Produce an executable (**.prg**) output file with symbols.
@@ -234,6 +233,19 @@ the table.
  the first input file name). If no errors are encountered, then no error listing
  file is created. Beware! If an assembly produces no errors, any error file from
  a previous assembly is not removed.
+
+**-g**
+ The **-g** switch causes RMAC to generate source-level debug symbols using the
+ stabs format. When linked with a compatible linker such as RLN, these symbols
+ can be used by source-level debuggers such as rdbjag, wdb, or gdb to step
+ through assembly code line-by-line with all the additional context of labels,
+ macros, constants, register equates, etc. available in the original assembly
+ listings rather than relying on the simple disassembly or raw machine code
+ available when stepping through instruction-by-instruction. This option only
+ works with the BSD COFF object file format, as the others do not use the
+ a.out-style symbol tables required by stabs, and RMAC does not currently
+ support placing stabs debug symbols in their own dedicated section in ELF
+ format object files.
 
 **-i**
  The **-i** switch allows automatic directory searching for include files. A list of
@@ -638,7 +650,7 @@ and may not be used as symbols (e.g. labels, equates, or the names of macros):
       a0 a1 a2 a3 a4 a5 a6 a7
       Tom/Jerry:
       r0 r1 r2 r3 r4 r5 r6 r7
-      r8 r9 r10 r11 r12 rl3 r14 r15
+      r8 r9 r10 r11 r12 r13 r14 r15
       6502:
       x y a
       DSP56001:
@@ -1023,7 +1035,14 @@ Directives relating to the 6502 are described in the chapter on `6502 Support`_.
    Therefore, to align GPU/DSP code, align the current section before and
    after the GPU/DSP code.
 
-   **.assert** *expression* [,\ *expression*...]
+**.align** *expression*
+
+  A generalised version of the above directives, this will align the program
+  counter to the boundary of the specified value. Note that there is not much
+  error checking happening (only values 0 and 1 are rejected). Also note that
+  in DSP56001 mode the align value is assumed to be in DSP words, i.e. 24 bits.
+
+**.assert** *expression* [,\ *expression*...]
 
    Assert that the conditions are true (non-zero). If any of the comma-seperated
    expressions evaluates to zero an assembler warning is issued. For example:

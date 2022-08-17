@@ -28,6 +28,7 @@
 	#define _OPEN_INC       _O_RDONLY|_O_BINARY
 	#define _PERM_MODE      _S_IREAD|_S_IWRITE
     #define PATH_SEPS       ";"
+    #define realpath(_fn, _abs) _fullpath((_abs), (_fn), _MAX_PATH)
 
 	#ifdef _MSC_VER
 		#if _MSC_VER > 1000
@@ -222,6 +223,7 @@ PTR
 #define LABEL        0			// User-defined symbol
 #define MACRO        1			// Macro definition
 #define MACARG       2			// Macro argument
+#define DBGSYM       3			// stabs debug symbol
 #define SY_UNDEF     -1			// Undefined (lookup never matches it)
 
 // Symbol and expression attributes
@@ -301,6 +303,7 @@ extern int m6502;
 extern int list_flag;
 extern int glob_flag;
 extern int lsym_flag;
+extern int dsym_flag;
 extern int optim_warn_flag;
 extern int obj_format;
 extern int legacy_flag;

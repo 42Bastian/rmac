@@ -190,6 +190,7 @@ static void DepositRISCInstructionWord(uint16_t opcode, int reg1, int reg2)
 	}
 
 	int value = ((opcode & 0x3F) << 10) + ((reg1 & 0x1F) << 5) + (reg2 & 0x1F);
+	GENLINENOSYM();
 	D_word(value);
 }
 

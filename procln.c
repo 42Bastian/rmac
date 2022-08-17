@@ -739,6 +739,7 @@ When checking to see if it's already been equated, issue a warning.
 			while ((dsp_am0 & md->mn0) == 0 || (dsp_am1 & md->mn1) == 0)
 				md = &dsp56k_machtab[md->mncont];
 
+			GENLINENOSYM();
 			(*md->mnfunc)(md->mninst | (parcode << 8));
 			goto loop;
 		}
@@ -784,6 +785,7 @@ When checking to see if it's already been equated, issue a warning.
 	// Call special-mode handler
 	if (m->mnattr & CGSPECIAL)
 	{
+		GENLINENOSYM();
 		(*m->mnfunc)(m->mninst, siz);
 		goto loop;
 	}
@@ -818,6 +820,7 @@ When checking to see if it's already been equated, issue a warning.
 
 	DEBUG { printf("    68K: mninst=$%X, siz=$%X, mnattr=$%X, amsk0=$%X, mn0=$%X, amsk1=$%X, mn1=$%X\n", m->mninst, siz, m->mnattr, amsk0, m->mn0, amsk1, m->mn1); }
 
+	GENLINENOSYM();
 	(*m->mnfunc)(m->mninst, siz);
 	goto loop;
 }

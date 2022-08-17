@@ -843,8 +843,9 @@ int d_qphrase(void)
 	return 0;
 }
 
+
 //
-// Adjust location to a <alignment> bytes
+// Adjust location to <alignment> bytes
 //
 int d_align(void)
 {
@@ -853,6 +854,18 @@ int d_align(void)
 
 	if (abs_expr(&eval) != OK)
 		return 0;
+
+	if (eval < 2)
+	{
+		return error("Invalid .align value specified");
+	}
+
+	if (dsp56001)
+	{
+		bytesToSkip = eval - sloc % eval;
+		D_ZEROFILL(bytesToSkip*3);
+		return 0;
+	}
 
 	bytesToSkip = eval - (rgpu || rdsp ? orgaddr : sloc) % eval;
 	if ( bytesToSkip != eval )
@@ -2469,3 +2482,4 @@ int d_endif(void)
 	f_ifent = rif;
 	return 0;
 }
+

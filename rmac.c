@@ -31,6 +31,7 @@ int verb_flag;					// Be verbose about what's going on
 int m6502;						// 1, assembling 6502 code
 int glob_flag;					// Assume undefined symbols are global
 int lsym_flag;					// Include local symbols in object file (ALWAYS true)
+int dsym_flag;					// Gen debug syms (Requires obj_format = BSD)
 int optim_warn_flag;			// Warn about possible short branches
 int prg_flag;					// !=0, produce .PRG executable (2=symbols)
 int prg_extend;					// !=0, output extended .PRG symbols
@@ -167,6 +168,7 @@ void DisplayHelp(void)
 		"                    l: LOD (use this for DSP56001 only)\n"
 		"                    x: com/exe/xex (Atari 800)\n"
 		"                    r: absolute address\n"
+		"  -g                Output source level debug information (BSD object only)\n"
 		"  -i[path]          Directory to search for include files\n"
 		"  -l[filename]      Create an output listing file\n"
 		"  -l*[filename]     Create an output listing file without pagination\n"
@@ -224,7 +226,7 @@ void DisplayVersion(void)
 		"|_|  |_| |_| |_|\\__,_|\\___|\n"
 		"\nRenamed Macro Assembler\n"
 		"Copyright (C) 199x Landon Dyer, 2011-2022 Reboot and Friends\n"
-		"V%01i.%01i.%01i.%01li %s (%s)\n\n", MAJOR, MINOR, PATCH, PATCHBS42, __DATE__, PLATFORM);
+		"V%01i.%01i.%01i %s (%s)\n\n", MAJOR, MINOR, PATCH, __DATE__, PLATFORM);
 }
 
 //
@@ -290,6 +292,42 @@ int ParseOptimization(char * optstring)
 	return OK;
 }
 
+static void ProcessFile(int fd, char *fname)
+{
+	char *dbgname = fname;
+
+	if (NULL == fname)
+	{
+		fname = defname; // Kludge first filename
+		dbgname = "(stdin)";
+	}
+
+	// First file operations:
+	if (firstfname == NULL)
+	{
+		// Record first filename.
+		firstfname = fname;
+
+		// Validate option compatibility
+		if (dsym_flag)
+		{
+			if (obj_format != BSD)
+			{
+				printf("-g: debug information only supported with BSD object file format\n");
+				dsym_flag = 0;
+				errcnt++;
+			}
+			else
+			{
+				GenMainFileSym(dbgname);
+			}
+		}
+	}
+
+	include(fd, dbgname);
+	Assemble();
+}
+
 extern int reg68base[53];
 extern int reg68tab[222];
 extern int reg68check[222];
@@ -326,6 +364,7 @@ int Process(int argc, char ** argv)
 	rdsp = 0;						// Initialize DSP assembly flag
 	robjproc = 0;					// Initialize OP assembly flag
 	lsym_flag = 1;					// Include local symbols in object file
+	dsym_flag = 0;					// No debug sym generation by default
 	orgactive = 0;					// Not in RISC org section
 	orgwarning = 0;					// No ORG warning issued
 	segpadsize = 2;					// Initialize segment padding size
@@ -432,7 +471,7 @@ int Process(int argc, char ** argv)
 				break;
 			case 'g':				// Debugging flag
 			case 'G':
-				printf("Debugging flag (-g) not yet implemented\n");
+				dsym_flag = 1;
 				break;
 			case 'i':				// Set directory search path
 			case 'I':
@@ -607,11 +646,7 @@ int Process(int argc, char ** argv)
 
 				break;
 			case EOS:				// Input is stdin
-				if (firstfname == NULL)	// Kludge first filename
-					firstfname = defname;
-
-				include(0, "(stdin)");
-				Assemble();
+				ProcessFile(0, NULL);
 				break;
 			case 'h':				// Display command line usage
 			case 'H':
@@ -646,10 +681,6 @@ int Process(int argc, char ** argv)
 		}
 		else
 		{
-			// Record first filename.
-			if (firstfname == NULL)
-				firstfname = argv[argno];
-
 			strcpy(fnbuf, argv[argno]);
 			fext(fnbuf, ".s", 0);
 			fd = open(fnbuf, 0);
@@ -661,8 +692,7 @@ int Process(int argc, char ** argv)
 				continue;
 			}
 
-			include(fd, fnbuf);
-			Assemble();
+			ProcessFile(fd, fnbuf);
 		}
 	}
 

@@ -46,6 +46,11 @@ int GenerateOPCode(int state)
 	if (!robjproc)
 		return error("opcode only valid in OP mode");
 
+	// It's OK to call this before validating state. If the state is invalid, an
+	// error will be generated and no object file will be produced, so it
+	// doesn't matter if the line number symbols are a little off.
+	GENLINENOSYM();
+
 	switch (state)
 	{
 	case MO_BITMAP:

@@ -1,79 +1,20 @@
-@echo off
-REM Check for file dates and build .h files if needed
+rem @echo off
+rem Check for file dates and build .h files if needed
 
-SET FILE1=68k.mch
-SET FILE2=68ktab.h
-if not exist %FILE2% GOTO BUILD
-for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
-if %NEWEST%==%FILE1% GOTO BUILD
+call :CHECK_OUT_OF_DATE 68k.mch 68ktab.h
+call :CHECK_OUT_OF_DATE direct.tab mntab.h
+call :CHECK_OUT_OF_DATE kw.tab kwtab.h
+call :CHECK_OUT_OF_DATE risc.tab risckw.h
+call :CHECK_OUT_OF_DATE dsp56k.mch dsp56ktab.h
+call :CHECK_OUT_OF_DATE 6502.tab 6502kw.h
+call :CHECK_OUT_OF_DATE op.tab opkw.h
+call :CHECK_OUT_OF_DATE 68kregs.tab 68kregs.h
+call :CHECK_OUT_OF_DATE 56kregs.tab 56kregs.h
+call :CHECK_OUT_OF_DATE 6502regs.tab 6502regs.h
+call :CHECK_OUT_OF_DATE riscregs.tab riscregs.h
+call :CHECK_OUT_OF_DATE unary.tab unarytab.h
 
-SET FILE1=direct.tab
-SET FILE2=mntab.h
-if not exist %FILE2% GOTO BUILD
-for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
-if %NEWEST%==%FILE1% GOTO BUILD
-
-SET FILE1=kw.tab
-SET FILE2=kwtab.h
-if not exist %FILE2% GOTO BUILD
-for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
-if %NEWEST%==%FILE1% GOTO BUILD
-
-SET FILE1=risc.tab
-SET FILE2=risckw.h
-if not exist %FILE2% GOTO BUILD
-for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
-if %NEWEST%==%FILE1% GOTO BUILD
-
-SET FILE1=dsp56k.mch
-SET FILE2=dsp56ktab.h
-if not exist %FILE2% GOTO BUILD
-for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
-if %NEWEST%==%FILE1% GOTO BUILD
-
-SET FILE1=6502.tab
-SET FILE2=6502kw.h
-if not exist %FILE2% GOTO BUILD
-for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
-if %NEWEST%==%FILE1% GOTO BUILD
-
-SET FILE1=op.tab
-SET FILE2=opkw.h
-if not exist %FILE2% GOTO BUILD
-for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
-if %NEWEST%==%FILE1% GOTO BUILD
-
-SET FILE1=68kregs.tab
-SET FILE2=68kregs.h
-if not exist %FILE2% GOTO BUILD
-for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
-if %NEWEST%==%FILE1% GOTO BUILD
-
-SET FILE1=56kregs.tab
-SET FILE2=56kregs.h
-if not exist %FILE2% GOTO BUILD
-for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
-if %NEWEST%==%FILE1% GOTO BUILD
-
-SET FILE1=6502regs.tab
-SET FILE2=6502regs.h
-if not exist %FILE2% GOTO BUILD
-for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
-if %NEWEST%==%FILE1% GOTO BUILD
-
-SET FILE1=riscregs.tab
-SET FILE2=riscregs.h
-if not exist %FILE2% GOTO BUILD
-for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
-if %NEWEST%==%FILE1% GOTO BUILD
-
-SET FILE1=unary.tab
-SET FILE2=unarytab.h
-if not exist %FILE2% GOTO BUILD
-for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
-if %NEWEST%==%FILE1% GOTO BUILD
-
-GOTO END
+GOTO NOGEN
 
 :BUILD
 
@@ -94,7 +35,7 @@ kwgen reg65 <6502regs.tab >6502regs.h
 kwgen regrisc <riscregs.tab >riscregs.h
 kwgen unary <unary.tab >unarytab.h
 
-rem touch files that include these header files so they'll recompile
+rem Touch timestamps of files that include these header files so they'll recompile
 echo Generating tables...
 copy /b amode.c +,, >NUL
 copy /b direct.c +,, >NUL
@@ -104,34 +45,40 @@ copy /b procln.c +,, >NUL
 copy /b riscasm.c +,, >NUL
 copy /b token.c +,, >NUL
 copy /b dsp56k_mach.c +,, >NUL
-
-:END
-
-REM If eagen0.c is newer than eagen.c then "touch" eagen.c so that visual studio will recompile both.
-REM Same for amode.c / parmode.h and mach.c / 68ktab.h
-
-SET FILE1=eagen0.c
-SET FILE2=eagen.c
-for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
-if %NEWEST%==%FILE2% GOTO CHECK2
-Echo touching eagen0.c...
 copy /b eagen.c +,, >NUL
+goto :END
 
-:CHECK2
-SET FILE1=parmode.h
-SET FILE2=amode.c
-for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
-if %NEWEST%==%FILE2% GOTO CHECK3
-Echo touching amode.c...
-copy /b amode.c +,, >NUL
+:NOGEN
 
-:CHECK3
-SET FILE1=68ktab.h
-SET FILE2=mach.c
-for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
-if %NEWEST%==%FILE2% GOTO END
-Echo touching mach.c...
-copy /b mach.c +,, >NUL
+REM If eagen0.c is newer than eagen.c then "touch" eagen.c so that visual studio will recompile oth.
+REM Same for amode.c / parmode.h and mach.c / 68ktab.h
+call :CHECK_AND_TOUCH eagen0.c eagen.c
+call :CHECK_AND_TOUCH parmode.h amode.c
+call :CHECK_AND_TOUCH 68ktab.h mach.c
 
 :END
+exit /b
 
+rem Check if second passed file is older compared to the first, or doesn't exist, or is zero size. In which case go generate everything just to be sure
+:CHECK_OUT_OF_DATE
+SET FILE1=%1
+SET FILE2=%2
+if not exist %FILE2% GOTO BUILD
+FOR /F "usebackq" %%A IN ('%FILE2%') DO set size=%%~zA
+if "%size%"=="0" GOTO BUILD
+for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
+if %NEWEST%==%FILE1% GOTO BUILD
+
+exit /b
+
+rem Check if second passed file is older compared to the first, and "touch" the file stamp of hat file if yes
+:CHECK_AND_TOUCH
+SET FILE1=%1
+SET FILE2=%2
+for /F %%i IN ('dir /b /OD %FILE1% %FILE2% ^| more +1') DO SET NEWEST=%%i
+if %NEWEST%==%FILE2% GOTO :CHECK_AND_TOUCH_END
+Echo touching %2...
+copy /b %2 +,, >NUL
+
+:CHECK_AND_TOUCH_END
+exit /b

@@ -58,7 +58,7 @@ void InitSymbolTable(void)
 //
 // Hash the ASCII name and enviroment number
 //
-int HashSymbol(uint8_t * name, int envno)
+int HashSymbol(const uint8_t * name, int envno)
 {
 	int sum = envno, k = 0;
 
@@ -76,7 +76,7 @@ int HashSymbol(uint8_t * name, int envno)
 //
 // Make a new symbol of type 'type' in enviroment 'envno'
 //
-SYM * NewSymbol(uint8_t * name, int type, int envno)
+SYM * NewSymbol(const uint8_t * name, int type, int envno)
 {
 	// Allocate the symbol
 	SYM * symbol = malloc(sizeof(SYM));
@@ -88,7 +88,7 @@ SYM * NewSymbol(uint8_t * name, int type, int envno)
 	}
 
 	// Fill-in the symbol
-	symbol->sname  = strdup(name);
+	symbol->sname  = name ? strdup(name) : NULL;
 	symbol->stype  = (uint8_t)type;
 	symbol->senv   = (uint16_t)envno;
 	// We don't set this as DEFINED, as it could be a forward reference!
@@ -99,14 +99,22 @@ SYM * NewSymbol(uint8_t * name, int type, int envno)
 	symbol->svalue = 0;
 	symbol->sorder = NULL;
 	symbol->uid    = currentUID++;
+	// We don't set st_type, st_desc, or st_other here because they are only
+	// used by stabs debug symbols, which are always initialized by
+	// NewDebugSymbol(), which always sets these fields. Hence, initializing
+	// them here would be redundant.
 
-	// Record filename the symbol is defined (for now only used by macro error reporting)
+	// Record filename the symbol is defined (Used by macro error reporting and some debug symbols)
 	symbol->cfileno = cfileno;
 
+	// Don't hash debug symbols: they are never looked up and may have no name.
+	if (type != DBGSYM)
+	{
 	// Install symbol in the symbol table
 	int hash = HashSymbol(name, envno);
 	symbol->snext = symbolTable[hash];
 	symbolTable[hash] = symbol;
+	}
 
 	// Append symbol to the symbol-order list
 	if (sorder == NULL)
@@ -235,7 +243,16 @@ uint32_t AssignSymbolNos(uint8_t * buf, uint8_t *(* construct)())
 	// them. We also pick which symbols should be global or not here.
 	for(SYM * sy=sdecl; sy!=NULL; sy=sy->sdecl)
 	{
-		// Skip non-labels
+		// Always export debug symbols. Don't force them global.
+		if (DBGSYM == sy->stype) {
+			sy->senv = scount++;
+
+			if (buf != NULL)
+				buf = construct(buf, sy, 0);
+			continue;
+		}
+
+		// Skip non-labels.
 		if (sy->stype != LABEL)
 			continue;
 
@@ -546,4 +563,118 @@ int symtable(void)
 	}
 
 	return 0;
+}
+
+SYM * NewDebugSymbol(const uint8_t * str, uint8_t type, uint8_t other, uint16_t desc)
+{
+	SYM * symbol = NewSymbol(str, DBGSYM, 0);
+
+	if (NULL == symbol)
+		fatal("Could not allocate space for debug symbol");
+
+	AddToSymbolDeclarationList(symbol);
+
+	symbol->st_type = type;
+	symbol->st_other = other;
+	symbol->st_desc = desc;
+
+	return symbol;
+}
+
+char *FilePath(const char * fname)
+{
+	char buf1[256];
+	char * fpath;
+	int i, j;
+
+	if ((fpath = realpath(fname, NULL)) != NULL)
+		return fpath;
+
+	for(i=0; nthpath("RMACPATH", i, buf1)!=0; i++)
+	{
+		j = strlen(buf1);
+
+		// Append path char if necessary
+		if (j > 0 && buf1[j - 1] != SLASHCHAR)
+			strcat(buf1, SLASHSTRING);
+
+		strcat(buf1, fname);
+
+		if ((fpath = realpath(buf1, NULL)) != NULL)
+			return fpath;
+	}
+
+	return NULL;
+}
+
+static void GenFileSym(const char * fname, uint8_t type, uint32_t addr, uint32_t sattr)
+{
+	char *fpath;
+
+	if (!(fpath = FilePath(fname)))
+	{
+		// Don't treat this as an error. Any file rmac can read is valid enough.
+		// Just use the relative filename in place of an absolute path for the
+		// debug information.
+		fpath = strdup(fname);
+
+		if (!fpath)
+			fatal("Could not allocate memory for fake path name");
+	}
+
+	SYM * symbol = NewDebugSymbol(fpath, type, 0, 0);
+
+	free(fpath);
+
+	symbol->svalue = addr;
+	symbol->sattr |= sattr;
+}
+
+void GenMainFileSym(const char * fname)
+{
+	GenFileSym(fname, 0x64 /* N_SO */, 0, DEFINED | TEXT);
+}
+
+void GenLineNoSym(void)
+{
+	uint32_t addr;
+	uint32_t sattr;
+	uint8_t type;
+	SYM * symbol;
+
+	static uint16_t prevlineno = -1;
+	static uint32_t prevaddr = -1;
+	static uint16_t prevfileno = 0;
+
+	if (orgactive)
+	{
+		addr = orgaddr;
+		sattr = ABS | DEFINED | EQUATED;
+		// 0x4c is N_FLINE, function start/body/end line number, repurposed by
+		// MADMAC/ALN for ABS line numbers.
+		type = 0x4c;
+	}
+	else
+	{
+		addr = pcloc;
+		sattr = DEFINED | cursect;
+		type = 0x44; // N_SLINE, text section line number
+	}
+
+	if ((addr == prevaddr) || ((curlineno == prevlineno) && (prevfileno == cfileno)))
+		return;
+
+	prevaddr = addr;
+	prevlineno = curlineno;
+
+	if (prevfileno != cfileno)
+		GenFileSym(curfname, 0x84 /* N_SOL */, addr, sattr);
+
+	prevfileno = cfileno;
+
+	/* MADMAC counts lines starting at 0. Offset curlineno accordingly */
+	symbol = NewDebugSymbol(NULL, type, 0, curlineno - 1);
+
+	symbol->svalue = addr;
+	symbol->sattr |= sattr;
 }

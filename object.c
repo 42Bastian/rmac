@@ -180,19 +180,38 @@ _________________________________________________
 uint8_t * AddBSDSymEntry(uint8_t * buf, SYM * sym, int globflag)
 {
 	chptr = buf;						// Point to buffer for depositing longs
+	if (sym->sname)
+	{
 	D_long(strindx);					// Deposit the symbol string index
+	}
+    else
+	{
+		D_long(0);						// Deposit special NULL string index
+	}
 
 	uint16_t w1 = sym->sattr;			// Obtain symbol attributes
 	uint32_t z = 0;						// Initialize resulting symbol flags
 
+	if (sym->stype == DBGSYM)
+	{
+		// Debug symbols hard-code the a.out symbol type in the st_type field
+		// and can include additional type-specific data in the a.out symbol
+		// "other" and "description" fields, both packed into this same dword.
+		z = sym->st_type << 24;
+		z |= sym->st_other << 16;
+		z |= sym->st_desc;
+	}
+	else
+	{
+		// Translate rmac symbol attributes to an a.out symbol type.
 	if (w1 & EQUATED)
 	{
 		z = 0x02000000;					// Set equated flag
 	}
 
-	// If a symbol is both EQUd and flagged as TBD then we let the latter take
-	// precedence. Otherwise the linker will not even bother trying to relocate
-	// the address during link time.
+		// If a symbol is both EQUd and flagged as TBD then we let the latter
+		// take precedence. Otherwise the linker will not even bother trying to
+		// relocate the address during link time.
 
 	switch (w1 & TDB)
 	{
@@ -203,6 +222,7 @@ uint8_t * AddBSDSymEntry(uint8_t * buf, SYM * sym, int globflag)
 
 	if (globflag)
 		z |= 0x01000000;				// Set global flag if requested
+	}
 
 	D_long(z);							// Deposit symbol attribute
 	z = sym->svalue;					// Obtain symbol value
@@ -214,8 +234,11 @@ uint8_t * AddBSDSymEntry(uint8_t * buf, SYM * sym, int globflag)
 		z += sect[DATA].sloc;			// If BSS add DATA segment size
 
 	D_long(z);							// Deposit symbol value
+	if (sym->sname)
+	{
 	strcpy(strtable + strindx, sym->sname);
 	strindx += strlen(sym->sname) + 1;	// Incr string index incl null terminate
+	}
 	buf += 12;							// Increment buffer to next record
 	symsize += 12;						// Increment symbol table size
 
