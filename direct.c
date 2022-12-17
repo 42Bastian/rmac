@@ -682,7 +682,7 @@ allright:
 
 	chcheck(size);
 
-	DEBUG { printf("INCBIN: File '%s' is %li bytes.\n", string[filename], size); }
+	DEBUG { printf("INCBIN: File '%s' is %lli bytes.\n", string[filename], size); }
 
 	char * fileBuffer = (char *)malloc(size);
 	bytesRead = read(fd, fileBuffer, size);

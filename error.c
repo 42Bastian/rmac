@@ -119,7 +119,7 @@ int error(const char * text, ...)
 			uint16_t fnum = cur_inobj->inobj.imacro->im_macro->cfileno;
 
 			// Check for absolute top filename (this should never happen)
-			if (fnum == -1)
+			if (fnum == (uint16_t)-1)
 				interror(8);
 			else
 			{

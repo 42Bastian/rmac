@@ -373,7 +373,7 @@ int AddFixup(uint32_t attr, uint32_t loc, TOKEN * fexpr)
 
 	DEBUG { printf("AddFixup: sno=%u, l#=%u, attr=$%X, loc=$%X, expr=%p, sym=%p, org=$%X\n", cursect, fixup->lineno, fixup->attr, fixup->loc, (void *)fixup->expr, (void *)fixup->symbol, fixup->orgaddr);
 		if (symbol != NULL)
-			printf("          name: %s, value: $%lX\n", symbol->sname, symbol->svalue);
+			printf("          name: %s, value: $%llX\n", symbol->sname, symbol->svalue);
 	}
 
 	return 0;

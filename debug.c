@@ -51,7 +51,7 @@ TOKEN * printexpr(TOKEN * tokenptr)
 				break;
 			case CONST:
 				tp.u32 = tokenptr;
-				printf("$%lX ", *tp.u64++);
+				printf("$%llX ", *tp.u64++);
 				tokenptr = tp.u32;
 				break;
 			case ACONST:
@@ -270,7 +270,7 @@ int dumptok(TOKEN * tk)
 		{
 		case CONST:                                        // CONST <value>
 			tp.u32 = tk;
-			printf("CONST=%lu", *tp.u64++);
+			printf("CONST=%llu", *tp.u64++);
 			tk = tp.u32;
 			break;
 		case STRING:                                       // STRING <address>
@@ -329,7 +329,7 @@ void DumpTokens(TOKEN * tokenBuffer)
 		else if (*t == CONST)
 		{
 			tp.u32 = t + 1;
-			printf("[CONST: $%lX]", *tp.u64);
+			printf("[CONST: $%llX]", *tp.u64);
 			t += 2;
 		}
 		else if (*t == ACONST)

@@ -221,7 +221,7 @@ void SetFilenameForErrorReporting(void)
 	WORD fnum = cfileno;
 
 	// Check for absolute top filename (this should never happen)
-	if (fnum == -1)
+	if (fnum == (uint16_t)-1)
 	{
 		curfname = "(*top*)";
 		return;
@@ -1819,14 +1819,14 @@ void DumpTokenBuffer(void)
 		{
 			PTR tp;
 			tp.u32 = t + 1;
-			printf("[CONST: $%lX]", *tp.u64);
+			printf("[CONST: $%llX]", *tp.u64);
 			t += 2;
 		}
 		else if (*t == FCONST)
 		{
 			PTR tp;
 			tp.u32 = t + 1;
-			printf("[FCONST: $%lX]", *tp.u64);
+			printf("[FCONST: $%llX]", *tp.u64);
 			t += 2;
 		}
 		else if (*t == ACONST)

@@ -415,11 +415,11 @@ int Process(int argc, char ** argv)
 					return errcnt;
 				}
 
-				sy = lookup(argv[argno] + 2, 0, 0);
+				sy = lookup((uint8_t *)argv[argno] + 2, 0, 0);
 
 				if (sy == NULL)
 				{
-					sy = NewSymbol(argv[argno] + 2, LABEL, 0);
+				  sy = NewSymbol((uint8_t *)argv[argno] + 2, LABEL, 0);
 					sy->svalue = 0;
 				}
 
@@ -751,7 +751,7 @@ int Process(int argc, char ** argv)
 		if (firstfname == NULL)
 			firstfname = defname;
 
-		strcpy(fnbuf, firstfname);
+		strncpy(fnbuf, firstfname,sizeof(fnbuf)-5);
 		fext(fnbuf, (prg_flag ? ".prg" : ".o"), 1);
 		objfname = fnbuf;
 	}
