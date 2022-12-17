@@ -210,7 +210,7 @@ uint64_t DoubleToFixedPoint(double d, int intBits, int fracBits)
 
 	// Invert the result, if necessary
 	if (signBit == 1)
-		result = (result = 0xFFFFFFFFFFFFFFFFLL) + 1;
+		result = (result ^ 0xFFFFFFFFFFFFFFFFLL) + 1;
 
 	return result;
 }

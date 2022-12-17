@@ -1167,7 +1167,7 @@ CHK_FOR_DISPn:
 			{
 				// When PC relative is enforced, check for any symbols that aren't
 				// EQU'd, in this case it's an illegal mode
-				if ((CHECK_OPTS(OPT_PC_RELATIVE)) && (AnEXATTR & (DEFINED | REFERENCED | EQUATED) == (DEFINED | REFERENCED)))
+			  if ((CHECK_OPTS(OPT_PC_RELATIVE)) && ((AnEXATTR & (DEFINED | REFERENCED | EQUATED)) == (DEFINED | REFERENCED)))
 					return error("relocation not allowed when o30 is enabled");
 
 				tok++;
