@@ -226,7 +226,7 @@ void DisplayVersion(void)
 		"|_|  |_| |_| |_|\\__,_|\\___|\n"
 		"\nRenamed Macro Assembler\n"
 		"Copyright (C) 199x Landon Dyer, 2011-2022 Reboot and Friends\n"
-		"V%01i.%01i.%01i %s (%s)\n\n", MAJOR, MINOR, PATCH, __DATE__, PLATFORM);
+		"V%01i.%01i.%01i-BS42 %s (%s)\n\n", MAJOR, MINOR, PATCH, __DATE__, PLATFORM);
 }
 
 //
