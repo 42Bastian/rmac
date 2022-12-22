@@ -8,7 +8,7 @@
 
 #include "error.h"
 #include <stdarg.h>
-#include <token.h>
+#include "token.h"
 #include "listing.h"
 char * interror_msg[] = {
 	"Unknown internal error",	// Error not referenced, should not be displayed
