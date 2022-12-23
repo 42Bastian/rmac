@@ -62,6 +62,7 @@ int activefpu = FPU_NONE;		// Active FPU (none by default)
 int org68k_active = 0;			// .org switch for 68k (only with RAW output format)
 uint32_t org68k_address;		// .org for 68k
 int correctMathRules;			// 1, use C operator precedence in expressions
+uint32_t used_architectures;	// Bitmask that records exactly which architectures were used during assembly
 
 //
 // Convert a string to uppercase
@@ -163,6 +164,7 @@ void DisplayHelp(void)
 		"  -f[format]        Output object file format\n"
 		"                    a: ALCYON\n"
 		"                    b: BSD (use this for Jaguar)\n"
+		"                    c: PRG (C64)\n"
 		"                    e: ELF\n"
 		"                    p: P56 (use this for DSP56001 only)\n"
 		"                    l: LOD (use this for DSP56001 only)\n"
@@ -442,6 +444,10 @@ int Process(int argc, char ** argv)
 				case 'b':			// -fb = BSD (Jaguar Recommended: 3 out 4 jaguars recommend it!)
 				case 'B':
 					obj_format = BSD;
+					break;
+				case 'c':
+				case 'C':
+					obj_format = C64PRG;
 					break;
 				case 'e':			// -fe = ELF
 				case 'E':
@@ -751,6 +757,8 @@ int Process(int argc, char ** argv)
 		if (firstfname == NULL)
 			firstfname = defname;
 
+		// It's the size of fnbuf minus 5 because of the possible 4 char suffix
+		// + trailing null (added by fext()).
 		strncpy(fnbuf, firstfname,sizeof(fnbuf)-5);
 		fext(fnbuf, (prg_flag ? ".prg" : ".o"), 1);
 		objfname = fnbuf;

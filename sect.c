@@ -462,6 +462,15 @@ int ResolveFixups(int sno)
 			if (evexpr(fup->expr, &eval, &eattr, &esym) != OK)
 				continue;
 
+			if (esym)
+				if (!(esym->sattr & DEFINED))
+				{
+					// If our expression still has an undefined symbol at this stage, it's bad news.
+					// The linker is never going to resolve the expression, so that's an error.
+					error("cannot export complex expression with unresloved symbol '%s'", esym->sname);
+					continue;
+				}
+
 			if ((CHECK_OPTS(OPT_PC_RELATIVE)) && (eattr & (DEFINED | REFERENCED | EQUATED)) == (DEFINED | REFERENCED))
 			{
 				error("relocation not allowed when o30 is enabled");

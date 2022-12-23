@@ -831,6 +831,11 @@ for(int j=0; j<i; j++)
 		// Just write the object file
 		m6502obj(fd);
 	}
+	else if (obj_format == C64PRG)
+	{
+		// Just write the object file
+		m6502c64(fd);
+	}
 	else if (obj_format == P56 || obj_format == LOD)
 	{
 		// Allocate 6MB object file image memory
@@ -859,8 +864,17 @@ for(int j=0; j<i; j++)
 	}
 	else if (obj_format == RAW)
 	{
-		if (!org68k_active)
+		if (!org68k_active && used_architectures & (!(M6502 | M56001P | M56001X | M56001Y | M56001L)))
 			return error("cannot output absolute binary without a starting address (.org or command line)");
+
+		if (used_architectures & M6502)
+		{
+			// Okay, this is not the best. But it'll have to do until we revamp things a bit with sections.
+			// Basically we assume that if raw output is requested and 6502 mode was switched on, nobody
+			// switched to other architectures. The combination doesn't make much sense anyway for now.
+			m6502raw(fd);
+			return 0;
+		}
 
 		// Alloc memory for text + data construction.
 		tds = sect[TEXT].sloc + sect[DATA].sloc;

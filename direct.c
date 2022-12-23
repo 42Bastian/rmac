@@ -621,32 +621,45 @@ allright:
 
 	tok += 2;
 
+	size = lseek(fd, 0L, SEEK_END);
+	pos = lseek(fd, 0L, SEEK_SET);
+
 	if (*tok != EOL)
 	{
-		// Check size parameter (can be omitted)
-		if (*tok++ == ',')
+		// Parse size and position parameters
+		uint64_t requested_size = -1;	// -1 means "not set" for these two
+
+		if (*tok++ != ',')
+		{
+			close(fd);
+			return error("expected comma after incbin filename");
+		}
+
+		if (*tok != EOL)
 		{
 			if (*tok != ',')
 			{
-				if (abs_expr(&size) != OK)
+				if (abs_expr(&requested_size) != OK)
 				{
 					close(fd);
 					return ERROR;
 				}
-				if ((int64_t)size <= 0)
+
+				if ((int64_t)requested_size <= 0 || requested_size > size)
 				{
+					close(fd);
 					return error("invalid incbin size requested");
 				}
 			}
-			else
-				size = lseek(fd, 0L, SEEK_END);
-		}
 
-		// Check offset parameter (can be omitted)
 		if (*tok != EOL)
 		{
-			if (*tok++ == ',')
+				if (*tok++ != ',')
 			{
+					close(fd);
+					return error("expected comma after size parameter");
+				}
+
 				if (*tok != EOL)
 				{
 					if (abs_expr(&pos) != OK)
@@ -655,29 +668,37 @@ allright:
 						return ERROR;
 					}
 
-					lseek(fd, pos, SEEK_SET);
-					if ((int64_t)(size - pos) < 0)
+					if ((int64_t)pos <= 0 || pos > size)
 					{
-						return error("requested incbin size out of range");
+						close(fd);
+						return error("invalid incbin position requested");
+					}
 					}
 				}
-				else
+
+			if (*tok != EOL)
 				{
-					// offset parameter omitted, so it's 0
-					pos = lseek(fd, 0L, SEEK_SET);
+				close(fd);
+				return error("extra characters following incbin");
 				}
 			}
-			else
-				return error(comma_error);
+
+		// Adjust size if the user didn't specify it via the parameter
+		if (requested_size == -1)
+		{
+			requested_size = size - pos;
 		}
-		else
-			pos = lseek(fd, 0L, SEEK_SET);
+
+		// Are we going to read past the end of the file?
+		if (pos + requested_size > size)
+		{
+			close(fd);
+			return error("invalid combination of incbin position and size");
 	}
-	else
-	{
-		// size & pos not given, so assume offset of 0 and all of the binary
-		size = lseek(fd, 0L, SEEK_END);
-		pos = lseek(fd, 0L, SEEK_SET);
+		size = requested_size;
+
+		// All checks passed, let's seek to where the user requested, otherwise at file start
+		lseek(fd, pos, SEEK_SET);
 	}
 
 	chcheck(size);
@@ -2006,6 +2027,7 @@ int d_56001(void)
 	regtab = reg56tab;
 	regcheck = reg56check;
 	regaccept = reg56accept;
+	used_architectures |= M56001P | M56001X | M56001Y | M56001L;
 	return 0;
 }
 
@@ -2037,6 +2059,7 @@ int d_gpu(void)
 	regtab = regrisctab;
 	regcheck = regrisccheck;
 	regaccept = regriscaccept;
+	//used_architectures |= MGPU;	// TODO: Should GPU/DSP have their own dedicated sections in the long run?
 	return 0;
 }
 
@@ -2068,6 +2091,7 @@ int d_dsp(void)
 	regtab = regrisctab;
 	regcheck = regrisccheck;
 	regaccept = regriscaccept;
+	//used_architectures |= MDSP;	// TODO: Should GPU/DSP have their own dedicated sections in the long run?
 	return 0;
 }
 
@@ -2340,6 +2364,7 @@ int d_objproc(void)
 	rgpu = 0;			// Unset GPU assembly
 	rdsp = 0;			// Unset DSP assembly
 	dsp56001 = 0;		// Unset 56001 assembly
+	//used_architectures |= MOP;	// TODO: Should OP have its own dedicated section in the long run?
 	return OK;
 }
 
@@ -2482,4 +2507,3 @@ int d_endif(void)
 	f_ifent = rif;
 	return 0;
 }
-

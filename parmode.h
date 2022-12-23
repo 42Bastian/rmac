@@ -37,10 +37,6 @@
 		AMn = IMMED;
 	}
 
-	// Small problem with this is that the opening parentheses might be an
-	// expression that's part of a displacement; this code will falsely flag
-	// that as an error.
-
 	// (An)
 	// (An)+
 	// (An,Xn[.siz][*scale])
@@ -919,14 +915,72 @@ IS_SUPPRESSEDn:
 		else
 		{
 			// (expr...
+			// We have an aliasing problem here, because a couple of differenct cases end up here:
+			// (a0), 0(a0,d0), (-288,a0,d0.l) can be easily detected and parsed.
+			// But what about (160*150)+4(A1)? With the old scheme, i.e. skip past the left parenthesis and try to parse the inside
+			// tokens will only parse (160*150) and everything else is assumed that it's part of the ea, i.e. +4(a1). This would produce
+			// an error since the parser would expect (a1). The way to work around this used to be to wrap all the displacement in
+			// parenthesis, ((160*150)+4)(a1). But that's something the user really doesn't want to think about.
+			// What we can do is to peek ahead in the token stream and see if we have something that reminds of an expression
+			// (i.e. no register tokens or commas) until we hit an open parenthesis plus a register (parenthesis balance during the scan
+			// has to be maintained of course, otherwise we might be led into false conclusions).
+			TOKEN *look_ahead = tok;
+			int parenthesis_level = 1;	// We count the opening parenthesis so we're not at level 0
+			int this_is_an_expression = 0;
+			while (1)
+			{
+				if (*look_ahead == EOL)
+				{
+					// Something really bad happened, abort
+					return error("reached end of line while parsing expression");
+				}
+				if (*look_ahead == '(')
+				{
+					if (parenthesis_level == 0)
+					{
+						if (look_ahead[1] == EOL)
+						{
+							return error("reached end of line while parsing expression");
+						}
+						if ((look_ahead[1] >= REG68_A0 && look_ahead[1] <= REG68_A7) || look_ahead[1] == REG68_PC)
+						{
+							tok--;						// Rewind token pointer to start of parenthesis
+							this_is_an_expression = 1;
+							break;
+						}
+					}
+					parenthesis_level++;
+					look_ahead++;
+					continue;
+				}
+				if (*look_ahead == ',' || (*look_ahead >= REG68_A0 && *look_ahead <= REG68_A7))
+				{
+					// Nope, this is a different case, abort
+					break;
+				}
+				if (*look_ahead == ')')
+				{
+					parenthesis_level--;
+					if (parenthesis_level < 0) return error("unbalanced parenthesis in expression");
+					look_ahead++;
+					continue;
+				}
+				if (*look_ahead == ACONST||*look_ahead==FCONST)
+				{
+					look_ahead += 3;	// Skip all the data associated with ACONST
+					continue;
+				}
+
+				look_ahead++;
+			}
+
 			if (expr(AnEXPR, &AnEXVAL, &AnEXATTR, &AnESYM) != OK)
 				return ERROR;
 
 			// It could be that this is really just an expression prefixing a
 			// register as a displacement...
-			if (*tok == ')')
+			if (*tok == '(')
 			{
-				tok++;
 				goto CHK_FOR_DISPn;
 			}
 

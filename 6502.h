@@ -19,6 +19,8 @@ extern void Init6502();
 extern int d_6502();
 extern void m6502cg(int op);
 extern void m6502obj(int ofd);
+extern void m6502raw(int ofd);
+extern void m6502c64(int ofd);
 
 #endif // __6502_H__
 

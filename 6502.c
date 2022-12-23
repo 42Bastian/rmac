@@ -243,6 +243,7 @@ int d_6502()
 	regtab = reg65tab;
 	regcheck = reg65check;
 	regaccept = reg65accept;
+	used_architectures |= M6502;
 
 	return 0;
 }
@@ -569,3 +570,52 @@ void m6502obj(int ofd)
 	}
 }
 
+
+// Write raw 6502 org'd code.
+// Super copypasta'd from above function
+void m6502raw(int ofd)
+{
+	CHUNK * ch = sect[M6502].scode;
+
+	// If no 6502 code was generated, bail out
+	if ((ch == NULL) || (ch->challoc == 0))
+		return;
+
+	register uint8_t *p = ch->chptr;
+
+	for(uint16_t * l=&orgmap[0][0]; l<currentorg; l+=2)
+	{
+		// Write the segment data
+		uint32_t unused = write(ofd, p + l[0], l[1] - l[0]);
+	}
+}
+
+
+//
+// Generate a C64 .PRG output file
+//
+void m6502c64(int ofd)
+{
+	uint8_t header[2];
+
+	CHUNK * ch = sect[M6502].scode;
+
+	// If no 6502 code was generated, bail out
+	if ((ch == NULL) || (ch->challoc == 0))
+		return;
+
+	if (currentorg != &orgmap[1][0])
+	{
+		// More than one 6502 section created, this is not allowed
+		error("when generating C64 .PRG files only one org section is allowed - aborting");
+		return;
+	}
+
+	SETLE16(header, 0, orgmap[0][0]);
+	register uint8_t * p = ch->chptr;
+
+	// Write header
+	uint32_t unused = write(ofd, header, 2);
+	// Write the data
+	unused = write(ofd, p + orgmap[0][0], orgmap[0][1] - orgmap[0][0]);
+}

@@ -585,7 +585,7 @@ be converted from a linked list into an array).
 //
 // Evaluate expression.
 // If the expression involves only ONE external symbol, the expression is
-// UNDEFINED, but it's value includes everything but the symbol value, and
+// UNDEFINED, but its value includes everything but the symbol value, and
 // 'a_esym' is set to the external symbol.
 //
 int evexpr(TOKEN * _tk, uint64_t * a_value, WORD * a_attr, SYM ** a_esym)

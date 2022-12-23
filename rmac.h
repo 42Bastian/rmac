@@ -199,6 +199,7 @@ LOD,				// DSP 56001 object format
 P56,				// DSP 56001 object format
 XEX, 				// COM/EXE/XEX/whatever a8 object format
 RAW,				// Output at absolute address
+C64PRG,				// C64 .PRG format
 };
 
 // Assembler token
@@ -262,6 +263,7 @@ PTR
 #define SIZP         0x0080		// .p (FPU pakced decimal real)
 #define SIZQ         0x0100		// .q (quad word)
 
+// Extended attributes
 #define EQUATEDREG   0x0008		// Equated register symbol
 #define UNDEF_EQUR   0x0010
 #define EQUATEDCC    0x0020
@@ -319,6 +321,7 @@ extern int *regbase;
 extern int *regtab;
 extern int *regcheck;
 extern int *regaccept;
+extern uint32_t used_architectures;
 
 // Exported functions
 void strtoupper(char * s);

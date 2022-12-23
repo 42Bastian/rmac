@@ -1257,6 +1257,14 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 			if (stuffnull)	// Arrange for string termination on next pass
 				nullspot = ln;
 
+			if (disabled)
+			{
+				// When we are in a disabled code block, the only thing that can break out
+				// of this is an ".endif" keyword, so this is the minimum we have to parse
+				// in order to discover such a keyword.
+				goto goteol;
+			}
+
 			continue;
 		}
 
