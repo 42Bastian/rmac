@@ -37,6 +37,7 @@ static TOKEN fixupExpr[4] = { CONST, 0, 0, ENDEXPR };
 //static PTR fixupPtr = { .tk = (fixupExpr + 1) };		// C99 \o/
 static PTR fixupPtr = { (uint8_t *)(fixupExpr + 1) };	// meh, it works
 
+extern int noYPOSby2;
 //
 // The main Object Processor assembler. Basically just calls the sub functions
 // to generate the appropriate code.
@@ -181,7 +182,8 @@ static int HandleBitmap(void)
 
 	ErrorIfNotAtEOL();
 
-	uint64_t p1 = 0x00 | ((ypos * 2) << 3) | (iheight << 14) | (linkAddr << 21) | (dataAddr << 40);
+        if ( noYPOSby2 == 0 ) ypos *= 2;
+	uint64_t p1 = 0x00 | (ypos << 3) | (iheight << 14) | (linkAddr << 21) | (dataAddr << 40);
 	uint64_t p2 = xpos | (bpp << 12) | (pitch << 15) | (dwidth << 18) | (iwidth << 28) | (index << 38) | (flags << 45) | (firstpix << 49);
 
 	lastSloc = sloc;
@@ -305,7 +307,8 @@ static int HandleScaledBitmap(void)
 
 	ErrorIfNotAtEOL();
 
-	uint64_t p1 = 0x01 | ((ypos * 2) << 3) | (iheight << 14) | (linkAddr << 21) | (dataAddr << 40);
+        if ( noYPOSby2 == 0 ) ypos *= 2;
+	uint64_t p1 = 0x01 | (ypos  << 3) | (iheight << 14) | (linkAddr << 21) | (dataAddr << 40);
 	uint64_t p2 = xpos | (bpp << 12) | (pitch << 15) | (dwidth << 18) | (iwidth << 28) | (index << 38) | (flags << 45) | (firstpix << 49);
 	uint64_t p3 = (xscale & 0xFF) | (yscale & 0xFF) << 8 | (remainder & 0xFF) << 16;
 
@@ -400,8 +403,8 @@ static int HandleBranch(void)
 		AddFixup(FU_QUAD | FU_OBJLINK, sloc, exprbuf);
 
 	ErrorIfNotAtEOL();
-
-	uint64_t p1 = 0x03 | (cc << 14) | ((ypos * 2) << 3) | ((eval & 0x3FFFF8) << 21);
+        if ( noYPOSby2 == 0 ) ypos *= 2;
+	uint64_t p1 = 0x03 | (cc << 14) | (ypos << 3) | ((eval & 0x3FFFF8) << 21);
 
 	lastObjType = 3;
 	D_quad(p1);

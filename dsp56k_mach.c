@@ -586,7 +586,7 @@ int dsp_imm12_abs16(LONG inst)
 
 	if (dsp_a1exattr & DEFINED)
 	{
-		D_dsp((a1exval - 1));
+		D_dsp((dsp_a1exval - 1));
 	}
 	else
 	{
@@ -835,7 +835,12 @@ int dsp_ea_imm5_abs16(LONG inst)
 
 		if (v < 0 || v > 23)
 			return error("immediate value must be between 0 and 23");
-
+		
+		if (dsp_am1==M_DSPEA && dsp_a1exval)
+		{
+			return error("illegal X: or Y: ea mode");
+		}
+		
 		inst |= (dsp_a1reg << 8) | v | dsp_a1memspace;
 		D_dsp(inst);
 

@@ -1185,19 +1185,19 @@ DEBUG { printf("TokenizeLine: Calling fpop() from SRC_IFILE...\n"); }
 					{
 						j = (int)tolowertab[*p2++];
 						j += kwbase[state];
-
+			
 						if (kwcheck[j] != state)
 						{
 							j = -1;
 							break;
 						}
-
+			
 						if (*p == EOS || p2 == ln)
 						{
 							j = kwaccept[j];
 							break;
 						}
-
+			
 						state = kwtab[j];
 					}
 				}
@@ -1922,3 +1922,4 @@ void DumpTokenBuffer(void)
 
 	printf("[EOL]\n");
 }
+

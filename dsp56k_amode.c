@@ -511,7 +511,7 @@ static inline int dsp_parmode(int *am, int *areg, TOKEN * AnEXPR, uint64_t * AnE
 				*AnEXVAL = (LONG)(((int32_t)(((uint32_t)*AnEXVAL) << (32 - 6))) >> (32 - 6));  // Sign extend 6 to 32 bits
 
 				if (*AnEXVAL < 0xFFFFFFC0)
-					return error("I/O Short Addressing Mode addresses must be between $FFE0 and $1F");
+					return error("I/O Short Addressing Mode addresses must be between $FFE0 and $FFFF");
 			}
 
 			*am = M_DSPPP;
@@ -888,7 +888,7 @@ static inline int SDreg(int reg)
 {
 	if (reg >= REG56_X0 && reg <= REG56_N7)
 		return reg & 0xFF;
-	else if (reg >= REG56_A0&&reg <= REG56_A2)
+	else if (reg >= REG56_A0 && reg <= REG56_A2)
 		return (8 >> (reg & 7)) | 8;
 	else //if (reg>=REG56_R0&&reg<=REG56_R7)
 		return reg - REG56_R0 + 16;
@@ -899,9 +899,9 @@ static inline int SDreg(int reg)
 	//	x1      | 261   | 5
 	//	y0      | 262   | 6
 	//	y1      | 263   | 7
-	//	b0      | 265   | 8
-	//	b2      | 267   | 9
-	//	b1      | 269   | 10
+	//	b0      | 265   | 9
+	//	b2      | 267   | 11
+	//	b1      | 269   | 13
 	//	a       | 270   | 14
 	//	b       | 271   | 15
 	//	n0      | 280   | 24
@@ -912,9 +912,9 @@ static inline int SDreg(int reg)
 	//	n5      | 285   | 29
 	//	n6      | 286   | 30
 	//	n7      | 287   | 31
-	//	a0	    | 136   | 0
-	//	a1	    | 137   | 1
-	//	a2      | 138   | 2
+	//	a0	    | 136   | 8
+	//	a1	    | 137   | 9
+	//	a2      | 138   | 10
 	//	r0	    | 151   | 16
 	//	r1	    | 152   | 17
 	//	r2	    | 153   | 18
@@ -1588,7 +1588,7 @@ x_gotea1:
 		// then it won't be used anyway
 		ea1 = DSP_EA_ABS;
 
-		if (!(dspImmedEXATTR&DEFINED))
+		if (!(dspImmedEXATTR & DEFINED))
 		{
 			force_imm = NUM_FORCE_LONG;
 			deposit_extra_ea = DEPOSIT_EXTRA_WORD;
@@ -2437,6 +2437,7 @@ static inline LONG checkea(const uint32_t termchar, const int strings)
 			else
 				return error(ea_errors[strings][11]);
 		}
+		return error("Expected R0-R7 in effective addressing mode");
 	}
 
 	return error("internal assembler error: Please report this error message: 'reached the end of checkea' with the line of code that caused it. Thanks, and sorry for the inconvenience");
@@ -2511,10 +2512,10 @@ LONG checkea_full(const uint32_t termchar, const int strings)
 // It's quite complex so it's split into a few procedures (in fact most of the
 // above ones). A big effort was made so this can be managable and not too
 // hacky, however one look at the 56001 manual regarding parallel moves and
-// you'll know that this is not an easy // problem to deal with!
+// you'll know that this is not an easy 
+// problem to deal with!
 // dest=destination register from the main opcode. This must not be the same
 // as D1 or D2 and that even goes for stuff like dest=A, D1=A0/1/2!!!
-//
 //
 LONG parmoves(WORD dest)
 {
@@ -2818,7 +2819,7 @@ deposit_immediate_short_with_register:
 		// X:   'S,X:ea' 'S,X:aa'
 		// X:R  'S,X:ea S2,D2' 'A,X:ea X0,A' 'B,X:ea X0,B'
 		// Y:   'S,Y:ea' 'S,Y:aa'
-		// R:Y: 'S1,D1 Y:ea,D2' 'S1,D1 S2,Y:ea' 'Y0,A A,Y:ea' 'Y0,B B,Y:ea' 'S1,D1 #xxxxxx,D2' 'Y0,A A,Y:ea' 'Y0,B B,Y:ea'
+		// R:Y: 'S1,D1 Y:ea,D2' 'S1,D1 S2,Y:ea' 'Y0,A A,Y:ea' 'Y0,B B,Y:ea' 'S1,D1 #xxxxxx,D2' 'Y0,B B,Y:ea'
 		// L:   'S,L:ea' 'S,L:aa'
 		LONG L_S1;
 parse_everything_else:

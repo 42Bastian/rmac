@@ -2204,16 +2204,15 @@ int m_pflusha(WORD inst, WORD siz)
 		D_word(inst);
 		return OK;
 	}
-	else if (activecpu == CPU_68040)
+	else if (activecpu == CPU_68040 || activecpu == CPU_68060)
 	{
 		inst = 0b1111010100011000;
 		D_word(inst);
 		return OK;
 	}
-	else
-		return error(unsupport);
+	
+	return error(unsupport);
 
-	return OK;
 }
 
 

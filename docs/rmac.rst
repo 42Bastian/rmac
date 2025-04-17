@@ -4,20 +4,20 @@ RMAC
 =====================
 Reference Manual
 ================
-version 2.0.23
+version 2.2.36
 ==============
 
 © and notes
 ===========
 
 *NOTE: Every effort has been made to ensure the accuracy and robustness of this
-manual and the associated software. However, because Reboot is constantly improving
-and updating its computer software, it is unable to guarantee
+manual and the associated software. However, the authors are constantly improving
+and updating its computer software, we is unable to guarantee
 the accuracy of printed or duplicated material after the date of publication and
 disclaims liability for changes, errors or omissions.*
 
 
-*Copyright © 2011-2022, the rmac authors*
+*Copyright © 2011-2024, the rmac authors*
 
 *All rights reserved.*
 
@@ -36,7 +36,7 @@ runs on the any POSIX compatible platform and the Atari ST. It was initially wri
 at Atari Corporation by programmers who needed a high performance assembler
 for their work. Then, more than 20 years later, because there was still a need for
 such an assembler and what was available wasn't up to expectations, Subqmod
-and eventually Reboot continued work on the freely released source, adding Jaguar
+and eventually the rmac authors continued work on the freely released source, adding Jaguar
 extensions and fixing bugs. Over time the assembler has been extended by adding
 support for Motorola's 68020/30/40/60, 68881/2, DSP56001 CPUs as well as Atari's
 Object Processor (OP) found on the Atari Jaguar.
@@ -116,10 +116,11 @@ is noname.o. The **-o** switch (see below) can be used change the output file na
 ===================  ===========
 Switch               Description
 ===================  ===========
--dname\ *[=value]*   Define symbol, with optional value.
+-dname\ *[=value]*   Define symbol, with optional value. Prefix value with **$** for hexadecimal input.
 -e\ *[file[.err]]*   Direct error messages to the specified file.
 -fa                  ALCYON output object file format (implied when **-ps** is enabled).
 -fb                  BSD COFF output object file format.
+-fb                  Commodore 64 PRG format.
 -fe                  ELF output object file format.
 -fr                  Absolute address. Source code is required to have one .org statement.
 -fx                  Atari 800 com/exe/xex output object file format.
@@ -151,7 +152,7 @@ Switch               Description
 
                       `jerry - Jaguar DSP JRISC`
 
-                      -o\ *file[.o]*       Direct object code output to the specified file.
+-o\ *file[.o]*        Direct object code output to the specified file.
 +/~oall               Turn all optimisations on/off
 +o\ *0-30*/*p*        Enable specific optimisation
 ~o\ *0-30*/*p*        Disable specific optimisation
@@ -714,8 +715,8 @@ bits set (i.e. character codes 128...255).
 
 You should be aware that backslash characters are popular in GEMDOS path
 names, and that you may have to escape backslash characters in your existing source
-code. For example, to get the file "'c:\\auto\\ahdi.s'" you would specify the string
-"`c:\\\\auto\\\\ahdi.s`".
+code. For example, to get the file ``c:\auto\ahdi.s`` you would specify the string
+``c:\\auto\\ahdi.s``.
 
 `Register Lists`_
 '''''''''''''''''
@@ -1698,7 +1699,7 @@ by number.
 ============ ================================================
 Special Form Description
 ============ ================================================
-``\\``       a single "\",
+``\\``       a single ``\``,
 ``\~``       a unique label of the form "Mn"
 ``\#``       the number of arguments actually specified
 ``\!``       the "dot-size" specified on the macro invocation
@@ -2076,6 +2077,9 @@ As the 6502 object code is not linkable (currently there is no linker) external
 references may not be made. (Nevertheless, RMAC may reasonably be used for
 large assemblies because of its blinding speed.)
 
+Currently there is no support for undocumented opcodes. This will be addressed
+in a future release.
+
 `6502 Addressing Modes`_
 ''''''''''''''''''''''''
 All standard 6502 addressing modes are supported, with the exception of the
@@ -2151,6 +2155,8 @@ the *.exe* format consists of chunks of this format (one after the other):
      02-03      Start Address. The segment will load at this address
      04-05      End Address. The last byte to load for this segment
      06-..      The actual segment data to load (End Address-Start Address + 1 bytes)
+
+In addition there is the standard output format for Commodore 64 binaries (.PRG).
 
 `Error Messages`_
 =================

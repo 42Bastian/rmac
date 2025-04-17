@@ -652,10 +652,10 @@ allright:
 				}
 			}
 
-		if (*tok != EOL)
-		{
-				if (*tok++ != ',')
+			if (*tok != EOL)
 			{
+				if (*tok++ != ',')
+				{
 					close(fd);
 					return error("expected comma after size parameter");
 				}
@@ -673,15 +673,15 @@ allright:
 						close(fd);
 						return error("invalid incbin position requested");
 					}
-					}
-				}
-
-			if (*tok != EOL)
-				{
-				close(fd);
-				return error("extra characters following incbin");
 				}
 			}
+
+			if (*tok != EOL)
+			{
+				close(fd);
+				return error("extra characters following incbin");
+			}
+		}
 
 		// Adjust size if the user didn't specify it via the parameter
 		if (requested_size == -1)
@@ -694,7 +694,7 @@ allright:
 		{
 			close(fd);
 			return error("invalid combination of incbin position and size");
-	}
+		}
 		size = requested_size;
 
 		// All checks passed, let's seek to where the user requested, otherwise at file start
@@ -899,8 +899,8 @@ int d_align(void)
 		{
 			sloc += bytesToSkip;
 
-		if (orgactive)
-			orgaddr += bytesToSkip;
+			if (orgactive)
+				orgaddr += bytesToSkip;
 		}
 	}
 	return 0;
@@ -1221,7 +1221,13 @@ int d_ds(WORD siz)
 
 	if (expr(exprbuf, &eval, &eattr, NULL) < 0)
 		return ERROR;
-
+	
+	if (!(eattr & DEFINED))
+		return error("undefined symbols not allowed in .ds statements");
+	
+	if ((eattr&(FLOAT | RISCREG)))
+		return error(".ds value must be integer");
+	
 	// Check to see if the value being passed in is negative (who the hell does
 	// that?--nobody does; it's the code gremlins, or rum, what does it)
 	// N.B.: Since 'eval' is of type uint64_t, if it goes negative, it will
@@ -1686,7 +1692,7 @@ int d_dcb(WORD siz)
 	dep_block((uint32_t)evalc, siz, (uint32_t)eval, eattr, exprbuf);
 
     ErrorIfNotAtEOL();
-	return 0;
+    return 0;
 }
 
 
@@ -1736,7 +1742,7 @@ int d_init(WORD def_siz)
 		switch (*tok++)
 		{                                 // Determine size of object to deposit
 		case DOTB: siz = SIZB; break;
-		case DOTW: siz = SIZB; break;
+		case DOTW: siz = SIZW; break;
 		case DOTL: siz = SIZL; break;
 		default:
 			siz = def_siz;
@@ -2509,3 +2515,4 @@ int d_endif(void)
 	f_ifent = rif;
 	return 0;
 }
+

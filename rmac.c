@@ -33,8 +33,7 @@ int glob_flag;					// Assume undefined symbols are global
 int lsym_flag;					// Include local symbols in object file (ALWAYS true)
 int dsym_flag;					// Gen debug syms (Requires obj_format = BSD)
 int optim_warn_flag;			// Warn about possible short branches
-int prg_flag;					// !=0, produce .PRG executable (2=symbols)
-int prg_extend;					// !=0, output extended .PRG symbols
+int prg_flag;					// !=0, produce .PRG executable (2=symbols, 3=extended symbols)
 int legacy_flag;				// Do stuff like insert code in RISC assembler
 int obj_format;					// Object format flag
 int debug;						// [1..9] Enable debugging levels
@@ -62,6 +61,7 @@ int activefpu = FPU_NONE;		// Active FPU (none by default)
 int org68k_active = 0;			// .org switch for 68k (only with RAW output format)
 uint32_t org68k_address;		// .org for 68k
 int correctMathRules;			// 1, use C operator precedence in expressions
+int noYPOSby2;                          // do not mulply YPOS by two for OP
 uint32_t used_architectures;	// Bitmask that records exactly which architectures were used during assembly
 
 //
@@ -212,6 +212,7 @@ void DisplayHelp(void)
 		"  -x                Turn on debugging mode\n"
 		"  -y[pagelen]       Set page line length (default: 61)\n"
 		"  -4                Use C style operator precedence\n"
+                "  -q                Do not multpliy YPOS by 2\n"
 		"\n", cmdlnexec);
 }
 
@@ -378,6 +379,7 @@ int Process(int argc, char ** argv)
 	regcheck = reg68check;			// Idem
 	regaccept = reg68accept;		// Idem
     correctMathRules = 0;			// respect operator precedence
+    noYPOSby2 = 0;
 	used_architectures = 0;			// Initialise used architectures bitfield
 	// Initialize modules
 	InitSymbolTable();				// Symbol table
@@ -397,8 +399,11 @@ int Process(int argc, char ** argv)
 		{
 			switch (argv[argno][1])
 			{
-                        case '4':
-                          correctMathRules = 1;
+			case '4':
+				correctMathRules = 1;
+				break;
+                        case 'q':
+                          noYPOSby2 = 1;
                           break;
 			case 'd':				// Define symbol
 			case 'D':
@@ -777,7 +782,7 @@ int Process(int argc, char ** argv)
 
 		// It's the size of fnbuf minus 5 because of the possible 4 char suffix
 		// + trailing null (added by fext()).
-		strncpy(fnbuf, firstfname,sizeof(fnbuf)-5);
+		strncpy(fnbuf, firstfname, sizeof(fnbuf) - 5);
 		fext(fnbuf, (prg_flag ? ".prg" : ".o"), 1);
 		objfname = fnbuf;
 	}

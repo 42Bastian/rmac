@@ -9,10 +9,10 @@ addl    M_ACC56    M_ACC56      PARMOVE %mmmmmmmmmmmmmmmm0001d010  dsp_baab     
 addr    M_ACC56    M_ACC56      PARMOVE %mmmmmmmmmmmmmmmm0000d010  dsp_baab                 d=(b,a=0, a,b=1)
 add     M_ACC56    M_ACC56      PARMOVE %mmmmmmmmmmmmmmmm0001d000  dsp_baab           +     d=(a=0, b=1)
 -       M_ALL48    M_ACC56      PARMOVE %mmmmmmmmmmmmmmmm0jjjd000  dsp_acc48                jjj=(x=2, y=3, x0=4, y0=5, x1=6, y1=7), d=(a=0, b=1)
-cmp     M_ACC56    M_ACC56      PARMOVE %mmmmmmmmmmmmmmmm0000d101  dsp_baab           +     d=(a=0, b=1)
--       M_ALU24    M_ACC56      PARMOVE %mmmmmmmmmmmmmmmm0jjjd101  dsp_acc48                jjj=(x=2, y=3, x0=4, y0=5, x1=6, y1=7), d=(a=0, b=1)
-cmpm    M_ACC56    M_ACC56      PARMOVE %mmmmmmmmmmmmmmmm0000d111  dsp_baab           +     d=(a=0, b=1)
--       M_ALU24    M_ACC56      PARMOVE %mmmmmmmmmmmmmmmm0jjjd111  dsp_acc48                jjj=(x=2, y=3, x0=4, y0=5, x1=6, y1=7), d=(a=0, b=1)
+cmp     M_ACC56    M_ACC56      PARTEST %mmmmmmmmmmmmmmmm0000d101  dsp_baab           +     d=(a=0, b=1)
+-       M_ALU24    M_ACC56      PARTEST %mmmmmmmmmmmmmmmm0jjjd101  dsp_acc48                jjj=(x=2, y=3, x0=4, y0=5, x1=6, y1=7), d=(a=0, b=1)
+cmpm    M_ACC56    M_ACC56      PARTEST %mmmmmmmmmmmmmmmm0000d111  dsp_baab           +     d=(a=0, b=1)
+-       M_ALU24    M_ACC56      PARTEST %mmmmmmmmmmmmmmmm0jjjd111  dsp_acc48                jjj=(x=2, y=3, x0=4, y0=5, x1=6, y1=7), d=(a=0, b=1)
 sub     M_ACC56    M_ACC56      PARMOVE %mmmmmmmmmmmmmmmm0001d100  dsp_baab           +     d=(a=0, b=1)
 -       M_ALL48    M_ACC56      PARMOVE %mmmmmmmmmmmmmmmm0jjjd100  dsp_acc48                jjj=(x=2, y=3, x0=4, y0=5, x1=6, y1=7), d=(a=0, b=1)
 tfr     M_ACC56    M_ACC56      PARMOVE %mmmmmmmmmmmmmmmm0000d001  dsp_baab           +     d=(a=0, b=1)
@@ -22,7 +22,7 @@ rol     M_ACC56    M_AM_NONE    PARMOVE %mmmmmmmmmmmmmmmm0011d111  dsp_ab       
 ror     M_ACC56    M_AM_NONE    PARMOVE %mmmmmmmmmmmmmmmm0010d111  dsp_ab                   d=(a=0, b=1)
 subl    M_ACC56    M_ACC56      PARMOVE %mmmmmmmmmmmmmmmm0001d110  dsp_baab                 d=(b,a=0, a,b=1)
 subr    M_ACC56    M_ACC56      PARMOVE %mmmmmmmmmmmmmmmm0000d110  dsp_baab                 d=(b,a=0, a,b=1)
-tst     M_ACC56    M_AM_NONE    PARMOVE %mmmmmmmmmmmmmmmm0000d011  dsp_ab                   d=(a=0, b=1)
+tst     M_ACC56    M_AM_NONE    PARTEST %mmmmmmmmmmmmmmmm0000d011  dsp_ab                   d=(a=0, b=1)
 enddo   M_AM_NONE  M_AM_NONE    NOPARMO %000000000000000010001100  dsp_self
 illegal M_AM_NONE  M_AM_NONE    NOPARMO %000000000000000000000101  dsp_self
 nop     M_AM_NONE  M_AM_NONE    NOPARMO %000000000000000000000000  dsp_self

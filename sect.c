@@ -29,7 +29,7 @@ void SwitchSection(int);
 SECT sect[NSECTS];		// All sections...
 int cursect;			// Current section number
 
-// These are copied from the section descriptor, the current code chunk
+// Globals
 int fixups_active = 0;	// Give a heads up to expr() because it might need to take some special measures
 
 // These are copied from the section descriptor, the current code chunk
@@ -486,7 +486,7 @@ int ResolveFixups(int sno)
 			SYM * sy = fup->symbol;
 			eattr = sy->sattr;
 
-			if ((CHECK_OPTS(OPT_PC_RELATIVE)) && (eattr & (DEFINED | REFERENCED | EQUATED)) == (DEFINED | REFERENCED))
+			if (!(dw & FU_PCREL) && (CHECK_OPTS(OPT_PC_RELATIVE)) && (eattr & (DEFINED | REFERENCED | EQUATED)) == (DEFINED | REFERENCED))
 			{
 				error("relocation not allowed when o30 is enabled");
 				continue;

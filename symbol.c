@@ -110,10 +110,10 @@ SYM * NewSymbol(const uint8_t * name, int type, int envno)
 	// Don't hash debug symbols: they are never looked up and may have no name.
 	if (type != DBGSYM)
 	{
-	// Install symbol in the symbol table
-	int hash = HashSymbol(name, envno);
-	symbol->snext = symbolTable[hash];
-	symbolTable[hash] = symbol;
+		// Install symbol in the symbol table
+		int hash = HashSymbol(name, envno);
+		symbol->snext = symbolTable[hash];
+		symbolTable[hash] = symbol;
 	}
 
 	// Append symbol to the symbol-order list
@@ -226,7 +226,7 @@ void ForceUndefinedSymbolsGlobal(void)
 //       count of the # of symbols in the symbol table, and the second is to
 //       actually create it.
 //
-uint32_t AssignSymbolNos(uint8_t * buf, uint8_t *(* construct)(uint8_t * buf, SYM * sym, int globflag))
+uint32_t AssignSymbolNos(uint8_t * buf, uint8_t *(* construct)())
 {
 	uint16_t scount = 0;
 
@@ -298,7 +298,7 @@ uint32_t AssignSymbolNos(uint8_t * buf, uint8_t *(* construct)(uint8_t * buf, SY
 // N.B.: It should be possible to merge this with AssignSymbolNos, as there's
 //       nothing really ELF specific in here, other than the "globals go at the
 //       end of the queue" thing, which doesn't break the others. :-P
-uint32_t AssignSymbolNosELF(uint8_t * buf, uint8_t *(* construct)(uint8_t * buf, SYM * sym, int globflag))
+uint32_t AssignSymbolNosELF(uint8_t * buf, uint8_t *(* construct)())
 {
 	uint16_t scount = 0;
 
