@@ -1,7 +1,7 @@
 //
 // RMAC - Renamed Macro Assembler for all Atari computers
 // TOKEN.C - Token Handling
-// Copyright (C) 199x Landon Dyer, 2011-2024 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2025 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -667,6 +667,12 @@ char * GetNextMacroLine(void)
 		return NULL;
 
 	imacro->im_nextln = strp->next;
+
+	// Record the line we're expanding here as if this errors out then
+	// it's too late to find this info (since macros are stored in a
+	// single linked list)
+	macro_error_line_number = strp->lineno;
+
 //	ExpandMacro((char *)(strp + 1), imacro->im_lnbuf, LNSIZ);
 	ExpandMacro(strp->line, imacro->im_lnbuf, LNSIZ);
 
@@ -802,7 +808,7 @@ int fpop(void)
 
 	// Give a warning to the user that we had to wipe their bum for them
 	if (numUnmatched > 0)
-		warn("missing %d .endif(s)", numUnmatched);
+		error("missing %d .endif(s)", numUnmatched);
 
 	tok = inobj->in_otok;	// Restore tok and etok
 	etok = inobj->in_etok;

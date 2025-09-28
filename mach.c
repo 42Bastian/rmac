@@ -1,7 +1,7 @@
 //
 // RMAC - Renamed Macro Assembler for all Atari computers
 // MACH.C - Code Generation
-// Copyright (C) 199x Landon Dyer, 2011-2024 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2025 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -348,17 +348,25 @@ int m_ea(WORD inst, WORD siz)
 //
 int m_lea(WORD inst, WORD siz)
 {
-	if (CHECK_OPTS(OPT_LEA_ADDQ)
+	if ((CHECK_OPTS(OPT_LEA_ADDQ) || optim_warn_flag)
 		&& ((am0 == ADISP) && (a0reg == a1reg) && (a0exattr & DEFINED))
 		&& ((a0exval > 0) && (a0exval <= 8)))
 	{
-		inst = 0b0101000001001000 | (((uint16_t)a0exval & 7) << 9) | (a0reg);
-		D_word(inst);
+		if (CHECK_OPTS(OPT_LEA_ADDQ))
+		{
+			inst = 0b0101000001001000 | (((uint16_t)a0exval & 7) << 9) | (a0reg);
+			D_word(inst);
 
-		if (optim_warn_flag)
-			warn("o4: lea size(An),An converted to addq #size,An");
+			if (optim_warn_flag)
+				warn("o4: lea size(An),An converted to addq #size,An");
 
-		return OK;
+			return OK;
+		}
+		else if (optim_warn_flag && !optimizeOff)
+		{
+			warn("o4: potential lea size(An),An conversion to addq #size,An");
+
+		}
 	}
 
 	return m_ea(inst, siz);
@@ -463,42 +471,56 @@ int m_adda(WORD inst, WORD siz)
 {
 	if ((a0exattr & DEFINED) && (am0 == IMMED))
 	{
-		if (CHECK_OPTS(OPT_ADDA_ADDQ))
+		if (CHECK_OPTS(OPT_ADDA_ADDQ) || optim_warn_flag)
 		{
 			if ((a0exval > 1) && (a0exval <= 8))
 			{
-				// Immediate is between 1 and 8 so let's convert to addq
-				return m_addq(0b0101000000000000, siz);
-
-				if (optim_warn_flag)
-					warn("o8: adda/suba size(An),An converted to addq/subq #size,An");
+				if (CHECK_OPTS(OPT_ADDA_ADDQ))
+				{
+					if (optim_warn_flag)
+						warn("o8: adda/suba size(An),An converted to addq/subq #size,An");
+					
+					// Immediate is between 1 and 8 so let's convert to addq
+					return m_addq(0b0101000000000000, siz);
+				}
+				else if (optim_warn_flag && !optimizeOff)
+				{
+					warn("o8: potential adda/suba size(An),An conversion to addq/subq #size,An");
+				}
 			}
 		}
 
-		if (CHECK_OPTS(OPT_ADDA_LEA))
+		if (CHECK_OPTS(OPT_ADDA_LEA) || optim_warn_flag)
 		{
 			if ((a0exval > 8) && ((a0exval + 0x8000) < 0x10000))
 			{
-				// Immediate is larger than 8 and word size so let's convert to lea
-				am0 = ADISP;    // Change addressing mode
-				a0reg = a1reg;  // In ADISP a0reg is used instead of a1reg!
-
-				if (!(inst & (1 << 14)))
+				if (CHECK_OPTS(OPT_ADDA_LEA))
 				{
-					// We have a suba #x,AREG so let's negate the value
-					a0exval = -a0exval;
-				}
+					// Immediate is larger than 8 and word size so let's convert to lea
+					am0 = ADISP;    // Change addressing mode
+					a0reg = a1reg;  // In ADISP a0reg is used instead of a1reg!
 
-				// We're going to rely on +o4 for this, so let's ensure that
-				// it's on, even just for this instruction
-				int return_value;
-				int temp_flag = optim_flags[OPT_LEA_ADDQ];
-				optim_flags[OPT_LEA_ADDQ] = 1;				// Temporarily save switch state
-				return_value = m_lea(0b0100000111011000, SIZW);
-				optim_flags[OPT_LEA_ADDQ] = temp_flag;		// Restore switch state
-				if (optim_warn_flag)
-					warn("o9: adda.w/l #x,Ay converted to lea x(Dy),Ay");
-				return return_value;
+					if (!(inst & (1 << 14)))
+					{
+						// We have a suba #x,AREG so let's negate the value
+						a0exval = -a0exval;
+					}
+
+					// We're going to rely on +o4 for this, so let's ensure that
+					// it's on, even just for this instruction
+					int return_value;
+					int temp_flag = optim_flags[OPT_LEA_ADDQ];
+					optim_flags[OPT_LEA_ADDQ] = 1;				// Temporarily save switch state
+					return_value = m_lea(0b0100000111011000, SIZW);
+					optim_flags[OPT_LEA_ADDQ] = temp_flag;		// Restore switch state
+					if (optim_warn_flag)
+						warn("o9: adda.w/l #x,Ay converted to lea x(Dy),Ay");
+					return return_value;
+				}
+				else if (optim_warn_flag && !optimizeOff)
+				{
+					warn("o9: potential adda.w/l #x,Ay conversion to lea x(Dy),Ay");
+				}
 			}
 		}
 	}
@@ -749,44 +771,50 @@ int m_move(WORD inst, WORD size)
 	// Try to optimize to MOVEQ
 	// N.B.: We can get away with casting the uint64_t to a 32-bit value
 	//       because it checks for a SIZL (i.e., a 32-bit value).
-	if (CHECK_OPTS(OPT_MOVEL_MOVEQ)
+	if ((CHECK_OPTS(OPT_MOVEL_MOVEQ) || optim_warn_flag)
 		&& (siz == SIZL) && (am0 == IMMED) && (am1 == DREG)
 		&& ((a0exattr & (TDB | DEFINED)) == DEFINED)
 		&& ((uint32_t)a0exval + 0x80 < 0x100))
 	{
-		m_moveq((WORD)0x7000, (WORD)0);
+		if (CHECK_OPTS(OPT_MOVEL_MOVEQ))
+		{
+			m_moveq((WORD)0x7000, (WORD)0);
 
-		if (optim_warn_flag)
-			warn("o1: move.l #size,dx converted to moveq");
+			if (optim_warn_flag)
+				warn("o1: move.l #size,dx converted to moveq");
+			return OK;
+		}
+		else if (optim_warn_flag && !optimizeOff)
+		{
+			warn("o1: potential move.l #size,dx conversion to moveq");
+		}
 	}
-	else
+	
+	if ((am0 < ABASE) && (am1 < ABASE))			// 68000 modes
 	{
-		if ((am0 < ABASE) && (am1 < ABASE))			// 68000 modes
-		{
-			inst |= siz_12[siz] | am_6[am1] | reg_9[a1reg] | am0 | a0reg;
-
-			D_word(inst);
-
-			if (am0 >= ADISP)
-				ea0gen((WORD)siz);
-
-			if (am1 >= ADISP)
-				ea1gen((WORD)siz | 0x8000);   // Tell ea1gen we're move ea,ea
-		}
-		else					// 68020+ modes
-		{
-			inst |= siz_12[siz] | reg_9[a1reg] | extra_addressing[am0 - ABASE];
-
-			D_word(inst);
-
-			if (am0 >= ADISP)
-				ea0gen((WORD)siz);
-
-			if (am1 >= ADISP)
-				ea1gen((WORD)siz);
-		}
+		inst |= siz_12[siz] | am_6[am1] | reg_9[a1reg] | am0 | a0reg;
+	
+		D_word(inst);
+	
+		if (am0 >= ADISP)
+			ea0gen((WORD)siz);
+	
+		if (am1 >= ADISP)
+			ea1gen((WORD)siz | 0x8000);   		// Tell ea1gen we're move ea,ea
 	}
-
+	else										// 68020+ modes
+	{
+		inst |= siz_12[siz] | reg_9[a1reg] | extra_addressing[am0 - ABASE];
+	
+		D_word(inst);
+	
+		if (am0 >= ADISP)
+			ea0gen((WORD)siz);
+	
+		if (am1 >= ADISP)
+			ea1gen((WORD)siz);
+	}
+	
 	return OK;
 }
 
@@ -912,16 +940,24 @@ int m_br(WORD inst, WORD siz)
 		// Optimize branch instr. size
 		if (siz == SIZN)
 		{
-			if (CHECK_OPTS(OPT_BSR_BCC_S) && (v != 0) && ((v + 0x80) < 0x100))
+			if ((CHECK_OPTS(OPT_BSR_BCC_S) || optim_warn_flag)
+				&& (v != 0) && ((v + 0x80) < 0x100))
 			{
-				// Fits in .B
-				inst |= v & 0xFF;
-				D_word(inst);
+				if (CHECK_OPTS(OPT_BSR_BCC_S))
+				{
+					// Fits in .B
+					inst |= v & 0xFF;
+					D_word(inst);
 
-				if (optim_warn_flag)
-					warn("o2: Bcc.w/BSR.w converted to .s");
+					if (optim_warn_flag)
+						warn("o2: Bcc.w/BSR.w converted to .s");
 
-				return OK;
+					return OK;
+				}
+				else if (optim_warn_flag && !optimizeOff)
+				{
+					warn("o2: potential Bcc.w/BSR.w conversion to .s");
+				}
 			}
 			else
 			{
@@ -1138,7 +1174,9 @@ immed1:
 	D_word(inst);
 	D_word(rmask);
 	ea0gen(siz);
-
+	
+	ErrorIfNotAtEOL();
+	
 	return OK;
 }
 
@@ -1161,7 +1199,13 @@ int m_clra(WORD inst, WORD siz)
 int m_clrd(WORD inst, WORD siz)
 {
 	if (!CHECK_OPTS(OPT_CLR_DX))
+	{
 		inst |= a0reg;
+		if (optim_warn_flag && !optimizeOff)
+		{
+			warn("o7: potential clr.l Dx conversion to moveq #0,Dx");
+		}
+	}
 	else
 	{
 		inst = (a0reg << 9) | 0b0111000000000000;
@@ -1186,6 +1230,7 @@ int m_clrd(WORD inst, WORD siz)
 //
 int m_br30(WORD inst, WORD siz)
 {
+	CHECK00;
 	if (a0exattr & DEFINED)
 	{
 		if ((a0exattr & TDB) != cursect)
@@ -3538,7 +3583,9 @@ fmovem_loop_2:
 	}
 	else
 		return error("bad size suffix");
-
+	
+	ErrorIfNotAtEOL();
+	
 	return OK;
 }
 

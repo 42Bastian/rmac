@@ -1,7 +1,7 @@
 //
 // RMAC - Renamed Macro Assembler for all Atari computers
 // OBJECT.C - Writing Object Files
-// Copyright (C) 199x Landon Dyer, 2011-2024 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2025 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -21,10 +21,16 @@
 
 uint32_t symsize = 0;			// Size of BSD/ELF symbol table
 uint32_t strindx = 0x00000004;	// BSD/ELF string table index
+uint32_t current_file_name_index;	// Caches the current filename for HiSoft debug symbol generation
 uint8_t * strtable;				// Pointer to the symbol string table
 uint8_t * objImage;				// Global object image pointer
 int elfHdrNum[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-uint32_t extraSyms;
+uint32_t extraSyms;				// Count ELF extra symbols
+
+uint8_t hisoft_header[] = {
+	0x00, 0x00, 0x03, 0xF1, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00, 0x48, 0x45, 0x41, 0x44,
+	0x44, 0x42, 0x47, 0x56, 0x30, 0x31, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00};
 
 static uint16_t tdb_tab[] = {
 	0,				// absolute
@@ -69,6 +75,12 @@ static void WriteP56(void);
 //
 uint8_t * AddSymEntry(register uint8_t * buf, SYM * sym, int globflag)
 {
+	// Bail if symbol is line number information
+	if (sym->st_type == 0x44 || sym->st_type == 0x4c || sym->st_type == 0x64 || sym->st_type == 0x84)
+	{
+		return buf;
+	}
+
 	// Copy symbol name to buffer (first 8 chars or less)
 	register uint8_t * s = sym->sname;
 	register int i;
@@ -156,6 +168,27 @@ uint8_t * AddSymEntry(register uint8_t * buf, SYM * sym, int globflag)
 	return buf;
 }
 
+uint8_t *AddHisoftLineNoEntry(uint8_t *buf, SYM *sym, int globflag)
+{
+	if (current_file_name_index != sym->cfileno)
+	{
+		// Not current file info - bail out
+		return buf;
+	}
+
+	if (!(sym->sattr & DEFINED && (sym->st_type == 0x4c || sym->st_type == 0x44)))
+		return buf;
+
+	chptr = buf;
+
+	D_long(sym->st_desc + 1);
+	D_long(sym->svalue);
+
+	symsize += 8;
+
+	return chptr;
+}
+
 //
 // Add an entry to the BSD symbol table
 //
@@ -182,7 +215,7 @@ uint8_t * AddBSDSymEntry(uint8_t * buf, SYM * sym, int globflag)
 	chptr = buf;						// Point to buffer for depositing longs
 	if (sym->sname)
 	{
-	D_long(strindx);					// Deposit the symbol string index
+		D_long(strindx);				// Deposit the symbol string index
 	}
     else
 	{
@@ -204,24 +237,24 @@ uint8_t * AddBSDSymEntry(uint8_t * buf, SYM * sym, int globflag)
 	else
 	{
 		// Translate rmac symbol attributes to an a.out symbol type.
-	if (w1 & EQUATED)
-	{
-		z = 0x02000000;					// Set equated flag
-	}
+		if (w1 & EQUATED)
+		{
+			z = 0x02000000;					// Set equated flag
+		}
 
 		// If a symbol is both EQUd and flagged as TBD then we let the latter
 		// take precedence. Otherwise the linker will not even bother trying to
 		// relocate the address during link time.
 
-	switch (w1 & TDB)
-	{
-	case TEXT: z = 0x04000000; break;	// Set TEXT segment flag
-	case DATA: z = 0x06000000; break;	// Set DATA segment flag
-	case BSS : z = 0x08000000; break;	// Set BSS segment flag
-	}
+		switch (w1 & TDB)
+		{
+		case TEXT: z = 0x04000000; break;	// Set TEXT segment flag
+		case DATA: z = 0x06000000; break;	// Set DATA segment flag
+		case BSS : z = 0x08000000; break;	// Set BSS segment flag
+		}
 
-	if (globflag)
-		z |= 0x01000000;				// Set global flag if requested
+		if (globflag)
+			z |= 0x01000000;				// Set global flag if requested
 	}
 
 	D_long(z);							// Deposit symbol attribute
@@ -236,8 +269,8 @@ uint8_t * AddBSDSymEntry(uint8_t * buf, SYM * sym, int globflag)
 	D_long(z);							// Deposit symbol value
 	if (sym->sname)
 	{
-	strcpy(strtable + strindx, sym->sname);
-	strindx += strlen(sym->sname) + 1;	// Incr string index incl null terminate
+		strcpy(strtable + strindx, sym->sname);
+		strindx += strlen(sym->sname) + 1;	// Incr string index incl null terminate
 	}
 	buf += 12;							// Increment buffer to next record
 	symsize += 12;						// Increment symbol table size
@@ -537,10 +570,48 @@ int WriteObject(int fd)
 		// we're writing a RELMODed executable. N.B.: Destroys buffer!
 		tds = MarkImage(buf, tds, sect[TEXT].sloc, 1);
 		unused = write(fd, buf, tds);
+		
+		if (dsym_flag)
+		{
+			// HiSoft line number format. For more information on this, visit
+			// http://clarets.org/steve/projects/hisoft_line_numbers.html
+			chptr = buf;
+			D_long(0x3f1);		// Header
+			D_long(0);			// Length - Will be filled out when we know the size
+			D_long(0);			// Offset
+			D_long(0x4c494e45);	// Chunk type ("LINE")
+
+			write(fd, hisoft_header, sizeof(hisoft_header));
+
+			current_file_name_index = 0;
+			FILEREC *fr = filerec;					// Begin processing files one by one
+			while (fr)
+			{
+				chptr = buf + 16;
+				symsize = 16;
+
+				// Emit a filename
+				size_t fname_size = (strlen(fr->frec_name) + 3) & ~0x3;
+				D_long(fname_size / 4);
+				strncpy(chptr, fr->frec_name, fname_size);
+				chptr += fname_size;
+				symsize += fname_size + 4;
+
+				AssignSymbolNos(chptr, AddHisoftLineNoEntry);	// Build symbol and string tables
+				chptr = buf + 4;					// Point to sym table size hdr entry
+				D_long((symsize - 16 + fname_size) / 4);			// Write the symbol table size
+				unused = write(fd, buf, symsize);
+
+				fr = fr->frec_next;
+				current_file_name_index++;
+			}
+		}
+		free(buf);
 	}
 	else if (obj_format == ELF)
 	{
 		// Allocate 6MB object file image memory
+		// TODO: We can do better RAM allocation than this!
 		buf = malloc(0x600000);
 
 		if (buf == NULL)
@@ -838,6 +909,10 @@ for(int j=0; j<i; j++)
 	}
 	else if (obj_format == P56 || obj_format == LOD)
 	{
+		// Check for at least one ORG section defined
+		if (!dsp_orgmap[0].chunk)
+			return error("Cannot output 56001 binaries without an .org directive");
+		
 		// Allocate 6MB object file image memory
 		uint8_t * buf = malloc(0x600000);
 

@@ -1,7 +1,7 @@
 //
 // RMAC - Renamed Macro Assembler for the Atari Jaguar Console System
 // AMODE.C - DSP 56001 Addressing Modes
-// Copyright (C) 199x Landon Dyer, 2011-2024 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2025 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -2674,10 +2674,10 @@ deposit_immediate_short_with_register:
 					double f = *(double *)&dspImmedEXVAL;
 					// Check direct.c for ossom comments regarding conversion!
 					//N.B.: This is bogus, we need to fix this so it does this the right way... !!! FIX !!!
-					dspImmedEXVAL = ((uint32_t)(int32_t)round(f * (1 << 23))) & 0xFFFFFF;
+					dspImmedEXVAL = ((uint32_t)(int32_t)ROUND(f * (1 << 23))) & 0xFFFFFF;
 					double g;
 					g = f * (1 << 23);
-					g = round(g);
+					g = ROUND(g);
 
 					if ((dspImmedEXVAL & 0xFFFF) == 0)
 					{

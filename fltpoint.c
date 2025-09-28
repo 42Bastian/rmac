@@ -77,7 +77,7 @@ uint32_t FloatToIEEE754(float f)
 	// we make sure to pass in a positive number (floats/doubles are *not* 2's
 	// complemented) as we already captured the sign bit above.
 	int32_t exponent;
-	float mantissa = frexpf((f < 0 ? -f : f), &exponent);
+	float mantissa = FREXPF((f < 0 ? -f : f), &exponent);
 
 	// Set the exponent bias for IEEE-754 floats
 	exponent += 0x7E;
@@ -88,10 +88,10 @@ uint32_t FloatToIEEE754(float f)
 		exponent = 0;
 
 	// Extract most significant 24 bits of mantissa
-	mantissa = ldexpf(mantissa, 24);
+	mantissa = LDEXPF(mantissa, 24);
 
 	// Convert to an unsigned int
-	uint32_t ieeeVal = truncf(mantissa);
+	uint32_t ieeeVal = TRUNCF(mantissa);
 
 	// ieeeVal now has the mantissa in binary format, *including* the leading 1
 	// bit; so we have to strip that bit out, since in IEEE-754, it's implied.
@@ -152,7 +152,7 @@ void DoubleToExtended(double d, uint8_t out[])
 		exponent = 0;
 
 	mantissa = ldexp(mantissa, 64);
-	uint64_t intMant = trunc(mantissa);
+	uint64_t intMant = TRUNCF(mantissa);
 
 	// Motorola extended floating point is 96 bits, so we pack it into the
 	// 12-byte array that's passed in. The format is as follows: 1 bit (sign),
@@ -190,7 +190,7 @@ uint32_t DoubleToDSPFloat(double d)
 	}
 
 	// The casts are here because some compilers do weird shit.  See bug #149.
-	return (uint32_t)((int32_t)trunc(round(ldexp(d, 23))));
+	return (uint32_t)((int32_t)TRUNCF(ROUND(ldexp(d, 23))));
 }
 
 

@@ -71,8 +71,8 @@ int eaNgen(WORD siz)
 
 					return OK;
 				}
-				if (optim_warn_flag)
-					warn("o3: Potential 0(An) to (An) conversion");
+				if (optim_warn_flag && !optimizeOff)
+					warn("o3: potential 0(An) to (An) conversion");
 			}
 
 			if ((v + 0x8000) >= 0x18000)

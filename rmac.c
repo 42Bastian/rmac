@@ -1,7 +1,7 @@
 //
 // RMAC - Renamed Macro Assembler for all Atari computers
 // RMAC.C - Main Application Code
-// Copyright (C) 199x Landon Dyer, 2011-2024 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2025 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -170,7 +170,8 @@ void DisplayHelp(void)
 		"                    l: LOD (use this for DSP56001 only)\n"
 		"                    x: com/exe/xex (Atari 800)\n"
 		"                    r: absolute address\n"
-		"  -g                Output source level debug information (BSD object only)\n"
+		"  -g                Output source level debug information (BSD object.\n"
+		"                       In ST .prg mode, output HiSoft format)"
 		"  -i[path]          Directory to search for include files\n"
 		"  -l[filename]      Create an output listing file\n"
 		"  -l*[filename]     Create an output listing file without pagination\n"
@@ -188,7 +189,7 @@ void DisplayHelp(void)
 		"                    o5: 68020+ Absolute long base/outer disp. to word\n"
 		"                    o6: Null branches to NOP\n"
 		"                    o7: clr.l Dx to moveq #0,Dx\n"
-		"                    o8: adda.w/l #x,Dy to addq.w/l #x,Dy\n"
+		"                    o8: adda.w/l #x,Ay to addq.w/l #x,Ay\n"
 		"                    o9: adda.w/l #x,Ay to lea x(Dy),Ay\n"
 		"                    o10: 56001 Use short format for immediate values if possible\n"
 		"                    o11: 56001 Auto convert short addressing mode to long (default: on)\n"
@@ -228,7 +229,7 @@ void DisplayVersion(void)
 		"| |  | | | | | | (_| | (__ \n"
 		"|_|  |_| |_| |_|\\__,_|\\___|\n"
 		"\nRenamed Macro Assembler\n"
-		"Copyright (C) 199x Landon Dyer, 2011-2024 rmac authors\n"
+		"Copyright (C) 199x Landon Dyer, 2011-2025 rmac authors\n"
 		"V%01i.%01i.%01i-BS42 %s (%s)\n\n", MAJOR, MINOR, PATCH, __DATE__, PLATFORM);
 }
 
@@ -253,7 +254,10 @@ int ParseOptimization(char * optstring)
 			&& (optstring[3] == 'l' || optstring[3] == 'L')
 			&& (optstring[4] == 'l' || optstring[4] == 'L'))
 		{
-			memset(optim_flags, onoff, OPT_COUNT * sizeof(int));
+			for (int i = 0; i < OPT_COUNT; i++)
+			{
+				optim_flags[i] = onoff;
+			}
 			optstring += 5;
 		}
 		else if (optstring[1] == 'o' || optstring[1] == 'O') // Turn on specific optimisation
@@ -314,7 +318,7 @@ static void ProcessFile(int fd, char *fname)
 		// Validate option compatibility
 		if (dsym_flag)
 		{
-			if (obj_format != BSD)
+			if (obj_format != BSD && obj_format != ALCYON)
 			{
 				printf("-g: debug information only supported with BSD object file format\n");
 				dsym_flag = 0;
@@ -371,14 +375,14 @@ int Process(int argc, char ** argv)
 	orgactive = 0;					// Not in RISC org section
 	orgwarning = 0;					// No ORG warning issued
 	segpadsize = 2;					// Initialize segment padding size
-    dsp_orgmap[0].start = 0;		// Initialize 56001 org initial address
-    dsp_orgmap[0].memtype = ORG_P;	// Initialize 56001 org start segment
+	dsp_orgmap[0].start = 0;		// Initialize 56001 org initial address
+	dsp_orgmap[0].memtype = ORG_P;	// Initialize 56001 org start segment
 	m6502 = 0;						// 6502 mode off by default
 	regbase = reg68base;			// Initialise DFA register tables
 	regtab = reg68tab;				// Idem
 	regcheck = reg68check;			// Idem
 	regaccept = reg68accept;		// Idem
-    correctMathRules = 0;			// respect operator precedence
+	correctMathRules = 0;			// respect operator precedence
     noYPOSby2 = 0;
 	used_architectures = 0;			// Initialise used architectures bitfield
 	// Initialize modules
@@ -391,6 +395,10 @@ int Process(int argc, char ** argv)
 	InitMacro();					// Macro processor
 	InitListing();					// Listing generator
 	Init6502();						// 6502 assembler
+	
+	// Make our presence known
+	sy = NewSymbol("_RMAC_", LABEL, 0);
+	sy->svalue = (MAJOR<<24)|(MINOR<<16)|((PATCH/10)<<8)|(PATCH%10);
 
 	// Process command line arguments and assemble source files
 	for(argno=0; argno<argc; argno++)

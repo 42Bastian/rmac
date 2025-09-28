@@ -1,7 +1,7 @@
 //
 // RMAC - Renamed Macro Assembler for all Atari computers
 // MARK.C - A record of things that are defined relative to any of the sections
-// Copyright (C) 199x Landon Dyer, 2011-2024 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2025 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -311,6 +311,16 @@ uint32_t MarkImage(register uint8_t * mp, uint32_t siz, uint32_t tsize, int okfl
 }
 
 
+#define RELOC_STD_BITS_SWAPPED   ((unsigned int) 0x01)
+#define RELOC_STD_BITS_RELATIVE  ((unsigned int) 0x02)
+#define RELOC_STD_BITS_JMPTABLE  ((unsigned int) 0x04)
+#define RELOC_STD_BITS_QUAD      ((unsigned int) 0x04)
+#define RELOC_STD_BITS_BASEREL   ((unsigned int) 0x08)
+#define RELOC_STD_BITS_EXTERN    ((unsigned int) 0x10)
+#define RELOC_STD_BITS_LENGTH    ((unsigned int) 0x60)
+#define RELOC_STD_BITS_LENGTH_SH 5
+#define RELOC_STD_BITS_PCREL     ((unsigned int) 0x80)
+
 //
 // Make mark image for BSD .o file
 //
@@ -367,30 +377,30 @@ printf("MarkBSDImage():\n");
 #ifdef DEBUG_IMAGE_MARKING
 printf(" validsegment: raddr = $%08X\n", loc);
 #endif
-			uint32_t rflag = 0x00000040;	// Absolute relocation
+			uint32_t rflag = 2 << RELOC_STD_BITS_LENGTH_SH;	// Absolute relocation, 32bit
 
 			if (w & MPCREL)
-				rflag = 0x000000A0;			// PC-relative relocation
+				rflag = (1 << RELOC_STD_BITS_LENGTH_SH) | RELOC_STD_BITS_PCREL;		// PC-relative relocation, 16bit
 
 			// This flag tells the linker to WORD swap the LONG when doing the
 			// relocation.
 			if (w & MMOVEI)
-				rflag |= 0x00000001;
+				rflag |= RELOC_STD_BITS_SWAPPED;
 
 			// This tells the linker to do a WORD relocation (otherwise it
 			// defaults to doing a LONG, throwing things off for WORD sized
 			// fixups)
 			if (!(w & (MLONG | MQUAD)))
-				rflag |= 0x00000002;
+				rflag |= RELOC_STD_BITS_RELATIVE;
 
 			// Tell the linker that the fixup is an OL QUAD data address
 			if (w & MQUAD)
-				rflag |= 0x00000004;
+				rflag |= RELOC_STD_BITS_QUAD;
 
 			if (symbol != NULL)
 			{
 				// Deposit external reference
-				rflag |= 0x00000010;			// Set external reloc flag bit
+				rflag |= RELOC_STD_BITS_EXTERN;	// Set external reloc flag bit
 				rflag |= (symbol->senv << 8);	// Put symbol index in flags
 
 #ifdef DEBUG_IMAGE_MARKING
@@ -425,10 +435,10 @@ printf("  validsegment(3): rflag = $%08X\n", rflag);
 					if (from == DATA)
 						dp += tsize;
 
-					uint32_t diff = (rflag & 0x02 ? GETBE16(dp, 0) : GETBE32(dp, 0));
+					uint32_t diff = (rflag & RELOC_STD_BITS_RELATIVE ? GETBE16(dp, 0) : GETBE32(dp, 0));
 
 					// Special handling for OP (data addr) relocation...
-					if (rflag & 0x04)
+					if (rflag & RELOC_STD_BITS_QUAD)
 					{
 						olBitsSave = diff & 0x7FF;
 						diff = (diff & 0xFFFFF800) >> 8;
@@ -438,7 +448,7 @@ printf("  validsegment(3): rflag = $%08X\n", rflag);
 #ifdef DEBUG_IMAGE_MARKING
 printf("  validsegment(4): diff = $%08X ", diff);
 #endif
-					if (rflag & 0x01)
+					if (rflag & RELOC_STD_BITS_SWAPPED)
 						diff = WORDSWAP32(diff);
 
 #ifdef DEBUG_IMAGE_MARKING
@@ -449,7 +459,7 @@ printf("(sect[TEXT].sloc=$%X) --> ", sect[TEXT].sloc);
 					if (w == BSS)
 						diff += sect[DATA].sloc;
 
-					if (rflag & 0x01)
+					if (rflag & RELOC_STD_BITS_SWAPPED)
 						diff = WORDSWAP32(diff);
 
 					// Make sure to deposit the correct size payload
@@ -458,11 +468,11 @@ printf("(sect[TEXT].sloc=$%X) --> ", sect[TEXT].sloc);
 					//       thus leaving a naked semicolon afterwards to
 					//       screw up the if/else structure. This is the price
 					//       you pay when using macros pretending to be code.
-					if (rflag & 0x02)		// WORD relocation
+					if (rflag & RELOC_STD_BITS_RELATIVE)		// WORD relocation
 					{
 						SETBE16(dp, 0, diff);
 					}
-					else if (rflag & 0x04)	// OP data address relocation
+					else if (rflag & RELOC_STD_BITS_QUAD)	// OP data address relocation
 					{
 						// We do it this way because we might have an offset
 						// that is not a multiple of 8 and thus we need this in
@@ -722,6 +732,10 @@ uint32_t CreateELFRelocationRecord(uint8_t * buf, uint8_t * secBuf, uint16_t sec
 				else if (w & BSS)
 					r_sym = elfHdrNum[ES_BSS];	// Mark BSS segment
 
+				// QUAD relocations are not supported by ELF
+				if (w & MQUAD)
+					error("QUAD relocation not supported for ELF (%s)", symbol ? (const char *)symbol->sname : "");
+
 				// Set the relocation type next
 				if (w & MPCREL)
 					r_type = 5;  // R_68K_PC16
@@ -730,11 +744,18 @@ uint32_t CreateELFRelocationRecord(uint8_t * buf, uint8_t * secBuf, uint16_t sec
 				//       It might be better to check the symbol's senv; that is,
 				//       if this is a real problem that needs addressing...
 				else if ((from & section) == 0)
+				{
 					// In the case of a section referring to a label in another
 					// section (for example text->data) use a R_68K_PC32 mark.
 					r_type = 4;  // R_68K_PC32
-				else
+					if (w & MMOVEI)
+						r_type = 44; // R_68K_PC32_SWAPPED
+				} else
+				{
 					r_type = 1;  // R_68K_32
+					if (w & MMOVEI)
+						r_type = 43; // R_68K_32_SWAPPED
+				}
 
 				r_addend = GETBE32(secBuf + r_offset, 0);
 

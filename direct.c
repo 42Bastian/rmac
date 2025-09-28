@@ -1,7 +1,7 @@
 //
 // RMAC - Renamed Macro Assembler for all Atari computers
 // DIRECT.C - Directive Handling
-// Copyright (C) 199x Landon Dyer, 2011-2024 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2025 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -36,7 +36,11 @@
 #include "riscregs.h"
 
 TOKEN exprbuf[128];			// Expression buffer
+#ifdef _ATARI_ST_
+SYM* symbolPtr[10000];		// Symbol pointers table
+#else
 SYM * symbolPtr[1000000];	// Symbol pointers table
+#endif
 static long unused;			// For supressing 'write' warnings
 char buffer[256];			// Scratch buffer for messages
 int largestAlign[3] = { 2, 2, 2 };	// Largest alignment value seen per section
@@ -703,7 +707,7 @@ allright:
 
 	chcheck(size);
 
-	DEBUG { printf("INCBIN: File '%s' is %lli bytes.\n", string[filename], size); }
+	DEBUG { printf("INCBIN: File '%s' is %li bytes.\n", string[filename], size); }
 
 	char * fileBuffer = (char *)malloc(size);
 	bytesRead = read(fd, fileBuffer, size);

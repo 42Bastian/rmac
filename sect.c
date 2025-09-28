@@ -1,7 +1,7 @@
 //
 // RMAC - Renamed Macro Assembler for all Atari computers
 // SECT.C - Code Generation, Fixups and Section Management
-// Copyright (C) 199x Landon Dyer, 2011-2024 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2025 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -376,7 +376,7 @@ int AddFixup(uint32_t attr, uint32_t loc, TOKEN * fexpr)
 
 	DEBUG { printf("AddFixup: sno=%u, l#=%u, attr=$%X, loc=$%X, expr=%p, sym=%p, org=$%X\n", cursect, fixup->lineno, fixup->attr, fixup->loc, (void *)fixup->expr, (void *)fixup->symbol, fixup->orgaddr);
 		if (symbol != NULL)
-			printf("          name: %s, value: $%llX\n", symbol->sname, symbol->svalue);
+			printf("          name: %s, value: $%lX\n", symbol->sname, symbol->svalue);
 	}
 
 	return 0;

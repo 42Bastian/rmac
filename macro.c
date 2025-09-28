@@ -1,7 +1,7 @@
 //
 // RMAC - Renamed Macro Assembler for all Atari computers
 // MACRO.C - Macro Definition and Invocation
-// Copyright (C) 199x Landon Dyer, 2011-2024 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2025 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -53,7 +53,7 @@ void InitMacro(void)
 //
 int ExitMacro(void)
 {
-WARNING(!!! Bad macro exiting !!!)
+// WARNING(!!! Bad macro exiting !!!)
 /*
 This is a problem. Currently, the argument logic just keeps the current
 arguments and doesn't save anything if a new macro is called in the middle
@@ -127,7 +127,7 @@ int defmac1(char * ln, int notEndFlag)
 			curmac->last->next = malloc(sizeof(LLIST));
 			curmac->last->next->next = NULL;
 			curmac->last->next->line = strdup(ln);
-			curmac->lineList->lineno = curlineno;
+			curmac->last->next->lineno = curlineno;
 			curmac->last = curmac->last->next;
 		}
 

@@ -1,7 +1,7 @@
 //
 // RMAC - Renamed Macro Assembler for all Atari computers
 // RMAC.H - Main Application Code
-// Copyright (C) 199x Landon Dyer, 2011-2024 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2025 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -86,7 +86,8 @@
 	#undef _OPEN_INC
 	#define _OPEN_FLAGS     _O_TRUNC|_O_CREAT|_O_BINARY|_O_RDWR
 	#define _OPEN_INC       O_RDONLY|_O_BINARY
-	#endif
+    #define realpath(_fn, _abs) _fullpath((_abs), (_fn), _MAX_PATH)
+    #endif
 
 	// WARNING WARNING WARNING
 	#define DO_PRAGMA(x) _Pragma (#x)
@@ -108,6 +109,17 @@
 
 #endif
 
+#ifdef _ATARI_ST_
+#define ROUND rint
+#define FREXPF frexp
+#define LDEXPF(value, bits) value*(float)(1<<bits)
+#define TRUNCF floor
+#else
+#define ROUND round
+#define FREXPF frexpf
+#define LDEXPF(value, bits) ldexpf(value,bits)
+#define TRUNCF truncf
+#endif
 
 //
 // Endian related, for safe handling of endian-sensitive data

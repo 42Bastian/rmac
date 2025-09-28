@@ -1,32 +1,16 @@
 #
 # RMAC - Renamed Macro Assembler for all Atari computers
-# Copyright (C) 199x Landon Dyer, 2011-2021 Reboot & Friends
+# Copyright (C) 199x Landon Dyer, 2011-2025 Reboot & Friends
 # MAKEFILE for *nix
 #
 
 STD := c99
 
-# Detect old, shitty platforms that aren't C99/POSIX compliant
-OSTYPE := $(shell uname -a)
-
-# Should catch MinGW
-ifeq "$(findstring MINGW, $(OSTYPE))" "MINGW"
-STD := gnu99
-endif
-
-# If we're cross compiling using MXE, we're still fooooooooooked
-ifneq "$(CROSS)" ""
-STD := gnu99
-endif
-
-
 RM = /bin/rm -f
 CC = $(CROSS)gcc
 HOSTCC = gcc
 
-#CFLAGS = -std=$(STD) -D_DEFAULT_SOURCE -g -D__GCCUNIX__ -I. -O2 -MMD
 CFLAGS = -std=$(STD) -D_DEFAULT_SOURCE -g -D__GCCUNIX__ -I. -O2
-CFLAGS+= -Wno-pointer-sign -Wno-deprecated-non-prototype
 
 OBJS = 6502.o amode.o debug.o direct.o dsp56k.o dsp56k_amode.o dsp56k_mach.o eagen.o error.o expr.o fltpoint.o listing.o mach.o macro.o mark.o object.o op.o procln.o riscasm.o rmac.o sect.o symbol.o token.o dirent_lose.o
 

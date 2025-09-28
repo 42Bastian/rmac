@@ -1,7 +1,7 @@
 //
 // RMAC - Renamed Macro Assembler for all Atari computers
 // SYMBOL.C - Symbol Handling
-// Copyright (C) 199x Landon Dyer, 2011-2024 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2025 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -548,7 +548,7 @@ int symtable(void)
 					strcpy(ln2, "external");
 				else
 				{
-					sprintf(ln2, "%016llX", q->svalue);
+					sprintf(ln2, "%016lX", q->svalue);
 					ToUppercase(ln2);
 				}
 

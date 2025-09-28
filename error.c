@@ -1,7 +1,7 @@
 //
 // RMAC - Renamed Macro Assembler for all Atari computers
 // ERROR.C - Error Handling
-// Copyright (C) 199x Landon Dyer, 2011-2024 Reboot and Friends
+// Copyright (C) 199x Landon Dyer, 2011-2025 Reboot and Friends
 // RMAC derived from MADMAC v1.07 Written by Landon Dyer, 1986
 // Source utilised with the kind permission of Landon Dyer
 //
@@ -11,10 +11,10 @@
 #include "token.h"
 #include "listing.h"
 char * interror_msg[] = {
-	"Unknown internal error",	// Error not referenced, should not be displayed
-	"Unknown internal error",	// Error not referenced, should not be displayed
+	"Unknown internal error",					// Error not referenced, should not be displayed
+	"Unknown internal error",					// Error not referenced, should not be displayed
 	"Bad MULTX entry in chrtab",				// Error #2
-	"Unknown internal error",	// Error not referenced, should not be displayed
+	"Unknown internal error",					// Error not referenced, should not be displayed
 	"Bad fixup type",							// Error #4
 	"Bad operator in expression stream",		// Error #5
 	"Can't find generated code in section",		// Error #6
@@ -26,6 +26,7 @@ char * interror_msg[] = {
 // Exported variables
 int errcnt;						// Error count
 char * err_fname;				// Name of error message file
+int macro_error_line_number;	// Line number where macro error happened
 
 // Internal variables
 static long unused;				// For supressing 'write' warnings
@@ -113,13 +114,14 @@ int error(const char * text, ...)
 		{
 			// This is basically SetFilenameForErrorReporting() but we don't
 			// call it here as it will clobber curfname. That function is used
-			// during fixups only so it really doesn't matter at that point...
+			// during fixups only so it really doesn't matter if it clobbers
+			// those variables at that point...
 			char * filename;
 			FILEREC * fr;
 			uint16_t fnum = cur_inobj->inobj.imacro->im_macro->cfileno;
 
 			// Check for absolute top filename (this should never happen)
-			if ((int16_t)fnum == -1)
+			if (fnum == -1)
 				interror(8);
 			else
 			{
@@ -138,7 +140,7 @@ int error(const char * text, ...)
 
 			filename = fr->frec_name;
 
-			sprintf(buf1, "%s %d: Error: %s\nCalled from: %s %d\n", filename, cur_inobj->inobj.imacro->im_macro->lineList->lineno, buf,
+			sprintf(buf1, "%s %d: Error: %s\nCalled from: %s %d\n", filename, macro_error_line_number, buf,
 			curfname, curlineno);
 		}
 			break;

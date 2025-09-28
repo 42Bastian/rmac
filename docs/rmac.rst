@@ -4,8 +4,8 @@ RMAC
 =====================
 Reference Manual
 ================
-version 2.2.36
-==============
+version 2.4.3
+=============
 
 © and notes
 ===========
@@ -17,7 +17,7 @@ the accuracy of printed or duplicated material after the date of publication and
 disclaims liability for changes, errors or omissions.*
 
 
-*Copyright © 2011-2024, the rmac authors*
+*Copyright © 2011-2025, the rmac authors*
 
 *All rights reserved.*
 
@@ -120,11 +120,12 @@ Switch               Description
 -e\ *[file[.err]]*   Direct error messages to the specified file.
 -fa                  ALCYON output object file format (implied when **-ps** is enabled).
 -fb                  BSD COFF output object file format.
--fb                  Commodore 64 PRG format.
+-fc                  Commodore 64 PRG format.
 -fe                  ELF output object file format.
 -fr                  Absolute address. Source code is required to have one .org statement.
 -fx                  Atari 800 com/exe/xex output object file format.
--g                   Generate source level debug info. Requires BSD COFF object file format.
+-g                   Generate source level debug info. Requires BSD COFF object file format,
+                     or ST `.prg` format where it will generate HiSoft Line Number format.
 -i\ *path*           Set include-file directory search path.
 -l\ *[file[prn]]*    Construct and direct assembly listing to the specified file.
 -l\ *\*[filename]*   Create an output listing file without pagination.
@@ -393,6 +394,16 @@ the following important exceptions:
    fatal error that you must deal with by splitting up your source files, re-sizing
    or eliminating memory-using programs such as ramdisks and desk accessories,
    or buying more RAM.
+ * rmac can be indentified during assembly by checking for the definition of a symbol
+   called ``_RMAC_``. Furthermore, the exact version of the assembler can be obtained
+   by reading the value of ``_RMAC_``. It is encoded in BCD format using the following
+   convention:
+
+   #. Major version (1 BCD digit)
+   #. Minor version (1 BCD digit)
+   #. Patch version (2 BCD digits)
+
+   For exmaple, version 2.1.15 is encoded as ``$02010105``.
 
 Forward Branches
 ''''''''''''''''
@@ -662,6 +673,8 @@ and may not be used as symbols (e.g. labels, equates, or the names of macros):
       m0 m1 m2 m3 m4 m5 m6 m7
       r0 r1 r2 r3 r4 r5 r6 r7
 
+Note that only the keywords that correspond to the architecture are illegal,
+for example ``x0`` can be used safely in 68000 mode.
 
 `Constants`_
 ''''''''''''
@@ -1811,14 +1824,14 @@ argument.
      ::
 
        .macro Fopen file, mode
-          movs.w   \mode,-(sp)  ;push open mode
+          move.w   \mode,-(sp)  ;push open mode
           move.1   \file,-(sp)  ;push address of tile name
           Gemdos   $3d,8        ;do the GEMDOS call
        .endm
 
 The **String** macro is used to allocate storage for a string, and to place the
-string's address somewhere. The first argument should be a string or other expres-
-sion acceptable in a dc.b directive. The second argument is optional; it specifies
+string's address somewhere. The first argument should be a string or other expression
+acceptable in a ``dc.b`` directive. The second argument is optional; it specifies
 where the address of the string should be placed. If the second argument is omitted,
 the string's address is pushed onto the stack. The string data itself is kept in the
 data segment.
