@@ -4,7 +4,6 @@
 68k.tab
 6502kw.h
 opkw.h
-dsp56k*
 *.o
 *~
 kwtab.h
